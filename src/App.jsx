@@ -27,8 +27,8 @@ const TB_H   = 52;
 const LG_H   = 36;
 const AM_REF = 'am-ref-btn';
 
-// 计算表头吸附的起始位置：所有上方导航元素的高度总和
-const HEADER_STICKY_TOP = NAV_H + SUB_H + TB_H + LG_H; // 等于 216
+// 精确计算所有上方元素高度总和: 56 + 72 + 52 + 36 = 216px
+const HEADER_STICKY_TOP = NAV_H + SUB_H + TB_H + LG_H;
 
 const fmt = date => {
   const y = date.getFullYear();
@@ -104,7 +104,6 @@ const GlobalStyles = () => (
     .tb-btn.today:hover{opacity:0.9}
     .tb-btn.icon{width:32px;padding:0;font-size:15px;color:#6b7280}
     .tb-select{height:32px;padding:0 12px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;font-size:13px;color:#374151;cursor:pointer;appearance:none}
-    .tb-select:focus {outline:none;border-color:#770bff}
     .tb-month{font-size:15px;font-weight:600;color:#111827;letter-spacing:-0.01em}
     .legend{height:${LG_H}px;padding:0 28px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:20px;position:sticky;top:${NAV_H+SUB_H+TB_H}px;z-index:470}
     .leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#9ca3af}
@@ -177,7 +176,7 @@ function LoginScreen({ onLogin, isInitializing, error }) {
         <h2 className="ms-title">Sign in</h2>
         <p className="ms-sub">Use your Pattern Asia work account to continue</p>
         {isInitializing
-          ? <div style={{fontSize:'13px',color:#605e5c,textAlign:'center'}}>Initializing...</div>
+          ? <div style={{fontSize:'13px',color:'#605e5c',textAlign:'center'}}>Initializing...</div>
           : (
             <button className="ms-btn" onClick={onLogin} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:10}}>
               <svg width="18" height="18" viewBox="0 0 21 21" fill="none">
@@ -741,8 +740,8 @@ export default function App() {
                                   onMouseOver={() => handleStatusCellMouseOver(m.id, weekIdx, shift)}
                                   onClick={e => {
                                     if (!isMe) return;
-                                    if (sid !== 'none') handleStatus(key, null, e);
-                                    else { e.stopPropagation(); setActiveMenu(open?null:key); }
+                                    if (sid !== 'none') handleStatus(key, null, e); // 已经有状态的点按直接取消
+                                    else { e.stopPropagation(); setActiveMenu(open?null:key); } // 空白点按弹出菜单
                                   }}
                                 >
                                   {sid !== 'none' ? `${cfg.icon} ${cfg.label}` : shift}
