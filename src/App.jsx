@@ -27,6 +27,9 @@ const TB_H   = 52;
 const LG_H   = 36;
 const AM_REF = 'am-ref-btn';
 
+// 计算表头吸附的起始位置：所有上方导航元素的高度总和
+const HEADER_STICKY_TOP = NAV_H + SUB_H + TB_H + LG_H; // 等于 216
+
 const fmt = date => {
   const y = date.getFullYear();
   const m = String(date.getMonth()+1).padStart(2,'0');
@@ -101,16 +104,17 @@ const GlobalStyles = () => (
     .tb-btn.today:hover{opacity:0.9}
     .tb-btn.icon{width:32px;padding:0;font-size:15px;color:#6b7280}
     .tb-select{height:32px;padding:0 12px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;font-size:13px;color:#374151;cursor:pointer;appearance:none}
+    .tb-select:focus {outline:none;border-color:#770bff}
     .tb-month{font-size:15px;font-weight:600;color:#111827;letter-spacing:-0.01em}
     .legend{height:${LG_H}px;padding:0 28px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:20px;position:sticky;top:${NAV_H+SUB_H+TB_H}px;z-index:470}
     .leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#9ca3af}
     .leg-sw{width:20px;height:10px;border-radius:4px}
     .tbl-outer{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 28px 48px;background:#f4f5f7}
     .main-tbl{width:100%;border-collapse:collapse;table-layout:fixed;min-width:860px}
-    .main-tbl thead{position:sticky;top:0;z-index:200;background:#f4f5f7}
+    .main-tbl thead{position:sticky;top:${HEADER_STICKY_TOP}px;z-index:460;background:#f4f5f7}
     .main-tbl th{padding:14px 4px 10px;text-align:center;font-size:10px;font-weight:600;color:#9ca3af;letter-spacing:0.06em;background:#f4f5f7}
     .main-tbl td{padding:0;height:${ROW_H}px;vertical-align:top}
-    .sticky-h{position:sticky;left:0;z-index:300;background:#f4f5f7}
+    .sticky-h{position:sticky;left:0;top:${HEADER_STICKY_TOP}px;z-index:461;background:#f4f5f7}
     .sticky-c{position:sticky;left:0;z-index:100;background:#f4f5f7;overflow:visible}
     .sticky-c::after,.sticky-h::after{content:'';position:absolute;top:0;right:-16px;bottom:0;width:16px;background:linear-gradient(to right,rgba(0,0,0,0.04),transparent);pointer-events:none}
     .nw{height:${ROW_H}px;display:flex;align-items:center;gap:10px;padding:0 8px;border-bottom:1px solid #ebebeb;overflow:visible}
@@ -173,7 +177,7 @@ function LoginScreen({ onLogin, isInitializing, error }) {
         <h2 className="ms-title">Sign in</h2>
         <p className="ms-sub">Use your Pattern Asia work account to continue</p>
         {isInitializing
-          ? <div style={{fontSize:'13px',color:'#605e5c',textAlign:'center'}}>Initializing...</div>
+          ? <div style={{fontSize:'13px',color:#605e5c,textAlign:'center'}}>Initializing...</div>
           : (
             <button className="ms-btn" onClick={onLogin} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:10}}>
               <svg width="18" height="18" viewBox="0 0 21 21" fill="none">
@@ -391,67 +395,40 @@ export default function App() {
   const handleStatus = async (key, val, e) => {
     e.stopPropagation();
     
-    // Check if this is a bulk select operation
     if (bulkSelectCells.length > 0) {
-      // BULK SELECT: Apply status to all selected empty cells
       setSaveStatus('saving');
-      
       const updatedRecords = { ...records };
-      bulkSelectCells.forEach(cellKey => {
-        updatedRecords[cellKey] = val;
-      });
-      
+      bulkSelectCells.forEach(cellKey => { updatedRecords[cellKey] = val; });
       setRecords(updatedRecords);
       setActiveMenu(null);
       setBulkSelectCells([]);
       
-      // Fire background requests WITHOUT waiting
       (async () => {
         try {
           await Promise.all(bulkSelectCells.map(cellKey => {
             const parts = cellKey.split('-');
-            const shift_name = parts[parts.length-1];
-            const staffId_name = parts[0];
-            const date_name = parts.slice(1,-1).join('-');
-            
-            return supabase.from('statuses').upsert({ 
-              id:cellKey, 
-              staff_id:staffId_name, 
-              date:date_name, 
-              shift:shift_name, 
-              status:val 
-            });
+            const shift_name = parts[parts.length-1], staffId_name = parts[0], date_name = parts.slice(1,-1).join('-');
+            return supabase.from('statuses').upsert({ id:cellKey, staff_id:staffId_name, date:date_name, shift:shift_name, status:val });
           }));
-          setSaveStatus('saved');
-          setTimeout(() => setSaveStatus(''), 2000);
-        } catch(e) {
-          console.error('Bulk select error:', e);
-          setSaveStatus('');
-        }
+          setSaveStatus('saved'); setTimeout(() => setSaveStatus(''), 2000);
+        } catch(e) { setSaveStatus(''); }
       })();
-      
     } else {
-      // NORMAL: Single cell status update
       setSaveStatus('saving');
-      if (val === null) { 
-        await supabase.from('statuses').delete().eq('id', key); 
-      } else {
+      if (val === null) { await supabase.from('statuses').delete().eq('id', key); }
+      else {
         const parts = key.split('-');
         const shift = parts[parts.length-1], staffId = parts[0], date = parts.slice(1,-1).join('-');
         await supabase.from('statuses').upsert({ id:key, staff_id:staffId, date, shift, status:val });
         setActiveMenu(null);
       }
-      setSaveStatus('saved'); 
-      setTimeout(() => setSaveStatus(''), 2000);
+      setSaveStatus('saved'); setTimeout(() => setSaveStatus(''), 2000);
     }
   };
 
   const handleStatusCellMouseDown = (staffId, dateIdx, shift, status, e) => {
     if (!account) return;
-    
-    // PERMISSION CHECK: Only allow current user to edit their own row
     if (staffId !== meStaff?.id) return;
-    
     setDragging({ staffId, dateIdx, shift, status, isEmptyCell: status === 'none' });
     setPreview([[staffId, dateIdx, shift]]);
   };
@@ -474,26 +451,16 @@ export default function App() {
     const range = [];
     for (let r = minIdx; r <= maxIdx; r++) {
       for (let d = minDate; d <= maxDate; d++) {
-        if (minShift === maxShift) {
-          range.push([staffIds[r], d, minShift === 0 ? 'AM' : 'PM']);
-        } else {
-          range.push([staffIds[r], d, 'AM']);
-          range.push([staffIds[r], d, 'PM']);
-        }
+        if (minShift === maxShift) range.push([staffIds[r], d, minShift === 0 ? 'AM' : 'PM']);
+        else { range.push([staffIds[r], d, 'AM']); range.push([staffIds[r], d, 'PM']); }
       }
     }
     setPreview(range);
   };
 
   const handleStatusCellMouseUp = async () => {
-    if (!dragging || preview.length === 0) {
-      setDragging(null);
-      setPreview([]);
-      return;
-    }
-
+    if (!dragging || preview.length === 0) { setDragging(null); setPreview([]); return; }
     const isEmptyCell = dragging.isEmptyCell;
-
     const week_arr = (() => {
       const d = new Date(viewDate), day = d.getDay();
       const mon = new Date(d.setDate(d.getDate()-day+(day===0?-6:1)));
@@ -504,50 +471,28 @@ export default function App() {
     })();
 
     if (isEmptyCell) {
-      // BULK SELECT: Dragged from empty cells
-      // Remember these cells and show dropdown to select status
-      const cellKeys = preview.map(([staffId, dateIdx, shift]) => 
-        `${staffId}-${week_arr[dateIdx]}-${shift}`
-      );
+      const cellKeys = preview.map(([staffId, dateIdx, shift]) => `${staffId}-${week_arr[dateIdx]}-${shift}`);
       setBulkSelectCells(cellKeys);
-      
-      // Show dropdown at first cell
       const firstCell = preview[0];
       const key = `${firstCell[0]}-${week_arr[firstCell[1]]}-${firstCell[2]}`;
       setActiveMenu(key);
-      
-      setDragging(null);
-      setPreview([]);
-      
+      setDragging(null); setPreview([]);
     } else {
-      // BULK UNSELECT: Dragged from filled cells
-      // Immediately unselect all cells - NO DROPDOWN
-      
       const updatedRecords = { ...records };
       preview.forEach(([staffId, dateIdx, shift]) => {
         const key = `${staffId}-${week_arr[dateIdx]}-${shift}`;
         delete updatedRecords[key];
       });
-
       setRecords(updatedRecords);
-      setSaveStatus('saving');
-      setDragging(null);
-      setPreview([]);
-      setActiveMenu(null); // CLOSE ANY OPEN DROPDOWN
-      
-      // Fire background requests WITHOUT waiting
+      setSaveStatus('saving'); setDragging(null); setPreview([]); setActiveMenu(null);
       (async () => {
         try {
           await Promise.all(preview.map(([staffId, dateIdx, shift]) => {
             const key = `${staffId}-${week_arr[dateIdx]}-${shift}`;
             return supabase.from('statuses').delete().eq('id', key);
           }));
-          setSaveStatus('saved');
-          setTimeout(() => setSaveStatus(''), 2000);
-        } catch(e) {
-          console.error('Bulk unselect error:', e);
-          setSaveStatus('');
-        }
+          setSaveStatus('saved'); setTimeout(() => setSaveStatus(''), 2000);
+        } catch(e) { setSaveStatus(''); }
       })();
     }
   };
@@ -716,7 +661,7 @@ export default function App() {
             <col style={{width:'200px'}}/>
             {week.map(d => <col key={d.ds}/>)}
           </colgroup>
-          <thead style={{position:'sticky',top:'0',zIndex:200,background:'#f4f5f7'}}>
+          <thead style={{position:'sticky',top:`${HEADER_STICKY_TOP}px`,zIndex:460,background:'#f4f5f7'}}>
             <tr>
               <th className="sticky-h" style={{textAlign:'left'}}></th>
               {week.map(d => (
@@ -738,11 +683,8 @@ export default function App() {
                       <div style={{display:'flex',alignItems:'center',gap:'10px',position:'relative',cursor:isMe?'pointer':'default'}}
                         onClick={async () => {
                           if (!isMe) return;
-                          if (emotions[m.id]) {
-                            await supabase.from('emotions').delete().eq('staff_id', m.id);
-                          } else {
-                            setSocialMenu(socialMenu===m.id ? null : m.id);
-                          }
+                          if (emotions[m.id]) { await supabase.from('emotions').delete().eq('staff_id', m.id); }
+                          else { setSocialMenu(socialMenu===m.id ? null : m.id); }
                         }}>
                         <div id={`av-${m.id}`} className="n-av-wrap" style={{position:'relative'}}>
                           <Avatar name={m.name} photoUrl={staffPhotos[m.id]} size={34} isMe={isMe}/>
@@ -798,9 +740,9 @@ export default function App() {
                                   onMouseDown={(e) => handleStatusCellMouseDown(m.id, weekIdx, shift, sid, e)}
                                   onMouseOver={() => handleStatusCellMouseOver(m.id, weekIdx, shift)}
                                   onClick={e => {
-                                    if (!isMe) return; // PERMISSION CHECK
-                                    if (sid !== 'none') handleStatus(key, null, e); // Single unselect - no dropdown
-                                    else { e.stopPropagation(); setActiveMenu(open?null:key); } // Single select - show dropdown
+                                    if (!isMe) return;
+                                    if (sid !== 'none') handleStatus(key, null, e);
+                                    else { e.stopPropagation(); setActiveMenu(open?null:key); }
                                   }}
                                 >
                                   {sid !== 'none' ? `${cfg.icon} ${cfg.label}` : shift}
