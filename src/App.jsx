@@ -106,7 +106,7 @@ const GlobalStyles = () => (
     .leg-sw{width:20px;height:10px;border-radius:4px}
     .tbl-outer{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 28px 48px;background:#f4f5f7}
     .main-tbl{width:100%;border-collapse:collapse;table-layout:fixed;min-width:860px}
-    .main-tbl thead{position:sticky;top:${NAV_H+SUB_H+TB_H+LG_H}px;z-index:300;background:#f4f5f7}
+    .main-tbl thead{position:sticky;top:0;z-index:300;background:#f4f5f7}
     .main-tbl th{padding:14px 4px 10px;text-align:center;font-size:10px;font-weight:600;color:#9ca3af;letter-spacing:0.06em;background:#f4f5f7}
     .main-tbl td{padding:0;height:${ROW_H}px;vertical-align:top}
     .sticky-h{position:sticky;left:0;z-index:300;background:#f4f5f7}
@@ -398,7 +398,7 @@ export default function App() {
   };
 
   const handleStatusCellMouseDown = (staffId, dateIdx, shift, status, e) => {
-    if (status === 'none' || !account) return;
+    if (!account) return;
     setDragging({ staffId, dateIdx, shift, status });
     setPreview([[staffId, dateIdx, shift]]);
   };
@@ -459,10 +459,16 @@ export default function App() {
         const shift_name = parts[parts.length-1];
         const staffId_name = parts[0];
         const date_name = parts.slice(1,-1).join('-');
-        return supabase.from('statuses').upsert({ id:key, staff_id:staffId_name, date:date_name, shift:shift_name, status:dragging.status });
+        
+        // If dragging from empty cell, delete; if dragging from filled cell, set status
+        if (dragging.status === 'none') {
+          return supabase.from('statuses').delete().eq('id', key);
+        } else {
+          return supabase.from('statuses').upsert({ id:key, staff_id:staffId_name, date:date_name, shift:shift_name, status:dragging.status });
+        }
       }));
     } catch(e) {
-      console.error('Bulk fill error:', e);
+      console.error('Bulk operation error:', e);
     }
 
     setDragging(null);
@@ -642,7 +648,7 @@ export default function App() {
             <col style={{width:'200px'}}/>
             {week.map(d => <col key={d.ds}/>)}
           </colgroup>
-          <thead style={{position:'sticky',top:`${NAV_H+SUB_H+TB_H+LG_H}px`,zIndex:300,background:'#f4f5f7'}}>
+          <thead style={{position:'sticky',top:0,zIndex:300,background:'#f4f5f7'}}>
             <tr>
               <th className="sticky-h" style={{textAlign:'left'}}></th>
               {week.map(d => (
