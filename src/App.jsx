@@ -107,7 +107,7 @@ const GlobalStyles = () => (
     .leg-sw{width:20px;height:10px;border-radius:4px}
     .tbl-outer{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 28px 48px;background:#f4f5f7}
     .main-tbl{width:100%;border-collapse:collapse;table-layout:fixed;min-width:860px}
-    .main-tbl thead{position:sticky;top:${NAV_H+SUB_H+TB_H+LG_H}px;z-index:460;background:#f4f5f7}
+    .main-tbl thead{position:sticky;top:0;z-index:200;background:#f4f5f7}
     .main-tbl th{padding:14px 4px 10px;text-align:center;font-size:10px;font-weight:600;color:#9ca3af;letter-spacing:0.06em;background:#f4f5f7}
     .main-tbl td{padding:0;height:${ROW_H}px;vertical-align:top}
     .sticky-h{position:sticky;left:0;z-index:300;background:#f4f5f7}
@@ -521,7 +521,7 @@ export default function App() {
       
     } else {
       // BULK UNSELECT: Dragged from filled cells
-      // Immediately unselect all cells
+      // Immediately unselect all cells - NO DROPDOWN
       
       const updatedRecords = { ...records };
       preview.forEach(([staffId, dateIdx, shift]) => {
@@ -533,6 +533,7 @@ export default function App() {
       setSaveStatus('saving');
       setDragging(null);
       setPreview([]);
+      setActiveMenu(null); // CLOSE ANY OPEN DROPDOWN
       
       // Fire background requests WITHOUT waiting
       (async () => {
@@ -715,7 +716,7 @@ export default function App() {
             <col style={{width:'200px'}}/>
             {week.map(d => <col key={d.ds}/>)}
           </colgroup>
-          <thead style={{position:'sticky',top:`${NAV_H+SUB_H+TB_H+LG_H}px`,zIndex:460,background:'#f4f5f7'}}>
+          <thead style={{position:'sticky',top:'0',zIndex:200,background:'#f4f5f7'}}>
             <tr>
               <th className="sticky-h" style={{textAlign:'left'}}></th>
               {week.map(d => (
@@ -798,8 +799,8 @@ export default function App() {
                                   onMouseOver={() => handleStatusCellMouseOver(m.id, weekIdx, shift)}
                                   onClick={e => {
                                     if (!isMe) return; // PERMISSION CHECK
-                                    if (sid !== 'none') handleStatus(key, null, e);
-                                    else { e.stopPropagation(); setActiveMenu(open?null:key); }
+                                    if (sid !== 'none') handleStatus(key, null, e); // Single unselect - no dropdown
+                                    else { e.stopPropagation(); setActiveMenu(open?null:key); } // Single select - show dropdown
                                   }}
                                 >
                                   {sid !== 'none' ? `${cfg.icon} ${cfg.label}` : shift}
