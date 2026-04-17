@@ -234,7 +234,7 @@ export default function App() {
   const [onlineUsers,         setOnlineUsers]         = useState([]);
   const [dragging,            setDragging]            = useState(null);
   const [preview,             setPreview]             = useState([]);
-  const [lastSelectedStatus,  setLastSelectedStatus]  = useState(null);
+  const [bulkSelectCells,     setBulkSelectCells]     = useState([]);
   
   const presenceRef   = useRef(null);
   const partyTimerRef = useRef(null);
@@ -389,24 +389,70 @@ export default function App() {
   };
 
   const handleStatus = async (key, val, e) => {
-    e.stopPropagation(); setSaveStatus('saving');
-    if (val === null) { await supabase.from('statuses').delete().eq('id', key); }
-    else {
-      const parts = key.split('-');
-      const shift = parts[parts.length-1], staffId = parts[0], date = parts.slice(1,-1).join('-');
-      await supabase.from('statuses').upsert({ id:key, staff_id:staffId, date, shift, status:val });
+    e.stopPropagation();
+    
+    // Check if this is a bulk select operation
+    if (bulkSelectCells.length > 0) {
+      // BULK SELECT: Apply status to all selected empty cells
+      setSaveStatus('saving');
+      
+      const updatedRecords = { ...records };
+      bulkSelectCells.forEach(cellKey => {
+        updatedRecords[cellKey] = val;
+      });
+      
+      setRecords(updatedRecords);
       setActiveMenu(null);
+      setBulkSelectCells([]);
+      
+      // Fire background requests WITHOUT waiting
+      (async () => {
+        try {
+          await Promise.all(bulkSelectCells.map(cellKey => {
+            const parts = cellKey.split('-');
+            const shift_name = parts[parts.length-1];
+            const staffId_name = parts[0];
+            const date_name = parts.slice(1,-1).join('-');
+            
+            return supabase.from('statuses').upsert({ 
+              id:cellKey, 
+              staff_id:staffId_name, 
+              date:date_name, 
+              shift:shift_name, 
+              status:val 
+            });
+          }));
+          setSaveStatus('saved');
+          setTimeout(() => setSaveStatus(''), 2000);
+        } catch(e) {
+          console.error('Bulk select error:', e);
+          setSaveStatus('');
+        }
+      })();
+      
+    } else {
+      // NORMAL: Single cell status update
+      setSaveStatus('saving');
+      if (val === null) { 
+        await supabase.from('statuses').delete().eq('id', key); 
+      } else {
+        const parts = key.split('-');
+        const shift = parts[parts.length-1], staffId = parts[0], date = parts.slice(1,-1).join('-');
+        await supabase.from('statuses').upsert({ id:key, staff_id:staffId, date, shift, status:val });
+        setActiveMenu(null);
+      }
+      setSaveStatus('saved'); 
+      setTimeout(() => setSaveStatus(''), 2000);
     }
-    setSaveStatus('saved'); setTimeout(() => setSaveStatus(''), 2000);
   };
 
   const handleStatusCellMouseDown = (staffId, dateIdx, shift, status, e) => {
     if (!account) return;
-    // If clicking on a filled cell, remember it as the last selected status
-    if (status !== 'none') {
-      setLastSelectedStatus(status);
-    }
-    setDragging({ staffId, dateIdx, shift, status });
+    
+    // PERMISSION CHECK: Only allow current user to edit their own row
+    if (staffId !== meStaff?.id) return;
+    
+    setDragging({ staffId, dateIdx, shift, status, isEmptyCell: status === 'none' });
     setPreview([[staffId, dateIdx, shift]]);
   };
 
@@ -446,6 +492,8 @@ export default function App() {
       return;
     }
 
+    const isEmptyCell = dragging.isEmptyCell;
+
     const week_arr = (() => {
       const d = new Date(viewDate), day = d.getDay();
       const mon = new Date(d.setDate(d.getDate()-day+(day===0?-6:1)));
@@ -455,60 +503,52 @@ export default function App() {
       });
     })();
 
-    // 1. IMMEDIATELY update local records (optimistic update)
-    const updatedRecords = { ...records };
-    preview.forEach(([staffId, dateIdx, shift]) => {
-      const key = `${staffId}-${week_arr[dateIdx]}-${shift}`;
+    if (isEmptyCell) {
+      // BULK SELECT: Dragged from empty cells
+      // Remember these cells and show dropdown to select status
+      const cellKeys = preview.map(([staffId, dateIdx, shift]) => 
+        `${staffId}-${week_arr[dateIdx]}-${shift}`
+      );
+      setBulkSelectCells(cellKeys);
       
-      if (dragging.status !== 'none') {
-        // Dragging from a FILLED cell → UNSELECT (delete operation)
+      // Show dropdown at first cell
+      const firstCell = preview[0];
+      const key = `${firstCell[0]}-${week_arr[firstCell[1]]}-${firstCell[2]}`;
+      setActiveMenu(key);
+      
+      setDragging(null);
+      setPreview([]);
+      
+    } else {
+      // BULK UNSELECT: Dragged from filled cells
+      // Immediately unselect all cells
+      
+      const updatedRecords = { ...records };
+      preview.forEach(([staffId, dateIdx, shift]) => {
+        const key = `${staffId}-${week_arr[dateIdx]}-${shift}`;
         delete updatedRecords[key];
-      } else {
-        // Dragging from an EMPTY cell → FILL with lastSelectedStatus
-        if (lastSelectedStatus) {
-          updatedRecords[key] = lastSelectedStatus;
-        }
-      }
-    });
+      });
 
-    setRecords(updatedRecords);
-    setSaveStatus('saving');
-    setDragging(null);
-    setPreview([]);
-
-    // 2. Fire background requests WITHOUT waiting
-    (async () => {
-      try {
-        await Promise.all(preview.map(([staffId, dateIdx, shift]) => {
-          const key = `${staffId}-${week_arr[dateIdx]}-${shift}`;
-          const parts = key.split('-');
-          const shift_name = parts[parts.length-1];
-          const staffId_name = parts[0];
-          const date_name = parts.slice(1,-1).join('-');
-          
-          if (dragging.status !== 'none') {
-            // Delete the record (unselect)
+      setRecords(updatedRecords);
+      setSaveStatus('saving');
+      setDragging(null);
+      setPreview([]);
+      
+      // Fire background requests WITHOUT waiting
+      (async () => {
+        try {
+          await Promise.all(preview.map(([staffId, dateIdx, shift]) => {
+            const key = `${staffId}-${week_arr[dateIdx]}-${shift}`;
             return supabase.from('statuses').delete().eq('id', key);
-          } else {
-            // Set the status (fill)
-            if (lastSelectedStatus) {
-              return supabase.from('statuses').upsert({ 
-                id:key, 
-                staff_id:staffId_name, 
-                date:date_name, 
-                shift:shift_name, 
-                status:lastSelectedStatus 
-              });
-            }
-          }
-        }));
-        setSaveStatus('saved');
-        setTimeout(() => setSaveStatus(''), 2000);
-      } catch(e) {
-        console.error('Bulk operation error:', e);
-        setSaveStatus('');
-      }
-    })();
+          }));
+          setSaveStatus('saved');
+          setTimeout(() => setSaveStatus(''), 2000);
+        } catch(e) {
+          console.error('Bulk unselect error:', e);
+          setSaveStatus('');
+        }
+      })();
+    }
   };
 
   const isPreviewCell = (staffId, dateIdx, shift) =>
@@ -757,7 +797,7 @@ export default function App() {
                                   onMouseDown={(e) => handleStatusCellMouseDown(m.id, weekIdx, shift, sid, e)}
                                   onMouseOver={() => handleStatusCellMouseOver(m.id, weekIdx, shift)}
                                   onClick={e => {
-                                    if (!isMe) return;
+                                    if (!isMe) return; // PERMISSION CHECK
                                     if (sid !== 'none') handleStatus(key, null, e);
                                     else { e.stopPropagation(); setActiveMenu(open?null:key); }
                                   }}
