@@ -5,7 +5,32 @@ import HOLIDAYS_DATA from './data/holidays.json';
 import RAW_STAFF_LIST from './data/staff.json';
 import STATUS_CONFIG from './data/status.json';
 import { createClient } from '@supabase/supabase-js';
+import { useMsal } from "@azure/msal-react";
+import { InteractionStatus } from "@azure/msal-browser";
+import { loginRequest } from "./authConfig";
 
+function App() {
+  const { instance, inProgress } = useMsal();
+
+  const handleLogin = () => {
+    // ✨ 这里的判断就是为了解决 interaction_in_progress 报错
+    // 只有在没有其他交互进行时，才允许发起登录
+    if (inProgress === InteractionStatus.None) {
+      instance.loginRedirect(loginRequest).catch((e) => {
+        console.error(e);
+      });
+    } else {
+      console.warn("登录正在处理中，请稍候...");
+    }
+  };
+
+  return (
+    <div className="App">
+      {/* 你的其他组件代码 */}
+      <button onClick={handleLogin}>Login with Microsoft</button>
+    </div>
+  );
+}
 const supabase = createClient(
   'https://vzdrpydtxlamoqtukgld.supabase.co',
   'sb_publishable_o1d0wmxwLrJCuTQ84uY38g__dqoj2dD'
