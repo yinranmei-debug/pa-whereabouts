@@ -13,9 +13,9 @@ const supabase = createClient(
 
 const msalInstance = new PublicClientApplication(msalConfig);
 const STAFF_LIST = RAW_STAFF_LIST.filter(p => p.id !== 'arthur');
-
 const SUPER_USERS = ['arthur.cheung@patternasia.com', 'brenda.lee@patternasia.com'];
 const CHINA_EXTRA = ['jessica.rao@patternasia.com'];
+
 const isSuperUser  = em => SUPER_USERS.includes(em.toLowerCase());
 const isChinaExtra = em => CHINA_EXTRA.includes(em.toLowerCase());
 const getStaffEntry = em => RAW_STAFF_LIST.find(s => s.email.toLowerCase() === em.toLowerCase());
@@ -40,6 +40,7 @@ const teamsColor = name => {
   for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
   return TEAMS_COLORS[Math.abs(h) % TEAMS_COLORS.length];
 };
+
 const initials = name => {
   const p = name.trim().split(' ');
   return p.length >= 2 ? (p[0][0] + p[p.length-1][0]).toUpperCase() : name[0].toUpperCase();
@@ -106,7 +107,7 @@ const GlobalStyles = () => (
     .leg-sw{width:20px;height:10px;border-radius:4px}
     .tbl-outer{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 28px 48px;background:#f4f5f7}
     .main-tbl{width:100%;border-collapse:collapse;table-layout:fixed;min-width:860px}
-    .main-tbl thead{position:sticky;top:${NAV_H+SUB_H+TB_H+LG_H}px;z-index:300;background:#f4f5f7}
+    .main-tbl thead{position:sticky;top:${NAV_H+SUB_H+TB_H+LG_H}px;z-index:460;background:#f4f5f7}
     .main-tbl th{padding:14px 4px 10px;text-align:center;font-size:10px;font-weight:600;color:#9ca3af;letter-spacing:0.06em;background:#f4f5f7}
     .main-tbl td{padding:0;height:${ROW_H}px;vertical-align:top}
     .sticky-h{position:sticky;left:0;z-index:300;background:#f4f5f7}
@@ -216,23 +217,25 @@ function AccessDeniedScreen({ email, onLogout }) {
 }
 
 export default function App() {
-  const [isInit,       setIsInit]     = useState(false);
-  const [account,      setAccount]    = useState(null);
-  const [authError,    setAuthError]  = useState(null);
-  const [denied,       setDenied]     = useState(false);
-  const [activeTab,    setActiveTab]  = useState('calendar');
-  const [viewDate,     setViewDate]   = useState(new Date());
-  const [region,       setRegion]     = useState('Hong Kong');
-  const [records,      setRecords]    = useState({});
-  const [activeMenu,   setActiveMenu] = useState(null);
-  const [socialMenu,   setSocialMenu] = useState(null);
-  const [emotions,     setEmotions]   = useState({});
-  const [saveStatus,   setSaveStatus] = useState('');
-  const [pillRects,    setPillRects]  = useState({});
-  const [staffPhotos,  setStaffPhotos]= useState({});
-  const [onlineUsers,  setOnlineUsers]= useState([]);
-  const [dragging,     setDragging]   = useState(null);
-  const [preview,      setPreview]    = useState([]);
+  const [isInit,              setIsInit]              = useState(false);
+  const [account,             setAccount]             = useState(null);
+  const [authError,           setAuthError]           = useState(null);
+  const [denied,              setDenied]              = useState(false);
+  const [activeTab,           setActiveTab]           = useState('calendar');
+  const [viewDate,            setViewDate]            = useState(new Date());
+  const [region,              setRegion]              = useState('Hong Kong');
+  const [records,             setRecords]             = useState({});
+  const [activeMenu,          setActiveMenu]          = useState(null);
+  const [socialMenu,          setSocialMenu]          = useState(null);
+  const [emotions,            setEmotions]            = useState({});
+  const [saveStatus,          setSaveStatus]          = useState('');
+  const [pillRects,           setPillRects]           = useState({});
+  const [staffPhotos,         setStaffPhotos]         = useState({});
+  const [onlineUsers,         setOnlineUsers]         = useState([]);
+  const [dragging,            setDragging]            = useState(null);
+  const [preview,             setPreview]             = useState([]);
+  const [lastSelectedStatus,  setLastSelectedStatus]  = useState(null);
+  
   const presenceRef   = useRef(null);
   const partyTimerRef = useRef(null);
 
@@ -399,6 +402,10 @@ export default function App() {
 
   const handleStatusCellMouseDown = (staffId, dateIdx, shift, status, e) => {
     if (!account) return;
+    // If clicking on a filled cell, remember it as the last selected status
+    if (status !== 'none') {
+      setLastSelectedStatus(status);
+    }
     setDragging({ staffId, dateIdx, shift, status });
     setPreview([[staffId, dateIdx, shift]]);
   };
@@ -410,17 +417,14 @@ export default function App() {
     const endIdx = staffIds.indexOf(staffId);
     const minIdx = Math.min(startIdx, endIdx);
     const maxIdx = Math.max(startIdx, endIdx);
-
     const startDate = dragging.dateIdx;
     const endDate = dateIdx;
     const minDate = Math.min(startDate, endDate);
     const maxDate = Math.max(startDate, endDate);
-
     const startShift = dragging.shift === 'AM' ? 0 : 1;
     const endShift = shift === 'AM' ? 0 : 1;
     const minShift = Math.min(startShift, endShift);
     const maxShift = Math.max(startShift, endShift);
-
     const range = [];
     for (let r = minIdx; r <= maxIdx; r++) {
       for (let d = minDate; d <= maxDate; d++) {
@@ -455,20 +459,24 @@ export default function App() {
     const updatedRecords = { ...records };
     preview.forEach(([staffId, dateIdx, shift]) => {
       const key = `${staffId}-${week_arr[dateIdx]}-${shift}`;
-      if (dragging.status === 'none') {
+      
+      if (dragging.status !== 'none') {
+        // Dragging from a FILLED cell → UNSELECT (delete operation)
         delete updatedRecords[key];
       } else {
-        updatedRecords[key] = dragging.status;
+        // Dragging from an EMPTY cell → FILL with lastSelectedStatus
+        if (lastSelectedStatus) {
+          updatedRecords[key] = lastSelectedStatus;
+        }
       }
     });
-    setRecords(updatedRecords);
 
-    // 2. Clear UI immediately
+    setRecords(updatedRecords);
     setSaveStatus('saving');
     setDragging(null);
     setPreview([]);
 
-    // 3. Fire background requests WITHOUT waiting
+    // 2. Fire background requests WITHOUT waiting
     (async () => {
       try {
         await Promise.all(preview.map(([staffId, dateIdx, shift]) => {
@@ -478,18 +486,20 @@ export default function App() {
           const staffId_name = parts[0];
           const date_name = parts.slice(1,-1).join('-');
           
-          if (dragging.status === 'none') {
-            // Delete the record
+          if (dragging.status !== 'none') {
+            // Delete the record (unselect)
             return supabase.from('statuses').delete().eq('id', key);
           } else {
-            // Set the status
-            return supabase.from('statuses').upsert({ 
-              id:key, 
-              staff_id:staffId_name, 
-              date:date_name, 
-              shift:shift_name, 
-              status:dragging.status 
-            });
+            // Set the status (fill)
+            if (lastSelectedStatus) {
+              return supabase.from('statuses').upsert({ 
+                id:key, 
+                staff_id:staffId_name, 
+                date:date_name, 
+                shift:shift_name, 
+                status:lastSelectedStatus 
+              });
+            }
           }
         }));
         setSaveStatus('saved');
@@ -525,7 +535,6 @@ export default function App() {
 
   const today     = fmt(new Date());
   const staffList = STAFF_LIST.filter(s => s.region === region);
-
   const inOffice = (() => {
     let n = 0;
     staffList.forEach(s => {
@@ -563,7 +572,6 @@ export default function App() {
   return (
     <div style={{minHeight:'100vh', background:'#f4f5f7'}} onMouseUp={handleStatusCellMouseUp}>
       <GlobalStyles />
-
       {activeTab === 'calendar' && week.filter(d => !d.editable).map(d => {
         const isHol = !!d.hol;
         const holName = d.hol ? d.hol.replace(/^\S+\s/, '') : '';
@@ -580,7 +588,6 @@ export default function App() {
           </div>
         );
       })}
-
       <nav className="nav">
         <div className={`nav-tab${activeTab==='calendar'?' active':''}`} onClick={() => setActiveTab('calendar')}>Calendar</div>
         <div className={`nav-tab${activeTab==='planner'?' active':''}`} style={{position:'relative'}} onClick={() => setActiveTab(activeTab==='planner'?'calendar':'planner')}>
@@ -634,7 +641,6 @@ export default function App() {
           </div>
         </div>
       </nav>
-
       <div className="sub-header">
         <div>
           <div className="page-title">APAC Whereabouts</div>
@@ -648,7 +654,6 @@ export default function App() {
           </div>
         )}
       </div>
-
       <div className="toolbar">
         <button className="tb-btn icon" onClick={() => { const d=new Date(viewDate); d.setDate(d.getDate()-7); setViewDate(d); }}>‹</button>
         <button className="tb-btn today" onClick={() => setViewDate(new Date())}>Today</button>
@@ -658,21 +663,19 @@ export default function App() {
         </select>
         <span className="tb-month">{viewDate.toLocaleString('default',{month:'long',year:'numeric'})}</span>
       </div>
-
       <div className="legend">
         <div className="leg-item"><div className="leg-sw" style={{background:'linear-gradient(135deg,#fdf2f8,#fce7f3)',border:'1.5px solid #f9a8d4'}}></div>Holiday</div>
         <div className="leg-item"><div className="leg-sw" style={{background:'linear-gradient(135deg,#eff6ff,#dbeafe)',border:'1.5px solid #93c5fd'}}></div>Weekend</div>
         <div className="leg-item"><div className="leg-sw" style={{background:'linear-gradient(135deg,#e8f0fe,#ede8fe)'}}></div>My days</div>
         <div className="leg-item"><div className="leg-sw" style={{background:'#fafafa',border:'1.5px solid #f3f4f6'}}></div>Team days</div>
       </div>
-
       <div className="tbl-outer dsz" onMouseLeave={handleStatusCellMouseUp}>
         <table className="main-tbl">
           <colgroup>
             <col style={{width:'200px'}}/>
             {week.map(d => <col key={d.ds}/>)}
           </colgroup>
-          <thead style={{position:'sticky',top:`${NAV_H+SUB_H+TB_H+LG_H}px`,zIndex:300,background:'#f4f5f7'}}>
+          <thead style={{position:'sticky',top:`${NAV_H+SUB_H+TB_H+LG_H}px`,zIndex:460,background:'#f4f5f7'}}>
             <tr>
               <th className="sticky-h" style={{textAlign:'left'}}></th>
               {week.map(d => (
