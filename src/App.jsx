@@ -27,7 +27,7 @@ const TB_H   = 52;
 const LG_H   = 36;
 const AM_REF = 'am-ref-btn';
 
-// 精确计算所有上方元素高度总和: 56 + 72 + 52 + 36 = 216px
+// 导航栏总高度: 56 + 72 + 52 + 36 = 216
 const HEADER_STICKY_TOP = NAV_H + SUB_H + TB_H + LG_H;
 
 const fmt = date => {
@@ -109,11 +109,11 @@ const GlobalStyles = () => (
     .leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#9ca3af}
     .leg-sw{width:20px;height:10px;border-radius:4px}
     .tbl-outer{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 28px 48px;background:#f4f5f7}
-    .main-tbl{width:100%;border-collapse:collapse;table-layout:fixed;min-width:860px}
-    .main-tbl thead{position:sticky;top:${HEADER_STICKY_TOP}px;z-index:460;background:#f4f5f7}
-    .main-tbl th{padding:14px 4px 10px;text-align:center;font-size:10px;font-weight:600;color:#9ca3af;letter-spacing:0.06em;background:#f4f5f7}
+    .main-tbl{width:100%;border-collapse:separate;table-layout:fixed;min-width:860px}
+    .main-tbl thead th{position:sticky;top:${HEADER_STICKY_TOP}px;z-index:460;background:#f4f5f7;box-shadow:inset 0 -1px 0 #ebebeb}
+    .main-tbl th{padding:14px 4px 10px;text-align:center;font-size:10px;font-weight:600;color:#9ca3af;letter-spacing:0.06em}
     .main-tbl td{padding:0;height:${ROW_H}px;vertical-align:top}
-    .sticky-h{position:sticky;left:0;top:${HEADER_STICKY_TOP}px;z-index:461;background:#f4f5f7}
+    .sticky-h{position:sticky;left:0;top:${HEADER_STICKY_TOP}px;z-index:461;background:#f4f5f7;box-shadow:inset -1px -1px 0 #ebebeb}
     .sticky-c{position:sticky;left:0;z-index:100;background:#f4f5f7;overflow:visible}
     .sticky-c::after,.sticky-h::after{content:'';position:absolute;top:0;right:-16px;bottom:0;width:16px;background:linear-gradient(to right,rgba(0,0,0,0.04),transparent);pointer-events:none}
     .nw{height:${ROW_H}px;display:flex;align-items:center;gap:10px;padding:0 8px;border-bottom:1px solid #ebebeb;overflow:visible}
@@ -515,7 +515,7 @@ export default function App() {
     if (pill) { pill.classList.remove('holi-tap'); void pill.offsetWidth; pill.classList.add('holi-tap'); }
     firePartyLocal(type, text);
     popAvatar(meStaff?.id || 'guest');
-    presenceRef.current?.send({ type:'broadcast', event:'party', payload:{ type, text, userId:meStaff?.id||'guest' } });
+    presenceRef.current?.send({ type:'broadcast', event:'party', payload:{ type, text, userId:meStaff?.id||guest } });
   };
 
   const today     = fmt(new Date());
@@ -740,8 +740,8 @@ export default function App() {
                                   onMouseOver={() => handleStatusCellMouseOver(m.id, weekIdx, shift)}
                                   onClick={e => {
                                     if (!isMe) return;
-                                    if (sid !== 'none') handleStatus(key, null, e); // 已经有状态的点按直接取消
-                                    else { e.stopPropagation(); setActiveMenu(open?null:key); } // 空白点按弹出菜单
+                                    if (sid !== 'none') handleStatus(key, null, e);
+                                    else { e.stopPropagation(); setActiveMenu(open?null:key); }
                                   }}
                                 >
                                   {sid !== 'none' ? `${cfg.icon} ${cfg.label}` : shift}
