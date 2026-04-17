@@ -106,6 +106,7 @@ const GlobalStyles = () => (
     .leg-sw{width:20px;height:10px;border-radius:4px}
     .tbl-outer{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 28px 48px;background:#f4f5f7}
     .main-tbl{width:100%;border-collapse:collapse;table-layout:fixed;min-width:860px}
+    .main-tbl thead{position:sticky;top:${NAV_H+SUB_H+TB_H+LG_H}px;z-index:300;background:#f4f5f7}
     .main-tbl th{padding:14px 4px 10px;text-align:center;font-size:10px;font-weight:600;color:#9ca3af;letter-spacing:0.06em;background:#f4f5f7}
     .main-tbl td{padding:0;height:${ROW_H}px;vertical-align:top}
     .sticky-h{position:sticky;left:0;z-index:300;background:#f4f5f7}
@@ -122,11 +123,13 @@ const GlobalStyles = () => (
     .emo-picker{position:absolute;left:54px;top:4px;z-index:10050;background:#fff;border-radius:12px;display:flex;padding:8px;gap:4px;box-shadow:0 8px 24px rgba(0,0,0,0.12);border:1px solid #e5e7eb;animation:dropIn 0.15s ease}
     .dw{height:${ROW_H}px;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:0 4px;border-bottom:1px solid #ebebeb}
     tr:last-child .dw{border-bottom:none}
-    .sh{height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;transition:all 0.15s;user-select:none;border:none}
-    .sh.mine{background:linear-gradient(135deg,#e8f0fe,#ede8fe);color:#374151;cursor:pointer}
+    .sh{height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;transition:all 0.15s;user-select:none;border:none;cursor:pointer}
+    .sh.mine{background:linear-gradient(135deg,#e8f0fe,#ede8fe);color:#374151}
     .sh.mine:hover{background:linear-gradient(135deg,#d2e3fc,#ddd6fe);box-shadow:0 4px 12px rgba(119,11,255,0.08);transform:scale(1.02)}
-    .sh.set{cursor:pointer}
+    .sh.set{cursor:grab}
+    .sh.set:active{cursor:grabbing}
     .sh.set:hover{filter:brightness(0.97);transform:scale(1.01)}
+    .sh.preview{background:#dbeafe !important;border:2px dashed #0284c7 !important;opacity:0.8}
     .sh.other{background:#fafafa;color:#d1d5db;border:1.5px solid #f3f4f6;cursor:default}
     .s-drop{position:absolute;top:42px;left:0;z-index:10001;background:#fff;border-radius:12px;width:200px;padding:6px;max-height:264px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.12);border:1px solid #e5e7eb;animation:dropIn 0.15s ease}
     .s-opt{padding:8px 10px;cursor:pointer;border-radius:8px;font-size:12px;display:flex;align-items:center;gap:10px;transition:background 0.1s}
@@ -228,6 +231,8 @@ export default function App() {
   const [pillRects,    setPillRects]  = useState({});
   const [staffPhotos,  setStaffPhotos]= useState({});
   const [onlineUsers,  setOnlineUsers]= useState([]);
+  const [dragging,     setDragging]   = useState(null);
+  const [preview,      setPreview]    = useState([]);
   const presenceRef   = useRef(null);
   const partyTimerRef = useRef(null);
 
@@ -392,6 +397,83 @@ export default function App() {
     setSaveStatus('saved'); setTimeout(() => setSaveStatus(''), 2000);
   };
 
+  const handleStatusCellMouseDown = (staffId, dateIdx, shift, status, e) => {
+    if (status === 'none' || !account) return;
+    setDragging({ staffId, dateIdx, shift, status });
+    setPreview([[staffId, dateIdx, shift]]);
+  };
+
+  const handleStatusCellMouseOver = (staffId, dateIdx, shift) => {
+    if (!dragging) return;
+    const staffIds = STAFF_LIST.filter(s => s.region === region).map(s => s.id);
+    const startIdx = staffIds.indexOf(dragging.staffId);
+    const endIdx = staffIds.indexOf(staffId);
+    const minIdx = Math.min(startIdx, endIdx);
+    const maxIdx = Math.max(startIdx, endIdx);
+
+    const startDate = dragging.dateIdx;
+    const endDate = dateIdx;
+    const minDate = Math.min(startDate, endDate);
+    const maxDate = Math.max(startDate, endDate);
+
+    const startShift = dragging.shift === 'AM' ? 0 : 1;
+    const endShift = shift === 'AM' ? 0 : 1;
+    const minShift = Math.min(startShift, endShift);
+    const maxShift = Math.max(startShift, endShift);
+
+    const range = [];
+    for (let r = minIdx; r <= maxIdx; r++) {
+      for (let d = minDate; d <= maxDate; d++) {
+        if (minShift === maxShift) {
+          range.push([staffIds[r], d, minShift === 0 ? 'AM' : 'PM']);
+        } else {
+          range.push([staffIds[r], d, 'AM']);
+          range.push([staffIds[r], d, 'PM']);
+        }
+      }
+    }
+    setPreview(range);
+  };
+
+  const handleStatusCellMouseUp = async () => {
+    if (!dragging || preview.length === 0) {
+      setDragging(null);
+      setPreview([]);
+      return;
+    }
+
+    setSaveStatus('saving');
+    const week_arr = (() => {
+      const d = new Date(viewDate), day = d.getDay();
+      const mon = new Date(d.setDate(d.getDate()-day+(day===0?-6:1)));
+      return Array.from({length:7}).map((_,i) => {
+        const t = new Date(mon); t.setDate(mon.getDate()+i);
+        return fmt(t);
+      });
+    })();
+
+    try {
+      await Promise.all(preview.map(([staffId, dateIdx, shift]) => {
+        const key = `${staffId}-${week_arr[dateIdx]}-${shift}`;
+        const parts = key.split('-');
+        const shift_name = parts[parts.length-1];
+        const staffId_name = parts[0];
+        const date_name = parts.slice(1,-1).join('-');
+        return supabase.from('statuses').upsert({ id:key, staff_id:staffId_name, date:date_name, shift:shift_name, status:dragging.status });
+      }));
+    } catch(e) {
+      console.error('Bulk fill error:', e);
+    }
+
+    setDragging(null);
+    setPreview([]);
+    setSaveStatus('saved');
+    setTimeout(() => setSaveStatus(''), 2000);
+  };
+
+  const isPreviewCell = (staffId, dateIdx, shift) =>
+    preview.some(([s, d, sh]) => s === staffId && d === dateIdx && sh === shift);
+
   const firePartyLocal = (type, text='') => {
     const els = type==='weekend' ? ['🍷','🌟','🎵','🍱'] : ['🎉', text.split(' ')[0]||'✨','✨'];
     for (let i=0; i<28; i++) {
@@ -449,10 +531,9 @@ export default function App() {
   const VH = window.innerHeight;
 
   return (
-    <div style={{minHeight:'100vh', background:'#f4f5f7'}}>
+    <div style={{minHeight:'100vh', background:'#f4f5f7'}} onMouseUp={handleStatusCellMouseUp} onMouseLeave={handleStatusCellMouseUp}>
       <GlobalStyles />
 
-      {/* Floating pill labels */}
       {activeTab === 'calendar' && week.filter(d => !d.editable).map(d => {
         const isHol = !!d.hol;
         const holName = d.hol ? d.hol.replace(/^\S+\s/, '') : '';
@@ -470,7 +551,6 @@ export default function App() {
         );
       })}
 
-      {/* Nav */}
       <nav className="nav">
         <div className={`nav-tab${activeTab==='calendar'?' active':''}`} onClick={() => setActiveTab('calendar')}>Calendar</div>
         <div className={`nav-tab${activeTab==='planner'?' active':''}`} style={{position:'relative'}} onClick={() => setActiveTab(activeTab==='planner'?'calendar':'planner')}>
@@ -525,7 +605,6 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Sub-header */}
       <div className="sub-header">
         <div>
           <div className="page-title">APAC Whereabouts</div>
@@ -540,7 +619,6 @@ export default function App() {
         )}
       </div>
 
-      {/* Toolbar */}
       <div className="toolbar">
         <button className="tb-btn icon" onClick={() => { const d=new Date(viewDate); d.setDate(d.getDate()-7); setViewDate(d); }}>‹</button>
         <button className="tb-btn today" onClick={() => setViewDate(new Date())}>Today</button>
@@ -551,7 +629,6 @@ export default function App() {
         <span className="tb-month">{viewDate.toLocaleString('default',{month:'long',year:'numeric'})}</span>
       </div>
 
-      {/* Legend */}
       <div className="legend">
         <div className="leg-item"><div className="leg-sw" style={{background:'linear-gradient(135deg,#fdf2f8,#fce7f3)',border:'1.5px solid #f9a8d4'}}></div>Holiday</div>
         <div className="leg-item"><div className="leg-sw" style={{background:'linear-gradient(135deg,#eff6ff,#dbeafe)',border:'1.5px solid #93c5fd'}}></div>Weekend</div>
@@ -559,14 +636,13 @@ export default function App() {
         <div className="leg-item"><div className="leg-sw" style={{background:'#fafafa',border:'1.5px solid #f3f4f6'}}></div>Team days</div>
       </div>
 
-      {/* Table */}
       <div className="tbl-outer dsz">
         <table className="main-tbl">
           <colgroup>
             <col style={{width:'200px'}}/>
             {week.map(d => <col key={d.ds}/>)}
           </colgroup>
-          <thead style={{position:'sticky',top:0,zIndex:250,background:'#f4f5f7'}}>
+          <thead style={{position:'sticky',top:`${NAV_H+SUB_H+TB_H+LG_H}px`,zIndex:300,background:'#f4f5f7'}}>
             <tr>
               <th className="sticky-h" style={{textAlign:'left'}}></th>
               {week.map(d => (
@@ -617,7 +693,7 @@ export default function App() {
                       </div>
                     </div>
                   </td>
-                  {week.map(d => {
+                  {week.map((d, weekIdx) => {
                     if (!d.editable) {
                       if (!isFirst) return null;
                       const isHol = !!d.hol;
@@ -637,13 +713,16 @@ export default function App() {
                             const sid  = records[key] || 'none';
                             const cfg  = STATUS_CONFIG[sid];
                             const open = activeMenu === key;
+                            const isPreview = isPreviewCell(m.id, weekIdx, shift);
                             const cls  = !isMe ? 'sh other' : sid!=='none' ? 'sh set' : 'sh mine';
                             return (
                               <div key={shift} style={{position:'relative'}}>
                                 <div
                                   id={isFirst && si===0 ? AM_REF : undefined}
-                                  className={cls}
+                                  className={`${cls} ${isPreview ? 'preview' : ''}`}
                                   style={sid!=='none' ? {background:cfg.bg,color:cfg.color,border:`1.5px solid ${cfg.color}30`} : {}}
+                                  onMouseDown={(e) => handleStatusCellMouseDown(m.id, weekIdx, shift, sid, e)}
+                                  onMouseOver={() => handleStatusCellMouseOver(m.id, weekIdx, shift)}
                                   onClick={e => {
                                     if (!isMe) return;
                                     if (sid !== 'none') handleStatus(key, null, e);
