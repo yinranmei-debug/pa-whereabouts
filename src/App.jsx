@@ -68,41 +68,35 @@ function Avatar({ name, photoUrl, size=34, isMe=false }) {
   );
 }
 
-// ── FIX 3: 飞行魔法组件，照参考代码模式重写 ─────────────────────────────────
+// ── 共用飞行层，A/B 效果都走这里 ────────────────────────────────────────────
 function EmojiFlyLayer({ flight, onComplete }) {
-  const [progress,    setProgress]    = useState(0);
-  const [pathPoints,  setPathPoints]  = useState([]);
+  const [progress,   setProgress]   = useState(0);
+  const [pathPoints, setPathPoints] = useState([]);
   const rafRef = useRef(null);
 
   useEffect(() => {
     if (!flight) { setProgress(0); setPathPoints([]); return; }
-    const duration = 900;
-    const startTime = performance.now();
+    const DURATION = 850;
+    const t0 = performance.now();
     const pts = [];
 
     const animate = (now) => {
-      const p = Math.min((now - startTime) / duration, 1);
+      const p = Math.min((now - t0) / DURATION, 1);
       setProgress(p);
-
       const { start, end } = flight;
-      const control = {
-        x: start.x + (end.x - start.x) * 0.2,
-        y: Math.max(start.y, end.y) + 180,
-      };
-
+      const ctrl = { x: start.x + (end.x - start.x) * 0.2, y: Math.max(start.y, end.y) + 160 };
       if (p >= 0.25) {
         const t = (p - 0.25) / 0.75;
         const e = t < 0.5 ? 8*t*t*t*t : 1 - Math.pow(-2*t+2,4)/2;
-        const cx = Math.pow(1-e,2)*start.x + 2*(1-e)*e*control.x + Math.pow(e,2)*end.x;
-        const cy = Math.pow(1-e,2)*start.y + 2*(1-e)*e*control.y + Math.pow(e,2)*end.y;
-        pts.push({ x:cx, y:cy });
+        pts.push({
+          x: Math.pow(1-e,2)*start.x + 2*(1-e)*e*ctrl.x + Math.pow(e,2)*end.x,
+          y: Math.pow(1-e,2)*start.y + 2*(1-e)*e*ctrl.y + Math.pow(e,2)*end.y,
+        });
         setPathPoints([...pts]);
       }
-
       if (p < 1) rafRef.current = requestAnimationFrame(animate);
-      else { rafRef.current = null; setTimeout(onComplete, 50); }
+      else { rafRef.current = null; setTimeout(onComplete, 40); }
     };
-
     rafRef.current = requestAnimationFrame(animate);
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, [flight]);
@@ -110,23 +104,22 @@ function EmojiFlyLayer({ flight, onComplete }) {
   if (!flight) return null;
 
   const { start, end, icon } = flight;
-  const control = {
-    x: start.x + (end.x - start.x) * 0.2,
-    y: Math.max(start.y, end.y) + 180,
-  };
+  const ctrl = { x: start.x + (end.x - start.x) * 0.2, y: Math.max(start.y, end.y) + 160 };
 
   let x, y, scale, rotate, opacity;
   if (progress < 0.25) {
-    const t = progress / 0.25;
-    const ease = 1 - Math.pow(1-t, 3);
+    const t  = progress / 0.25;
+    const ez = 1 - Math.pow(1-t, 3);
     x = start.x; y = start.y;
-    scale = 1 + ease * 1.0; rotate = t * -20; opacity = t;
+    scale = 1 + ez; rotate = t * -18; opacity = ez;
   } else {
-    const t = (progress - 0.25) / 0.75;
-    const e = t < 0.5 ? 8*t*t*t*t : 1 - Math.pow(-2*t+2,4)/2;
-    x = Math.pow(1-e,2)*start.x + 2*(1-e)*e*control.x + Math.pow(e,2)*end.x;
-    y = Math.pow(1-e,2)*start.y + 2*(1-e)*e*control.y + Math.pow(e,2)*end.y;
-    scale = 2 - e; rotate = -20 + e*20; opacity = progress > 0.9 ? 1-(progress-0.9)/0.1 : 1;
+    const t  = (progress - 0.25) / 0.75;
+    const ez = t < 0.5 ? 8*t*t*t*t : 1 - Math.pow(-2*t+2,4)/2;
+    x = Math.pow(1-ez,2)*start.x + 2*(1-ez)*ez*ctrl.x + Math.pow(ez,2)*end.x;
+    y = Math.pow(1-ez,2)*start.y + 2*(1-ez)*ez*ctrl.y + Math.pow(ez,2)*end.y;
+    scale   = 2 - ez * 1.1;
+    rotate  = -18 + ez * 18;
+    opacity = progress > 0.88 ? 1 - (progress - 0.88) / 0.12 : 1;
   }
 
   const dPath = pathPoints.length > 1
@@ -137,29 +130,29 @@ function EmojiFlyLayer({ flight, onComplete }) {
     <>
       <svg style={{position:'fixed',inset:0,width:'100%',height:'100%',pointerEvents:'none',zIndex:10998}}>
         <defs>
-          <linearGradient id="neon-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <linearGradient id="fly-grad" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%"   stopColor="#009bff" stopOpacity="0"/>
-            <stop offset="60%"  stopColor="#009bff" stopOpacity="0.35"/>
-            <stop offset="100%" stopColor="#770bff" stopOpacity="0.85"/>
+            <stop offset="55%"  stopColor="#009bff" stopOpacity="0.32"/>
+            <stop offset="100%" stopColor="#770bff" stopOpacity="0.82"/>
           </linearGradient>
-          <filter id="neon-blur" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="4" result="blur"/>
-            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          <filter id="fly-blur" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
           </filter>
         </defs>
         {dPath && (
-          <path d={dPath} fill="none" stroke="url(#neon-grad)" strokeWidth="8"
-            strokeLinecap="round" filter="url(#neon-blur)"
-            opacity={progress > 0.9 ? 0 : 1}
-            style={{transition:'opacity 0.15s'}}
+          <path d={dPath} fill="none" stroke="url(#fly-grad)" strokeWidth="7"
+            strokeLinecap="round" filter="url(#fly-blur)"
+            opacity={progress > 0.88 ? 0 : 1}
+            style={{transition:'opacity 0.12s'}}
           />
         )}
       </svg>
       <div style={{
         position:'fixed', left:x, top:y,
         transform:`translate(-50%,-50%) scale(${scale}) rotate(${rotate}deg)`,
-        fontSize:'28px', pointerEvents:'none', zIndex:10999, opacity,
-        filter:`drop-shadow(0 0 12px rgba(119,11,255,${progress>0.3?0.55:0}))`,
+        fontSize:'26px', pointerEvents:'none', zIndex:10999, opacity,
+        filter:`drop-shadow(0 0 10px rgba(119,11,255,${progress>0.28?0.5:0}))`,
         willChange:'transform,opacity',
       }}>
         {icon}
@@ -175,69 +168,48 @@ const GlobalStyles = () => (
     html,body{height:100%}
 
     @keyframes holiBounce{
-      0%  {transform:scale(1)}
-      35% {transform:scale(1.08)}
-      65% {transform:scale(0.95)}
-      82% {transform:scale(1.03)}
-      100%{transform:scale(1)}
+      0%  {transform:scale(1)}35%{transform:scale(1.08)}65%{transform:scale(0.95)}82%{transform:scale(1.03)}100%{transform:scale(1)}
     }
-    .holi-tap .pill-card{
-      animation:holiBounce 0.42s cubic-bezier(0.25,0.46,0.45,0.94) both;
-      transform-origin:center center;
-    }
+    .holi-tap .pill-card{animation:holiBounce 0.42s cubic-bezier(0.25,0.46,0.45,0.94) both;transform-origin:center center;}
 
-    /* FIX 4: emoji+label 容器一起弹 */
     @keyframes emojiLabelPop{
-      0%  {transform:scale(1)    rotate(0deg);  }
-      22% {transform:scale(1.45) rotate(-10deg);}
-      48% {transform:scale(0.84) rotate(7deg);  }
-      68% {transform:scale(1.18) rotate(-4deg); }
-      84% {transform:scale(0.97) rotate(1deg);  }
-      100%{transform:scale(1)    rotate(0deg);  }
+      0%{transform:scale(1) rotate(0deg);}22%{transform:scale(1.45) rotate(-10deg);}
+      48%{transform:scale(0.84) rotate(7deg);}68%{transform:scale(1.18) rotate(-4deg);}
+      84%{transform:scale(0.97) rotate(1deg);}100%{transform:scale(1) rotate(0deg);}
     }
     .emoji-label-pop{
       animation:emojiLabelPop 0.65s cubic-bezier(0.34,1.46,0.64,1) both;
       transform-origin:center center;
-      display:flex; flex-direction:column; align-items:center; gap:8px;
+      display:flex;flex-direction:column;align-items:center;gap:8px;
     }
 
-    /* snap-impact: 头像被击中回弹 */
-    @keyframes snapImpact{
-      0%  {transform:scale(1)}
-      30% {transform:scale(1.6) rotate(12deg)}
-      55% {transform:scale(0.85) rotate(-5deg)}
-      75% {transform:scale(1.2) rotate(2deg)}
-      90% {transform:scale(0.97)}
-      100%{transform:scale(1) rotate(0deg)}
+    /* 头像被心情 emoji 击中 */
+    @keyframes avatarSnap{
+      0%{transform:scale(1)}28%{transform:scale(1.55) rotate(10deg)}
+      55%{transform:scale(0.87) rotate(-4deg)}78%{transform:scale(1.16) rotate(2deg)}
+      92%{transform:scale(0.97)}100%{transform:scale(1) rotate(0deg)}
     }
-    .snap-impact{
-      animation:snapImpact 0.55s cubic-bezier(0.34,1.56,0.64,1) both;
+    .avatar-snap{animation:avatarSnap 0.52s cubic-bezier(0.34,1.56,0.64,1) both;}
+
+    /* 格子被工作状态击中 */
+    @keyframes cellSnap{
+      0%{transform:scale(1)}30%{transform:scale(1.12)}60%{transform:scale(0.94)}80%{transform:scale(1.04)}100%{transform:scale(1)}
     }
+    .cell-snap{animation:cellSnap 0.38s cubic-bezier(0.34,1.56,0.64,1) both;}
 
     @keyframes colGlowFade{
-      0%   {opacity:0;  transform:scaleX(0.92);}
-      12%  {opacity:1;  transform:scaleX(1);   }
-      65%  {opacity:0.5;transform:scaleX(1);   }
-      85%  {opacity:0.3;transform:scaleX(1.01);}
-      100% {opacity:0;  transform:scaleX(1);   }
+      0%{opacity:0;transform:scaleX(0.92);}12%{opacity:1;transform:scaleX(1);}
+      65%{opacity:0.5;transform:scaleX(1);}85%{opacity:0.3;transform:scaleX(1.01);}100%{opacity:0;transform:scaleX(1);}
     }
     .col-glow-overlay{
       position:fixed;pointer-events:none;z-index:150;border-radius:10px;
       background:linear-gradient(180deg,rgba(0,229,255,0.055) 0%,rgba(0,155,255,0.07) 30%,rgba(119,11,255,0.07) 70%,rgba(119,11,255,0.04) 100%);
       box-shadow:inset 0 0 8px 2px rgba(0,155,255,0.32),inset 0 0 18px 4px rgba(119,11,255,0.20),inset 0 0 4px 1px rgba(0,229,255,0.28),0 0 10px 2px rgba(0,155,255,0.10),0 0 20px 5px rgba(119,11,255,0.07);
-      animation:colGlowFade 1.8s cubic-bezier(0.22,0.61,0.36,1) both;
-      will-change:opacity,transform;
+      animation:colGlowFade 1.8s cubic-bezier(0.22,0.61,0.36,1) both;will-change:opacity,transform;
     }
 
-    @keyframes slideInFromRight{
-      from{transform:translateX(52px);opacity:0.3;}
-      to  {transform:translateX(0);   opacity:1;  }
-    }
-    @keyframes slideInFromLeft{
-      from{transform:translateX(-52px);opacity:0.3;}
-      to  {transform:translateX(0);    opacity:1;  }
-    }
-    /* FIX 2: slide 只作用于数据列 td */
+    @keyframes slideInFromRight{from{transform:translateX(52px);opacity:0.3;}to{transform:translateX(0);opacity:1;}}
+    @keyframes slideInFromLeft{from{transform:translateX(-52px);opacity:0.3;}to{transform:translateX(0);opacity:1;}}
     .td-slide-right{animation:slideInFromRight 0.28s cubic-bezier(0.25,0.46,0.45,0.94) both;}
     .td-slide-left {animation:slideInFromLeft  0.28s cubic-bezier(0.25,0.46,0.45,0.94) both;}
 
@@ -414,28 +386,28 @@ export default function App() {
   const [bulkSelectCells, setBulkSelectCells] = useState([]);
   const [bouncingDs,      setBouncingDs]      = useState(null);
   const [slideDir,        setSlideDir]        = useState(null);
-  // FIX 1: 用表头 daycol 的 getBoundingClientRect 存 X 坐标 map
   const [colXMap,         setColXMap]         = useState({});
-  // FIX 3: 飞行魔法
+  // 飞行层：{ icon, start, end, type:'mood'|'status', payload }
   const [flight,          setFlight]          = useState(null);
-  const [snapEffect,      setSnapEffect]      = useState(false);
+  // 飞行落地后要执行的回调，存在 ref 里避免闭包问题
+  const flightOnLandRef = useRef(null);
+  // 格子 snap 动画：存 cell key
+  const [snapCellKey,    setSnapCellKey]      = useState(null);
 
-  const slideTimerRef  = useRef(null);
-  const presenceRef    = useRef(null);
-  const partyTimerRef  = useRef(null);
-  const scrollRef      = useRef(null);
-  const headerRef      = useRef(null);
-  const glowFrameRef   = useRef(null);
-  const glowLevelRef   = useRef(0);
-  const glowRafRef     = useRef(null);
-  // FIX 3: ref 绑定到自己的头像 DOM
-  const myAvatarRef    = useRef(null);
+  const slideTimerRef = useRef(null);
+  const presenceRef   = useRef(null);
+  const partyTimerRef = useRef(null);
+  const scrollRef     = useRef(null);
+  const headerRef     = useRef(null);
+  const glowFrameRef  = useRef(null);
+  const glowLevelRef  = useRef(0);
+  const glowRafRef    = useRef(null);
+  const myAvatarRef   = useRef(null);
 
-  // FIX 1: 读表头 daycol 中心 X，表头不参与 slide 动画，永远准确
+  // 读表头 daycol 中心 X
   const measureColX = useCallback(() => {
-    const cols = document.querySelectorAll('[data-hdr-ds]');
     const map = {};
-    cols.forEach(el => {
+    document.querySelectorAll('[data-hdr-ds]').forEach(el => {
       const r = el.getBoundingClientRect();
       map[el.dataset.hdrDs] = r.left + r.width / 2;
     });
@@ -583,24 +555,21 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const adjustPillPadding = () => {
+    const adj = () => {
       const am = document.getElementById(AM_REF);
       if (!am) return;
       const amTop = am.getBoundingClientRect().top;
       document.querySelectorAll('.pill').forEach(pill => {
-        const offset = amTop - pill.getBoundingClientRect().top;
-        pill.style.paddingTop    = Math.max(0, offset) + 'px';
-        pill.style.paddingBottom = Math.max(0, offset) + 'px';
+        const off = amTop - pill.getBoundingClientRect().top;
+        pill.style.paddingTop    = Math.max(0,off)+'px';
+        pill.style.paddingBottom = Math.max(0,off)+'px';
       });
     };
-    requestAnimationFrame(() => requestAnimationFrame(adjustPillPadding));
-    window.addEventListener('resize', adjustPillPadding);
-    window.addEventListener('scroll', adjustPillPadding, true);
-    return () => {
-      window.removeEventListener('resize', adjustPillPadding);
-      window.removeEventListener('scroll', adjustPillPadding, true);
-    };
-  }, [region, viewDate, activeTab]);
+    requestAnimationFrame(()=>requestAnimationFrame(adj));
+    window.addEventListener('resize',adj);
+    window.addEventListener('scroll',adj,true);
+    return ()=>{ window.removeEventListener('resize',adj); window.removeEventListener('scroll',adj,true); };
+  }, [region,viewDate,activeTab]);
 
   useEffect(() => {
     if (!account) return;
@@ -615,7 +584,7 @@ export default function App() {
   if (denied)   return <AccessDeniedScreen email={account?.username||''} onLogout={logout}/>;
   if (!account) return <LoginScreen onLogin={login} isInitializing={!isInit} error={authError}/>;
 
-  const me        = account.username.toLowerCase();
+  const me      = account.username.toLowerCase();
   const superUser = isSuperUser(me);
   const meStaff   = getStaffEntry(me);
 
@@ -630,61 +599,86 @@ export default function App() {
     partyTimerRef.current=setTimeout(()=>{ el.style.transition='transform 0.5s ease'; el.style.transform='scale(1)'; },500);
   };
 
-  // FIX 3: 飞行魔法触发 — 同步读坐标，不经过 async
-  const triggerStatusFly = (clickedEl, statusIcon) => {
+  // ── 效果A：心情 emoji 飞向头像 ───────────────────────────────────────────
+  const triggerMoodFly = (emo, clickedEl) => {
     if (!myAvatarRef.current || !clickedEl) return;
     const srcR = clickedEl.getBoundingClientRect();
     const avR  = myAvatarRef.current.getBoundingClientRect();
+    // 落地回调：upsert emotion + 头像 snap
+    flightOnLandRef.current = async () => {
+      if (meStaff) await supabase.from('emotions').upsert({ staff_id: meStaff.id, emoji: emo });
+      const avEl = myAvatarRef.current;
+      if (avEl) {
+        avEl.classList.remove('avatar-snap');
+        void avEl.offsetWidth;
+        avEl.classList.add('avatar-snap');
+        setTimeout(()=>avEl.classList.remove('avatar-snap'), 550);
+      }
+    };
     setFlight({
-      icon:  statusIcon,
+      icon:  emo,
       start: { x: srcR.left + srcR.width/2,  y: srcR.top + srcR.height/2 },
-      end:   { x: avR.right - 6,             y: avR.bottom - 6 },
+      end:   { x: avR.right - 5,             y: avR.bottom - 5 },
+    });
+    setSocialMenu(null);
+  };
+
+  // ── 效果B：工作状态 icon 飞向对应格子 ────────────────────────────────────
+  const triggerStatusFly = (statusId, clickedEl, cellKey) => {
+    const cfg = STATUS_CONFIG[statusId];
+    if (!cfg || !clickedEl) return;
+    // 终点：格子 DOM，用 data-cell-key 属性找
+    const cellEl = document.querySelector(`[data-cell-key="${cellKey}"]`);
+    if (!cellEl) return;
+    const srcR  = clickedEl.getBoundingClientRect();
+    const cellR = cellEl.getBoundingClientRect();
+    // 落地回调：写 records + cell snap + supabase
+    flightOnLandRef.current = async () => {
+      // 显示新状态
+      const parts = cellKey.split('-');
+      const shift   = parts[parts.length-1];
+      const staffId = parts[0];
+      const date    = parts.slice(1,-1).join('-');
+      setRecords(r => ({ ...r, [cellKey]: statusId }));
+      setActiveMenu(null);
+      setSaveStatus('saving');
+      // cell snap 动画
+      setSnapCellKey(cellKey);
+      setTimeout(()=>setSnapCellKey(null), 400);
+      // supabase
+      await supabase.from('statuses').upsert({ id:cellKey, staff_id:staffId, date, shift, status:statusId });
+      setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
+    };
+    setFlight({
+      icon:  cfg.icon,
+      start: { x: srcR.left  + srcR.width/2,  y: srcR.top  + srcR.height/2 },
+      end:   { x: cellR.left + cellR.width/2,  y: cellR.top + cellR.height/2 },
     });
   };
 
+  // 飞行落地统一入口
   const handleFlightComplete = () => {
     setFlight(null);
-    // snap-impact on avatar
-    const avEl = myAvatarRef.current;
-    if (avEl) {
-      avEl.classList.remove('snap-impact');
-      void avEl.offsetWidth;
-      avEl.classList.add('snap-impact');
-      setTimeout(() => avEl.classList.remove('snap-impact'), 560);
+    if (flightOnLandRef.current) {
+      flightOnLandRef.current();
+      flightOnLandRef.current = null;
     }
   };
 
-  const handleStatus = async (key, val, e) => {
+  // 普通状态操作（清除时不飞行）
+  const handleStatusClear = async (key, e) => {
     e.stopPropagation();
-    // FIX 3: 立即同步读坐标，触发飞行
-    if (val !== null && meStaff) {
-      const cfg = STATUS_CONFIG[val];
-      if (cfg) triggerStatusFly(e.currentTarget, cfg.icon);
-    }
-    if (bulkSelectCells.length>0) {
+    if (bulkSelectCells.length > 0) {
       setSaveStatus('saving');
-      const updatedRecords={...records};
-      bulkSelectCells.forEach(cellKey=>{updatedRecords[cellKey]=val;});
-      setRecords(updatedRecords); setActiveMenu(null); setBulkSelectCells([]);
-      (async()=>{
-        try {
-          await Promise.all(bulkSelectCells.map(cellKey=>{
-            const parts=cellKey.split('-');
-            const shift_name=parts[parts.length-1],staffId_name=parts[0],date_name=parts.slice(1,-1).join('-');
-            return supabase.from('statuses').upsert({id:cellKey,staff_id:staffId_name,date:date_name,shift:shift_name,status:val});
-          }));
-          setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
-        } catch(e){setSaveStatus('');}
-      })();
+      const upd = { ...records };
+      bulkSelectCells.forEach(ck => { delete upd[ck]; });
+      setRecords(upd); setActiveMenu(null); setBulkSelectCells([]);
+      await Promise.all(bulkSelectCells.map(ck => supabase.from('statuses').delete().eq('id',ck)));
+      setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
     } else {
       setSaveStatus('saving');
-      if (val===null) { await supabase.from('statuses').delete().eq('id',key); }
-      else {
-        const parts=key.split('-');
-        const shift=parts[parts.length-1],staffId=parts[0],date=parts.slice(1,-1).join('-');
-        await supabase.from('statuses').upsert({id:key,staff_id:staffId,date,shift,status:val});
-        setActiveMenu(null);
-      }
+      setRecords(r => { const n={...r}; delete n[key]; return n; });
+      await supabase.from('statuses').delete().eq('id',key);
       setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
     }
   };
@@ -721,14 +715,12 @@ export default function App() {
         const firstCell=preview[0];
         setActiveMenu(`${firstCell[0]}-${week_arr[firstCell[1]]}-${firstCell[2]}`);
       } else {
-        const updatedRecords={...records};
-        preview.forEach(([staffId,dateIdx,shift])=>{delete updatedRecords[`${staffId}-${week_arr[dateIdx]}-${shift}`];});
-        setRecords(updatedRecords); setSaveStatus('saving'); setActiveMenu(null);
+        const upd={...records};
+        preview.forEach(([staffId,dateIdx,shift])=>{ delete upd[`${staffId}-${week_arr[dateIdx]}-${shift}`]; });
+        setRecords(upd); setSaveStatus('saving'); setActiveMenu(null);
         (async()=>{
-          try {
-            await Promise.all(preview.map(([staffId,dateIdx,shift])=>supabase.from('statuses').delete().eq('id',`${staffId}-${week_arr[dateIdx]}-${shift}`)));
-            setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
-          } catch(e){setSaveStatus('');}
+          await Promise.all(preview.map(([staffId,dateIdx,shift])=>supabase.from('statuses').delete().eq('id',`${staffId}-${week_arr[dateIdx]}-${shift}`)));
+          setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
         })();
       }
     }
@@ -756,12 +748,12 @@ export default function App() {
     if (td) {
       document.querySelectorAll('.col-glow-overlay').forEach(el=>el.remove());
       const r=td.getBoundingClientRect();
-      const overlay=document.createElement('div');
-      overlay.className='col-glow-overlay';
-      overlay.style.left=`${r.left}px`; overlay.style.top=`${r.top}px`;
-      overlay.style.width=`${r.width}px`; overlay.style.height=`${r.height}px`;
-      document.body.appendChild(overlay);
-      setTimeout(()=>overlay.remove(),2000);
+      const ov=document.createElement('div');
+      ov.className='col-glow-overlay';
+      ov.style.left=`${r.left}px`; ov.style.top=`${r.top}px`;
+      ov.style.width=`${r.width}px`; ov.style.height=`${r.height}px`;
+      document.body.appendChild(ov);
+      setTimeout(()=>ov.remove(),2000);
     }
     firePartyLocal(type,text);
     popAvatar(meStaff?.id||'guest');
@@ -780,9 +772,7 @@ export default function App() {
   const inOffice=(()=>{
     let n=0;
     staffList.forEach(s=>{
-      const amFilled=!!records[`${s.id}-${today}-AM`];
-      const pmFilled=!!records[`${s.id}-${today}-PM`];
-      if (!(amFilled&&pmFilled)) n++;
+      if (!(!!records[`${s.id}-${today}-AM`] && !!records[`${s.id}-${today}-PM`])) n++;
     });
     return {n,total:staffList.length};
   })();
@@ -811,42 +801,32 @@ export default function App() {
 
   const jumpToDate=ds=>{setViewDate(new Date(ds));setActiveTab('calendar');};
   const VH=window.innerHeight;
-
-  // FIX 2: slide class 只用在 td 级别，不用在 table 级别
-  const tdSlideClass = slideDir==='right' ? 'td-slide-right' : slideDir==='left' ? 'td-slide-left' : '';
-
-  // 非工作日列
-  const nonEditableCols = week.reduce((acc,d,i)=>{ if (!d.editable) acc.push({...d,colIndex:i}); return acc; },[]);
+  const tdSlideClass=slideDir==='right'?'td-slide-right':slideDir==='left'?'td-slide-left':'';
+  const nonEditableCols=week.reduce((acc,d,i)=>{ if (!d.editable) acc.push({...d,colIndex:i}); return acc; },[]);
 
   return (
     <div style={{minHeight:'100vh',background:'#f4f5f7'}} onMouseUp={handleStatusCellMouseUp}>
       <GlobalStyles/>
       <div ref={glowFrameRef} className="glow-frame"/>
 
-      {/* FIX 3: 飞行魔法层 */}
+      {/* 共用飞行层 */}
       {flight && (
         <EmojiFlyLayer
-          key={`${flight.start.x}-${flight.start.y}`}
+          key={`${flight.start.x}-${flight.start.y}-${Date.now()}`}
           flight={flight}
           onComplete={handleFlightComplete}
         />
       )}
 
-      {/* FIX 1+4: emoji 浮层，X 从表头 daycol 读，emoji+label 一起缩放 */}
+      {/* 非工作日 emoji + label 浮层 */}
       {activeTab==='calendar' && nonEditableCols.map(d=>{
         const x = colXMap[d.ds];
         if (!x) return null;
         const isHol=!!d.hol;
         const holName=d.hol?d.hol.replace(/^\S+\s/,''):'';
-        const y = VH / 2;
-        const isBouncing = bouncingDs===d.ds;
+        const isBouncing=bouncingDs===d.ds;
         return (
-          <div key={d.ds} style={{
-            position:'fixed', left:x, top:y,
-            transform:'translate(-50%,-50%)',
-            pointerEvents:'none', zIndex:200,
-          }}>
-            {/* FIX 4: emoji + label 包在同一容器，一起做弹跳动画 */}
+          <div key={d.ds} style={{position:'fixed',left:x,top:VH/2,transform:'translate(-50%,-50%)',pointerEvents:'none',zIndex:200}}>
             <div
               key={isBouncing?`${d.ds}-b`:d.ds}
               className={isBouncing?'emoji-label-pop':''}
@@ -855,13 +835,7 @@ export default function App() {
               <span style={{fontSize:'48px',userSelect:'none',display:'inline-block',lineHeight:1}}>
                 {isHol?d.hol.split(' ')[0]:'🏝️'}
               </span>
-              <span style={{
-                fontSize:'10px',fontWeight:'700',
-                color:isHol?'#be185d':'#1d4ed8',
-                letterSpacing:'0.06em',textAlign:'center',
-                userSelect:'none',wordBreak:'break-word',
-                fontFamily:"'Plus Jakarta Sans',sans-serif",
-              }}>
+              <span style={{fontSize:'10px',fontWeight:'700',color:isHol?'#be185d':'#1d4ed8',letterSpacing:'0.06em',textAlign:'center',userSelect:'none',fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
                 {isHol?holName:'WEEKEND'}
               </span>
             </div>
@@ -954,12 +928,10 @@ export default function App() {
       </div>
 
       <div className="tbl-outer dsz">
-        {/* 表头独立，不参与 slide */}
         <div className="tbl-hdr-sticky">
           <div ref={headerRef} className="tbl-hdr-row">
             <div className="tbl-hdr-namecol"/>
             {week.map(d=>(
-              // FIX 1: data-hdr-ds 用于 measureColX 读取中心 X
               <div key={d.ds} data-hdr-ds={d.ds} className="tbl-hdr-daycol">
                 <div style={{fontSize:'10px',fontWeight:'600',letterSpacing:'0.06em',marginBottom:'5px',color:d.isToday?'#770bff':'#9ca3af'}}>
                   {d.dayName.toUpperCase()}
@@ -973,7 +945,6 @@ export default function App() {
         </div>
 
         <div ref={scrollRef} className="tbl-scroll dsz" onScroll={handleTableScroll} onMouseLeave={handleStatusCellMouseUp}>
-          {/* FIX 2: table 本身不加 slideClass，只在 td 上加 */}
           <table className="main-tbl">
             <colgroup>
               <col style={{width:'200px'}}/>
@@ -985,18 +956,13 @@ export default function App() {
                 const isFirst=rowIdx===0;
                 return (
                   <tr key={m.id} id={isMe?'my-row':undefined}>
-                    {/* 名字列：不加 tdSlideClass，保持静止 */}
+                    {/* 名字列：不加 tdSlideClass */}
                     <td className="sticky-c" style={{background:'#f4f5f7',padding:'0 8px 0 0'}}>
                       <div className="nw">
                         <div style={{display:'flex',alignItems:'center',gap:'10px',position:'relative',cursor:isMe?'pointer':'default'}}
-                          onClick={async()=>{
-                            if (!isMe) return;
-                            if (emotions[m.id]) { await supabase.from('emotions').delete().eq('staff_id',m.id); }
-                            else { setSocialMenu(socialMenu===m.id?null:m.id); }
-                          }}>
-                          {/* FIX 3: ref 绑定到自己的头像外层 div */}
+                          onClick={()=>{ if (!isMe) return; setSocialMenu(socialMenu===m.id?null:m.id); }}>
                           <div
-                            ref={isMe ? myAvatarRef : null}
+                            ref={isMe?myAvatarRef:null}
                             id={`av-${m.id}`}
                             className={`n-av-wrap${isMe?' is-me':''}`}
                             style={{position:'relative'}}
@@ -1008,14 +974,15 @@ export default function App() {
                             <div className={`n-name${isMe?' me':''}`}>{m.name}</div>
                             {isMe&&<div className="n-you">YOU</div>}
                           </div>
+                          {/* 效果A：心情 picker */}
                           {isMe&&socialMenu===m.id&&(
                             <div className="emo-picker dsz">
                               {['🧘','⚡','☕','🎯','🚀','💪','🌱'].map(emo=>(
                                 <div key={emo}
-                                  onClick={async e=>{e.stopPropagation();await supabase.from('emotions').upsert({staff_id:m.id,emoji:emo});setSocialMenu(null);}}
-                                  style={{fontSize:'18px',cursor:'pointer',padding:'4px 6px',borderRadius:'6px',transition:'background 0.1s'}}
-                                  onMouseOver={e=>e.currentTarget.style.background='#f3f4f6'}
-                                  onMouseOut={e=>e.currentTarget.style.background='transparent'}
+                                  onClick={e=>{ e.stopPropagation(); triggerMoodFly(emo, e.currentTarget); }}
+                                  style={{fontSize:'18px',cursor:'pointer',padding:'4px 6px',borderRadius:'6px',transition:'all 0.15s'}}
+                                  onMouseOver={e=>{e.currentTarget.style.background='#f3f4f6';e.currentTarget.style.transform='scale(1.25)';}}
+                                  onMouseOut={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.transform='scale(1)';}}
                                 >{emo}</div>
                               ))}
                             </div>
@@ -1028,7 +995,6 @@ export default function App() {
                         if (!isFirst) return null;
                         const isHol=!!d.hol;
                         return (
-                          // FIX 2: ptd 加 tdSlideClass
                           <td key={d.ds} className={`ptd ${tdSlideClass}`} rowSpan={staffList.length}>
                             <div data-pill-ds={d.ds} className={`pill ${isHol?'hol':'we'}`} onClick={e=>fireParty(e,isHol?'holiday':'weekend',d.hol||'',d.ds)}>
                               <div className="pill-card"/>
@@ -1037,7 +1003,6 @@ export default function App() {
                         );
                       }
                       return (
-                        // FIX 2: 普通 td 加 tdSlideClass
                         <td key={d.ds} className={tdSlideClass}>
                           <div className="dw">
                             {['AM','PM'].map((shift,si)=>{
@@ -1047,11 +1012,14 @@ export default function App() {
                               const open=activeMenu===key;
                               const isPreview=isPreviewCell(m.id,weekIdx,shift);
                               const cls=!isMe?'sh other':sid!=='none'?'sh set':'sh mine';
+                              const isSnapping=snapCellKey===key;
                               return (
                                 <div key={shift} style={{position:'relative'}}>
+                                  {/* data-cell-key 供效果B定位终点 */}
                                   <div
+                                    data-cell-key={key}
                                     id={isFirst&&si===0?AM_REF:undefined}
-                                    className={`${cls} ${isPreview?'preview':''}`}
+                                    className={`${cls} ${isPreview?'preview':''} ${isSnapping?'cell-snap':''}`}
                                     style={sid!=='none'?{background:cfg.bg,color:cfg.color,border:`1.5px solid ${cfg.color}30`}:{}}
                                     onMouseDown={e=>handleStatusCellMouseDown(m.id,weekIdx,shift,sid,e)}
                                     onMouseOver={()=>handleStatusCellMouseOver(m.id,weekIdx,shift)}
@@ -1059,7 +1027,7 @@ export default function App() {
                                       if (!isMe) return;
                                       e.stopPropagation();
                                       if (preview.length<=1) {
-                                        if (sid!=='none') handleStatus(key,null,e);
+                                        if (sid!=='none') handleStatusClear(key,e);
                                         else setActiveMenu(open?null:key);
                                       }
                                     }}
@@ -1071,7 +1039,11 @@ export default function App() {
                                       <div style={{padding:'3px 10px 7px',fontSize:'10px',color:'#9ca3af',fontWeight:'600',borderBottom:'1px solid #f0f0f0',marginBottom:'3px',letterSpacing:'0.06em'}}>STATUS</div>
                                       {Object.entries(STATUS_CONFIG).map(([sId,sCfg])=>(
                                         <div key={sId} className="s-opt"
-                                          onClick={e=>handleStatus(key,sId,e)}>
+                                          onClick={e=>{
+                                            e.stopPropagation();
+                                            // 效果B：同步读坐标，触发飞行
+                                            triggerStatusFly(sId, e.currentTarget, key);
+                                          }}>
                                           <span style={{fontSize:'15px'}}>{sCfg.icon}</span>
                                           <span className="s-opt-lbl">{sCfg.label}</span>
                                         </div>
