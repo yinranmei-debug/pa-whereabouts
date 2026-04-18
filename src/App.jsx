@@ -26,15 +26,12 @@ const isSuperUser  = em => SUPER_USERS.includes(em.toLowerCase());
 const isChinaExtra = em => CHINA_EXTRA.includes(em.toLowerCase());
 const getStaffEntry = em => RAW_STAFF_LIST.find(s => s.email.toLowerCase() === em.toLowerCase());
 
-const ROW_H      = 110;
-const NAV_H      = 64;
-const SUB_H      = 52;
-const TB_H       = 56;
-const LG_H       = 40;
-const AM_REF     = 'am-ref-btn';
-const NAME_COL_W = 220;
-const TBL_PAD    = 24;
-const HEADER_STICKY_TOP = NAV_H + SUB_H + TB_H + LG_H;
+const ROW_H  = 110;
+const NAV_H  = 72;
+const TB_H   = 56;
+const LG_H   = 40;
+const AM_REF = 'am-ref-btn';
+const HEADER_STICKY_TOP = NAV_H + TB_H + LG_H;
 
 const fmt = date => {
   const y = date.getFullYear();
@@ -50,7 +47,7 @@ export default function App() {
   const [denied,          setDenied]          = useState(false);
   const [activeTab,       setActiveTab]       = useState('calendar');
   const [viewDate,        setViewDate]        = useState(new Date());
-  const [region,          setRegion]          = useState('Hong Kong');
+  const [region]                              = useState('Hong Kong');
   const [records,         setRecords]         = useState({});
   const [activeMenu,      setActiveMenu]      = useState(null);
   const [socialMenu,      setSocialMenu]      = useState(null);
@@ -158,14 +155,6 @@ export default function App() {
 
   useEffect(() => {
     if (!account) return;
-    const em = account.username.toLowerCase();
-    if (isSuperUser(em)) setRegion('Hong Kong');
-    else if (isChinaExtra(em)) setRegion('China');
-    else { const s = getStaffEntry(em); if (s) setRegion(s.region); }
-  }, [account]);
-
-  useEffect(() => {
-    if (!account) return;
     (async () => {
       let token;
       try { const r = await msalInstance.acquireTokenSilent({scopes:['User.ReadBasic.All'],account}); token=r.accessToken; }
@@ -224,7 +213,12 @@ export default function App() {
   }, [account]);
 
   useEffect(() => {
-    const fn = e => { if (!e.target.closest('.dsz')&&!e.target.closest('.nav-tab')) { setActiveMenu(null);setSocialMenu(null);setActiveTab(t=>t==='planner'?'calendar':t); } };
+    const fn = e => {
+      if (!e.target.closest('.dsz')&&!e.target.closest('.nav-tab')&&!e.target.closest('.hol-planner-btn')) {
+        setActiveMenu(null); setSocialMenu(null);
+        setActiveTab(t=>t==='planner'?'calendar':t);
+      }
+    };
     document.addEventListener('mousedown',fn);
     return ()=>document.removeEventListener('mousedown',fn);
   }, []);
@@ -259,9 +253,8 @@ export default function App() {
   if (denied)   return <AccessDeniedScreen email={account?.username||''} onLogout={logout}/>;
   if (!account) return <LoginScreen onLogin={login} isInitializing={!isInit} error={authError}/>;
 
-  const me        = account.username.toLowerCase();
-  const superUser = isSuperUser(me);
-  const meStaff   = getStaffEntry(me);
+  const me      = account.username.toLowerCase();
+  const meStaff = getStaffEntry(me);
 
   const popAvatar = userId => {
     const el=document.getElementById(`av-${userId}`);
@@ -282,8 +275,7 @@ export default function App() {
       if (meStaff) await supabase.from('emotions').upsert({ staff_id: meStaff.id, emoji: emo });
       const avEl = myAvatarRef.current;
       if (avEl) {
-        avEl.classList.remove('avatar-snap');
-        void avEl.offsetWidth;
+        avEl.classList.remove('avatar-snap'); void avEl.offsetWidth;
         avEl.classList.add('avatar-snap');
         setTimeout(()=>avEl.classList.remove('avatar-snap'), 550);
       }
@@ -342,19 +334,12 @@ export default function App() {
       keysToFill.forEach((k, i) => { staggerMap[k] = i * 45; });
       setStaggerCells(staggerMap);
       setTimeout(() => setStaggerCells({}), keysToFill.length * 45 + 350);
-      setRecords(r => {
-        const upd = { ...r };
-        keysToFill.forEach(ck => { upd[ck] = statusId; });
-        return upd;
-      });
-      setActiveMenu(null);
-      setBulkSelectCells([]);
+      setRecords(r => { const upd={...r}; keysToFill.forEach(ck=>{upd[ck]=statusId;}); return upd; });
+      setActiveMenu(null); setBulkSelectCells([]);
       setSaveStatus('saving');
       await Promise.all(keysToFill.map(ck => {
-        const parts   = ck.split('-');
-        const shift   = parts[parts.length-1];
-        const staffId = parts[0];
-        const date    = parts.slice(1,-1).join('-');
+        const parts=ck.split('-');
+        const shift=parts[parts.length-1],staffId=parts[0],date=parts.slice(1,-1).join('-');
         return supabase.from('statuses').upsert({id:ck,staff_id:staffId,date,shift,status:statusId});
       }));
       setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
@@ -452,8 +437,8 @@ export default function App() {
       headerRef.current.scrollLeft=scrollRef.current.scrollLeft;
   };
 
-  const today=fmt(new Date());
-  const staffList=STAFF_LIST.filter(s=>s.region===region);
+  const today    = fmt(new Date());
+  const staffList = STAFF_LIST.filter(s=>s.region===region);
 
   const inOffice=(()=>{
     let n=0;
@@ -488,6 +473,7 @@ export default function App() {
   const jumpToDate=ds=>{setViewDate(new Date(ds));setActiveTab('calendar');};
   const VH=window.innerHeight;
   const tdSlideClass=slideDir==='right'?'td-slide-right':slideDir==='left'?'td-slide-left':'';
+  // fix bug 5: always show overlay regardless of activeTab
   const nonEditableCols=week.reduce((acc,d,i)=>{ if (!d.editable) acc.push({...d,colIndex:i}); return acc; },[]);
 
   return (
@@ -503,8 +489,8 @@ export default function App() {
         />
       )}
 
-      {/* weekend/holiday emoji overlay */}
-      {activeTab==='calendar' && nonEditableCols.map(d=>{
+      {/* fix bug 5: removed activeTab==='calendar' condition so overlay always shows */}
+      {nonEditableCols.map(d=>{
         const x = colXMap[d.ds];
         if (!x) return null;
         const isHol=!!d.hol;
@@ -530,36 +516,48 @@ export default function App() {
 
       {/* ── NAV ── */}
       <nav className="nav">
-        {/* logo */}
-        <div className="nav-logo">
-          <div className="nav-logo-icon">📅</div>
-          <span className="nav-logo-text">Whereabouts</span>
+        <span className="nav-logo-text">Whereabouts</span>
+
+        <div className={`nav-tab${activeTab==='calendar'?' active':''}`} onClick={()=>setActiveTab('calendar')}>
+          Calendar
         </div>
 
-        <div className={`nav-tab${activeTab==='calendar'?' active':''}`} onClick={()=>setActiveTab('calendar')}>Calendar</div>
-
-        {/* holiday planner as pill button */}
-        <div style={{position:'relative',marginLeft:'4px'}}>
-          <button
-            className={`hol-planner-btn${activeTab==='planner'?' active':''} nav-tab`}
+        {/* holiday planner — same style as Calendar tab */}
+        <div style={{position:'relative'}}>
+          <div
+            className={`nav-tab${activeTab==='planner'?' active':''}`}
             onClick={()=>setActiveTab(activeTab==='planner'?'calendar':'planner')}
           >
-            ℹ️ Holiday Planner
-          </button>
+            Holiday Planner
+          </div>
           {activeTab==='planner'&&(
-            <div style={{position:'absolute',top:'calc(100% + 8px)',left:0,zIndex:10020,background:'#fff',borderRadius:16,width:310,padding:18,boxShadow:'0 16px 48px rgba(0,0,0,0.12)',border:'1px solid rgba(226,232,240,0.8)',animation:'dropIn 0.15s ease'}}
-              onClick={e=>e.stopPropagation()}>
-              <div style={{fontSize:'10px',fontWeight:'700',color:'#9ca3af',letterSpacing:'0.1em',marginBottom:'12px'}}>{region.toUpperCase()} HOLIDAYS 2026</div>
-              <div style={{maxHeight:'340px',overflowY:'auto'}}>
+            <div
+              className="dsz"
+              style={{position:'absolute',top:'calc(100% + 4px)',left:0,zIndex:10020,background:'#fff',borderRadius:16,width:320,padding:16,boxShadow:'0 16px 48px rgba(0,0,0,0.12)',border:'1px solid rgba(226,232,240,0.8)',animation:'dropIn 0.18s ease'}}
+              onClick={e=>e.stopPropagation()}
+            >
+              <div style={{fontSize:'10px',fontWeight:'700',color:'#9ca3af',letterSpacing:'0.1em',marginBottom:'10px',padding:'0 4px'}}>
+                {region.toUpperCase()} PUBLIC HOLIDAYS 2026
+              </div>
+              <div style={{maxHeight:'360px',overflowY:'auto',display:'flex',flexDirection:'column',gap:'2px'}}>
                 {plannerList().map(h=>(
-                  <div key={h.date} className="plan-row"
-                    style={{background:h.isWE?'#f0f9ff':'#f9fafb',borderLeft:`3px solid ${h.isWE?'#009bff':'#e5e7eb'}`}}
-                    onClick={()=>jumpToDate(h.date)}>
+                  <div
+                    key={h.date}
+                    className="plan-row"
+                    onClick={()=>jumpToDate(h.date)}
+                  >
                     <div>
-                      <div className="plan-date" style={{color:h.isWE?'#009bff':'#374151'}}>{h.date}</div>
-                      <div style={{fontSize:'10px',color:'#9ca3af',marginTop:'1px'}}>{h.day}</div>
+                      <div className="plan-date">{h.date}</div>
+                      <div className="plan-name">{h.day}</div>
                     </div>
-                    <div style={{fontWeight:'400',fontSize:'12px',color:'#374151',textAlign:'right',marginLeft:'12px'}}>{h.name}</div>
+                    <div style={{
+                      padding:'3px 10px',borderRadius:'8px',
+                      background:'linear-gradient(135deg,rgba(0,155,255,0.1),rgba(119,11,255,0.1))',
+                      fontSize:'11px',fontWeight:'600',
+                      color:'#5b21b6',
+                    }}>
+                      {h.name}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -572,20 +570,17 @@ export default function App() {
           {saveStatus==='saving'&&<span className="save-txt">↻ Saving</span>}
           {saveStatus==='saved' &&<span className="save-ok">✓ Saved</span>}
 
-          {/* online users */}
           {onlineUsers.length>0&&(
             <div className="online-pill">
               <div className="online-stack">
                 {onlineUsers.slice(0,4).map((u,i)=>(
                   <div key={u.email} title={u.name} className="online-av" style={{zIndex:10-i}}>
-                    <Avatar name={u.name} photoUrl={staffPhotos[u.id]} size={22}/>
+                    <Avatar name={u.name} photoUrl={staffPhotos[u.id]} size={24}/>
                   </div>
                 ))}
-                {onlineUsers.length>4&&(
-                  <div className="online-count">+{onlineUsers.length-4}</div>
-                )}
+                {onlineUsers.length>4&&<div className="online-count">+{onlineUsers.length-4}</div>}
               </div>
-              <div className="online-live">
+              <div style={{display:'flex',flexDirection:'column',gap:'1px'}}>
                 <div className="online-live-label">
                   <div className="online-live-dot"/>
                   LIVE NOW
@@ -597,33 +592,21 @@ export default function App() {
 
           <div className="user-chip">
             <span className="user-name">{account.name}</span>
-            <Avatar name={meStaff?.name||account.name} photoUrl={staffPhotos[meStaff?.id]} size={26}/>
+            <Avatar name={meStaff?.name||account.name} photoUrl={staffPhotos[meStaff?.id]} size={28}/>
             <button className="signout-btn" onClick={logout}>Sign out</button>
           </div>
         </div>
       </nav>
 
-      {/* ── SUB HEADER ── */}
-      <div className="sub-header">
-        <div className="page-title">Whereabouts</div>
-        {superUser&&(
-          <div className="region-toggle">
-            {['Hong Kong','China'].map(r=>(
-              <button key={r} className={`region-btn ${region===r?'on':'off'}`} onClick={()=>setRegion(r)}>{r}</button>
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* ── TOOLBAR ── */}
       <div className="toolbar">
-        {/* nav group */}
-        <div style={{display:'flex',alignItems:'center',background:'#f9fafb',borderRadius:'12px',border:'1.5px solid #e5e7eb',overflow:'hidden'}}>
-          <button className="tb-btn icon" style={{border:'none',borderRadius:0,background:'transparent'}} onClick={()=>navigateWeek(-7)}>‹</button>
-          <div style={{width:'1px',height:'20px',background:'#e5e7eb'}}/>
+        {/* today/nav group with elevation */}
+        <div className="nav-group">
+          <button className="nav-group-arrow" onClick={()=>navigateWeek(-7)}>‹</button>
+          <div className="nav-group-div"/>
           <button
             className="tb-btn today"
-            style={{borderRadius:0,border:'none',height:'36px'}}
+            style={{borderRadius:0,height:'44px'}}
             onClick={e=>{
               navigateWeek(0,new Date());
               const btn=e.currentTarget;
@@ -635,20 +618,28 @@ export default function App() {
               setTimeout(()=>setTodaySonar(false),2000);
             }}
           >Today</button>
-          <div style={{width:'1px',height:'20px',background:'rgba(255,255,255,0.3)'}}/>
-          <button className="tb-btn icon" style={{border:'none',borderRadius:0,background:'transparent'}} onClick={()=>navigateWeek(7)}>›</button>
+          <div className="nav-group-div" style={{background:'rgba(255,255,255,0.25)'}}/>
+          <button className="nav-group-arrow" onClick={()=>navigateWeek(7)}>›</button>
         </div>
 
-        {/* month display */}
-        <div className="tb-month">
-          <div className="tb-month-icon">📅</div>
-          {viewDate.toLocaleString('default',{month:'long',year:'numeric'})}
-        </div>
+        {/* month display — english */}
+        <span className="tb-month">
+          {viewDate.toLocaleString('en-US',{month:'long',year:'numeric'})}
+        </span>
 
-        <select className="tb-select" value={viewDate.getMonth()} onChange={e=>{
-          const d=new Date(viewDate); d.setMonth(+e.target.value); d.setDate(1); navigateWeek(0,d);
-        }}>
-          {Array.from({length:12}).map((_,i)=><option key={i} value={i}>{new Date(0,i).toLocaleString('default',{month:'long'})}</option>)}
+        {/* month select — english */}
+        <select
+          className="tb-select"
+          value={viewDate.getMonth()}
+          onChange={e=>{
+            const d=new Date(viewDate); d.setMonth(+e.target.value); d.setDate(1); navigateWeek(0,d);
+          }}
+        >
+          {Array.from({length:12}).map((_,i)=>(
+            <option key={i} value={i}>
+              {new Date(2026,i,1).toLocaleString('en-US',{month:'long'})}
+            </option>
+          ))}
         </select>
 
         {/* team summary */}
@@ -719,8 +710,10 @@ export default function App() {
                     <tr key={m.id} id={isMe?'my-row':undefined}>
                       <td className="sticky-c" style={{background:'#fff',padding:'0 8px 0 0'}}>
                         <div className="nw">
-                          <div style={{display:'flex',alignItems:'center',gap:'10px',position:'relative',cursor:isMe?'pointer':'default'}}
-                            onClick={()=>{ if (!isMe) return; setSocialMenu(socialMenu===m.id?null:m.id); }}>
+                          <div
+                            style={{display:'flex',alignItems:'center',gap:'10px',position:'relative',cursor:isMe?'pointer':'default'}}
+                            onClick={()=>{ if (!isMe) return; setSocialMenu(socialMenu===m.id?null:m.id); }}
+                          >
                             <div
                               ref={isMe?myAvatarRef:null}
                               id={`av-${m.id}`}
@@ -781,13 +774,7 @@ export default function App() {
                                     <div
                                       data-cell-key={key}
                                       id={isFirst&&si===0?AM_REF:undefined}
-                                      className={[
-                                        cls,
-                                        isPreview      ? 'preview'       : '',
-                                        isSnapping     ? 'cell-snap'     : '',
-                                        isBulkSelected ? 'bulk-selected' : '',
-                                        staggerDelay!==undefined ? 'cell-stagger' : '',
-                                      ].filter(Boolean).join(' ')}
+                                      className={[cls,isPreview?'preview':'',isSnapping?'cell-snap':'',isBulkSelected?'bulk-selected':'',staggerDelay!==undefined?'cell-stagger':''].filter(Boolean).join(' ')}
                                       style={{
                                         ...(sid!=='none'?{background:cfg.bg,color:cfg.color,border:`1.5px solid ${cfg.color}30`}:{}),
                                         ...(staggerDelay!==undefined?{animationDelay:`${staggerDelay}ms`}:{}),
@@ -803,7 +790,8 @@ export default function App() {
                                         }
                                       }}
                                     >
-                                      {sid!=='none'?`${cfg.icon} ${cfg.label}`:shift}
+                                      {/* item 9: only show emoji + shift, no text label */}
+                                      {sid!=='none' ? `${cfg.icon} ${shift}` : shift}
                                     </div>
                                     {open&&isMe&&(
                                       <div className="s-drop dsz">
@@ -817,8 +805,9 @@ export default function App() {
                                               if (bulkSelectCells.length>0) handleBulkStatusSelect(sId,e);
                                               else handleStatusSelect(key,sId,e);
                                             }}>
-                                            <span style={{fontSize:'15px'}}>{sCfg.icon}</span>
-                                            <span className="s-opt-lbl">{sCfg.label}</span>
+                                            {/* dropdown shows emoji only, large */}
+                                            <span style={{fontSize:'20px'}}>{sCfg.icon}</span>
+                                            <span style={{fontSize:'12px',color:'#374151',fontWeight:'500'}}>{sCfg.label}</span>
                                           </div>
                                         ))}
                                       </div>
