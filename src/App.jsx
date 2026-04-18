@@ -69,11 +69,7 @@ const GlobalStyles = () => (
     *,*:before,*:after{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%}
 
-    /*
-     * FIX 2: holiBounce now targets .pill-card (the inner element), NOT .pill.
-     * .pill keeps its fixed dimensions — scale on .pill-card stays visually
-     * contained inside .pill's box, so adjacent columns never shift.
-     */
+    /* pill-card bounce — only .pill-card scales, .pill container stays fixed */
     @keyframes holiBounce{
       0%  {transform:scale(1)}
       35% {transform:scale(1.08)}
@@ -86,26 +82,57 @@ const GlobalStyles = () => (
       transform-origin:center center;
     }
 
+    /*
+     * COLUMN RIPPLE — 水环辐射
+     * Three pseudo-rings launched from the vertical center of the column.
+     * Each ring is a ::before/::after on injected ripple divs.
+     * We inject 3 absolutely-positioned divs inside .ptd and animate them.
+     */
+    @keyframes colRipple{
+      0%  { transform:translate(-50%,-50%) scale(0);   opacity:0.7; }
+      70% { transform:translate(-50%,-50%) scale(1);   opacity:0.25;}
+      88% { transform:translate(-50%,-50%) scale(0.92);opacity:0.18;}
+      100%{ transform:translate(-50%,-50%) scale(1.04);opacity:0;  }
+    }
+    .col-ripple-ring{
+      position:absolute;
+      left:50%;
+      top:50%;
+      /* size: tall enough to cover the full column height as a circle */
+      width:340px;
+      height:340px;
+      border-radius:50%;
+      pointer-events:none;
+      z-index:150;
+      transform:translate(-50%,-50%) scale(0);
+      background: radial-gradient(circle,
+        rgba(0,229,255,0.55)   0%,
+        rgba(0,155,255,0.45)  28%,
+        rgba(119,11,255,0.30) 55%,
+        rgba(119,11,255,0)    75%
+      );
+      animation: colRipple 1.2s cubic-bezier(0.22,0.61,0.36,1) both;
+    }
+    .col-ripple-ring:nth-child(2){ animation-delay:0.13s; opacity:0.6; }
+    .col-ripple-ring:nth-child(3){ animation-delay:0.26s; opacity:0.45;}
+
     @keyframes dropIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
     @keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
     @keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
     @keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.4)}50%{box-shadow:0 0 0 4px rgba(34,197,94,0)}}
 
     /*
-     * FIX 1: glow frame — GPU-composited layer via transform:translateZ(0) + will-change.
-     * Use OUTER box-shadow (not inset) on a 4-sided border overlay so the browser
-     * can promote this to its own compositing layer and animate opacity/box-shadow
-     * without repainting the main document layer.
-     * The frame sits outside the viewport boundary so the outer shadow bleeds inward.
+     * FRAME GLOW — restored as inset box-shadow, GPU layer via will-change+translateZ
+     * inset:0 so the element exactly covers the viewport, shadow bleeds inward
      */
     .glow-frame{
       position:fixed;
-      inset:-6px;
+      inset:0;
       pointer-events:none;
       z-index:9998;
       opacity:0;
       border-radius:0;
-      box-shadow:0 0 0px 0px rgba(0,155,255,0);
+      box-shadow:inset 0 0 0px 0px rgba(0,155,255,0);
       will-change:opacity,box-shadow;
       transform:translateZ(0);
     }
@@ -176,10 +203,8 @@ const GlobalStyles = () => (
     .s-opt{padding:8px 10px;cursor:pointer;border-radius:8px;font-size:12px;display:flex;align-items:center;gap:10px;transition:background 0.1s}
     .s-opt:hover{background:#f9fafb}
     .s-opt-lbl{font-weight:400;color:#374151}
-    td.ptd{height:1px;padding:0 4px;vertical-align:top}
-    /* pill container: fixed bounds, clips overflow so scale on pill-card stays inside */
+    td.ptd{height:1px;padding:0 4px;vertical-align:top;position:relative;overflow:visible;}
     .pill{height:100%;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:pointer;user-select:none;overflow:hidden;}
-    /* pill-card: this is what actually scales — it's a child, so scale is clipped by .pill's overflow:hidden */
     .pill-card{width:100%;flex:1;border-radius:10px;transition:box-shadow 0.2s,filter 0.2s;transform-origin:center center;will-change:transform;}
     .pill:hover .pill-card{filter:brightness(0.97)}
     .hol .pill-card{background:linear-gradient(180deg,#fdf2f8,#fce7f3);box-shadow:0 2px 8px rgba(236,72,153,0.12),0 1px 3px rgba(236,72,153,0.06)}
@@ -284,7 +309,7 @@ export default function App() {
   const glowLevelRef  = useRef(0);
   const glowRafRef    = useRef(null);
 
-  // ── glow decay loop — fully imperative, zero React re-renders ────────────
+  // ── glow frame decay loop — fully imperative, zero React re-renders ──────
   useEffect(() => {
     const decay = () => {
       glowLevelRef.current = Math.max(0, glowLevelRef.current - 0.016);
@@ -292,18 +317,20 @@ export default function App() {
       if (el) {
         const lvl = glowLevelRef.current;
         if (lvl > 0.001) {
-          // outer box-shadow bleeds inward from the -6px inset frame
-          const b1  = lvl * 80;
-          const b2  = lvl * 160;
-          const b3  = lvl * 50;
-          const op1 = 0.25 + lvl * 0.55;
-          const op2 = 0.15 + lvl * 0.45;
-          const op3 = lvl  * 0.4;
+          const i1  = lvl * 90;
+          const s1  = lvl * 30;
+          const i2  = lvl * 180;
+          const s2  = lvl * 55;
+          const i3  = lvl * 60;
+          const s3  = lvl * 16;
+          const op1 = 0.28 + lvl * 0.52;
+          const op2 = 0.16 + lvl * 0.44;
+          const op3 = lvl  * 0.38;
           el.style.opacity   = String(Math.min(lvl * 1.5, 1));
           el.style.boxShadow = [
-            `0 0 ${b1}px ${lvl*28}px rgba(0,155,255,${op1})`,
-            `0 0 ${b2}px ${lvl*50}px rgba(119,11,255,${op2})`,
-            `0 0 ${b3}px ${lvl*14}px rgba(0,229,255,${op3})`,
+            `inset 0 0 ${i1}px ${s1}px rgba(0,155,255,${op1})`,
+            `inset 0 0 ${i2}px ${s2}px rgba(119,11,255,${op2})`,
+            `inset 0 0 ${i3}px ${s3}px rgba(0,229,255,${op3})`,
           ].join(',');
         } else {
           el.style.opacity   = '0';
@@ -571,18 +598,43 @@ export default function App() {
     }
   };
 
+  // ── fireParty: pill bounce + column ripple rings + frame glow boost ───────
   const fireParty = (e, type, text='') => {
     const pill = e.currentTarget.closest('.pill');
+
+    // 1. pill-card bounce (unchanged)
     if (pill) {
-      // remove then re-add to restart animation on rapid clicks
       pill.classList.remove('holi-tap');
       void pill.offsetWidth;
       pill.classList.add('holi-tap');
     }
+
+    // 2. column ripple — inject 3 ring divs into the .ptd td, auto-remove after anim
+    const td = e.currentTarget.closest('td.ptd');
+    if (td) {
+      // remove any leftover rings from a previous rapid click
+      td.querySelectorAll('.col-ripple-ring').forEach(r => r.remove());
+      for (let i = 0; i < 3; i++) {
+        const ring = document.createElement('div');
+        ring.className = 'col-ripple-ring';
+        td.appendChild(ring);
+      }
+      // clean up after animation completes (longest = 0.26s delay + 1.2s = 1.46s)
+      setTimeout(() => {
+        td.querySelectorAll('.col-ripple-ring').forEach(r => r.remove());
+      }, 1600);
+    }
+
+    // 3. emoji rain
     firePartyLocal(type, text);
+
+    // 4. avatar pop
     popAvatar(meStaff?.id || 'guest');
-    // boost glow — stacks with rapid clicks, capped at 1
+
+    // 5. frame glow boost — stacks on rapid clicks
     glowLevelRef.current = Math.min(glowLevelRef.current + 0.65, 1);
+
+    // 6. broadcast to other online users
     presenceRef.current?.send({ type:'broadcast', event:'party', payload:{ type, text, userId:meStaff?.id||'guest' } });
   };
 
@@ -632,7 +684,7 @@ export default function App() {
     <div style={{minHeight:'100vh', background:'#f4f5f7'}} onMouseUp={handleStatusCellMouseUp}>
       <GlobalStyles />
 
-      {/* glow frame — outside viewport bounds, outer shadow bleeds inward as edge glow */}
+      {/* frame glow — inset:0, GPU layer, driven by glowLevelRef RAF loop */}
       <div ref={glowFrameRef} className="glow-frame" />
 
       {activeTab === 'calendar' && week.filter(d => !d.editable).map(d => {
