@@ -13,7 +13,6 @@ import LoginScreen        from './components/LoginScreen';
 import AccessDeniedScreen from './components/AccessDeniedScreen';
 import EmojiFlyLayer      from './components/EmojiFlyLayer';
 import TourOverlay        from './components/TourOverlay';
-import MobileView         from './components/MobileView';
 
 const supabase = createClient(
   'https://vzdrpydtxlamoqtukgld.supabase.co',
@@ -97,7 +96,6 @@ export default function App() {
   const [tipSlideClass,   setTipSlideClass]   = useState('tip-slide-in-right');
   const [tipVisible,      setTipVisible]      = useState(true);
   const [showTour,        setShowTour]        = useState(false);
-  const [isMobile,        setIsMobile]        = useState(window.innerWidth <= 768);
   const dailyTips = useRef(getDailyTips());
 
   const slideTimerRef   = useRef(null);
@@ -110,13 +108,7 @@ export default function App() {
   const glowRafRef      = useRef(null);
   const myAvatarRef     = useRef(null);
   const flightOnLandRef = useRef(null);
-
-  // responsive
-  useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
+  const touchDragRef    = useRef(null);
 
   const measureColX = useCallback(() => {
     const map = {};
@@ -194,14 +186,13 @@ export default function App() {
     })();
   }, []);
 
-  // auto-show tips after login
   useEffect(() => {
     if (!account) return;
     const t = setTimeout(() => { setShowTips(true); setTipIdx(0); }, 1200);
     return () => clearTimeout(t);
   }, [account]);
 
-  // tour — show every login for testing
+  // tour — show every login for testing, restore localStorage check for production
   useEffect(() => {
     if (!account) return;
     const t = setTimeout(() => setShowTour(true), 2800);
@@ -301,21 +292,7 @@ export default function App() {
     const t=setTimeout(()=>{ document.getElementById('my-row')?.scrollIntoView({behavior:'smooth',block:'center'}); },400);
     return ()=>clearTimeout(t);
   }, [account,region]);
-  // mobile party — must be before early returns, fireParty called via closure
-  useEffect(() => {
-    const fn = (e) => {
-      const { type, text, ds } = e.detail;
-      // firePartyLocal + popAvatar are stable, no closure issue
-      firePartyLocal(type, text);
-      if (ds) {
-        setBouncingDs(ds);
-        setTimeout(() => setBouncingDs(null), 700);
-      }
-      glowLevelRef.current = Math.min(glowLevelRef.current + 0.65, 1);
-    };
-    document.addEventListener('mob-party', fn);
-    return () => document.removeEventListener('mob-party', fn);
-  }, []);
+
   const navigateTip = (dir) => {
     const nextIdx = dir==='next'
       ? (tipIdx+1) % dailyTips.current.length
@@ -432,6 +409,7 @@ export default function App() {
     setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
   };
 
+  // ── mouse drag ──────────────────────────────────────────────────────
   const handleStatusCellMouseDown=(staffId,dateIdx,shift,status,e)=>{
     if (!account||staffId!==meStaff?.id) return;
     setDragging({staffId,dateIdx,shift,status,isEmptyCell:status==='none'});
@@ -476,6 +454,32 @@ export default function App() {
     setDragging(null); setPreview([]);
   };
 
+  // ── touch drag — mirrors mouse logic exactly ────────────────────────
+  const handleStatusCellTouchStart=(staffId,dateIdx,shift,status,e)=>{
+    if (!account||staffId!==meStaff?.id) return;
+    touchDragRef.current = { staffId, dateIdx, shift, status, isEmptyCell: status==='none' };
+    setDragging({ staffId, dateIdx, shift, status, isEmptyCell: status==='none' });
+    setPreview([[staffId,dateIdx,shift]]);
+  };
+
+  const handleStatusCellTouchMove=(e)=>{
+    if (!touchDragRef.current) return;
+    e.preventDefault(); // prevent scroll while dragging
+    const touch = e.touches[0];
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (!el) return;
+    const cellEl = el.closest('[data-cell-touch]');
+    if (!cellEl) return;
+    const { staffId, dateIdx, shift } = cellEl.dataset;
+    if (!staffId) return;
+    handleStatusCellMouseOver(staffId, parseInt(dateIdx), shift);
+  };
+
+  const handleStatusCellTouchEnd=(e)=>{
+    handleStatusCellMouseUp();
+    touchDragRef.current = null;
+  };
+
   const isPreviewCell=(staffId,dateIdx,shift)=>preview.some(([s,d,sh])=>s===staffId&&d===dateIdx&&sh===shift);
 
   const firePartyLocal=(type,text='')=>{
@@ -509,9 +513,6 @@ export default function App() {
     glowLevelRef.current=Math.min(glowLevelRef.current+0.65,1);
     presenceRef.current?.send({type:'broadcast',event:'party',payload:{type,text,userId:meStaff?.id||'guest'}});
   };
-
-  // mobile party event — defined after fireParty
- 
 
   const handleTableScroll=()=>{
     if (headerRef.current&&scrollRef.current)
@@ -558,16 +559,18 @@ export default function App() {
   const currentTip = dailyTips.current[tipIdx];
 
   return (
-    <div style={{minHeight:'100vh',background:'#F0F4FF'}} onMouseUp={handleStatusCellMouseUp}>
+    <div
+      style={{minHeight:'100vh',background:'#F0F4FF'}}
+      onMouseUp={handleStatusCellMouseUp}
+      onTouchEnd={handleStatusCellTouchEnd}
+    >
       <GlobalStyles/>
       <div ref={glowFrameRef} className="glow-frame"/>
 
-      {/* tour overlay */}
       {showTour && (
         <TourOverlay onDone={()=>{
           setShowTour(false);
-          // TODO: restore before production:
-          // localStorage.setItem(`tour-done-${account.username}`,'1');
+          // restore for production: localStorage.setItem(`tour-done-${account.username}`,'1');
         }}/>
       )}
 
@@ -603,7 +606,7 @@ export default function App() {
         <div style={{position:'fixed',inset:0,zIndex:10500,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(15,23,42,0.45)',backdropFilter:'blur(4px)',animation:'dropIn 0.2s ease'}}>
           <div style={{background:'#fff',borderRadius:24,width:420,padding:'32px 28px 28px',boxShadow:'0 24px 64px rgba(0,0,0,0.18)',position:'relative',overflow:'hidden'}}>
             <div style={{position:'absolute',top:0,left:0,right:0,height:4,background:'linear-gradient(90deg,#009bff,#770bff)'}}/>
-            <button onClick={()=>setShowTips(false)} style={{position:'absolute',top:16,right:16,width:28,height:28,borderRadius:'50%',border:'none',background:'#f1f5f9',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:'#64748b',transition:'all 0.15s'}} onMouseOver={e=>{e.currentTarget.style.background='#e2e8f0';}} onMouseOut={e=>{e.currentTarget.style.background='#f1f5f9';}}>✕</button>
+            <button onClick={()=>setShowTips(false)} style={{position:'absolute',top:16,right:16,width:28,height:28,borderRadius:'50%',border:'none',background:'#f1f5f9',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:'#64748b'}} onMouseOver={e=>{e.currentTarget.style.background='#e2e8f0';}} onMouseOut={e=>{e.currentTarget.style.background='#f1f5f9';}}>✕</button>
             <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:22}}>
               <div style={{width:40,height:40,borderRadius:12,background:'linear-gradient(135deg,rgba(0,155,255,0.1),rgba(119,11,255,0.1))',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                 <BulbIcon size={20} color='#770bff'/>
@@ -621,7 +624,7 @@ export default function App() {
               <p style={{fontSize:15,lineHeight:1.65,color:'#334155',fontWeight:400,margin:0}}>{currentTip.text}</p>
             </div>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-              <button onClick={()=>navigateTip('prev')} style={{width:36,height:36,borderRadius:10,border:'1.5px solid #e5e7eb',background:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,color:'#6b7280',transition:'all 0.15s'}} onMouseOver={e=>{e.currentTarget.style.borderColor='#009bff';e.currentTarget.style.color='#009bff';}} onMouseOut={e=>{e.currentTarget.style.borderColor='#e5e7eb';e.currentTarget.style.color='#6b7280';}}>‹</button>
+              <button onClick={()=>navigateTip('prev')} style={{width:36,height:36,borderRadius:10,border:'1.5px solid #e5e7eb',background:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,color:'#6b7280'}} onMouseOver={e=>{e.currentTarget.style.borderColor='#009bff';e.currentTarget.style.color='#009bff';}} onMouseOut={e=>{e.currentTarget.style.borderColor='#e5e7eb';e.currentTarget.style.color='#6b7280';}}>‹</button>
               <div style={{display:'flex',gap:6,alignItems:'center'}}>
                 {dailyTips.current.map((_,i)=>(
                   <div key={i} onClick={()=>{setTipSlideClass(i>tipIdx?'tip-slide-in-right':'tip-slide-in-left');setTipVisible(false);setTimeout(()=>{setTipIdx(i);setTipVisible(true);},50);}}
@@ -629,13 +632,13 @@ export default function App() {
                   />
                 ))}
               </div>
-              <button onClick={()=>navigateTip('next')} style={{width:36,height:36,borderRadius:10,border:'1.5px solid #e5e7eb',background:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,color:'#6b7280',transition:'all 0.15s'}} onMouseOver={e=>{e.currentTarget.style.borderColor='#770bff';e.currentTarget.style.color='#770bff';}} onMouseOut={e=>{e.currentTarget.style.borderColor='#e5e7eb';e.currentTarget.style.color='#6b7280';}}>›</button>
+              <button onClick={()=>navigateTip('next')} style={{width:36,height:36,borderRadius:10,border:'1.5px solid #e5e7eb',background:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,color:'#6b7280'}} onMouseOver={e=>{e.currentTarget.style.borderColor='#770bff';e.currentTarget.style.color='#770bff';}} onMouseOut={e=>{e.currentTarget.style.borderColor='#e5e7eb';e.currentTarget.style.color='#6b7280';}}>›</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── NAV ── */}
+      {/* NAV */}
       <nav className="nav">
         <span className="nav-logo-text">Whereabouts</span>
         <div className={`nav-tab${activeTab==='calendar'?' active':''}`} onClick={()=>setActiveTab('calendar')}>Calendar</div>
@@ -659,11 +662,9 @@ export default function App() {
         <div className="nav-right">
           {saveStatus==='saving'&&<span className="save-txt">↻ Saving</span>}
           {saveStatus==='saved' &&<span className="save-ok">✓ Saved</span>}
-
           <button className="bulb-btn" onClick={()=>{setTipIdx(0);setShowTips(true);}} title="Wellbeing Daily Tips">
             <BulbIcon size={18} color='#fbbf24'/>
           </button>
-
           {onlineUsers.length>0&&(
             <div className="online-pill">
               <div className="online-stack">
@@ -680,7 +681,6 @@ export default function App() {
               </div>
             </div>
           )}
-
           <div className="user-chip">
             <span className="user-name">{account.name}</span>
             <Avatar name={meStaff?.name||account.name} photoUrl={staffPhotos[meStaff?.id]} size={28}/>
@@ -689,7 +689,7 @@ export default function App() {
         </div>
       </nav>
 
-      {/* ── TOOLBAR ── */}
+      {/* TOOLBAR */}
       <div className="toolbar">
         <button className="tb-btn icon" onClick={()=>navigateWeek(-7)}>‹</button>
         <button
@@ -721,7 +721,7 @@ export default function App() {
         )}
       </div>
 
-      {/* ── LEGEND ── */}
+      {/* LEGEND */}
       <div className="legend">
         <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#fdf2f8,#fce7f3)',border:'1.5px solid #f9a8d4'}}/>Holiday</div>
         <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#eff6ff,#dbeafe)',border:'1.5px solid #93c5fd'}}/>Weekend</div>
@@ -729,185 +729,171 @@ export default function App() {
         <div className="leg-item"><div className="leg-dot" style={{background:'#fafafa',border:'1.5px solid #f3f4f6'}}/>Team days</div>
       </div>
 
-      {/* ── MOBILE OR DESKTOP TABLE ── */}
-      {isMobile ? (
-        <MobileView
-          staffList={staffList}
-          week={week}
-          records={records}
-          me={me}
-          meStaff={meStaff}
-          STATUS_CONFIG={STATUS_CONFIG}
-          onStatusSelect={(key, sId) => {
-            const parts=key.split('-');
-            const shift=parts[parts.length-1],staffId=parts[0],date=parts.slice(1,-1).join('-');
-            setRecords(r=>({...r,[key]:sId}));
-            setSaveStatus('saving');
-            supabase.from('statuses').upsert({id:key,staff_id:staffId,date,shift,status:sId})
-              .then(()=>{ setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000); });
-          }}
-          onStatusClear={(key) => {
-            setRecords(r=>{const n={...r};delete n[key];return n;});
-            setSaveStatus('saving');
-            supabase.from('statuses').delete().eq('id',key)
-              .then(()=>{ setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000); });
-          }}
-          emotions={emotions}
-          staffPhotos={staffPhotos}
-          socialMenu={socialMenu}
-          setSocialMenu={setSocialMenu}
-          triggerMoodFly={triggerMoodFly}
-          onlineUsers={onlineUsers}
-        />
-      ) : (
-        <div className="tbl-outer dsz">
-          <div className="tbl-card">
-            <div className="tbl-hdr-sticky">
-              <div ref={headerRef} className="tbl-hdr-row">
-                <div className="tbl-hdr-namecol"/>
-                {week.map(d=>(
-                  <div key={d.ds} data-hdr-ds={d.ds} className="tbl-hdr-daycol">
-                    <div style={{fontSize:'11px',fontWeight:'700',letterSpacing:'0.06em',marginBottom:'6px',color:d.isToday?'#770bff':'#9ca3af'}}>{d.dayName.toUpperCase()}</div>
-                    <div style={{position:'relative',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto',width:'34px',height:'34px'}}>
-                      {d.isToday && todaySonar && (
-                        <>
-                          <div className="sonar-ring sonar-animate" style={{animationDelay:'0s',width:'34px',height:'34px'}}/>
-                          <div className="sonar-ring sonar-animate" style={{animationDelay:'0.4s',width:'34px',height:'34px'}}/>
-                        </>
-                      )}
-                      <div style={{width:'34px',height:'34px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',background:d.isToday?'linear-gradient(135deg,#009bff,#770bff)':'transparent',color:d.isToday?'#fff':'#111827',fontSize:'15px',fontWeight:'700',position:'relative',zIndex:1}}>
-                        {d.num}
-                      </div>
+      {/* TABLE */}
+      <div className="tbl-outer dsz">
+        <div className="tbl-card">
+          <div className="tbl-hdr-sticky">
+            <div ref={headerRef} className="tbl-hdr-row">
+              <div className="tbl-hdr-namecol"/>
+              {week.map(d=>(
+                <div key={d.ds} data-hdr-ds={d.ds} className="tbl-hdr-daycol">
+                  <div style={{fontSize:'11px',fontWeight:'700',letterSpacing:'0.06em',marginBottom:'6px',color:d.isToday?'#770bff':'#9ca3af'}}>{d.dayName.toUpperCase()}</div>
+                  <div style={{position:'relative',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto',width:'34px',height:'34px'}}>
+                    {d.isToday && todaySonar && (
+                      <>
+                        <div className="sonar-ring sonar-animate" style={{animationDelay:'0s',width:'34px',height:'34px'}}/>
+                        <div className="sonar-ring sonar-animate" style={{animationDelay:'0.4s',width:'34px',height:'34px'}}/>
+                      </>
+                    )}
+                    <div style={{width:'34px',height:'34px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',background:d.isToday?'linear-gradient(135deg,#009bff,#770bff)':'transparent',color:d.isToday?'#fff':'#111827',fontSize:'15px',fontWeight:'700',position:'relative',zIndex:1}}>
+                      {d.num}
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
+          </div>
 
-            <div ref={scrollRef} className="tbl-scroll dsz" onScroll={handleTableScroll} onMouseLeave={handleStatusCellMouseUp}>
-              <table className="main-tbl">
-                <colgroup>
-                  <col style={{width:'220px'}}/>
-                  {week.map(d=><col key={d.ds}/>)}
-                </colgroup>
-                <tbody>
-                  {staffList.map((m,rowIdx)=>{
-                    const isMe=m.email.toLowerCase()===me;
-                    const isFirst=rowIdx===0;
-                    return (
-                      <tr key={m.id} id={isMe?'my-row':undefined}>
-                        <td className="sticky-c" style={{background:'#fff',padding:'0 8px 0 0'}}>
-                          <div className="nw">
-                            <div style={{display:'flex',alignItems:'center',gap:'10px',position:'relative',cursor:isMe?'pointer':'default'}} onClick={()=>{ if (!isMe) return; setSocialMenu(socialMenu===m.id?null:m.id); }}>
-                              <div
-                                ref={isMe?myAvatarRef:null}
-                                id={`av-${m.id}`}
-                                className={`n-av-wrap${isMe?' is-me':' is-other'}`}
-                                style={{position:'relative'}}
-                                onMouseEnter={e=>{ if (!isMe) e.currentTarget.style.transform='scale(1.1)'; }}
-                                onMouseLeave={e=>{ if (!isMe) e.currentTarget.style.transform='scale(1)'; }}
-                              >
-                                <Avatar name={m.name} photoUrl={staffPhotos[m.id]} size={60} isMe={isMe}/>
-                                {emotions[m.id]&&<div className="emo-tag">{emotions[m.id]}</div>}
-                              </div>
-                              <div>
-                                <div className={`n-name${isMe?' me':''}`}>{m.name}</div>
-                                {isMe&&<div className="n-you">YOU</div>}
-                              </div>
-                              {isMe&&socialMenu===m.id&&(
-                                <div className="emo-picker dsz">
-                                  {['🧘','⚡','☕','🎯','🚀','💪','🌱'].map(emo=>(
-                                    <div key={emo} onClick={e=>{ e.stopPropagation(); triggerMoodFly(emo, e.currentTarget); }}
-                                      style={{fontSize:'18px',cursor:'pointer',padding:'4px 6px',borderRadius:'6px',transition:'all 0.15s'}}
-                                      onMouseOver={e=>{e.currentTarget.style.background='#f3f4f6';e.currentTarget.style.transform='scale(1.25)';}}
-                                      onMouseOut={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.transform='scale(1)';}}
-                                    >{emo}</div>
-                                  ))}
-                                </div>
-                              )}
+          <div
+            ref={scrollRef}
+            className="tbl-scroll dsz"
+            onScroll={handleTableScroll}
+            onMouseLeave={handleStatusCellMouseUp}
+            onTouchMove={handleStatusCellTouchMove}
+          >
+            <table className="main-tbl">
+              <colgroup>
+                <col style={{width:'220px'}}/>
+                {week.map(d=><col key={d.ds}/>)}
+              </colgroup>
+              <tbody>
+                {staffList.map((m,rowIdx)=>{
+                  const isMe=m.email.toLowerCase()===me;
+                  const isFirst=rowIdx===0;
+                  return (
+                    <tr key={m.id} id={isMe?'my-row':undefined}>
+                      <td className="sticky-c" style={{background:'#fff',padding:'0 8px 0 0'}}>
+                        <div className="nw">
+                          <div style={{display:'flex',alignItems:'center',gap:'10px',position:'relative',cursor:isMe?'pointer':'default'}} onClick={()=>{ if (!isMe) return; setSocialMenu(socialMenu===m.id?null:m.id); }}>
+                            <div
+                              ref={isMe?myAvatarRef:null}
+                              id={`av-${m.id}`}
+                              className={`n-av-wrap${isMe?' is-me':' is-other'}`}
+                              style={{position:'relative'}}
+                              onMouseEnter={e=>{ if (!isMe) e.currentTarget.style.transform='scale(1.1)'; }}
+                              onMouseLeave={e=>{ if (!isMe) e.currentTarget.style.transform='scale(1)'; }}
+                            >
+                              <Avatar name={m.name} photoUrl={staffPhotos[m.id]} size={60} isMe={isMe}/>
+                              {emotions[m.id]&&<div className="emo-tag">{emotions[m.id]}</div>}
                             </div>
+                            <div>
+                              <div className={`n-name${isMe?' me':''}`}>{m.name}</div>
+                              {isMe&&<div className="n-you">YOU</div>}
+                            </div>
+                            {isMe&&socialMenu===m.id&&(
+                              <div className="emo-picker dsz">
+                                {['🧘','⚡','☕','🎯','🚀','💪','🌱'].map(emo=>(
+                                  <div key={emo} onClick={e=>{ e.stopPropagation(); triggerMoodFly(emo, e.currentTarget); }}
+                                    style={{fontSize:'18px',cursor:'pointer',padding:'4px 6px',borderRadius:'6px',transition:'all 0.15s'}}
+                                    onMouseOver={e=>{e.currentTarget.style.background='#f3f4f6';e.currentTarget.style.transform='scale(1.25)';}}
+                                    onMouseOut={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.transform='scale(1)';}}
+                                  >{emo}</div>
+                                ))}
+                              </div>
+                            )}
                           </div>
-                        </td>
-                        {week.map((d,weekIdx)=>{
-                          if (!d.editable) {
-                            if (!isFirst) return null;
-                            const isHol=!!d.hol;
-                            return (
-                              <td key={d.ds} className={`ptd ${tdSlideClass}`} rowSpan={staffList.length}>
-                                <div data-pill-ds={d.ds} className={`pill ${isHol?'hol':'we'}`} onClick={e=>fireParty(e,isHol?'holiday':'weekend',d.hol||'',d.ds)}>
-                                  <div className="pill-card"/>
-                                </div>
-                              </td>
-                            );
-                          }
+                        </div>
+                      </td>
+                      {week.map((d,weekIdx)=>{
+                        if (!d.editable) {
+                          if (!isFirst) return null;
+                          const isHol=!!d.hol;
                           return (
-                            <td key={d.ds} className={tdSlideClass}>
-                              <div className="dw">
-                                {['AM','PM'].map((shift,si)=>{
-                                  const key=`${m.id}-${d.ds}-${shift}`;
-                                  const sid=records[key]||'none';
-                                  const cfg=STATUS_CONFIG[sid];
-                                  const open=activeMenu===key;
-                                  const isPreview=isPreviewCell(m.id,weekIdx,shift);
-                                  const isBulkSelected=bulkSelectCells.includes(key);
-                                  const isSnapping=snapCellKey===key;
-                                  const staggerDelay=staggerCells[key];
-                                  const cls=!isMe?'sh other':sid!=='none'?'sh set':'sh mine';
-                                  return (
-                                    <div key={shift} style={{position:'relative'}}>
-                                      <div
-                                        data-cell-key={key}
-                                        id={isFirst&&si===0?AM_REF:undefined}
-                                        className={[cls,isPreview?'preview':'',isSnapping?'cell-snap':'',isBulkSelected?'bulk-selected':'',staggerDelay!==undefined?'cell-stagger':''].filter(Boolean).join(' ')}
-                                        style={{
-                                          ...(sid!=='none'?{background:cfg.bg,color:cfg.color,border:`1.5px solid ${cfg.color}30`}:{}),
-                                          ...(staggerDelay!==undefined?{animationDelay:`${staggerDelay}ms`}:{}),
-                                        }}
-                                        onMouseDown={e=>handleStatusCellMouseDown(m.id,weekIdx,shift,sid,e)}
-                                        onMouseOver={()=>handleStatusCellMouseOver(m.id,weekIdx,shift)}
-                                        onClick={e=>{
-                                          if (!isMe) return;
-                                          e.stopPropagation();
-                                          if (preview.length<=1) {
-                                            if (sid!=='none') handleStatusClear(key,e);
-                                            else setActiveMenu(open?null:key);
-                                          }
-                                        }}
-                                      >
-                                        {sid!=='none'
-                                          ? <><span className="sh-icon">{cfg.icon}</span><span>{shift}</span></>
-                                          : shift
-                                        }
-                                      </div>
-                                      {open&&isMe&&(
-                                        <div className="s-drop dsz">
-                                          <div style={{padding:'3px 10px 7px',fontSize:'10px',color:'#9ca3af',fontWeight:'600',borderBottom:'1px solid #f0f0f0',marginBottom:'3px',letterSpacing:'0.06em'}}>
-                                            {bulkSelectCells.length>0?`${bulkSelectCells.length} CELLS`:'STATUS'}
-                                          </div>
-                                          {Object.entries(STATUS_CONFIG).map(([sId,sCfg])=>(
-                                            <div key={sId} className="s-opt" onClick={e=>{ e.stopPropagation(); if (bulkSelectCells.length>0) handleBulkStatusSelect(sId,e); else handleStatusSelect(key,sId,e); }}>
-                                              <span className="s-opt-icon">{sCfg.icon}</span>
-                                              <span className="s-opt-label">{sCfg.label}</span>
-                                            </div>
-                                          ))}
-                                        </div>
-                                      )}
-                                    </div>
-                                  );
-                                })}
+                            <td key={d.ds} className={`ptd ${tdSlideClass}`} rowSpan={staffList.length}>
+                              <div
+                                data-pill-ds={d.ds}
+                                className={`pill ${isHol?'hol':'we'}`}
+                                onClick={e=>fireParty(e,isHol?'holiday':'weekend',d.hol||'',d.ds)}
+                                onTouchEnd={e=>{ e.preventDefault(); fireParty({currentTarget:e.currentTarget,stopPropagation:()=>{}},isHol?'holiday':'weekend',d.hol||'',d.ds); }}
+                              >
+                                <div className="pill-card"/>
                               </div>
                             </td>
                           );
-                        })}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                        }
+                        return (
+                          <td key={d.ds} className={tdSlideClass}>
+                            <div className="dw">
+                              {['AM','PM'].map((shift,si)=>{
+                                const key=`${m.id}-${d.ds}-${shift}`;
+                                const sid=records[key]||'none';
+                                const cfg=STATUS_CONFIG[sid];
+                                const open=activeMenu===key;
+                                const isPreview=isPreviewCell(m.id,weekIdx,shift);
+                                const isBulkSelected=bulkSelectCells.includes(key);
+                                const isSnapping=snapCellKey===key;
+                                const staggerDelay=staggerCells[key];
+                                const cls=!isMe?'sh other':sid!=='none'?'sh set':'sh mine';
+                                return (
+                                  <div key={shift} style={{position:'relative'}}>
+                                    <div
+                                      data-cell-key={key}
+                                      data-cell-touch="1"
+                                      data-staff-id={m.id}
+                                      data-date-idx={weekIdx}
+                                      data-shift={shift}
+                                      id={isFirst&&si===0?AM_REF:undefined}
+                                      className={[cls,isPreview?'preview':'',isSnapping?'cell-snap':'',isBulkSelected?'bulk-selected':'',staggerDelay!==undefined?'cell-stagger':''].filter(Boolean).join(' ')}
+                                      style={{
+                                        ...(sid!=='none'?{background:cfg.bg,color:cfg.color,border:`1.5px solid ${cfg.color}30`}:{}),
+                                        ...(staggerDelay!==undefined?{animationDelay:`${staggerDelay}ms`}:{}),
+                                        touchAction:'none',
+                                      }}
+                                      onMouseDown={e=>handleStatusCellMouseDown(m.id,weekIdx,shift,sid,e)}
+                                      onMouseOver={()=>handleStatusCellMouseOver(m.id,weekIdx,shift)}
+                                      onTouchStart={e=>handleStatusCellTouchStart(m.id,weekIdx,shift,sid,e)}
+                                      onClick={e=>{
+                                        if (!isMe) return;
+                                        e.stopPropagation();
+                                        if (preview.length<=1) {
+                                          if (sid!=='none') handleStatusClear(key,e);
+                                          else setActiveMenu(open?null:key);
+                                        }
+                                      }}
+                                    >
+                                      {sid!=='none'
+                                        ? <><span className="sh-icon">{cfg.icon}</span><span>{shift}</span></>
+                                        : shift
+                                      }
+                                    </div>
+                                    {open&&isMe&&(
+                                      <div className="s-drop dsz">
+                                        <div style={{padding:'3px 10px 7px',fontSize:'10px',color:'#9ca3af',fontWeight:'600',borderBottom:'1px solid #f0f0f0',marginBottom:'3px',letterSpacing:'0.06em'}}>
+                                          {bulkSelectCells.length>0?`${bulkSelectCells.length} CELLS`:'STATUS'}
+                                        </div>
+                                        {Object.entries(STATUS_CONFIG).map(([sId,sCfg])=>(
+                                          <div key={sId} className="s-opt" onClick={e=>{ e.stopPropagation(); if (bulkSelectCells.length>0) handleBulkStatusSelect(sId,e); else handleStatusSelect(key,sId,e); }}>
+                                            <span className="s-opt-icon">{sCfg.icon}</span>
+                                            <span className="s-opt-label">{sCfg.label}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

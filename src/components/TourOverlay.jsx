@@ -11,21 +11,21 @@ const STEPS = [
   {
     id: 'toolbar',
     title: '⏪ Week Navigation',
-    desc: 'Use ‹ › to move between weeks. Click Today to snap back instantly — watch the cool pulse effect!',
+    desc: 'Use ‹ › to move between weeks. Click Today to snap back instantly.',
     position: 'bottom',
     highlight: () => document.querySelector('.toolbar'),
   },
   {
     id: 'bulb',
     title: '💡 Wellbeing Tips',
-    desc: 'Every day we pick 3 personalised wellbeing tips just for you. Click the lightbulb anytime.',
+    desc: '3 wellbeing tips pushed to you every day. Click the lightbulb anytime.',
     position: 'bottom-left',
     highlight: () => document.querySelector('.bulb-btn'),
   },
   {
     id: 'status',
     title: '🗓 Set Your Status',
-    desc: "Click any AM or PM cell in your row to set your work status. Try it — there's a fun flying effect!",
+    desc: 'Click any AM or PM cell in your row to set your work status for the day.',
     position: 'top',
     highlight: () => document.querySelector('#my-row .sh.mine') || document.querySelector('.sh.mine'),
   },
@@ -42,13 +42,6 @@ const STEPS = [
     desc: 'Click on any weekend or holiday column — it triggers confetti and sends a live party effect to the whole team!',
     position: 'top',
     highlight: () => document.querySelector('.pill.we') || document.querySelector('.pill.hol'),
-  },
-  {
-    id: 'online',
-    title: '🟢 Live Presence',
-    desc: "See who's online right now in real time. The green dot means they're active.",
-    position: 'bottom-left',
-    highlight: () => document.querySelector('.online-pill'),
   },
 ];
 
@@ -97,7 +90,6 @@ const TourOverlay = ({ onDone }) => {
   };
 
   useEffect(() => {
-    // small delay so DOM is ready for newly-visible elements
     const t = setTimeout(measure, 80);
     window.addEventListener('resize', measure);
     window.addEventListener('scroll', measure, true);
@@ -111,7 +103,6 @@ const TourOverlay = ({ onDone }) => {
   const next = () => step < STEPS.length - 1 ? setStep(s => s + 1) : onDone();
   const prev = () => { if (step > 0) setStep(s => s - 1); };
 
-  // four dark rectangles that leave a bright cutout
   const renderSpotlight = () => {
     if (!box) {
       return (
@@ -129,13 +120,9 @@ const TourOverlay = ({ onDone }) => {
 
     return (
       <>
-        {/* top strip */}
         <div style={{...s, top:0, left:0, right:0, height:Math.max(0,top)}} onClick={next}/>
-        {/* bottom strip */}
         <div style={{...s, top:Math.max(0,bottom), left:0, right:0, bottom:0}} onClick={next}/>
-        {/* left strip */}
         <div style={{...s, top:Math.max(0,top), left:0, width:Math.max(0,left), height:Math.max(0,height)}} onClick={next}/>
-        {/* right strip */}
         <div style={{...s, top:Math.max(0,top), left:Math.max(0,right), right:0, height:Math.max(0,height)}} onClick={next}/>
       </>
     );
@@ -152,10 +139,8 @@ const TourOverlay = ({ onDone }) => {
         .tour-ring{animation:spotlightPulse 2s ease-in-out infinite;}
       `}</style>
 
-      {/* spotlight panels */}
       {renderSpotlight()}
 
-      {/* glowing ring around highlighted element */}
       {box && (
         <div
           className="tour-ring"
@@ -174,7 +159,6 @@ const TourOverlay = ({ onDone }) => {
         />
       )}
 
-      {/* tooltip card */}
       <div
         style={{
           position:   'fixed',
@@ -190,14 +174,12 @@ const TourOverlay = ({ onDone }) => {
           fontFamily: "'Plus Jakarta Sans',sans-serif",
         }}
       >
-        {/* gradient top bar */}
         <div style={{
           position:'absolute',top:0,left:0,right:0,height:3,
           background:'linear-gradient(90deg,#009bff,#770bff)',
           borderRadius:'18px 18px 0 0',
         }}/>
 
-        {/* progress dots + counter */}
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
           <div style={{display:'flex',gap:5}}>
             {STEPS.map((_,i) => (
