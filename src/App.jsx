@@ -26,14 +26,14 @@ const isSuperUser  = em => SUPER_USERS.includes(em.toLowerCase());
 const isChinaExtra = em => CHINA_EXTRA.includes(em.toLowerCase());
 const getStaffEntry = em => RAW_STAFF_LIST.find(s => s.email.toLowerCase() === em.toLowerCase());
 
-const ROW_H      = 104;
-const NAV_H      = 56;
-const SUB_H      = 48;
-const TB_H       = 52;
-const LG_H       = 36;
+const ROW_H      = 110;
+const NAV_H      = 64;
+const SUB_H      = 52;
+const TB_H       = 56;
+const LG_H       = 40;
 const AM_REF     = 'am-ref-btn';
-const NAME_COL_W = 200;
-const TBL_PAD    = 28;
+const NAME_COL_W = 220;
+const TBL_PAD    = 24;
 const HEADER_STICKY_TOP = NAV_H + SUB_H + TB_H + LG_H;
 
 const fmt = date => {
@@ -491,7 +491,7 @@ export default function App() {
   const nonEditableCols=week.reduce((acc,d,i)=>{ if (!d.editable) acc.push({...d,colIndex:i}); return acc; },[]);
 
   return (
-    <div style={{minHeight:'100vh',background:'#F8FAFC'}} onMouseUp={handleStatusCellMouseUp}>
+    <div style={{minHeight:'100vh',background:'#F0F4FF'}} onMouseUp={handleStatusCellMouseUp}>
       <GlobalStyles/>
       <div ref={glowFrameRef} className="glow-frame"/>
 
@@ -530,11 +530,24 @@ export default function App() {
 
       {/* ── NAV ── */}
       <nav className="nav">
+        {/* logo */}
+        <div className="nav-logo">
+          <div className="nav-logo-icon">📅</div>
+          <span className="nav-logo-text">Whereabouts</span>
+        </div>
+
         <div className={`nav-tab${activeTab==='calendar'?' active':''}`} onClick={()=>setActiveTab('calendar')}>Calendar</div>
-        <div className={`nav-tab${activeTab==='planner'?' active':''}`} style={{position:'relative'}} onClick={()=>setActiveTab(activeTab==='planner'?'calendar':'planner')}>
-          Holiday Planner
+
+        {/* holiday planner as pill button */}
+        <div style={{position:'relative',marginLeft:'4px'}}>
+          <button
+            className={`hol-planner-btn${activeTab==='planner'?' active':''} nav-tab`}
+            onClick={()=>setActiveTab(activeTab==='planner'?'calendar':'planner')}
+          >
+            ℹ️ Holiday Planner
+          </button>
           {activeTab==='planner'&&(
-            <div style={{position:'absolute',top:'calc(100% + 2px)',left:0,zIndex:10020,background:'#fff',borderRadius:16,width:310,padding:18,boxShadow:'0 16px 48px rgba(0,0,0,0.1)',border:'1px solid rgba(226,232,240,0.8)',animation:'dropIn 0.15s ease'}}
+            <div style={{position:'absolute',top:'calc(100% + 8px)',left:0,zIndex:10020,background:'#fff',borderRadius:16,width:310,padding:18,boxShadow:'0 16px 48px rgba(0,0,0,0.12)',border:'1px solid rgba(226,232,240,0.8)',animation:'dropIn 0.15s ease'}}
               onClick={e=>e.stopPropagation()}>
               <div style={{fontSize:'10px',fontWeight:'700',color:'#9ca3af',letterSpacing:'0.1em',marginBottom:'12px'}}>{region.toUpperCase()} HOLIDAYS 2026</div>
               <div style={{maxHeight:'340px',overflowY:'auto'}}>
@@ -553,6 +566,7 @@ export default function App() {
             </div>
           )}
         </div>
+
         <div className="nav-sep"/>
         <div className="nav-right">
           {saveStatus==='saving'&&<span className="save-txt">↻ Saving</span>}
@@ -560,23 +574,23 @@ export default function App() {
 
           {/* online users */}
           {onlineUsers.length>0&&(
-            <div style={{display:'flex',alignItems:'center',gap:'8px',padding:'5px 12px',background:'#fff',border:'1px solid rgba(226,232,240,0.9)',borderRadius:'100px',boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
+            <div className="online-pill">
               <div className="online-stack">
-                {onlineUsers.slice(0,5).map((u,i)=>(
+                {onlineUsers.slice(0,4).map((u,i)=>(
                   <div key={u.email} title={u.name} className="online-av" style={{zIndex:10-i}}>
                     <Avatar name={u.name} photoUrl={staffPhotos[u.id]} size={22}/>
                   </div>
                 ))}
-                {onlineUsers.length>5&&(
-                  <div className="online-count">+{onlineUsers.length-5}</div>
+                {onlineUsers.length>4&&(
+                  <div className="online-count">+{onlineUsers.length-4}</div>
                 )}
               </div>
-              <div style={{display:'flex',flexDirection:'column',gap:'1px'}}>
-                <div style={{display:'flex',alignItems:'center',gap:'4px'}}>
-                  <div style={{width:'6px',height:'6px',borderRadius:'50%',background:'#22c55e',animation:'pulseDot 2s infinite'}}/>
-                  <span style={{fontSize:'10px',fontWeight:'700',color:'#16a34a',letterSpacing:'0.04em'}}>LIVE</span>
+              <div className="online-live">
+                <div className="online-live-label">
+                  <div className="online-live-dot"/>
+                  LIVE NOW
                 </div>
-                <span style={{fontSize:'10px',color:'#9ca3af',fontWeight:'500'}}>{onlineUsers.length} online</span>
+                <span className="online-live-count">{onlineUsers.length} Online</span>
               </div>
             </div>
           )}
@@ -603,64 +617,86 @@ export default function App() {
 
       {/* ── TOOLBAR ── */}
       <div className="toolbar">
-        <button className="tb-btn icon" onClick={()=>navigateWeek(-7)}>‹</button>
-        <button
-          className="tb-btn today"
-          onClick={e=>{
-            navigateWeek(0,new Date());
-            const btn=e.currentTarget;
-            btn.classList.remove('today-glint');
-            void btn.offsetWidth;
-            btn.classList.add('today-glint');
-            setTimeout(()=>btn.classList.remove('today-glint'),600);
-            setTodaySonar(true);
-            setTimeout(()=>setTodaySonar(false),2000);
-          }}
-        >Today</button>
-        <button className="tb-btn icon" onClick={()=>navigateWeek(7)}>›</button>
+        {/* nav group */}
+        <div style={{display:'flex',alignItems:'center',background:'#f9fafb',borderRadius:'12px',border:'1.5px solid #e5e7eb',overflow:'hidden'}}>
+          <button className="tb-btn icon" style={{border:'none',borderRadius:0,background:'transparent'}} onClick={()=>navigateWeek(-7)}>‹</button>
+          <div style={{width:'1px',height:'20px',background:'#e5e7eb'}}/>
+          <button
+            className="tb-btn today"
+            style={{borderRadius:0,border:'none',height:'36px'}}
+            onClick={e=>{
+              navigateWeek(0,new Date());
+              const btn=e.currentTarget;
+              btn.classList.remove('today-glint');
+              void btn.offsetWidth;
+              btn.classList.add('today-glint');
+              setTimeout(()=>btn.classList.remove('today-glint'),600);
+              setTodaySonar(true);
+              setTimeout(()=>setTodaySonar(false),2000);
+            }}
+          >Today</button>
+          <div style={{width:'1px',height:'20px',background:'rgba(255,255,255,0.3)'}}/>
+          <button className="tb-btn icon" style={{border:'none',borderRadius:0,background:'transparent'}} onClick={()=>navigateWeek(7)}>›</button>
+        </div>
+
+        {/* month display */}
+        <div className="tb-month">
+          <div className="tb-month-icon">📅</div>
+          {viewDate.toLocaleString('default',{month:'long',year:'numeric'})}
+        </div>
+
         <select className="tb-select" value={viewDate.getMonth()} onChange={e=>{
           const d=new Date(viewDate); d.setMonth(+e.target.value); d.setDate(1); navigateWeek(0,d);
         }}>
           {Array.from({length:12}).map((_,i)=><option key={i} value={i}>{new Date(0,i).toLocaleString('default',{month:'long'})}</option>)}
         </select>
-        <span className="tb-month">{viewDate.toLocaleString('default',{month:'long',year:'numeric'})}</span>
 
-        {/* team summary banner */}
+        {/* team summary */}
         <div className="team-summary">
           <div className="team-summary-dot"/>
-          <span>{inOffice.n} / {inOffice.total} in office today</span>
+          <span>TEAM SUMMARY: {inOffice.n} / {inOffice.total} IN OFFICE TODAY</span>
         </div>
       </div>
 
       {/* ── LEGEND ── */}
       <div className="legend">
-        <div className="leg-item"><div className="leg-sw" style={{background:'linear-gradient(135deg,#fdf2f8,#fce7f3)',border:'1.5px solid #f9a8d4'}}/>Holiday</div>
-        <div className="leg-item"><div className="leg-sw" style={{background:'linear-gradient(135deg,#eff6ff,#dbeafe)',border:'1.5px solid #93c5fd'}}/>Weekend</div>
-        <div className="leg-item"><div className="leg-sw" style={{background:'linear-gradient(135deg,#e8f0fe,#ede8fe)'}}/>My days</div>
-        <div className="leg-item"><div className="leg-sw" style={{background:'#fafafa',border:'1.5px solid #f3f4f6'}}/>Team days</div>
+        <div className="leg-item">
+          <div className="leg-dot" style={{background:'linear-gradient(135deg,#fdf2f8,#fce7f3)',border:'1.5px solid #f9a8d4'}}/>
+          Holiday
+        </div>
+        <div className="leg-item">
+          <div className="leg-dot" style={{background:'linear-gradient(135deg,#eff6ff,#dbeafe)',border:'1.5px solid #93c5fd'}}/>
+          Weekend
+        </div>
+        <div className="leg-item">
+          <div className="leg-dot" style={{background:'linear-gradient(135deg,#e8f0fe,#ede8fe)'}}/>
+          My days
+        </div>
+        <div className="leg-item">
+          <div className="leg-dot" style={{background:'#fafafa',border:'1.5px solid #f3f4f6'}}/>
+          Team days
+        </div>
       </div>
 
       {/* ── TABLE ── */}
       <div className="tbl-outer dsz">
         <div className="tbl-card">
-
-          {/* sticky table header */}
           <div className="tbl-hdr-sticky">
             <div ref={headerRef} className="tbl-hdr-row">
               <div className="tbl-hdr-namecol"/>
               {week.map(d=>(
                 <div key={d.ds} data-hdr-ds={d.ds} className="tbl-hdr-daycol">
-                  <div style={{fontSize:'10px',fontWeight:'700',letterSpacing:'0.06em',marginBottom:'5px',color:d.isToday?'#770bff':'#9ca3af'}}>
+                  <div style={{fontSize:'11px',fontWeight:'700',letterSpacing:'0.06em',marginBottom:'6px',color:d.isToday?'#770bff':'#9ca3af'}}>
                     {d.dayName.toUpperCase()}
                   </div>
-                  <div style={{position:'relative',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto',width:'30px',height:'30px'}}>
+                  <div style={{position:'relative',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto',width:'34px',height:'34px'}}>
                     {d.isToday && todaySonar && (
                       <>
-                        <div className="sonar-ring sonar-animate" style={{animationDelay:'0s'}}/>
-                        <div className="sonar-ring sonar-animate" style={{animationDelay:'0.4s'}}/>
+                        <div className="sonar-ring sonar-animate" style={{animationDelay:'0s',width:'34px',height:'34px'}}/>
+                        <div className="sonar-ring sonar-animate" style={{animationDelay:'0.4s',width:'34px',height:'34px'}}/>
                       </>
                     )}
-                    <div style={{width:'30px',height:'30px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',background:d.isToday?'linear-gradient(135deg,#009bff,#770bff)':'transparent',color:d.isToday?'#fff':'#111827',fontSize:'14px',fontWeight:'600',position:'relative',zIndex:1}}>
+                    <div style={{width:'34px',height:'34px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',background:d.isToday?'linear-gradient(135deg,#009bff,#770bff)':'transparent',color:d.isToday?'#fff':'#111827',fontSize:'15px',fontWeight:'700',position:'relative',zIndex:1}}>
                       {d.num}
                     </div>
                   </div>
@@ -672,7 +708,7 @@ export default function App() {
           <div ref={scrollRef} className="tbl-scroll dsz" onScroll={handleTableScroll} onMouseLeave={handleStatusCellMouseUp}>
             <table className="main-tbl">
               <colgroup>
-                <col style={{width:'200px'}}/>
+                <col style={{width:'220px'}}/>
                 {week.map(d=><col key={d.ds}/>)}
               </colgroup>
               <tbody>
@@ -800,7 +836,6 @@ export default function App() {
               </tbody>
             </table>
           </div>
-
         </div>
       </div>
     </div>

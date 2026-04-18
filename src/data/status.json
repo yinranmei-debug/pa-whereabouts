@@ -1,5 +1,5 @@
 {
-  "WFH": { "label": "WFH", "icon": "🏠", "color": "#137333", "bg": "#e6f4ea" },
+  "WFH": { "label": "Work From Home", "icon": "🏠", "color": "#137333", "bg": "#e6f4ea" },
   "AL": { "label": "Annual Leave", "icon": "🌴", "color": "#b06000", "bg": "#fef7e0" },
   "SL": { "label": "Sick Leave", "icon": "🤒", "color": "#d93025", "bg": "#fce8e6" },
   "BT": { "label": "Business Trip", "icon": "✈️", "color": "#1a73e8", "bg": "#e8f0fe" },
