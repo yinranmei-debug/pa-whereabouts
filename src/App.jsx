@@ -68,22 +68,40 @@ const GlobalStyles = () => (
   <style>{`
     *,*:before,*:after{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%}
-    @keyframes holiBounce{0%{transform:scale(1)}30%{transform:scale(1.03)}60%{transform:scale(0.98)}85%{transform:scale(1.01)}100%{transform:scale(1)}}
+
+    @keyframes holiBounce{
+      0%  {transform:scale(1)}
+      35% {transform:scale(1.06)}
+      65% {transform:scale(0.96)}
+      82% {transform:scale(1.02)}
+      100%{transform:scale(1)}
+    }
+    /* FIX 2: contain+overflow lock the scale inside the pill's own box, no grid bleed */
+    .holi-tap{
+      animation:holiBounce 0.42s cubic-bezier(0.25,0.46,0.45,0.94) both !important;
+      transform-origin:center center;
+      isolation:isolate;
+      overflow:hidden;
+      contain:layout style;
+    }
+    /* pill itself also clips so scale never bleeds into adjacent td */
+    .pill{
+      overflow:hidden;
+      contain:layout style;
+    }
+
     @keyframes dropIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
     @keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
     @keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
     @keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.4)}50%{box-shadow:0 0 0 4px rgba(34,197,94,0)}}
-    .holi-tap{animation:holiBounce 0.4s cubic-bezier(0.25,0.46,0.45,0.94) both !important;transform-origin:center center;isolation:isolate}
-    @keyframes glowBreathe{
-      0%,100%{opacity:0.55;box-shadow:inset 0 0 38px 8px rgba(0,155,255,0.28),inset 0 0 80px 16px rgba(119,11,255,0.18),inset 0 0 0px 0px rgba(0,229,255,0);}
-      50%{opacity:1;box-shadow:inset 0 0 60px 16px rgba(0,155,255,0.42),inset 0 0 120px 32px rgba(119,11,255,0.28),inset 0 0 24px 4px rgba(0,229,255,0.15);}
-    }
+
+    /* FIX 1: glow frame — NO animation, NO default opacity. Fully JS-driven. */
     .glow-frame{
-      position:fixed;inset:0;pointer-events:none;z-index:9998;border-radius:0;
-      box-shadow:inset 0 0 38px 8px rgba(0,155,255,0.28),inset 0 0 80px 16px rgba(119,11,255,0.18);
-      animation:glowBreathe 3.2s ease-in-out infinite;
-      transition:box-shadow 0.08s ease-out,opacity 0.08s ease-out;
+      position:fixed;inset:0;pointer-events:none;z-index:9998;
+      opacity:0;
+      box-shadow:inset 0 0 0px 0px rgba(0,155,255,0);
     }
+
     body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;background:#f4f5f7;color:#111827;-webkit-font-smoothing:antialiased}
     .nav{height:${NAV_H}px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;padding:0 28px;position:sticky;top:0;z-index:500}
     .nav-tab{height:${NAV_H}px;display:flex;align-items:center;padding:0 14px;font-size:13px;font-weight:400;color:#6b7280;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;white-space:nowrap;user-select:none}
@@ -151,7 +169,8 @@ const GlobalStyles = () => (
     .s-opt:hover{background:#f9fafb}
     .s-opt-lbl{font-weight:400;color:#374151}
     td.ptd{height:1px;padding:0 4px;vertical-align:top}
-    .pill{height:100%;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:pointer;user-select:none}
+    /* pill base — overflow+contain prevent scale from bleeding into adjacent columns */
+    .pill{height:100%;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:pointer;user-select:none;overflow:hidden;contain:layout style;}
     .pill-card{width:100%;flex:1;border-radius:10px;transition:box-shadow 0.2s,filter 0.2s}
     .pill:hover .pill-card{filter:brightness(0.97)}
     .hol .pill-card{background:linear-gradient(180deg,#fdf2f8,#fce7f3);box-shadow:0 2px 8px rgba(236,72,153,0.12),0 1px 3px rgba(236,72,153,0.06)}
@@ -248,46 +267,40 @@ export default function App() {
   const [preview,         setPreview]         = useState([]);
   const [bulkSelectCells, setBulkSelectCells] = useState([]);
 
-  const presenceRef    = useRef(null);
-  const partyTimerRef  = useRef(null);
-  const scrollRef      = useRef(null);
-  const headerRef      = useRef(null);
-  // glow frame ref — we drive it imperatively to avoid React re-render on every RAF tick
-  const glowFrameRef   = useRef(null);
-  const glowLevelRef   = useRef(0);   // 0 = resting, boosted by clicks, decays over time
-  const glowRafRef     = useRef(null);
+  const presenceRef   = useRef(null);
+  const partyTimerRef = useRef(null);
+  const scrollRef     = useRef(null);
+  const headerRef     = useRef(null);
+  const glowFrameRef  = useRef(null);
+  const glowLevelRef  = useRef(0);
+  const glowRafRef    = useRef(null);
 
-  // ── glow decay loop — runs forever once started ──────────────────────────
+  // ── glow decay loop ───────────────────────────────────────────────────────
   useEffect(() => {
     const decay = () => {
-      glowLevelRef.current = Math.max(0, glowLevelRef.current - 0.018);
+      glowLevelRef.current = Math.max(0, glowLevelRef.current - 0.016);
       if (glowFrameRef.current) {
         const lvl = glowLevelRef.current;
-        // base breath is handled by CSS animation; we ONLY add extra intensity here
-        // when lvl > 0 we override animation and pump up the box-shadow
-        if (lvl > 0) {
-          const b  = lvl;          // 0→1
-          const i1 = 38 + b * 120; // inset blur 1
-          const s1 = 8  + b * 40;  // spread 1
-          const i2 = 80 + b * 200; // inset blur 2
-          const s2 = 16 + b * 60;  // spread 2
-          const i3 = b * 60;        // cyan accent
-          const s3 = b * 12;
-          const op1 = 0.28 + b * 0.55;
-          const op2 = 0.18 + b * 0.45;
-          const op3 = b * 0.4;
-          glowFrameRef.current.style.animation = 'none';
-          glowFrameRef.current.style.opacity   = String(Math.min(0.55 + b * 0.45, 1));
+        if (lvl > 0.001) {
+          const i1 = 40  + lvl * 130;
+          const s1 = 8   + lvl * 44;
+          const i2 = 80  + lvl * 220;
+          const s2 = 16  + lvl * 64;
+          const i3 = lvl * 70;
+          const s3 = lvl * 14;
+          const op1 = 0.30 + lvl * 0.55;
+          const op2 = 0.18 + lvl * 0.48;
+          const op3 = lvl  * 0.42;
+          glowFrameRef.current.style.opacity   = String(Math.min(lvl * 1.4, 1));
           glowFrameRef.current.style.boxShadow = [
             `inset 0 0 ${i1}px ${s1}px rgba(0,155,255,${op1})`,
             `inset 0 0 ${i2}px ${s2}px rgba(119,11,255,${op2})`,
             `inset 0 0 ${i3}px ${s3}px rgba(0,229,255,${op3})`,
           ].join(',');
         } else {
-          // restore CSS breathing animation
-          glowFrameRef.current.style.animation = '';
-          glowFrameRef.current.style.opacity   = '';
-          glowFrameRef.current.style.boxShadow = '';
+          // fully off
+          glowFrameRef.current.style.opacity   = '0';
+          glowFrameRef.current.style.boxShadow = 'none';
         }
       }
       glowRafRef.current = requestAnimationFrame(decay);
@@ -374,8 +387,7 @@ export default function App() {
       .on('broadcast', { event:'party' }, ({ payload }) => {
         firePartyLocal(payload.type, payload.text);
         popAvatar(payload.userId);
-        // remote party also boosts glow
-        glowLevelRef.current = Math.min(glowLevelRef.current + 0.6, 1);
+        glowLevelRef.current = Math.min(glowLevelRef.current + 0.65, 1);
       })
       .subscribe(async status => {
         if (status==='SUBSCRIBED') {
@@ -557,7 +569,7 @@ export default function App() {
     if (pill) { pill.classList.remove('holi-tap'); void pill.offsetWidth; pill.classList.add('holi-tap'); }
     firePartyLocal(type, text);
     popAvatar(meStaff?.id || 'guest');
-    // ── boost glow on every click, capped at 1, stacks with rapid clicks ──
+    // boost glow on every click — stacks with rapid clicking, capped at 1
     glowLevelRef.current = Math.min(glowLevelRef.current + 0.65, 1);
     presenceRef.current?.send({ type:'broadcast', event:'party', payload:{ type, text, userId:meStaff?.id||'guest' } });
   };
@@ -608,7 +620,7 @@ export default function App() {
     <div style={{minHeight:'100vh', background:'#f4f5f7'}} onMouseUp={handleStatusCellMouseUp}>
       <GlobalStyles />
 
-      {/* ── always-on glow frame — driven imperatively via glowFrameRef ── */}
+      {/* glow frame — invisible by default, JS-driven on click only */}
       <div ref={glowFrameRef} className="glow-frame" />
 
       {activeTab === 'calendar' && week.filter(d => !d.editable).map(d => {
