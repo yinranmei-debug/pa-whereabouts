@@ -61,6 +61,7 @@ export default function App() {
   const [dragging,        setDragging]        = useState(null);
   const [preview,         setPreview]         = useState([]);
   const [bulkSelectCells, setBulkSelectCells] = useState([]);
+  const [staggerCells,    setStaggerCells]    = useState({});
   const [bouncingDs,      setBouncingDs]      = useState(null);
   const [slideDir,        setSlideDir]        = useState(null);
   const [colXMap,         setColXMap]         = useState({});
@@ -326,21 +327,61 @@ export default function App() {
     if (flightOnLandRef.current) { flightOnLandRef.current(); flightOnLandRef.current = null; }
   };
 
-  const handleStatusClear = async (key, e) => {
+  const handleStatus = async (key, val, e) => {
     e.stopPropagation();
     if (bulkSelectCells.length > 0) {
-      setSaveStatus('saving');
-      const upd = { ...records };
-      bulkSelectCells.forEach(ck => { delete upd[ck]; });
-      setRecords(upd); setActiveMenu(null); setBulkSelectCells([]);
-      await Promise.all(bulkSelectCells.map(ck => supabase.from('statuses').delete().eq('id',ck)));
-      setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
+      // 批量：第一格飞行，其余 stagger 填入
+      const cfg = STATUS_CONFIG[val];
+      if (cfg) triggerStatusFly(val, e.currentTarget, bulkSelectCells[0]);
+
+      const keysToFill = [...bulkSelectCells];
+      flightOnLandRef.current = async () => {
+        // stagger 动画 map
+        const staggerMap = {};
+        keysToFill.forEach((k, i) => { staggerMap[k] = i * 40; });
+        setStaggerCells(staggerMap);
+        setTimeout(() => setStaggerCells({}), keysToFill.length * 40 + 300);
+
+        // 填入所有格子
+        setRecords(r => {
+          const upd = { ...r };
+          keysToFill.forEach(ck => { upd[ck] = val; });
+          return upd;
+        });
+        setActiveMenu(null);
+        setBulkSelectCells([]);
+        setSaveStatus('saving');
+        await Promise.all(keysToFill.map(ck => {
+          const parts   = ck.split('-');
+          const shift   = parts[parts.length-1];
+          const staffId = parts[0];
+          const date    = parts.slice(1,-1).join('-');
+          return supabase.from('statuses').upsert({id:ck,staff_id:staffId,date,shift,status:val});
+        }));
+        setSaveStatus('saved');
+        setTimeout(()=>setSaveStatus(''),2000);
+      };
     } else {
       setSaveStatus('saving');
-      setRecords(r => { const n={...r}; delete n[key]; return n; });
-      await supabase.from('statuses').delete().eq('id',key);
+      if (val===null) {
+        setRecords(r=>{const n={...r};delete n[key];return n;});
+        await supabase.from('statuses').delete().eq('id',key);
+      } else {
+        const parts=key.split('-');
+        const shift=parts[parts.length-1],staffId=parts[0],date=parts.slice(1,-1).join('-');
+        await supabase.from('statuses').upsert({id:key,staff_id:staffId,date,shift,status:val});
+        setActiveMenu(null);
+      }
       setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
     }
+  };
+
+  const handleStatusClear = async (key, e) => {
+    e.stopPropagation();
+    setSaveStatus('saving');
+    setRecords(r => { const n={...r}; delete n[key]; return n; });
+    await supabase.from('statuses').delete().eq('id',key);
+    setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
   };
 
   const handleStatusCellMouseDown=(staffId,dateIdx,shift,status,e)=>{
@@ -374,6 +415,11 @@ export default function App() {
         setBulkSelectCells(cellKeys);
         const firstCell=preview[0];
         setActiveMenu(`${firstCell[0]}-${week_arr[firstCell[1]]}-${firstCell[2]}`);
+        // stagger 预分配，松手时立即给格子加呼吸动画视觉反馈
+        const staggerMap={};
+        cellKeys.forEach((k,i)=>{staggerMap[k]=i*40;});
+        setStaggerCells(staggerMap);
+        setTimeout(()=>setStaggerCells({}), cellKeys.length*40+300);
       } else {
         const upd={...records};
         preview.forEach(([staffId,dateIdx,shift])=>{ delete upd[`${staffId}-${week_arr[dateIdx]}-${shift}`]; });
@@ -667,15 +713,26 @@ export default function App() {
                               const cfg=STATUS_CONFIG[sid];
                               const open=activeMenu===key;
                               const isPreview=isPreviewCell(m.id,weekIdx,shift);
-                              const cls=!isMe?'sh other':sid!=='none'?'sh set':'sh mine';
+                              const isBulkSelected=bulkSelectCells.includes(key);
                               const isSnapping=snapCellKey===key;
+                              const staggerDelay=staggerCells[key];
+                              const cls=!isMe?'sh other':sid!=='none'?'sh set':'sh mine';
                               return (
                                 <div key={shift} style={{position:'relative'}}>
                                   <div
                                     data-cell-key={key}
                                     id={isFirst&&si===0?AM_REF:undefined}
-                                    className={`${cls} ${isPreview?'preview':''} ${isSnapping?'cell-snap':''}`}
-                                    style={sid!=='none'?{background:cfg.bg,color:cfg.color,border:`1.5px solid ${cfg.color}30`}:{}}
+                                    className={[
+                                      cls,
+                                      isPreview     ? 'preview'       : '',
+                                      isSnapping    ? 'cell-snap'     : '',
+                                      isBulkSelected? 'bulk-selected' : '',
+                                      staggerDelay!==undefined ? 'cell-stagger' : '',
+                                    ].join(' ')}
+                                    style={{
+                                      ...(sid!=='none'?{background:cfg.bg,color:cfg.color,border:`1.5px solid ${cfg.color}30`}:{}),
+                                      ...(staggerDelay!==undefined?{animationDelay:`${staggerDelay}ms`}:{}),
+                                    }}
                                     onMouseDown={e=>handleStatusCellMouseDown(m.id,weekIdx,shift,sid,e)}
                                     onMouseOver={()=>handleStatusCellMouseOver(m.id,weekIdx,shift)}
                                     onClick={e=>{
@@ -694,7 +751,7 @@ export default function App() {
                                       <div style={{padding:'3px 10px 7px',fontSize:'10px',color:'#9ca3af',fontWeight:'600',borderBottom:'1px solid #f0f0f0',marginBottom:'3px',letterSpacing:'0.06em'}}>STATUS</div>
                                       {Object.entries(STATUS_CONFIG).map(([sId,sCfg])=>(
                                         <div key={sId} className="s-opt"
-                                          onClick={e=>{ e.stopPropagation(); triggerStatusFly(sId, e.currentTarget, key); }}>
+                                          onClick={e=>{ e.stopPropagation(); handleStatus(key,sId,e); }}>
                                           <span style={{fontSize:'15px'}}>{sCfg.icon}</span>
                                           <span className="s-opt-lbl">{sCfg.label}</span>
                                         </div>
