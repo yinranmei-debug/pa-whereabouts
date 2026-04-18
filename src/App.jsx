@@ -114,6 +114,19 @@ const GlobalStyles = () => (
       transform-origin:center center;
     }
 
+    /* snap-impact: 头像被击中时的回弹 */
+    @keyframes snapImpact{
+      0%  {transform:scale(1)}
+      30% {transform:scale(1.55)}
+      55% {transform:scale(0.88)}
+      75% {transform:scale(1.18)}
+      90% {transform:scale(0.97)}
+      100%{transform:scale(1)}
+    }
+    .snap-impact{
+      animation:snapImpact 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
     @keyframes slideInFromRight{
       from{transform:translateX(52px);opacity:0.3;}
       to  {transform:translateX(0);   opacity:1;  }
@@ -276,6 +289,110 @@ function AccessDeniedScreen({ email, onLogout }) {
   );
 }
 
+// ── 飞行魔法组件 ──────────────────────────────────────────────────────────────
+function FlyingEmoji({ startPos, endPos, icon, onDone }) {
+  const rafRef      = useRef(null);
+  const startTimeRef = useRef(null);
+  const [pos,        setPos]        = useState({ x: startPos.x, y: startPos.y });
+  const [scale,      setScale]      = useState(1);
+  const [rotation,   setRotation]   = useState(0);
+  const [opacity,    setOpacity]    = useState(1);
+  const [pathPoints, setPathPoints] = useState([]);
+  const DURATION = 900;
+
+  useEffect(() => {
+    // 控制点：重力下坠感，Y = max(start,end) + 180
+    const cp = {
+      x: (startPos.x + endPos.x) / 2 - 60,
+      y: Math.max(startPos.y, endPos.y) + 180,
+    };
+
+    const tick = (now) => {
+      if (!startTimeRef.current) startTimeRef.current = now;
+      const elapsed = now - startTimeRef.current;
+      const raw = Math.min(elapsed / DURATION, 1);
+
+      let x, y, sc, rot, op;
+
+      if (raw < 0.25) {
+        // 蓄力阶段
+        const t = raw / 0.25;
+        x   = startPos.x;
+        y   = startPos.y;
+        sc  = 1 + t * 1.0;   // 1 → 2
+        rot = t * 15;
+        op  = 1;
+      } else {
+        // 贝塞尔飞行阶段
+        const t = (raw - 0.25) / 0.75;
+        const inv = 1 - t;
+        x   = inv*inv*startPos.x + 2*inv*t*cp.x + t*t*endPos.x;
+        y   = inv*inv*startPos.y + 2*inv*t*cp.y + t*t*endPos.y;
+        sc  = 2 - t * 1.4;   // 2 → 0.6 shrinks as it lands
+        rot = 15 + t * 345;
+        op  = t > 0.85 ? 1 - (t - 0.85) / 0.15 : 1;
+      }
+
+      setPos({ x, y });
+      setScale(sc);
+      setRotation(rot);
+      setOpacity(op);
+      setPathPoints(prev => [...prev.slice(-28), { x, y }]);
+
+      if (raw < 1) {
+        rafRef.current = requestAnimationFrame(tick);
+      } else {
+        onDone();
+      }
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
+
+  // SVG trail path string
+  const trailPath = pathPoints.length > 1
+    ? 'M ' + pathPoints.map(p => `${p.x} ${p.y}`).join(' L ')
+    : '';
+
+  return (
+    <>
+      {/* 霓虹拖尾 SVG */}
+      {trailPath && (
+        <svg style={{position:'fixed',inset:0,width:'100%',height:'100%',pointerEvents:'none',zIndex:10998}} xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="neon-blur">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <linearGradient id="trail-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#009bff" stopOpacity="0"/>
+              <stop offset="60%" stopColor="#009bff" stopOpacity="0.6"/>
+              <stop offset="100%" stopColor="#770bff" stopOpacity="0.9"/>
+            </linearGradient>
+          </defs>
+          <path d={trailPath} fill="none" stroke="url(#trail-grad)" strokeWidth="3"
+            strokeLinecap="round" filter="url(#neon-blur)" opacity={opacity}/>
+        </svg>
+      )}
+      {/* 飞行 emoji */}
+      <div style={{
+        position:'fixed',
+        left: pos.x,
+        top:  pos.y,
+        transform:`translate(-50%,-50%) scale(${scale}) rotate(${rotation}deg)`,
+        fontSize:'22px',
+        pointerEvents:'none',
+        zIndex:10999,
+        opacity,
+        willChange:'transform,opacity',
+      }}>
+        {icon}
+      </div>
+    </>
+  );
+}
+
 export default function App() {
   const [isInit,          setIsInit]          = useState(false);
   const [account,         setAccount]         = useState(null);
@@ -296,9 +413,10 @@ export default function App() {
   const [bulkSelectCells, setBulkSelectCells] = useState([]);
   const [bouncingDs,      setBouncingDs]      = useState(null);
   const [slideDir,        setSlideDir]        = useState(null);
-  // 新：只追踪横向滚动量，window.innerWidth 直接读，不需要 containerWidth state
   const [tblScrollLeft,   setTblScrollLeft]   = useState(0);
   const [winWidth,        setWinWidth]        = useState(window.innerWidth);
+  // 飞行魔法 state
+  const [flyAnim, setFlyAnim] = useState(null); // {startPos, endPos, icon}
 
   const slideTimerRef = useRef(null);
   const presenceRef   = useRef(null);
@@ -309,18 +427,17 @@ export default function App() {
   const glowLevelRef  = useRef(0);
   const glowRafRef    = useRef(null);
 
-  // 纯 layout math：完全不读任何 DOM 元素位置，slide 动画中也永远正确
-  // window.innerWidth 是视口宽度，表格铺满全宽
-  // 实际可用宽度 = winWidth，但表格有 min-width:860，所以取 max
+  // FIX 1: 正确公式 — 表格铺满全宽，8 份等分（1名字 + 7日期）
   const getColX = (colIndex, scrollLeft) => {
-    const tableW  = Math.max(winWidth, 860);
-    const dataW   = tableW - TBL_PAD * 2 - NAME_COL_W;
-    const colW    = dataW / 7;
-    const colLeft = TBL_PAD + NAME_COL_W + colIndex * colW;
+    const tableW = Math.max(winWidth, 860);
+    // FIX: 只减 padding*2，不再多减 NAME_COL_W
+    const totalCols = 8; // 名字列算1份，7天各1份
+    const colW = (tableW - TBL_PAD * 2) / totalCols;
+    // colIndex 是 0-6 的日期列，名字列是第0份，所以日期列从第1份开始
+    const colLeft = TBL_PAD + (1 + colIndex) * colW;
     return colLeft - scrollLeft + colW / 2;
   };
 
-  // window resize → 更新 winWidth
   useEffect(() => {
     const onResize = () => setWinWidth(window.innerWidth);
     window.addEventListener('resize', onResize);
@@ -340,7 +457,6 @@ export default function App() {
     });
   };
 
-  // glow decay loop
   useEffect(() => {
     const decay = () => {
       glowLevelRef.current = Math.max(0, glowLevelRef.current - 0.016);
@@ -458,7 +574,6 @@ export default function App() {
     return ()=>document.removeEventListener('mousedown',fn);
   }, []);
 
-  // 只保留 pill 垂直 padding 对齐逻辑，X 坐标完全不用 DOM 了
   useEffect(() => {
     const adjustPillPadding = () => {
       const am = document.getElementById(AM_REF);
@@ -507,8 +622,33 @@ export default function App() {
     partyTimerRef.current=setTimeout(()=>{ el.style.transition='transform 0.5s ease'; el.style.transform='scale(1)'; },500);
   };
 
-  const handleStatus = async (key,val,e) => {
+  // 触发飞行魔法：从点击的 s-opt 元素飞向左侧头像
+  const triggerFlyToAvatar = (clickedEl, icon) => {
+    const srcR = clickedEl.getBoundingClientRect();
+    const startPos = { x: srcR.left + srcR.width/2, y: srcR.top + srcR.height/2 };
+    const avEl = document.getElementById(`av-${meStaff?.id}`);
+    if (!avEl) return;
+    const avR = avEl.getBoundingClientRect();
+    const endPos = { x: avR.right - 4, y: avR.bottom - 4 };
+    setFlyAnim({ startPos, endPos, icon });
+  };
+
+  const triggerSnapImpact = () => {
+    const avEl = document.getElementById(`av-${meStaff?.id}`);
+    if (!avEl) return;
+    avEl.classList.remove('snap-impact');
+    void avEl.offsetWidth;
+    avEl.classList.add('snap-impact');
+    setTimeout(() => avEl.classList.remove('snap-impact'), 520);
+  };
+
+  const handleStatus = async (key, val, e, clickedEl) => {
     e.stopPropagation();
+    // 飞行动效：每次选 status 都触发
+    if (clickedEl && val !== null) {
+      const cfg = STATUS_CONFIG[val];
+      if (cfg) triggerFlyToAvatar(clickedEl, cfg.icon);
+    }
     if (bulkSelectCells.length>0) {
       setSaveStatus('saving');
       const updatedRecords={...records};
@@ -620,7 +760,6 @@ export default function App() {
   const handleTableScroll=()=>{
     if (headerRef.current&&scrollRef.current) {
       headerRef.current.scrollLeft=scrollRef.current.scrollLeft;
-      // 更新 scrollLeft 让 emoji X 坐标跟着水平滚动
       setTblScrollLeft(scrollRef.current.scrollLeft);
     }
   };
@@ -663,8 +802,6 @@ export default function App() {
   const jumpToDate=ds=>{setViewDate(new Date(ds));setActiveTab('calendar');};
   const VH=window.innerHeight;
   const slideClass=slideDir==='right'?'week-slide-right':slideDir==='left'?'week-slide-left':'';
-
-  // 非工作日列（带 colIndex）
   const nonEditableCols=week.reduce((acc,d,i)=>{ if (!d.editable) acc.push({...d,colIndex:i}); return acc; },[]);
 
   return (
@@ -672,7 +809,18 @@ export default function App() {
       <GlobalStyles/>
       <div ref={glowFrameRef} className="glow-frame"/>
 
-      {/* emoji 浮层：X 用 layout math，Y 固定视口中央，slide 动画中永远不偏移 */}
+      {/* 飞行魔法层 */}
+      {flyAnim && (
+        <FlyingEmoji
+          key={`${flyAnim.startPos.x}-${flyAnim.startPos.y}-${Date.now()}`}
+          startPos={flyAnim.startPos}
+          endPos={flyAnim.endPos}
+          icon={flyAnim.icon}
+          onDone={() => { setFlyAnim(null); triggerSnapImpact(); }}
+        />
+      )}
+
+      {/* emoji 浮层：layout math，永远居中不偏移 */}
       {activeTab==='calendar' && nonEditableCols.map(d=>{
         const isHol=!!d.hol;
         const holName=d.hol?d.hol.replace(/^\S+\s/,''):'';
@@ -681,10 +829,10 @@ export default function App() {
         const isBouncing = bouncingDs===d.ds;
         return (
           <div key={d.ds} style={{
-            position:'fixed', left:x, top:y,
+            position:'fixed',left:x,top:y,
             transform:'translate(-50%,-50%)',
-            display:'flex', flexDirection:'column', alignItems:'center', gap:'8px',
-            pointerEvents:'none', zIndex:200,
+            display:'flex',flexDirection:'column',alignItems:'center',gap:'8px',
+            pointerEvents:'none',zIndex:200,
           }}>
             <span
               key={isBouncing?`${d.ds}-b`:d.ds}
@@ -693,13 +841,7 @@ export default function App() {
             >
               {isHol?d.hol.split(' ')[0]:'🏝️'}
             </span>
-            <span style={{
-              fontSize:'10px',fontWeight:'700',
-              color:isHol?'#be185d':'#1d4ed8',
-              letterSpacing:'0.06em',textAlign:'center',
-              userSelect:'none',wordBreak:'break-word',
-              fontFamily:"'Plus Jakarta Sans',sans-serif",
-            }}>
+            <span style={{fontSize:'10px',fontWeight:'700',color:isHol?'#be185d':'#1d4ed8',letterSpacing:'0.06em',textAlign:'center',userSelect:'none',wordBreak:'break-word',fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
               {isHol?holName:'WEEKEND'}
             </span>
           </div>
@@ -884,7 +1026,7 @@ export default function App() {
                                       if (!isMe) return;
                                       e.stopPropagation();
                                       if (preview.length<=1) {
-                                        if (sid!=='none') handleStatus(key,null,e);
+                                        if (sid!=='none') handleStatus(key,null,e,null);
                                         else setActiveMenu(open?null:key);
                                       }
                                     }}
@@ -895,7 +1037,8 @@ export default function App() {
                                     <div className="s-drop dsz">
                                       <div style={{padding:'3px 10px 7px',fontSize:'10px',color:'#9ca3af',fontWeight:'600',borderBottom:'1px solid #f0f0f0',marginBottom:'3px',letterSpacing:'0.06em'}}>STATUS</div>
                                       {Object.entries(STATUS_CONFIG).map(([sId,sCfg])=>(
-                                        <div key={sId} className="s-opt" onClick={e=>handleStatus(key,sId,e)}>
+                                        <div key={sId} className="s-opt"
+                                          onClick={e=>handleStatus(key,sId,e,e.currentTarget)}>
                                           <span style={{fontSize:'15px'}}>{sCfg.icon}</span>
                                           <span className="s-opt-lbl">{sCfg.label}</span>
                                         </div>
