@@ -27,7 +27,6 @@ const TB_H   = 52;
 const LG_H   = 36;
 const AM_REF = 'am-ref-btn';
 
-// 精确计算所有上方元素高度总和: 56 + 72 + 52 + 36 = 216px
 const HEADER_STICKY_TOP = NAV_H + SUB_H + TB_H + LG_H;
 
 const fmt = date => {
@@ -108,14 +107,16 @@ const GlobalStyles = () => (
     .legend{height:${LG_H}px;padding:0 28px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:20px;position:sticky;top:${NAV_H+SUB_H+TB_H}px;z-index:470}
     .leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#9ca3af}
     .leg-sw{width:20px;height:10px;border-radius:4px}
-    .tbl-outer{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 28px 48px;background:#f4f5f7}
+    .tbl-outer{background:#f4f5f7;padding-bottom:48px}
+    .tbl-hdr-sticky{position:sticky;top:${HEADER_STICKY_TOP}px;z-index:460;background:#f4f5f7;overflow:hidden;border-bottom:1px solid #ebebeb}
+    .tbl-hdr-row{display:flex;align-items:center;min-width:860px;padding:0 28px}
+    .tbl-hdr-namecol{width:208px;flex-shrink:0}
+    .tbl-hdr-daycol{flex:1;text-align:center;padding:14px 4px 10px}
+    .tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 28px}
     .main-tbl{width:100%;border-collapse:collapse;table-layout:fixed;min-width:860px}
-    .main-tbl thead{position:sticky;top:${HEADER_STICKY_TOP}px;z-index:460;background:#f4f5f7}
-    .main-tbl th{padding:14px 4px 10px;text-align:center;font-size:10px;font-weight:600;color:#9ca3af;letter-spacing:0.06em;background:#f4f5f7}
     .main-tbl td{padding:0;height:${ROW_H}px;vertical-align:top}
-    .sticky-h{position:sticky;left:0;top:${HEADER_STICKY_TOP}px;z-index:461;background:#f4f5f7}
     .sticky-c{position:sticky;left:0;z-index:100;background:#f4f5f7;overflow:visible}
-    .sticky-c::after,.sticky-h::after{content:'';position:absolute;top:0;right:-16px;bottom:0;width:16px;background:linear-gradient(to right,rgba(0,0,0,0.04),transparent);pointer-events:none}
+    .sticky-c::after{content:'';position:absolute;top:0;right:-16px;bottom:0;width:16px;background:linear-gradient(to right,rgba(0,0,0,0.04),transparent);pointer-events:none}
     .nw{height:${ROW_H}px;display:flex;align-items:center;gap:10px;padding:0 8px;border-bottom:1px solid #ebebeb;overflow:visible}
     tr:last-child .nw{border-bottom:none}
     .n-av-wrap{will-change:transform}
@@ -162,7 +163,7 @@ const GlobalStyles = () => (
     .ms-app-row{display:flex;align-items:center;gap:10px;margin-top:28px;padding-top:16px;border-top:1px solid #edebe9}
     .ms-app-icon{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#009bff,#770bff);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0}
     .ms-err{margin-top:14px;color:#a4262c;background:#fde7e9;padding:10px 14px;border-radius:2px;font-size:13px;border-left:3px solid #a4262c}
-    @media(max-width:768px){.nav,.sub-header,.toolbar,.legend,.tbl-outer{padding-left:16px;padding-right:16px}}
+    @media(max-width:768px){.nav,.sub-header,.toolbar,.legend{padding-left:16px;padding-right:16px}.tbl-scroll{padding:0 16px}.tbl-hdr-row{padding:0 16px}}
   `}</style>
 );
 
@@ -220,27 +221,29 @@ function AccessDeniedScreen({ email, onLogout }) {
 }
 
 export default function App() {
-  const [isInit,              setIsInit]              = useState(false);
-  const [account,             setAccount]             = useState(null);
-  const [authError,           setAuthError]           = useState(null);
-  const [denied,              setDenied]              = useState(false);
-  const [activeTab,           setActiveTab]           = useState('calendar');
-  const [viewDate,            setViewDate]            = useState(new Date());
-  const [region,              setRegion]              = useState('Hong Kong');
-  const [records,             setRecords]             = useState({});
-  const [activeMenu,          setActiveMenu]          = useState(null);
-  const [socialMenu,          setSocialMenu]          = useState(null);
-  const [emotions,            setEmotions]            = useState({});
-  const [saveStatus,          setSaveStatus]          = useState('');
-  const [pillRects,           setPillRects]           = useState({});
-  const [staffPhotos,         setStaffPhotos]         = useState({});
-  const [onlineUsers,         setOnlineUsers]         = useState([]);
-  const [dragging,            setDragging]            = useState(null);
-  const [preview,             setPreview]             = useState([]);
-  const [bulkSelectCells,     setBulkSelectCells]     = useState([]);
-  
+  const [isInit,          setIsInit]          = useState(false);
+  const [account,         setAccount]         = useState(null);
+  const [authError,       setAuthError]       = useState(null);
+  const [denied,          setDenied]          = useState(false);
+  const [activeTab,       setActiveTab]       = useState('calendar');
+  const [viewDate,        setViewDate]        = useState(new Date());
+  const [region,          setRegion]          = useState('Hong Kong');
+  const [records,         setRecords]         = useState({});
+  const [activeMenu,      setActiveMenu]      = useState(null);
+  const [socialMenu,      setSocialMenu]      = useState(null);
+  const [emotions,        setEmotions]        = useState({});
+  const [saveStatus,      setSaveStatus]      = useState('');
+  const [pillRects,       setPillRects]       = useState({});
+  const [staffPhotos,     setStaffPhotos]     = useState({});
+  const [onlineUsers,     setOnlineUsers]     = useState([]);
+  const [dragging,        setDragging]        = useState(null);
+  const [preview,         setPreview]         = useState([]);
+  const [bulkSelectCells, setBulkSelectCells] = useState([]);
+
   const presenceRef   = useRef(null);
   const partyTimerRef = useRef(null);
+  const scrollRef     = useRef(null);
+  const headerRef     = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -302,7 +305,7 @@ export default function App() {
         }).subscribe();
       supabase.channel('emotions-changes')
         .on('postgres_changes', { event:'*', schema:'public', table:'emotions' }, payload => {
-          if (payload.eventType === 'DELETE') setEmotions(e => { const n={...e}; delete n[payload.old.staff_id]; return n; });
+          if (payload.eventType==='DELETE') setEmotions(e => { const n={...e}; delete n[payload.old.staff_id]; return n; });
           else setEmotions(e => ({ ...e, [payload.new.staff_id]:payload.new.emoji }));
         }).subscribe();
     })();
@@ -393,7 +396,6 @@ export default function App() {
 
   const handleStatus = async (key, val, e) => {
     e.stopPropagation();
-    
     if (bulkSelectCells.length > 0) {
       setSaveStatus('saving');
       const updatedRecords = { ...records };
@@ -401,7 +403,6 @@ export default function App() {
       setRecords(updatedRecords);
       setActiveMenu(null);
       setBulkSelectCells([]);
-      
       (async () => {
         try {
           await Promise.all(bulkSelectCells.map(cellKey => {
@@ -436,21 +437,17 @@ export default function App() {
     if (!dragging) return;
     const staffIds = STAFF_LIST.filter(s => s.region === region).map(s => s.id);
     const startIdx = staffIds.indexOf(dragging.staffId);
-    const endIdx = staffIds.indexOf(staffId);
+    const endIdx   = staffIds.indexOf(staffId);
     const minIdx = Math.min(startIdx, endIdx);
     const maxIdx = Math.max(startIdx, endIdx);
-    const startDate = dragging.dateIdx;
-    const endDate = dateIdx;
-    const minDate = Math.min(startDate, endDate);
-    const maxDate = Math.max(startDate, endDate);
-    const startShift = dragging.shift === 'AM' ? 0 : 1;
-    const endShift = shift === 'AM' ? 0 : 1;
-    const minShift = Math.min(startShift, endShift);
-    const maxShift = Math.max(startShift, endShift);
+    const minDate = Math.min(dragging.dateIdx, dateIdx);
+    const maxDate = Math.max(dragging.dateIdx, dateIdx);
+    const minShift = Math.min(dragging.shift==='AM'?0:1, shift==='AM'?0:1);
+    const maxShift = Math.max(dragging.shift==='AM'?0:1, shift==='AM'?0:1);
     const range = [];
     for (let r = minIdx; r <= maxIdx; r++) {
       for (let d = minDate; d <= maxDate; d++) {
-        if (minShift === maxShift) range.push([staffIds[r], d, minShift === 0 ? 'AM' : 'PM']);
+        if (minShift === maxShift) range.push([staffIds[r], d, minShift===0?'AM':'PM']);
         else { range.push([staffIds[r], d, 'AM']); range.push([staffIds[r], d, 'PM']); }
       }
     }
@@ -460,21 +457,15 @@ export default function App() {
   const handleStatusCellMouseUp = async () => {
     if (!dragging || preview.length === 0) { setDragging(null); setPreview([]); return; }
     const isEmptyCell = dragging.isEmptyCell;
-    const week_arr = (() => {
-      const d = new Date(viewDate), day = d.getDay();
-      const mon = new Date(d.setDate(d.getDate()-day+(day===0?-6:1)));
-      return Array.from({length:7}).map((_,i) => {
-        const t = new Date(mon); t.setDate(mon.getDate()+i);
-        return fmt(t);
-      });
-    })();
-
+    const week_arr = week.map(d => d.ds);
     if (isEmptyCell) {
-      const cellKeys = preview.map(([staffId, dateIdx, shift]) => `${staffId}-${week_arr[dateIdx]}-${shift}`);
-      setBulkSelectCells(cellKeys);
-      const firstCell = preview[0];
-      const key = `${firstCell[0]}-${week_arr[firstCell[1]]}-${firstCell[2]}`;
-      setActiveMenu(key);
+      if (preview.length > 1) {
+        const cellKeys = preview.map(([staffId, dateIdx, shift]) => `${staffId}-${week_arr[dateIdx]}-${shift}`);
+        setBulkSelectCells(cellKeys);
+        const firstCell = preview[0];
+        const key = `${firstCell[0]}-${week_arr[firstCell[1]]}-${firstCell[2]}`;
+        setActiveMenu(key);
+      }
       setDragging(null); setPreview([]);
     } else {
       const updatedRecords = { ...records };
@@ -518,9 +509,15 @@ export default function App() {
     presenceRef.current?.send({ type:'broadcast', event:'party', payload:{ type, text, userId:meStaff?.id||'guest' } });
   };
 
+  const handleTableScroll = () => {
+    if (headerRef.current && scrollRef.current) {
+      headerRef.current.scrollLeft = scrollRef.current.scrollLeft;
+    }
+  };
+
   const today     = fmt(new Date());
   const staffList = STAFF_LIST.filter(s => s.region === region);
-  const inOffice = (() => {
+  const inOffice  = (() => {
     let n = 0;
     staffList.forEach(s => {
       const absent = st => ['AL','SL','BL','BH','ML','PL','WFH','OL','DV'].includes(st);
@@ -538,7 +535,7 @@ export default function App() {
       const rd = HOLIDAYS_DATA[region];
       const hol = rd?.holidays?.[ds];
       const isAdj = rd?.adjusted_workdays?.includes(ds);
-      const isWE = (t.getDay()===0||t.getDay()===6)&&!isAdj;
+      const isWE  = (t.getDay()===0||t.getDay()===6)&&!isAdj;
       return { ds, num:t.getDate(), dayName:t.toLocaleDateString('en-US',{weekday:'short'}), hol, isWE, isToday:ds===today, editable:!hol&&(!(t.getDay()===0||t.getDay()===6)||isAdj), isAdj };
     });
   })();
@@ -557,8 +554,9 @@ export default function App() {
   return (
     <div style={{minHeight:'100vh', background:'#f4f5f7'}} onMouseUp={handleStatusCellMouseUp}>
       <GlobalStyles />
+
       {activeTab === 'calendar' && week.filter(d => !d.editable).map(d => {
-        const isHol = !!d.hol;
+        const isHol   = !!d.hol;
         const holName = d.hol ? d.hol.replace(/^\S+\s/, '') : '';
         const pos = pillRects[d.ds];
         if (!pos) return null;
@@ -573,6 +571,7 @@ export default function App() {
           </div>
         );
       })}
+
       <nav className="nav">
         <div className={`nav-tab${activeTab==='calendar'?' active':''}`} onClick={() => setActiveTab('calendar')}>Calendar</div>
         <div className={`nav-tab${activeTab==='planner'?' active':''}`} style={{position:'relative'}} onClick={() => setActiveTab(activeTab==='planner'?'calendar':'planner')}>
@@ -626,6 +625,7 @@ export default function App() {
           </div>
         </div>
       </nav>
+
       <div className="sub-header">
         <div>
           <div className="page-title">APAC Whereabouts</div>
@@ -639,6 +639,7 @@ export default function App() {
           </div>
         )}
       </div>
+
       <div className="toolbar">
         <button className="tb-btn icon" onClick={() => { const d=new Date(viewDate); d.setDate(d.getDate()-7); setViewDate(d); }}>‹</button>
         <button className="tb-btn today" onClick={() => setViewDate(new Date())}>Today</button>
@@ -648,127 +649,153 @@ export default function App() {
         </select>
         <span className="tb-month">{viewDate.toLocaleString('default',{month:'long',year:'numeric'})}</span>
       </div>
+
       <div className="legend">
         <div className="leg-item"><div className="leg-sw" style={{background:'linear-gradient(135deg,#fdf2f8,#fce7f3)',border:'1.5px solid #f9a8d4'}}></div>Holiday</div>
         <div className="leg-item"><div className="leg-sw" style={{background:'linear-gradient(135deg,#eff6ff,#dbeafe)',border:'1.5px solid #93c5fd'}}></div>Weekend</div>
         <div className="leg-item"><div className="leg-sw" style={{background:'linear-gradient(135deg,#e8f0fe,#ede8fe)'}}></div>My days</div>
         <div className="leg-item"><div className="leg-sw" style={{background:'#fafafa',border:'1.5px solid #f3f4f6'}}></div>Team days</div>
       </div>
-      <div className="tbl-outer dsz" onMouseLeave={handleStatusCellMouseUp}>
-        <table className="main-tbl">
-          <colgroup>
-            <col style={{width:'200px'}}/>
-            {week.map(d => <col key={d.ds}/>)}
-          </colgroup>
-          <thead style={{position:'sticky',top:`${HEADER_STICKY_TOP}px`,zIndex:460,background:'#f4f5f7'}}>
-            <tr>
-              <th className="sticky-h" style={{textAlign:'left'}}></th>
-              {week.map(d => (
-                <th key={d.ds}>
-                  <div style={{fontSize:'10px',fontWeight:'600',color:d.isToday?'#770bff':'#9ca3af',marginBottom:'5px',letterSpacing:'0.06em'}}>{d.dayName.toUpperCase()}</div>
-                  <div style={{width:'30px',height:'30px',borderRadius:'50%',margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'center',background:d.isToday?'linear-gradient(135deg,#009bff,#770bff)':'transparent',color:d.isToday?'#fff':'#111827',fontSize:'14px',fontWeight:'600'}}>{d.num}</div>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {staffList.map((m, rowIdx) => {
-              const isMe    = m.email.toLowerCase() === me;
-              const isFirst = rowIdx === 0;
-              return (
-                <tr key={m.id} id={isMe?'my-row':undefined}>
-                  <td className="sticky-c" style={{background:'#f4f5f7',padding:'0 8px 0 0'}}>
-                    <div className="nw">
-                      <div style={{display:'flex',alignItems:'center',gap:'10px',position:'relative',cursor:isMe?'pointer':'default'}}
-                        onClick={async () => {
-                          if (!isMe) return;
-                          if (emotions[m.id]) { await supabase.from('emotions').delete().eq('staff_id', m.id); }
-                          else { setSocialMenu(socialMenu===m.id ? null : m.id); }
-                        }}>
-                        <div id={`av-${m.id}`} className="n-av-wrap" style={{position:'relative'}}>
-                          <Avatar name={m.name} photoUrl={staffPhotos[m.id]} size={34} isMe={isMe}/>
-                          {emotions[m.id] && <div className="emo-tag">{emotions[m.id]}</div>}
-                        </div>
-                        <div>
-                          <div className={`n-name${isMe?' me':''}`}>{m.name}</div>
-                          {isMe && <div className="n-you">YOU</div>}
-                        </div>
-                        {isMe && socialMenu===m.id && (
-                          <div className="emo-picker dsz">
-                            {['🧘','⚡','☕','🎯','🚀','💪','🌱'].map(emo => (
-                              <div key={emo}
-                                onClick={async e => { e.stopPropagation(); await supabase.from('emotions').upsert({ staff_id:m.id, emoji:emo }); setSocialMenu(null); }}
-                                style={{fontSize:'18px',cursor:'pointer',padding:'4px 6px',borderRadius:'6px',transition:'background 0.1s'}}
-                                onMouseOver={e => e.currentTarget.style.background='#f3f4f6'}
-                                onMouseOut={e  => e.currentTarget.style.background='transparent'}
-                              >{emo}</div>
-                            ))}
+
+      <div className="tbl-outer dsz">
+
+        {/* ── 独立 sticky 表头，完全在 tbl-scroll 之外，祖先链无 overflow ── */}
+        <div className="tbl-hdr-sticky">
+          <div ref={headerRef} className="tbl-hdr-row">
+            {/* 名字列占位：与 table 第一列 col width:200px + td padding:0 8px 0 0 对齐 */}
+            <div className="tbl-hdr-namecol"/>
+            {/* 7个日期格，flex:1 与 table 等分列完全一致 */}
+            {week.map(d => (
+              <div key={d.ds} className="tbl-hdr-daycol">
+                <div style={{fontSize:'10px',fontWeight:'600',letterSpacing:'0.06em',marginBottom:'5px',color:d.isToday?'#770bff':'#9ca3af'}}>
+                  {d.dayName.toUpperCase()}
+                </div>
+                <div style={{
+                  width:'30px',height:'30px',borderRadius:'50%',
+                  margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'center',
+                  background:d.isToday?'linear-gradient(135deg,#009bff,#770bff)':'transparent',
+                  color:d.isToday?'#fff':'#111827',
+                  fontSize:'14px',fontWeight:'600',
+                }}>
+                  {d.num}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── 可水平滚动的表格，onScroll 同步表头 scrollLeft ── */}
+        <div
+          ref={scrollRef}
+          className="tbl-scroll dsz"
+          onScroll={handleTableScroll}
+          onMouseLeave={handleStatusCellMouseUp}
+        >
+          <table className="main-tbl">
+            <colgroup>
+              <col style={{width:'200px'}}/>
+              {week.map(d => <col key={d.ds}/>)}
+            </colgroup>
+            <tbody>
+              {staffList.map((m, rowIdx) => {
+                const isMe    = m.email.toLowerCase() === me;
+                const isFirst = rowIdx === 0;
+                return (
+                  <tr key={m.id} id={isMe?'my-row':undefined}>
+                    <td className="sticky-c" style={{background:'#f4f5f7',padding:'0 8px 0 0'}}>
+                      <div className="nw">
+                        <div style={{display:'flex',alignItems:'center',gap:'10px',position:'relative',cursor:isMe?'pointer':'default'}}
+                          onClick={async () => {
+                            if (!isMe) return;
+                            if (emotions[m.id]) { await supabase.from('emotions').delete().eq('staff_id', m.id); }
+                            else { setSocialMenu(socialMenu===m.id ? null : m.id); }
+                          }}>
+                          <div id={`av-${m.id}`} className="n-av-wrap" style={{position:'relative'}}>
+                            <Avatar name={m.name} photoUrl={staffPhotos[m.id]} size={34} isMe={isMe}/>
+                            {emotions[m.id] && <div className="emo-tag">{emotions[m.id]}</div>}
                           </div>
-                        )}
+                          <div>
+                            <div className={`n-name${isMe?' me':''}`}>{m.name}</div>
+                            {isMe && <div className="n-you">YOU</div>}
+                          </div>
+                          {isMe && socialMenu===m.id && (
+                            <div className="emo-picker dsz">
+                              {['🧘','⚡','☕','🎯','🚀','💪','🌱'].map(emo => (
+                                <div key={emo}
+                                  onClick={async e => { e.stopPropagation(); await supabase.from('emotions').upsert({ staff_id:m.id, emoji:emo }); setSocialMenu(null); }}
+                                  style={{fontSize:'18px',cursor:'pointer',padding:'4px 6px',borderRadius:'6px',transition:'background 0.1s'}}
+                                  onMouseOver={e => e.currentTarget.style.background='#f3f4f6'}
+                                  onMouseOut={e  => e.currentTarget.style.background='transparent'}
+                                >{emo}</div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  {week.map((d, weekIdx) => {
-                    if (!d.editable) {
-                      if (!isFirst) return null;
-                      const isHol = !!d.hol;
+                    </td>
+                    {week.map((d, weekIdx) => {
+                      if (!d.editable) {
+                        if (!isFirst) return null;
+                        const isHol = !!d.hol;
+                        return (
+                          <td key={d.ds} className="ptd" rowSpan={staffList.length}>
+                            <div data-pill-ds={d.ds} className={`pill ${isHol?'hol':'we'}`} onClick={e => fireParty(e, isHol?'holiday':'weekend', d.hol||'')}>
+                              <div className="pill-card"/>
+                            </div>
+                          </td>
+                        );
+                      }
                       return (
-                        <td key={d.ds} className="ptd" rowSpan={staffList.length}>
-                          <div data-pill-ds={d.ds} className={`pill ${isHol?'hol':'we'}`} onClick={e => fireParty(e, isHol?'holiday':'weekend', d.hol||'')}>
-                            <div className="pill-card"/>
+                        <td key={d.ds}>
+                          <div className="dw">
+                            {['AM','PM'].map((shift, si) => {
+                              const key     = `${m.id}-${d.ds}-${shift}`;
+                              const sid     = records[key] || 'none';
+                              const cfg     = STATUS_CONFIG[sid];
+                              const open    = activeMenu === key;
+                              const isPreview = isPreviewCell(m.id, weekIdx, shift);
+                              const cls     = !isMe ? 'sh other' : sid!=='none' ? 'sh set' : 'sh mine';
+                              return (
+                                <div key={shift} style={{position:'relative'}}>
+                                  <div
+                                    id={isFirst && si===0 ? AM_REF : undefined}
+                                    className={`${cls} ${isPreview ? 'preview' : ''}`}
+                                    style={sid!=='none' ? {background:cfg.bg,color:cfg.color,border:`1.5px solid ${cfg.color}30`} : {}}
+                                    onMouseDown={e => handleStatusCellMouseDown(m.id, weekIdx, shift, sid, e)}
+                                    onMouseOver={() => handleStatusCellMouseOver(m.id, weekIdx, shift)}
+                                    onClick={e => {
+                                      if (!isMe) return;
+                                      if (sid !== 'none') handleStatus(key, null, e);
+                                      else { e.stopPropagation(); setActiveMenu(open?null:key); }
+                                    }}
+                                  >
+                                    {sid !== 'none' ? `${cfg.icon} ${cfg.label}` : shift}
+                                  </div>
+                                  {open && isMe && (
+                                    <div className="s-drop dsz">
+                                      <div style={{padding:'3px 10px 7px',fontSize:'10px',color:'#9ca3af',fontWeight:'600',borderBottom:'1px solid #f0f0f0',marginBottom:'3px',letterSpacing:'0.06em'}}>STATUS</div>
+                                      {Object.entries(STATUS_CONFIG).map(([sId,sCfg]) => (
+                                        <div key={sId} className="s-opt" onClick={e => handleStatus(key,sId,e)}>
+                                          <span style={{fontSize:'15px'}}>{sCfg.icon}</span>
+                                          <span className="s-opt-lbl">{sCfg.label}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
                         </td>
                       );
-                    }
-                    return (
-                      <td key={d.ds}>
-                        <div className="dw">
-                          {['AM','PM'].map((shift, si) => {
-                            const key  = `${m.id}-${d.ds}-${shift}`;
-                            const sid  = records[key] || 'none';
-                            const cfg  = STATUS_CONFIG[sid];
-                            const open = activeMenu === key;
-                            const isPreview = isPreviewCell(m.id, weekIdx, shift);
-                            const cls  = !isMe ? 'sh other' : sid!=='none' ? 'sh set' : 'sh mine';
-                            return (
-                              <div key={shift} style={{position:'relative'}}>
-                                <div
-                                  id={isFirst && si===0 ? AM_REF : undefined}
-                                  className={`${cls} ${isPreview ? 'preview' : ''}`}
-                                  style={sid!=='none' ? {background:cfg.bg,color:cfg.color,border:`1.5px solid ${cfg.color}30`} : {}}
-                                  onMouseDown={(e) => handleStatusCellMouseDown(m.id, weekIdx, shift, sid, e)}
-                                  onMouseOver={() => handleStatusCellMouseOver(m.id, weekIdx, shift)}
-                                  onClick={e => {
-                                    if (!isMe) return;
-                                    if (sid !== 'none') handleStatus(key, null, e); // 已经有状态的点按直接取消
-                                    else { e.stopPropagation(); setActiveMenu(open?null:key); } // 空白点按弹出菜单
-                                  }}
-                                >
-                                  {sid !== 'none' ? `${cfg.icon} ${cfg.label}` : shift}
-                                </div>
-                                {open && isMe && (
-                                  <div className="s-drop dsz">
-                                    <div style={{padding:'3px 10px 7px',fontSize:'10px',color:'#9ca3af',fontWeight:'600',borderBottom:'1px solid #f0f0f0',marginBottom:'3px',letterSpacing:'0.06em'}}>STATUS</div>
-                                    {Object.entries(STATUS_CONFIG).map(([sId,sCfg]) => (
-                                      <div key={sId} className="s-opt" onClick={e => handleStatus(key,sId,e)}>
-                                        <span style={{fontSize:'15px'}}>{sCfg.icon}</span>
-                                        <span className="s-opt-lbl">{sCfg.label}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
       </div>
     </div>
   );
