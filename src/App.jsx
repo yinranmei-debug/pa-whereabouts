@@ -665,12 +665,14 @@ export default function App() {
                         <div style={{display:'flex',alignItems:'center',gap:'10px',position:'relative',cursor:isMe?'pointer':'default'}}
                           onClick={()=>{ if (!isMe) return; setSocialMenu(socialMenu===m.id?null:m.id); }}>
                           <div
-                            ref={isMe?myAvatarRef:null}
-                            id={`av-${m.id}`}
-                            className={`n-av-wrap${isMe?' is-me':' is-other'}`}
-                            style={{position:'relative'}}
-                          >
-                            <Avatar name={m.name} photoUrl={staffPhotos[m.id]} size={46} isMe={isMe}/>
+  ref={isMe?myAvatarRef:null}
+  id={`av-${m.id}`}
+  className={`n-av-wrap${isMe?' is-me':' is-other'}`}
+  style={{position:'relative'}}
+  onMouseEnter={e=>{ if (!isMe) e.currentTarget.style.transform='scale(1.1)'; }}
+  onMouseLeave={e=>{ if (!isMe) e.currentTarget.style.transform='scale(1)'; }}
+>
+                            <Avatar name={m.name} photoUrl={staffPhotos[m.id]} size={60} isMe={isMe}/>
                             {emotions[m.id]&&<div className="emo-tag">{emotions[m.id]}</div>}
                           </div>
                           <div>
