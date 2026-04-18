@@ -75,11 +75,19 @@ const GlobalStyles = () => (
 
     .tb-btn.today{
       position:relative;overflow:hidden;
-      background:linear-gradient(90deg,#009bff,#770bff);
-      color:#fff;border:none;font-weight:600;padding:0 16px;
+      background:linear-gradient(90deg,#009bff,#770bff) !important;
+      color:#fff !important;
+      border:none !important;
+      font-weight:600;
+      padding:0 16px;
       transform-origin:center center;
     }
-    .tb-btn.today:hover{opacity:0.9;}
+    .tb-btn.today:hover{
+      background:linear-gradient(90deg,#009bff,#770bff) !important;
+      color:#fff !important;
+      border:none !important;
+      opacity:0.88;
+    }
     .tb-btn.today:active{
       transform:scale(0.92) translateY(1px);
       box-shadow:inset 0 4px 8px rgba(0,0,0,0.2);
