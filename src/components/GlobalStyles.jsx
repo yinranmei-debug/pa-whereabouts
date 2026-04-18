@@ -159,13 +159,12 @@ const GlobalStyles = () => (
     tr:hover .n-name{background:linear-gradient(90deg,#009bff,#770bff);-webkit-background-clip:text;background-clip:text;color:transparent;}
     .n-you{font-size:9px;font-weight:700;background:linear-gradient(90deg,#009bff,#770bff);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:0.06em;margin-top:2px;}
 
-    .emo-tag{position:absolute;bottom:-6px;right:-6px;background:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.15);border:2px solid #fff;}
+    .emo-tag{position:absolute;bottom:-6px;right:-6px;background:#fff;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 2px 8px rgba(0,0,0,0.15);border:2px solid #fff;}
     .emo-picker{position:absolute;left:54px;top:4px;z-index:10050;background:#fff;border-radius:14px;display:flex;padding:8px;gap:4px;box-shadow:0 8px 32px rgba(0,0,0,0.1);border:1px solid #e5e7eb;animation:dropIn 0.15s ease;}
 
     .dw{height:${ROW_H}px;display:flex;flex-direction:column;justify-content:center;gap:7px;padding:0 6px;border-bottom:1px solid #f1f5f9;}
     tr:last-child .dw{border-bottom:none;}
 
-    /* status cells — emoji larger via .sh-icon, text stays 12px */
     .sh{height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;transition:all 0.15s;user-select:none;border:none;cursor:pointer;gap:4px;}
     .sh-icon{font-size:18px;line-height:1;flex-shrink:0;}
     .sh.mine{background:linear-gradient(135deg,#EEF2FF,#F5F3FF);color:#6b7280;border:1px solid rgba(199,210,254,0.6);}
@@ -206,7 +205,20 @@ const GlobalStyles = () => (
     .ms-app-icon{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#009bff,#770bff);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;}
     .ms-err{margin-top:14px;color:#a4262c;background:#fde7e9;padding:10px 14px;border-radius:8px;font-size:13px;border-left:3px solid #a4262c;}
 
-    @media(max-width:768px){.nav,.toolbar,.legend{padding-left:16px;padding-right:16px;}.tbl-scroll,.tbl-hdr-row{padding-left:16px;padding-right:16px;}.tbl-outer{padding:16px 16px 48px;}}
+    @media(max-width:768px){
+      .nav,.toolbar,.legend{padding-left:16px;padding-right:16px;}
+      .tbl-scroll,.tbl-hdr-row{padding-left:16px;padding-right:16px;}
+      .tbl-outer{padding:16px 16px 48px;}
+      .nav-logo-text{font-size:16px;margin-right:12px;}
+      .nav-tab{padding:0 10px;font-size:13px;}
+      .online-pill{display:none;}
+      .team-summary{display:none;}
+      .tb-month{font-size:13px;}
+      .toolbar{gap:6px;padding:0 16px;}
+      .tb-btn{height:30px;font-size:12px;}
+      .legend{gap:12px;padding:0 16px;}
+      .leg-item{font-size:11px;}
+    }
   `}</style>
 );
 
