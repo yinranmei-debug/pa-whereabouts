@@ -69,25 +69,21 @@ const GlobalStyles = () => (
     *,*:before,*:after{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%}
 
+    /*
+     * FIX 2: holiBounce now targets .pill-card (the inner element), NOT .pill.
+     * .pill keeps its fixed dimensions — scale on .pill-card stays visually
+     * contained inside .pill's box, so adjacent columns never shift.
+     */
     @keyframes holiBounce{
       0%  {transform:scale(1)}
-      35% {transform:scale(1.06)}
-      65% {transform:scale(0.96)}
-      82% {transform:scale(1.02)}
+      35% {transform:scale(1.08)}
+      65% {transform:scale(0.95)}
+      82% {transform:scale(1.03)}
       100%{transform:scale(1)}
     }
-    /* FIX 2: contain+overflow lock the scale inside the pill's own box, no grid bleed */
-    .holi-tap{
-      animation:holiBounce 0.42s cubic-bezier(0.25,0.46,0.45,0.94) both !important;
+    .holi-tap .pill-card{
+      animation:holiBounce 0.42s cubic-bezier(0.25,0.46,0.45,0.94) both;
       transform-origin:center center;
-      isolation:isolate;
-      overflow:hidden;
-      contain:layout style;
-    }
-    /* pill itself also clips so scale never bleeds into adjacent td */
-    .pill{
-      overflow:hidden;
-      contain:layout style;
     }
 
     @keyframes dropIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
@@ -95,11 +91,23 @@ const GlobalStyles = () => (
     @keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
     @keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.4)}50%{box-shadow:0 0 0 4px rgba(34,197,94,0)}}
 
-    /* FIX 1: glow frame — NO animation, NO default opacity. Fully JS-driven. */
+    /*
+     * FIX 1: glow frame — GPU-composited layer via transform:translateZ(0) + will-change.
+     * Use OUTER box-shadow (not inset) on a 4-sided border overlay so the browser
+     * can promote this to its own compositing layer and animate opacity/box-shadow
+     * without repainting the main document layer.
+     * The frame sits outside the viewport boundary so the outer shadow bleeds inward.
+     */
     .glow-frame{
-      position:fixed;inset:0;pointer-events:none;z-index:9998;
+      position:fixed;
+      inset:-6px;
+      pointer-events:none;
+      z-index:9998;
       opacity:0;
-      box-shadow:inset 0 0 0px 0px rgba(0,155,255,0);
+      border-radius:0;
+      box-shadow:0 0 0px 0px rgba(0,155,255,0);
+      will-change:opacity,box-shadow;
+      transform:translateZ(0);
     }
 
     body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;background:#f4f5f7;color:#111827;-webkit-font-smoothing:antialiased}
@@ -169,9 +177,10 @@ const GlobalStyles = () => (
     .s-opt:hover{background:#f9fafb}
     .s-opt-lbl{font-weight:400;color:#374151}
     td.ptd{height:1px;padding:0 4px;vertical-align:top}
-    /* pill base — overflow+contain prevent scale from bleeding into adjacent columns */
-    .pill{height:100%;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:pointer;user-select:none;overflow:hidden;contain:layout style;}
-    .pill-card{width:100%;flex:1;border-radius:10px;transition:box-shadow 0.2s,filter 0.2s}
+    /* pill container: fixed bounds, clips overflow so scale on pill-card stays inside */
+    .pill{height:100%;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:pointer;user-select:none;overflow:hidden;}
+    /* pill-card: this is what actually scales — it's a child, so scale is clipped by .pill's overflow:hidden */
+    .pill-card{width:100%;flex:1;border-radius:10px;transition:box-shadow 0.2s,filter 0.2s;transform-origin:center center;will-change:transform;}
     .pill:hover .pill-card{filter:brightness(0.97)}
     .hol .pill-card{background:linear-gradient(180deg,#fdf2f8,#fce7f3);box-shadow:0 2px 8px rgba(236,72,153,0.12),0 1px 3px rgba(236,72,153,0.06)}
     .we  .pill-card{background:linear-gradient(180deg,#eff6ff,#dbeafe);box-shadow:0 2px 8px rgba(59,130,246,0.1),0 1px 3px rgba(59,130,246,0.06)}
@@ -275,32 +284,30 @@ export default function App() {
   const glowLevelRef  = useRef(0);
   const glowRafRef    = useRef(null);
 
-  // ── glow decay loop ───────────────────────────────────────────────────────
+  // ── glow decay loop — fully imperative, zero React re-renders ────────────
   useEffect(() => {
     const decay = () => {
       glowLevelRef.current = Math.max(0, glowLevelRef.current - 0.016);
-      if (glowFrameRef.current) {
+      const el = glowFrameRef.current;
+      if (el) {
         const lvl = glowLevelRef.current;
         if (lvl > 0.001) {
-          const i1 = 40  + lvl * 130;
-          const s1 = 8   + lvl * 44;
-          const i2 = 80  + lvl * 220;
-          const s2 = 16  + lvl * 64;
-          const i3 = lvl * 70;
-          const s3 = lvl * 14;
-          const op1 = 0.30 + lvl * 0.55;
-          const op2 = 0.18 + lvl * 0.48;
-          const op3 = lvl  * 0.42;
-          glowFrameRef.current.style.opacity   = String(Math.min(lvl * 1.4, 1));
-          glowFrameRef.current.style.boxShadow = [
-            `inset 0 0 ${i1}px ${s1}px rgba(0,155,255,${op1})`,
-            `inset 0 0 ${i2}px ${s2}px rgba(119,11,255,${op2})`,
-            `inset 0 0 ${i3}px ${s3}px rgba(0,229,255,${op3})`,
+          // outer box-shadow bleeds inward from the -6px inset frame
+          const b1  = lvl * 80;
+          const b2  = lvl * 160;
+          const b3  = lvl * 50;
+          const op1 = 0.25 + lvl * 0.55;
+          const op2 = 0.15 + lvl * 0.45;
+          const op3 = lvl  * 0.4;
+          el.style.opacity   = String(Math.min(lvl * 1.5, 1));
+          el.style.boxShadow = [
+            `0 0 ${b1}px ${lvl*28}px rgba(0,155,255,${op1})`,
+            `0 0 ${b2}px ${lvl*50}px rgba(119,11,255,${op2})`,
+            `0 0 ${b3}px ${lvl*14}px rgba(0,229,255,${op3})`,
           ].join(',');
         } else {
-          // fully off
-          glowFrameRef.current.style.opacity   = '0';
-          glowFrameRef.current.style.boxShadow = 'none';
+          el.style.opacity   = '0';
+          el.style.boxShadow = 'none';
         }
       }
       glowRafRef.current = requestAnimationFrame(decay);
@@ -566,10 +573,15 @@ export default function App() {
 
   const fireParty = (e, type, text='') => {
     const pill = e.currentTarget.closest('.pill');
-    if (pill) { pill.classList.remove('holi-tap'); void pill.offsetWidth; pill.classList.add('holi-tap'); }
+    if (pill) {
+      // remove then re-add to restart animation on rapid clicks
+      pill.classList.remove('holi-tap');
+      void pill.offsetWidth;
+      pill.classList.add('holi-tap');
+    }
     firePartyLocal(type, text);
     popAvatar(meStaff?.id || 'guest');
-    // boost glow on every click — stacks with rapid clicking, capped at 1
+    // boost glow — stacks with rapid clicks, capped at 1
     glowLevelRef.current = Math.min(glowLevelRef.current + 0.65, 1);
     presenceRef.current?.send({ type:'broadcast', event:'party', payload:{ type, text, userId:meStaff?.id||'guest' } });
   };
@@ -620,7 +632,7 @@ export default function App() {
     <div style={{minHeight:'100vh', background:'#f4f5f7'}} onMouseUp={handleStatusCellMouseUp}>
       <GlobalStyles />
 
-      {/* glow frame — invisible by default, JS-driven on click only */}
+      {/* glow frame — outside viewport bounds, outer shadow bleeds inward as edge glow */}
       <div ref={glowFrameRef} className="glow-frame" />
 
       {activeTab === 'calendar' && week.filter(d => !d.editable).map(d => {
