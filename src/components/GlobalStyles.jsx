@@ -72,6 +72,7 @@ const GlobalStyles = () => (
       0%  {transform:scale(1);   opacity:0.8; box-shadow:0 0 0 0    rgba(119,11,255,0.7);}
       100%{transform:scale(2.5); opacity:0;   box-shadow:0 0 0 20px rgba(119,11,255,0);  }
     }
+
     .tb-btn.today{
       position:relative;overflow:hidden;
       background:linear-gradient(90deg,#009bff,#770bff);
@@ -84,15 +85,15 @@ const GlobalStyles = () => (
       box-shadow:inset 0 4px 8px rgba(0,0,0,0.2);
     }
     .tb-btn.today::after{
-  content:'';position:absolute;top:0;height:100%;width:44px;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.45),transparent);
-  transform:skewX(-20deg);left:-150%;pointer-events:none;
-  opacity:0;
-}
-.today-glint::after{
-  opacity:1;
-  animation:glint 0.55s ease-in-out;
-}
+      content:'';position:absolute;top:0;height:100%;width:44px;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,0.45),transparent);
+      transform:skewX(-20deg);left:-150%;pointer-events:none;
+      opacity:0;
+    }
+    .today-glint::after{
+      opacity:1;
+      animation:glint 0.55s ease-in-out;
+    }
     .sonar-ring{
       position:absolute;border:2px solid #770bff;border-radius:50%;
       pointer-events:none;width:30px;height:30px;
