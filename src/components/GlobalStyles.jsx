@@ -84,13 +84,15 @@ const GlobalStyles = () => (
       box-shadow:inset 0 4px 8px rgba(0,0,0,0.2);
     }
     .tb-btn.today::after{
-      content:'';position:absolute;top:0;height:100%;width:44px;
-      background:linear-gradient(90deg,transparent,rgba(255,255,255,0.45),transparent);
-      transform:skewX(-20deg);left:-150%;pointer-events:none;
-    }
-    .today-glint::after{
-      animation:glint 0.55s ease-in-out;
-    }
+  content:'';position:absolute;top:0;height:100%;width:44px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.45),transparent);
+  transform:skewX(-20deg);left:-150%;pointer-events:none;
+  opacity:0;
+}
+.today-glint::after{
+  opacity:1;
+  animation:glint 0.55s ease-in-out;
+}
     .sonar-ring{
       position:absolute;border:2px solid #770bff;border-radius:50%;
       pointer-events:none;width:30px;height:30px;
