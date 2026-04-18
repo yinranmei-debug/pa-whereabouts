@@ -41,28 +41,23 @@ const fmt = date => {
   return `${y}-${m}-${d}`;
 };
 
-// pick 3 tips from different categories seeded by date
 const getDailyTips = () => {
   const today = new Date();
   const seed  = today.getFullYear()*10000 + (today.getMonth()+1)*100 + today.getDate();
   const categories = [...new Set(TIPS_DATA.map(t=>t.category))];
-  const seededPick = (arr, s) => arr[Math.abs(s*2654435761 >>> 0) % arr.length];
-  const picked = [];
-  const usedCats = [];
-  let s = seed;
+  const seededPick = (arr, s) => arr[Math.abs((s*2654435761)>>>0) % arr.length];
+  const picked = []; const usedCats = []; let s = seed;
   while (picked.length < 3 && usedCats.length < categories.length) {
     const cat = seededPick(categories.filter(c=>!usedCats.includes(c)), s);
     if (!cat) break;
     usedCats.push(cat);
-    const catTips = TIPS_DATA.filter(t=>t.category===cat);
-    const tip = seededPick(catTips, s+picked.length);
+    const tip = seededPick(TIPS_DATA.filter(t=>t.category===cat), s+picked.length);
     if (tip) picked.push(tip);
     s = (s * 1664525 + 1013904223) & 0xffffffff;
   }
   return picked;
 };
 
-// Lightbulb SVG icon
 const BulbIcon = ({ size=20, color='#fbbf24' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9 21h6M12 3a6 6 0 0 1 6 6c0 2.22-1.21 4.16-3 5.2V17H9v-2.8C7.21 13.16 6 11.22 6 9a6 6 0 0 1 6-6z"/>
@@ -95,8 +90,6 @@ export default function App() {
   const [flight,          setFlight]          = useState(null);
   const [snapCellKey,     setSnapCellKey]     = useState(null);
   const [todaySonar,      setTodaySonar]      = useState(false);
-
-  // tips state
   const [showTips,        setShowTips]        = useState(false);
   const [tipIdx,          setTipIdx]          = useState(0);
   const [tipSlideClass,   setTipSlideClass]   = useState('tip-slide-in-right');
@@ -190,7 +183,7 @@ export default function App() {
     })();
   }, []);
 
-  // auto-show tips on login
+  // auto-show tips after login
   useEffect(() => {
     if (!account) return;
     const t = setTimeout(() => { setShowTips(true); setTipIdx(0); }, 1200);
@@ -292,12 +285,12 @@ export default function App() {
   }, [account,region]);
 
   const navigateTip = (dir) => {
-    const nextIdx = dir === 'next'
-      ? (tipIdx + 1) % dailyTips.current.length
-      : (tipIdx - 1 + dailyTips.current.length) % dailyTips.current.length;
-    setTipSlideClass(dir === 'next' ? 'tip-slide-in-right' : 'tip-slide-in-left');
+    const nextIdx = dir==='next'
+      ? (tipIdx+1) % dailyTips.current.length
+      : (tipIdx-1+dailyTips.current.length) % dailyTips.current.length;
+    setTipSlideClass(dir==='next'?'tip-slide-in-right':'tip-slide-in-left');
     setTipVisible(false);
-    setTimeout(() => { setTipIdx(nextIdx); setTipVisible(true); }, 50);
+    setTimeout(()=>{ setTipIdx(nextIdx); setTipVisible(true); }, 50);
   };
 
   const login  = async () => { setAuthError(null); try { await msalInstance.loginRedirect(loginRequest); } catch(e) { setAuthError(e.message); } };
@@ -542,7 +535,6 @@ export default function App() {
         />
       )}
 
-      {/* weekend/holiday emoji overlay — always visible */}
       {nonEditableCols.map(d=>{
         const x = colXMap[d.ds];
         if (!x) return null;
@@ -564,48 +556,34 @@ export default function App() {
       {/* ── TIPS PANEL ── */}
       {showTips && currentTip && (
         <div style={{position:'fixed',inset:0,zIndex:10500,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(15,23,42,0.45)',backdropFilter:'blur(4px)',animation:'dropIn 0.2s ease'}}>
-          <div style={{background:'#fff',borderRadius:24,width:400,padding:'32px 28px 28px',boxShadow:'0 24px 64px rgba(0,0,0,0.18)',position:'relative',overflow:'hidden'}}>
-            {/* gradient top bar */}
+          <div style={{background:'#fff',borderRadius:24,width:420,padding:'32px 28px 28px',boxShadow:'0 24px 64px rgba(0,0,0,0.18)',position:'relative',overflow:'hidden'}}>
             <div style={{position:'absolute',top:0,left:0,right:0,height:4,background:'linear-gradient(90deg,#009bff,#770bff)'}}/>
 
-            {/* close button */}
             <button
               onClick={()=>setShowTips(false)}
-              style={{position:'absolute',top:16,right:16,width:28,height:28,borderRadius:'50%',border:'none',background:'#f1f5f9',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.15s',fontSize:14,color:'#64748b'}}
+              style={{position:'absolute',top:16,right:16,width:28,height:28,borderRadius:'50%',border:'none',background:'#f1f5f9',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:'#64748b',transition:'all 0.15s'}}
               onMouseOver={e=>{e.currentTarget.style.background='#e2e8f0';}}
               onMouseOut={e=>{e.currentTarget.style.background='#f1f5f9';}}
             >✕</button>
 
-            {/* header */}
-            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:20}}>
-              <div style={{width:36,height:36,borderRadius:10,background:'linear-gradient(135deg,rgba(0,155,255,0.1),rgba(119,11,255,0.1))',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                <BulbIcon size={18} color='#770bff'/>
+            <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:22}}>
+              <div style={{width:40,height:40,borderRadius:12,background:'linear-gradient(135deg,rgba(0,155,255,0.1),rgba(119,11,255,0.1))',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                <BulbIcon size={20} color='#770bff'/>
               </div>
               <div>
-                <div style={{fontSize:11,fontWeight:700,color:'#9ca3af',letterSpacing:'0.08em',textTransform:'uppercase'}}>Daily Tip</div>
-                <div style={{fontSize:13,fontWeight:700,color:'#111827'}}>
-                  {tipIdx+1} of {dailyTips.current.length}
-                </div>
+                <div style={{fontSize:16,fontWeight:700,color:'#111827',letterSpacing:'-0.01em'}}>Wellbeing Daily Tips</div>
+                <div style={{fontSize:11,fontWeight:500,color:'#9ca3af',marginTop:'2px'}}>{tipIdx+1} of {dailyTips.current.length} today</div>
               </div>
             </div>
 
-            {/* tip content */}
-            <div
-              key={tipIdx}
-              className={tipVisible ? tipSlideClass : ''}
-              style={{minHeight:120,marginBottom:24}}
-            >
-              {/* category badge */}
+            <div key={tipIdx} className={tipVisible?tipSlideClass:''} style={{minHeight:120,marginBottom:24}}>
               <div style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 10px',borderRadius:'100px',background:'linear-gradient(135deg,rgba(0,155,255,0.08),rgba(119,11,255,0.08))',border:'1px solid rgba(119,11,255,0.12)',marginBottom:12}}>
-                <span style={{fontSize:14}}>{currentTip.icon}</span>
+                <span style={{fontSize:15}}>{currentTip.icon}</span>
                 <span style={{fontSize:11,fontWeight:700,color:'#5b21b6',letterSpacing:'0.04em'}}>{currentTip.category}</span>
               </div>
-              <p style={{fontSize:15,lineHeight:1.65,color:'#334155',fontWeight:400,margin:0}}>
-                {currentTip.text}
-              </p>
+              <p style={{fontSize:15,lineHeight:1.65,color:'#334155',fontWeight:400,margin:0}}>{currentTip.text}</p>
             </div>
 
-            {/* navigation dots + arrows */}
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
               <button
                 onClick={()=>navigateTip('prev')}
@@ -613,21 +591,13 @@ export default function App() {
                 onMouseOver={e=>{e.currentTarget.style.borderColor='#009bff';e.currentTarget.style.color='#009bff';}}
                 onMouseOut={e=>{e.currentTarget.style.borderColor='#e5e7eb';e.currentTarget.style.color='#6b7280';}}
               >‹</button>
-
               <div style={{display:'flex',gap:6,alignItems:'center'}}>
                 {dailyTips.current.map((_,i)=>(
-                  <div
-                    key={i}
-                    onClick={()=>{
-                      setTipSlideClass(i>tipIdx?'tip-slide-in-right':'tip-slide-in-left');
-                      setTipVisible(false);
-                      setTimeout(()=>{setTipIdx(i);setTipVisible(true);},50);
-                    }}
+                  <div key={i} onClick={()=>{setTipSlideClass(i>tipIdx?'tip-slide-in-right':'tip-slide-in-left');setTipVisible(false);setTimeout(()=>{setTipIdx(i);setTipVisible(true);},50);}}
                     style={{width:i===tipIdx?20:8,height:8,borderRadius:4,cursor:'pointer',transition:'all 0.3s',background:i===tipIdx?'linear-gradient(90deg,#009bff,#770bff)':'#e5e7eb'}}
                   />
                 ))}
               </div>
-
               <button
                 onClick={()=>navigateTip('next')}
                 style={{width:36,height:36,borderRadius:10,border:'1.5px solid #e5e7eb',background:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,color:'#6b7280',transition:'all 0.15s'}}
@@ -642,42 +612,29 @@ export default function App() {
       {/* ── NAV ── */}
       <nav className="nav">
         <span className="nav-logo-text">Whereabouts</span>
-
         <div className={`nav-tab${activeTab==='calendar'?' active':''}`} onClick={()=>setActiveTab('calendar')}>Calendar</div>
-
         <div style={{position:'relative'}}>
-          <div className={`nav-tab${activeTab==='planner'?' active':''}`} onClick={()=>setActiveTab(activeTab==='planner'?'calendar':'planner')}>
-            Holiday Planner
-          </div>
+          <div className={`nav-tab${activeTab==='planner'?' active':''}`} onClick={()=>setActiveTab(activeTab==='planner'?'calendar':'planner')}>Holiday Planner</div>
           {activeTab==='planner'&&(
             <div className="dsz" style={{position:'absolute',top:'calc(100% + 4px)',left:0,zIndex:10020,background:'#fff',borderRadius:16,width:320,padding:16,boxShadow:'0 16px 48px rgba(0,0,0,0.12)',border:'1px solid rgba(226,232,240,0.8)',animation:'dropIn 0.18s ease'}} onClick={e=>e.stopPropagation()}>
-              <div style={{fontSize:'10px',fontWeight:'700',color:'#9ca3af',letterSpacing:'0.1em',marginBottom:'10px',padding:'0 4px'}}>
-                {region.toUpperCase()} PUBLIC HOLIDAYS 2026
-              </div>
+              <div style={{fontSize:'10px',fontWeight:'700',color:'#9ca3af',letterSpacing:'0.1em',marginBottom:'10px',padding:'0 4px'}}>{region.toUpperCase()} PUBLIC HOLIDAYS 2026</div>
               <div style={{maxHeight:'360px',overflowY:'auto',display:'flex',flexDirection:'column',gap:'2px'}}>
                 {plannerList().map(h=>(
                   <div key={h.date} className="plan-row" onClick={()=>jumpToDate(h.date)}>
-                    <div>
-                      <div className="plan-date">{h.date}</div>
-                      <div className="plan-name">{h.day}</div>
-                    </div>
-                    <div style={{padding:'3px 10px',borderRadius:'8px',background:'linear-gradient(135deg,rgba(0,155,255,0.1),rgba(119,11,255,0.1))',fontSize:'11px',fontWeight:'600',color:'#5b21b6'}}>
-                      {h.name}
-                    </div>
+                    <div><div className="plan-date">{h.date}</div><div className="plan-name">{h.day}</div></div>
+                    <div style={{padding:'3px 10px',borderRadius:'8px',background:'linear-gradient(135deg,rgba(0,155,255,0.1),rgba(119,11,255,0.1))',fontSize:'11px',fontWeight:'600',color:'#5b21b6'}}>{h.name}</div>
                   </div>
                 ))}
               </div>
             </div>
           )}
         </div>
-
         <div className="nav-sep"/>
         <div className="nav-right">
           {saveStatus==='saving'&&<span className="save-txt">↻ Saving</span>}
           {saveStatus==='saved' &&<span className="save-ok">✓ Saved</span>}
 
-          {/* bulb tip button */}
-          <button className="bulb-btn" onClick={()=>{setTipIdx(0);setShowTips(true);}} title="Daily Tips">
+          <button className="bulb-btn" onClick={()=>{setTipIdx(0);setShowTips(true);}} title="Wellbeing Daily Tips">
             <BulbIcon size={18} color='#fbbf24'/>
           </button>
 
@@ -706,7 +663,7 @@ export default function App() {
         </div>
       </nav>
 
-      {/* ── TOOLBAR — restored simple style ── */}
+      {/* ── TOOLBAR ── */}
       <div className="toolbar">
         <button className="tb-btn icon" onClick={()=>navigateWeek(-7)}>‹</button>
         <button
@@ -722,9 +679,7 @@ export default function App() {
           }}
         >Today</button>
         <button className="tb-btn icon" onClick={()=>navigateWeek(7)}>›</button>
-
         <span className="tb-month">{viewDate.toLocaleString('en-US',{month:'long',year:'numeric'})}</span>
-
         <select className="tb-select" value={viewDate.getMonth()} onChange={e=>{
           const d=new Date(viewDate); d.setMonth(+e.target.value); d.setDate(1); navigateWeek(0,d);
         }}>
@@ -732,7 +687,6 @@ export default function App() {
             <option key={i} value={i}>{new Date(2026,i,1).toLocaleString('en-US',{month:'long'})}</option>
           ))}
         </select>
-
         <div className="team-summary">
           <div className="team-summary-dot"/>
           <span>TEAM SUMMARY: {inOffice.n} / {inOffice.total} IN OFFICE TODAY</span>
@@ -862,7 +816,10 @@ export default function App() {
                                         }
                                       }}
                                     >
-                                      {sid!=='none' ? `${cfg.icon} ${shift}` : shift}
+                                      {sid!=='none'
+                                        ? <><span className="sh-icon">{cfg.icon}</span><span>{shift}</span></>
+                                        : shift
+                                      }
                                     </div>
                                     {open&&isMe&&(
                                       <div className="s-drop dsz">
@@ -871,7 +828,7 @@ export default function App() {
                                         </div>
                                         {Object.entries(STATUS_CONFIG).map(([sId,sCfg])=>(
                                           <div key={sId} className="s-opt" onClick={e=>{ e.stopPropagation(); if (bulkSelectCells.length>0) handleBulkStatusSelect(sId,e); else handleStatusSelect(key,sId,e); }}>
-                                            <span style={{fontSize:'22px'}}>{sCfg.icon}</span>
+                                            <span className="s-opt-icon">{sCfg.icon}</span>
                                             <span className="s-opt-label">{sCfg.label}</span>
                                           </div>
                                         ))}

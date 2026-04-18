@@ -52,12 +52,11 @@ const GlobalStyles = () => (
       100%{transform:scale(2.5);opacity:0;box-shadow:0 0 0 20px rgba(119,11,255,0);}
     }
 
-    /* today button — restored simple style */
     .tb-btn.today{
       position:relative;overflow:hidden;
       background:linear-gradient(90deg,#009bff,#770bff) !important;
       color:#fff !important;border:none !important;
-      font-weight:700;padding:0 20px;height:32px;
+      font-weight:700;padding:0 16px;height:32px;
       font-size:13px;border-radius:8px;
       transform-origin:center center;
     }
@@ -81,27 +80,16 @@ const GlobalStyles = () => (
     @keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
     @keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.4)}50%{box-shadow:0 0 0 4px rgba(34,197,94,0)}}
 
-    /* tips animations */
     @keyframes tipSlideInRight{from{opacity:0;transform:translateX(60px);}to{opacity:1;transform:translateX(0);}}
     @keyframes tipSlideInLeft{from{opacity:0;transform:translateX(-60px);}to{opacity:1;transform:translateX(0);}}
-    @keyframes tipSlideOutRight{from{opacity:1;transform:translateX(0);}to{opacity:0;transform:translateX(60px);}}
-    @keyframes tipSlideOutLeft{from{opacity:1;transform:translateX(0);}to{opacity:0;transform:translateX(-60px);}}
     .tip-slide-in-right{animation:tipSlideInRight 0.32s cubic-bezier(0.25,0.46,0.45,0.94) both;}
     .tip-slide-in-left{animation:tipSlideInLeft 0.32s cubic-bezier(0.25,0.46,0.45,0.94) both;}
 
-    /* bulb glow */
     @keyframes bulbPulse{
       0%,100%{filter:drop-shadow(0 0 3px rgba(251,191,36,0.4));}
       50%{filter:drop-shadow(0 0 8px rgba(251,191,36,0.8)) drop-shadow(0 0 16px rgba(251,191,36,0.3));}
     }
-    .bulb-btn{
-      width:38px;height:38px;border-radius:50%;
-      background:rgba(255,255,255,0.08);
-      border:1px solid rgba(255,255,255,0.12);
-      display:flex;align-items:center;justify-content:center;
-      cursor:pointer;transition:all 0.2s;
-      animation:bulbPulse 2.5s ease-in-out infinite;
-    }
+    .bulb-btn{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;animation:bulbPulse 2.5s ease-in-out infinite;}
     .bulb-btn:hover{background:rgba(251,191,36,0.15);border-color:rgba(251,191,36,0.4);transform:scale(1.1);}
 
     .glow-frame{position:fixed;inset:0;pointer-events:none;z-index:9998;opacity:0;box-shadow:inset 0 0 0px 0px rgba(0,155,255,0);will-change:opacity,box-shadow;transform:translateZ(0);}
@@ -132,7 +120,6 @@ const GlobalStyles = () => (
     .signout-btn{height:28px;padding:0 12px;border-radius:100px;border:none;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.6);font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;}
     .signout-btn:hover{background:rgba(255,255,255,0.2);color:#fff;}
 
-    /* toolbar — restored simple style */
     .toolbar{height:${TB_H}px;padding:0 32px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:8px;position:sticky;top:${NAV_H}px;z-index:480;}
     .tb-btn{height:32px;padding:0 12px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;font-size:13px;font-weight:400;color:#374151;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;}
     .tb-btn:hover{background:#f9fafb;border-color:#d1d5db;}
@@ -172,26 +159,26 @@ const GlobalStyles = () => (
     tr:hover .n-name{background:linear-gradient(90deg,#009bff,#770bff);-webkit-background-clip:text;background-clip:text;color:transparent;}
     .n-you{font-size:9px;font-weight:700;background:linear-gradient(90deg,#009bff,#770bff);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:0.06em;margin-top:2px;}
 
-    /* emotion tag — larger */
     .emo-tag{position:absolute;bottom:-6px;right:-6px;background:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.15);border:2px solid #fff;}
-
     .emo-picker{position:absolute;left:54px;top:4px;z-index:10050;background:#fff;border-radius:14px;display:flex;padding:8px;gap:4px;box-shadow:0 8px 32px rgba(0,0,0,0.1);border:1px solid #e5e7eb;animation:dropIn 0.15s ease;}
 
     .dw{height:${ROW_H}px;display:flex;flex-direction:column;justify-content:center;gap:7px;padding:0 6px;border-bottom:1px solid #f1f5f9;}
     tr:last-child .dw{border-bottom:none;}
 
-    /* status cells — larger emoji */
-    .sh{height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;transition:all 0.15s;user-select:none;border:none;cursor:pointer;gap:4px;}
+    /* status cells — emoji larger via .sh-icon, text stays 12px */
+    .sh{height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;transition:all 0.15s;user-select:none;border:none;cursor:pointer;gap:4px;}
+    .sh-icon{font-size:18px;line-height:1;flex-shrink:0;}
     .sh.mine{background:linear-gradient(135deg,#EEF2FF,#F5F3FF);color:#6b7280;border:1px solid rgba(199,210,254,0.6);}
     .sh.mine:hover{background:linear-gradient(135deg,#dde5fe,#ede9fe);box-shadow:0 4px 12px rgba(119,11,255,0.1);transform:scale(1.02);}
     .sh.set{cursor:grab;}
     .sh.set:active{cursor:grabbing;}
     .sh.set:hover{filter:brightness(0.97);transform:scale(1.01);}
-    .sh.other{background:#fafafa;color:#d1d5db;border:1px solid #f3f4f6;cursor:default;font-size:12px;}
+    .sh.other{background:#fafafa;color:#d1d5db;border:1px solid #f3f4f6;cursor:default;}
 
     .s-drop{position:absolute;top:46px;left:0;z-index:10001;background:#fff;border-radius:14px;width:180px;padding:6px;max-height:264px;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.1);border:1px solid #e5e7eb;animation:dropIn 0.15s ease;}
-    .s-opt{padding:8px 10px;cursor:pointer;border-radius:10px;font-size:20px;display:flex;align-items:center;justify-content:center;gap:8px;transition:background 0.1s;}
+    .s-opt{padding:8px 10px;cursor:pointer;border-radius:10px;display:flex;align-items:center;gap:8px;transition:background 0.1s;}
     .s-opt:hover{background:linear-gradient(135deg,rgba(0,155,255,0.08),rgba(119,11,255,0.08));}
+    .s-opt-icon{font-size:22px;line-height:1;flex-shrink:0;}
     .s-opt-label{font-size:12px;color:#374151;font-weight:500;}
 
     td.ptd{height:1px;padding:0 6px;vertical-align:top;position:relative;}
