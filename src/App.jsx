@@ -22,13 +22,11 @@ const getStaffEntry = em => RAW_STAFF_LIST.find(s => s.email.toLowerCase() === e
 
 const ROW_H  = 104;
 const NAV_H  = 56;
-const SUB_H  = 72;
+const SUB_H  = 48;
 const TB_H   = 52;
 const LG_H   = 36;
 const AM_REF = 'am-ref-btn';
 
-// FIX 4: SUB_H reduced since subtitle line removed — keep same value for layout
-// but page-sub div will be gone so visual height will be smaller
 const HEADER_STICKY_TOP = NAV_H + SUB_H + TB_H + LG_H;
 
 const fmt = date => {
@@ -68,6 +66,9 @@ function Avatar({ name, photoUrl, size=34, isMe=false }) {
 
 const GlobalStyles = () => (
   <style>{`
+    /* FIX 4: Plus Jakarta Sans from Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
     *,*:before,*:after{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%}
 
@@ -83,82 +84,67 @@ const GlobalStyles = () => (
       transform-origin:center center;
     }
 
-    /* column glow — gentler */
+    /* column glow */
     @keyframes colGlowFade{
-      0%   { opacity:0;   transform:scaleX(0.92); }
-      12%  { opacity:1;   transform:scaleX(1);    }
-      65%  { opacity:0.5; transform:scaleX(1);    }
-      85%  { opacity:0.3; transform:scaleX(1.01); }
-      100% { opacity:0;   transform:scaleX(1);    }
+      0%   {opacity:0;  transform:scaleX(0.92);}
+      12%  {opacity:1;  transform:scaleX(1);   }
+      65%  {opacity:0.5;transform:scaleX(1);   }
+      85%  {opacity:0.3;transform:scaleX(1.01);}
+      100% {opacity:0;  transform:scaleX(1);   }
     }
     .col-glow-overlay{
-      position:fixed;
-      pointer-events:none;
-      z-index:150;
-      border-radius:10px;
-      background: linear-gradient(180deg,
-        rgba(0,229,255,0.055)  0%,
-        rgba(0,155,255,0.07)  30%,
-        rgba(119,11,255,0.07) 70%,
-        rgba(119,11,255,0.04) 100%
-      );
-      box-shadow:
-        inset 0 0  8px 2px  rgba(0,155,255,0.32),
-        inset 0 0 18px 4px  rgba(119,11,255,0.20),
-        inset 0 0  4px 1px  rgba(0,229,255,0.28),
-              0 0 10px 2px  rgba(0,155,255,0.10),
-              0 0 20px 5px  rgba(119,11,255,0.07);
-      animation: colGlowFade 1.8s cubic-bezier(0.22,0.61,0.36,1) both;
-      will-change: opacity, transform;
+      position:fixed;pointer-events:none;z-index:150;border-radius:10px;
+      background:linear-gradient(180deg,rgba(0,229,255,0.055) 0%,rgba(0,155,255,0.07) 30%,rgba(119,11,255,0.07) 70%,rgba(119,11,255,0.04) 100%);
+      box-shadow:inset 0 0 8px 2px rgba(0,155,255,0.32),inset 0 0 18px 4px rgba(119,11,255,0.20),inset 0 0 4px 1px rgba(0,229,255,0.28),0 0 10px 2px rgba(0,155,255,0.10),0 0 20px 5px rgba(119,11,255,0.07);
+      animation:colGlowFade 1.8s cubic-bezier(0.22,0.61,0.36,1) both;
+      will-change:opacity,transform;
     }
 
-    /* emoji spring bounce — FIX 1: scale reduced to 1.35 (was 1.55) so it won't clip */
+    /* FIX 1: emoji spring — 48px, smoother, peak 1.45, 0.65s */
     @keyframes emojiSpring{
-      0%  { transform:scale(1)    rotate(0deg);  }
-      20% { transform:scale(1.35) rotate(-8deg); }
-      45% { transform:scale(0.88) rotate(5deg);  }
-      65% { transform:scale(1.14) rotate(-3deg); }
-      82% { transform:scale(0.97) rotate(1deg);  }
-      100%{ transform:scale(1)    rotate(0deg);  }
+      0%  {transform:scale(1)    rotate(0deg);  }
+      22% {transform:scale(1.45) rotate(-10deg);}
+      48% {transform:scale(0.84) rotate(7deg);  }
+      68% {transform:scale(1.18) rotate(-4deg); }
+      84% {transform:scale(0.97) rotate(1deg);  }
+      100%{transform:scale(1)    rotate(0deg);  }
     }
     .emoji-pop{
-      animation: emojiSpring 0.52s cubic-bezier(0.34,1.56,0.64,1) both;
+      animation:emojiSpring 0.65s cubic-bezier(0.34,1.46,0.64,1) both;
       display:inline-block;
       transform-origin:center center;
     }
 
-    /* FIX 3: weekly slide animations */
+    /* weekly slide */
     @keyframes slideInFromRight{
-      from { transform:translateX(48px); opacity:0.4; }
-      to   { transform:translateX(0);    opacity:1;   }
+      from{transform:translateX(52px);opacity:0.3;}
+      to  {transform:translateX(0);   opacity:1;  }
     }
     @keyframes slideInFromLeft{
-      from { transform:translateX(-48px); opacity:0.4; }
-      to   { transform:translateX(0);     opacity:1;   }
+      from{transform:translateX(-52px);opacity:0.3;}
+      to  {transform:translateX(0);    opacity:1;  }
     }
-    .week-slide-right{
-      animation: slideInFromRight 0.28s cubic-bezier(0.25,0.46,0.45,0.94) both;
-    }
-    .week-slide-left{
-      animation: slideInFromLeft 0.28s cubic-bezier(0.25,0.46,0.45,0.94) both;
-    }
+    .week-slide-right{animation:slideInFromRight 0.28s cubic-bezier(0.25,0.46,0.45,0.94) both;}
+    .week-slide-left {animation:slideInFromLeft  0.28s cubic-bezier(0.25,0.46,0.45,0.94) both;}
 
     @keyframes dropIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
     @keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
     @keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
     @keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.4)}50%{box-shadow:0 0 0 4px rgba(34,197,94,0)}}
 
-    .glow-frame{
-      position:fixed;inset:0;pointer-events:none;z-index:9998;opacity:0;
-      box-shadow:inset 0 0 0px 0px rgba(0,155,255,0);
-      will-change:opacity,box-shadow;transform:translateZ(0);
-    }
+    .glow-frame{position:fixed;inset:0;pointer-events:none;z-index:9998;opacity:0;
+      box-shadow:inset 0 0 0px 0px rgba(0,155,255,0);will-change:opacity,box-shadow;transform:translateZ(0);}
 
-    body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;background:#f4f5f7;color:#111827;-webkit-font-smoothing:antialiased}
+    body{
+      /* FIX 4: Plus Jakarta Sans as body font for nav */
+      font-family:'Plus Jakarta Sans','Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;
+      background:#f4f5f7;color:#111827;-webkit-font-smoothing:antialiased;
+    }
     .nav{height:${NAV_H}px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;padding:0 28px;position:sticky;top:0;z-index:500}
-    .nav-tab{height:${NAV_H}px;display:flex;align-items:center;padding:0 14px;font-size:13px;font-weight:400;color:#6b7280;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;white-space:nowrap;user-select:none}
+    /* FIX 4: nav tabs use Plus Jakarta Sans weight 500 */
+    .nav-tab{height:${NAV_H}px;display:flex;align-items:center;padding:0 14px;font-size:13px;font-weight:500;font-family:'Plus Jakarta Sans',sans-serif;color:#6b7280;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;white-space:nowrap;user-select:none}
     .nav-tab:hover{color:#111827}
-    .nav-tab.active{color:transparent;background:linear-gradient(90deg,#009bff,#770bff);-webkit-background-clip:text;background-clip:text;border-image:linear-gradient(90deg,#009bff,#770bff) 1;font-weight:600}
+    .nav-tab.active{color:transparent;background:linear-gradient(90deg,#009bff,#770bff);-webkit-background-clip:text;background-clip:text;border-image:linear-gradient(90deg,#009bff,#770bff) 1;font-weight:700}
     .nav-sep{width:1px;height:20px;background:#e5e7eb;margin:0 8px;flex-shrink:0}
     .nav-right{margin-left:auto;display:flex;align-items:center;gap:10px}
     .save-txt{font-size:12px;color:#9ca3af;animation:pulse 1.2s infinite}
@@ -169,14 +155,20 @@ const GlobalStyles = () => (
     .user-name{font-size:12px;font-weight:600;color:#374151}
     .signout-btn{height:26px;padding:0 10px;border-radius:100px;border:none;background:#e5e7eb;color:#6b7280;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s}
     .signout-btn:hover{background:#d1d5db;color:#374151}
-    /* FIX 4: sub-header height reduced since subtitle removed */
-    .sub-header{height:48px;padding:0 28px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;position:sticky;top:${NAV_H}px;z-index:490}
-    .page-title{font-size:20px;font-weight:600;background:linear-gradient(90deg,#009bff,#770bff);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:-0.02em}
+    .sub-header{height:${SUB_H}px;padding:0 28px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;position:sticky;top:${NAV_H}px;z-index:490}
+    /* FIX 4: title uses Plus Jakarta Sans 800 weight, slightly larger */
+    .page-title{
+      font-size:22px;font-weight:800;
+      font-family:'Plus Jakarta Sans',sans-serif;
+      background:linear-gradient(90deg,#009bff,#770bff);
+      -webkit-background-clip:text;background-clip:text;color:transparent;
+      letter-spacing:-0.03em;
+    }
     .region-toggle{display:flex;background:#f3f4f6;border-radius:8px;padding:3px;gap:2px}
     .region-btn{height:28px;padding:0 14px;border-radius:6px;border:none;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s}
     .region-btn.on{background:linear-gradient(90deg,#009bff,#770bff);color:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.15)}
     .region-btn.off{background:transparent;color:#9ca3af}
-    .toolbar{height:${TB_H}px;padding:0 28px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:8px;position:sticky;top:${NAV_H+48}px;z-index:480}
+    .toolbar{height:${TB_H}px;padding:0 28px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:8px;position:sticky;top:${NAV_H+SUB_H}px;z-index:480}
     .tb-btn{height:32px;padding:0 12px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;font-size:13px;font-weight:400;color:#374151;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center}
     .tb-btn:hover{background:#f9fafb;border-color:#d1d5db}
     .tb-btn.today{background:linear-gradient(90deg,#009bff,#770bff);color:#fff;border:none;font-weight:600;padding:0 16px}
@@ -184,11 +176,11 @@ const GlobalStyles = () => (
     .tb-btn.icon{width:32px;padding:0;font-size:15px;color:#6b7280}
     .tb-select{height:32px;padding:0 12px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;font-size:13px;color:#374151;cursor:pointer;appearance:none}
     .tb-month{font-size:15px;font-weight:600;color:#111827;letter-spacing:-0.01em}
-    .legend{height:${LG_H}px;padding:0 28px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:20px;position:sticky;top:${NAV_H+48+TB_H}px;z-index:470}
+    .legend{height:${LG_H}px;padding:0 28px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:20px;position:sticky;top:${NAV_H+SUB_H+TB_H}px;z-index:470}
     .leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#9ca3af}
     .leg-sw{width:20px;height:10px;border-radius:4px}
     .tbl-outer{background:#f4f5f7;padding-bottom:48px;position:relative}
-    .tbl-hdr-sticky{position:sticky;top:${NAV_H+48+TB_H+LG_H}px;z-index:460;background:#f4f5f7;border-bottom:1px solid #ebebeb}
+    .tbl-hdr-sticky{position:sticky;top:${HEADER_STICKY_TOP}px;z-index:460;background:#f4f5f7;border-bottom:1px solid #ebebeb}
     .tbl-hdr-row{display:grid;grid-template-columns:200px repeat(7,1fr);min-width:860px;padding:0 28px}
     .tbl-hdr-namecol{background:#f4f5f7}
     .tbl-hdr-daycol{padding:14px 4px 10px;text-align:center;background:#f4f5f7}
@@ -272,7 +264,7 @@ function LoginScreen({ onLogin, isInitializing, error }) {
         <div className="ms-app-row">
           <div className="ms-app-icon">P</div>
           <div>
-            <div style={{fontSize:'13px',fontWeight:'600',color:'#201f1e'}}>APAC Whereabouts</div>
+            <div style={{fontSize:'13px',fontWeight:'600',color:'#201f1e'}}>Whereabouts</div>
             <div style={{fontSize:'11px',color:'#605e5c'}}>Pattern Asia Pacific</div>
           </div>
         </div>
@@ -287,7 +279,7 @@ function AccessDeniedScreen({ email, onLogout }) {
       <div className="ms-card">
         <h2 className="ms-title">Access denied</h2>
         <p style={{fontSize:'13px',color:'#605e5c',marginBottom:'20px'}}>
-          <strong>{email}</strong> is not authorised to access APAC Whereabouts.<br/>
+          <strong>{email}</strong> is not authorised to access Whereabouts.<br/>
           Please contact your administrator if you believe this is an error.
         </p>
         <button className="ms-btn" style={{background:'#f3f2f1',color:'#201f1e',border:'1px solid #8a8886'}} onClick={onLogout}>
@@ -318,9 +310,8 @@ export default function App() {
   const [preview,         setPreview]         = useState([]);
   const [bulkSelectCells, setBulkSelectCells] = useState([]);
   const [bouncingDs,      setBouncingDs]      = useState(null);
-  // FIX 3: track slide direction
   const [slideDir,        setSlideDir]        = useState(null);
-  const slideTimerRef = useRef(null);
+  const slideTimerRef  = useRef(null);
 
   const presenceRef   = useRef(null);
   const partyTimerRef = useRef(null);
@@ -330,17 +321,16 @@ export default function App() {
   const glowLevelRef  = useRef(0);
   const glowRafRef    = useRef(null);
 
-  // FIX 3: helper to navigate week with slide direction
+  // FIX 2: clear pillRects on navigate so emoji doesn't show stale coords during slide
   const navigateWeek = (deltaDays, forcedDate = null) => {
     setViewDate(prev => {
       const target = forcedDate || (() => {
-        const d = new Date(prev);
-        d.setDate(d.getDate() + deltaDays);
-        return d;
+        const d = new Date(prev); d.setDate(d.getDate() + deltaDays); return d;
       })();
-      // determine slide direction
       const dir = target > prev ? 'right' : 'left';
       setSlideDir(dir);
+      // FIX 2: clear emoji positions immediately — re-measured after slide
+      setPillRects({});
       clearTimeout(slideTimerRef.current);
       slideTimerRef.current = setTimeout(() => setSlideDir(null), 320);
       return target;
@@ -354,19 +344,15 @@ export default function App() {
       if (el) {
         const lvl = glowLevelRef.current;
         if (lvl > 0.001) {
-          const i1 = lvl*25; const s1 = lvl*10;
-          const i2 = lvl*45; const s2 = lvl*16;
-          const i3 = lvl*18; const s3 = lvl*6;
-          const op1 = 0.28+lvl*0.52, op2 = 0.16+lvl*0.44, op3 = lvl*0.38;
+          const i1=lvl*25, s1=lvl*10, i2=lvl*45, s2=lvl*16, i3=lvl*18, s3=lvl*6;
+          const op1=0.28+lvl*0.52, op2=0.16+lvl*0.44, op3=lvl*0.38;
           el.style.opacity   = String(Math.min(lvl*1.5,1));
           el.style.boxShadow = [
             `inset 0 0 ${i1}px ${s1}px rgba(0,155,255,${op1})`,
             `inset 0 0 ${i2}px ${s2}px rgba(119,11,255,${op2})`,
             `inset 0 0 ${i3}px ${s3}px rgba(0,229,255,${op3})`,
           ].join(',');
-        } else {
-          el.style.opacity='0'; el.style.boxShadow='none';
-        }
+        } else { el.style.opacity='0'; el.style.boxShadow='none'; }
       }
       glowRafRef.current = requestAnimationFrame(decay);
     };
@@ -455,9 +441,8 @@ export default function App() {
         glowLevelRef.current=Math.min(glowLevelRef.current+0.65,1);
       })
       .subscribe(async status=>{
-        if (status==='SUBSCRIBED') {
+        if (status==='SUBSCRIBED')
           await channel.track({id:meStaffLocal?.id||'guest',name:meStaffLocal?.name||account.name,email:account.username.toLowerCase()});
-        }
       });
     presenceRef.current=channel;
     return ()=>{ supabase.removeChannel(channel); };
@@ -561,7 +546,7 @@ export default function App() {
     const staffIds=STAFF_LIST.filter(s=>s.region===region).map(s=>s.id);
     const minIdx=Math.min(staffIds.indexOf(dragging.staffId),staffIds.indexOf(staffId));
     const maxIdx=Math.max(staffIds.indexOf(dragging.staffId),staffIds.indexOf(staffId));
-    const minDate=Math.min(dragging.dateIdx,dateIdx), maxDate=Math.max(dragging.dateIdx,dateIdx);
+    const minDate=Math.min(dragging.dateIdx,dateIdx),maxDate=Math.max(dragging.dateIdx,dateIdx);
     const minShift=Math.min(dragging.shift==='AM'?0:1,shift==='AM'?0:1);
     const maxShift=Math.max(dragging.shift==='AM'?0:1,shift==='AM'?0:1);
     const range=[];
@@ -612,7 +597,8 @@ export default function App() {
   const fireParty=(e,type,text='',ds='')=>{
     const pill=e.currentTarget.closest('.pill');
     if (pill) { pill.classList.remove('holi-tap'); void pill.offsetWidth; pill.classList.add('holi-tap'); }
-    if (ds) { setBouncingDs(ds); setTimeout(()=>setBouncingDs(null),600); }
+    if (ds) { setBouncingDs(ds); setTimeout(()=>setBouncingDs(null),700); }
+    // FIX 3: only inject overlay if we found a valid td.ptd
     const td=e.currentTarget.closest('td.ptd');
     if (td) {
       document.querySelectorAll('.col-glow-overlay').forEach(el=>el.remove());
@@ -637,15 +623,12 @@ export default function App() {
   const today=fmt(new Date());
   const staffList=STAFF_LIST.filter(s=>s.region===region);
 
-  // FIX 2: in-office count — only absent if BOTH AM and PM have absent status
   const inOffice=(()=>{
     let n=0;
-    const absent=st=>['AL','SL','BL','BH','ML','PL','WFH','OL','DV'].includes(st);
     staffList.forEach(s=>{
-      const amAbsent=absent(records[`${s.id}-${today}-AM`]);
-      const pmAbsent=absent(records[`${s.id}-${today}-PM`]);
-      // FIX 2: was &&, now: only count as absent if BOTH slots absent
-      if (!(amAbsent&&pmAbsent)) n++;
+      const amFilled=!!records[`${s.id}-${today}-AM`];
+      const pmFilled=!!records[`${s.id}-${today}-PM`];
+      if (!(amFilled&&pmFilled)) n++;
     });
     return {n,total:staffList.length};
   })();
@@ -674,36 +657,36 @@ export default function App() {
 
   const jumpToDate=ds=>{setViewDate(new Date(ds));setActiveTab('calendar');};
   const VH=window.innerHeight;
-
-  // FIX 3: slide class for table
-  const slideClass = slideDir==='right' ? 'week-slide-right' : slideDir==='left' ? 'week-slide-left' : '';
+  const slideClass=slideDir==='right'?'week-slide-right':slideDir==='left'?'week-slide-left':'';
 
   return (
     <div style={{minHeight:'100vh',background:'#f4f5f7'}} onMouseUp={handleStatusCellMouseUp}>
       <GlobalStyles/>
       <div ref={glowFrameRef} className="glow-frame"/>
 
+      {/* FIX 1+2: emoji 48px, no overflow:hidden parent, pillRects cleared on navigate */}
       {activeTab==='calendar'&&week.filter(d=>!d.editable).map(d=>{
         const isHol=!!d.hol;
         const holName=d.hol?d.hol.replace(/^\S+\s/,''):'';
         const pos=pillRects[d.ds];
         if (!pos) return null;
-        const labelH=56,pad=8,idealY=VH/2;
+        const labelH=64,pad=8,idealY=VH/2;
         const minY=pos.top+pad+labelH/2,maxY=pos.bottom-pad-labelH/2;
         if (minY>maxY) return null;
         const clampedY=Math.min(Math.max(idealY,minY),maxY);
         const isBouncing=bouncingDs===d.ds;
         return (
-          <div key={d.ds} style={{position:'fixed',left:pos.x,top:clampedY,transform:'translate(-50%,-50%)',display:'flex',flexDirection:'column',alignItems:'center',gap:'6px',pointerEvents:'none',zIndex:200,maxWidth:pos.maxX-pos.minX}}>
-            {/* FIX 1: removed overflow:hidden from parent, emoji has room to bounce */}
+          <div key={d.ds} style={{position:'fixed',left:pos.x,top:clampedY,transform:'translate(-50%,-50%)',display:'flex',flexDirection:'column',alignItems:'center',gap:'8px',pointerEvents:'none',zIndex:200,maxWidth:pos.maxX-pos.minX}}>
             <span
               key={isBouncing?`${d.ds}-b`:d.ds}
               className={isBouncing?'emoji-pop':''}
-              style={{fontSize:'26px',userSelect:'none',display:'inline-block'}}
+              style={{fontSize:'48px',userSelect:'none',display:'inline-block',lineHeight:1}}
             >
               {isHol?d.hol.split(' ')[0]:'🏝️'}
             </span>
-            <span style={{fontSize:'10px',fontWeight:'600',color:isHol?'#be185d':'#1d4ed8',letterSpacing:'0.04em',textAlign:'center',userSelect:'none',wordBreak:'break-word'}}>{isHol?holName:'WEEKEND'}</span>
+            <span style={{fontSize:'10px',fontWeight:'700',color:isHol?'#be185d':'#1d4ed8',letterSpacing:'0.06em',textAlign:'center',userSelect:'none',wordBreak:'break-word',fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
+              {isHol?holName:'WEEKEND'}
+            </span>
           </div>
         );
       })}
@@ -762,9 +745,9 @@ export default function App() {
         </div>
       </nav>
 
-      {/* FIX 4: subtitle line removed, sub-header now single line */}
+      {/* FIX 4: title is now just "Whereabouts", Plus Jakarta Sans 800, no subtitle */}
       <div className="sub-header">
-        <div className="page-title">APAC Whereabouts</div>
+        <div className="page-title">Whereabouts</div>
         {superUser&&(
           <div className="region-toggle">
             {['Hong Kong','China'].map(r=>(
@@ -775,13 +758,11 @@ export default function App() {
       </div>
 
       <div className="toolbar">
-        {/* FIX 3: use navigateWeek instead of direct setViewDate */}
         <button className="tb-btn icon" onClick={()=>navigateWeek(-7)}>‹</button>
         <button className="tb-btn today" onClick={()=>navigateWeek(0,new Date())}>Today</button>
         <button className="tb-btn icon" onClick={()=>navigateWeek(7)}>›</button>
         <select className="tb-select" value={viewDate.getMonth()} onChange={e=>{
-          const d=new Date(viewDate); d.setMonth(+e.target.value); d.setDate(1);
-          navigateWeek(0,d);
+          const d=new Date(viewDate); d.setMonth(+e.target.value); d.setDate(1); navigateWeek(0,d);
         }}>
           {Array.from({length:12}).map((_,i)=><option key={i} value={i}>{new Date(0,i).toLocaleString('default',{month:'long'})}</option>)}
         </select>
@@ -797,7 +778,6 @@ export default function App() {
 
       <div className="tbl-outer dsz">
         <div className="tbl-hdr-sticky">
-          {/* FIX 3: slide class on header row too so header slides with body */}
           <div ref={headerRef} className={`tbl-hdr-row ${slideClass}`}>
             <div className="tbl-hdr-namecol"/>
             {week.map(d=>(
@@ -814,7 +794,6 @@ export default function App() {
         </div>
 
         <div ref={scrollRef} className="tbl-scroll dsz" onScroll={handleTableScroll} onMouseLeave={handleStatusCellMouseUp}>
-          {/* FIX 3: slide class on table so rows animate */}
           <table className={`main-tbl ${slideClass}`}>
             <colgroup>
               <col style={{width:'200px'}}/>
