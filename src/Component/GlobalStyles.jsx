@@ -1,3 +1,9 @@
+const NAV_H  = 56;
+const SUB_H  = 48;
+const TB_H   = 52;
+const LG_H   = 36;
+const ROW_H  = 104;
+const HEADER_STICKY_TOP = NAV_H + SUB_H + TB_H + LG_H;
 import React from 'react';
 
 const TEAMS_COLORS = ['#B3CEE0','#D1A7C8','#A7C8A0','#E0C8A7','#A7B9E0','#E0A7A7','#C8D1A7','#A7D1CE','#D1C8A7','#B9A7E0','#A7C8D1','#E0B9A7'];
