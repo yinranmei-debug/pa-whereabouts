@@ -6,12 +6,11 @@ import RAW_STAFF_LIST from './data/staff.json';
 import STATUS_CONFIG from './data/status.json';
 import { createClient } from '@supabase/supabase-js';
 
-// ── 拆出去的纯UI组件 ──────────────────────────────────────────────────────────
-import GlobalStyles        from './GlobalStyles';
-import Avatar              from './Avatar';
-import LoginScreen         from './LoginScreen';
-import AccessDeniedScreen  from './AccessDeniedScreen';
-import EmojiFlyLayer       from './EmojiFlyLayer';
+import GlobalStyles       from './components/GlobalStyles';
+import Avatar             from './components/Avatar';
+import LoginScreen        from './components/LoginScreen';
+import AccessDeniedScreen from './components/AccessDeniedScreen';
+import EmojiFlyLayer      from './components/EmojiFlyLayer';
 
 const supabase = createClient(
   'https://vzdrpydtxlamoqtukgld.supabase.co',
