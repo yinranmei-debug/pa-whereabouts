@@ -67,6 +67,8 @@ export default function App() {
   const [colXMap,         setColXMap]         = useState({});
   const [flight,          setFlight]          = useState(null);
   const [snapCellKey,     setSnapCellKey]     = useState(null);
+  const [todayPopping,    setTodayPopping]    = useState(false);
+
 
   const slideTimerRef   = useRef(null);
   const presenceRef     = useRef(null);
@@ -599,7 +601,15 @@ export default function App() {
 
       <div className="toolbar">
         <button className="tb-btn icon" onClick={()=>navigateWeek(-7)}>‹</button>
-        <button className="tb-btn today" onClick={()=>navigateWeek(0,new Date())}>Today</button>
+        <button
+  className={`tb-btn today${todayPopping?' today-pop':''}`}
+  onClick={()=>{
+    navigateWeek(0,new Date());
+    setTodayPopping(false);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>setTodayPopping(true)));
+    setTimeout(()=>setTodayPopping(false), 520);
+  }}
+>Today</button>
         <button className="tb-btn icon" onClick={()=>navigateWeek(7)}>›</button>
         <select className="tb-select" value={viewDate.getMonth()} onChange={e=>{
           const d=new Date(viewDate); d.setMonth(+e.target.value); d.setDate(1); navigateWeek(0,d);
