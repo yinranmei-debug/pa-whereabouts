@@ -6,6 +6,13 @@ import RAW_STAFF_LIST from './data/staff.json';
 import STATUS_CONFIG from './data/status.json';
 import { createClient } from '@supabase/supabase-js';
 
+// ── 拆出去的纯UI组件 ──────────────────────────────────────────────────────────
+import GlobalStyles        from './GlobalStyles';
+import Avatar              from './Avatar';
+import LoginScreen         from './LoginScreen';
+import AccessDeniedScreen  from './AccessDeniedScreen';
+import EmojiFlyLayer       from './EmojiFlyLayer';
+
 const supabase = createClient(
   'https://vzdrpydtxlamoqtukgld.supabase.co',
   'sb_publishable_o1d0wmxwLrJCuTQ84uY38g__dqoj2dD'
@@ -37,335 +44,6 @@ const fmt = date => {
   return `${y}-${m}-${d}`;
 };
 
-const TEAMS_COLORS = ['#B3CEE0','#D1A7C8','#A7C8A0','#E0C8A7','#A7B9E0','#E0A7A7','#C8D1A7','#A7D1CE','#D1C8A7','#B9A7E0','#A7C8D1','#E0B9A7'];
-const teamsColor = name => {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
-  return TEAMS_COLORS[Math.abs(h) % TEAMS_COLORS.length];
-};
-
-const initials = name => {
-  const p = name.trim().split(' ');
-  return p.length >= 2 ? (p[0][0] + p[p.length-1][0]).toUpperCase() : name[0].toUpperCase();
-};
-
-function Avatar({ name, photoUrl, size=34, isMe=false }) {
-  if (!name) return null;
-  return (
-    <div style={{
-      width:size, height:size, borderRadius:'50%', flexShrink:0, overflow:'hidden',
-      display:'flex', alignItems:'center', justifyContent:'center',
-      fontSize:size*0.36, fontFamily:"'Segoe UI',sans-serif", fontWeight:600,
-      letterSpacing:'0.02em', background:photoUrl?'transparent':teamsColor(name),
-      color:'#fff', userSelect:'none',
-      ...(isMe?{boxShadow:'0 0 0 2px #fff,0 0 0 4px #770bff'}:{}),
-    }}>
-      {photoUrl
-        ? <img src={photoUrl} alt={name} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
-        : initials(name)
-      }
-    </div>
-  );
-}
-
-// ── 共用飞行层，A/B 效果都走这里 ────────────────────────────────────────────
-function EmojiFlyLayer({ flight, onComplete }) {
-  const [progress,   setProgress]   = useState(0);
-  const [pathPoints, setPathPoints] = useState([]);
-  const rafRef = useRef(null);
-
-  useEffect(() => {
-    if (!flight) { setProgress(0); setPathPoints([]); return; }
-    const DURATION = 850;
-    const t0 = performance.now();
-    const pts = [];
-
-    const animate = (now) => {
-      const p = Math.min((now - t0) / DURATION, 1);
-      setProgress(p);
-      const { start, end } = flight;
-      const ctrl = { x: start.x + (end.x - start.x) * 0.2, y: Math.max(start.y, end.y) + 160 };
-      if (p >= 0.25) {
-        const t = (p - 0.25) / 0.75;
-        const e = t < 0.5 ? 8*t*t*t*t : 1 - Math.pow(-2*t+2,4)/2;
-        pts.push({
-          x: Math.pow(1-e,2)*start.x + 2*(1-e)*e*ctrl.x + Math.pow(e,2)*end.x,
-          y: Math.pow(1-e,2)*start.y + 2*(1-e)*e*ctrl.y + Math.pow(e,2)*end.y,
-        });
-        setPathPoints([...pts]);
-      }
-      if (p < 1) rafRef.current = requestAnimationFrame(animate);
-      else { rafRef.current = null; setTimeout(onComplete, 40); }
-    };
-    rafRef.current = requestAnimationFrame(animate);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, [flight]);
-
-  if (!flight) return null;
-
-  const { start, end, icon } = flight;
-  const ctrl = { x: start.x + (end.x - start.x) * 0.2, y: Math.max(start.y, end.y) + 160 };
-
-  let x, y, scale, rotate, opacity;
-  if (progress < 0.25) {
-    const t  = progress / 0.25;
-    const ez = 1 - Math.pow(1-t, 3);
-    x = start.x; y = start.y;
-    scale = 1 + ez; rotate = t * -18; opacity = ez;
-  } else {
-    const t  = (progress - 0.25) / 0.75;
-    const ez = t < 0.5 ? 8*t*t*t*t : 1 - Math.pow(-2*t+2,4)/2;
-    x = Math.pow(1-ez,2)*start.x + 2*(1-ez)*ez*ctrl.x + Math.pow(ez,2)*end.x;
-    y = Math.pow(1-ez,2)*start.y + 2*(1-ez)*ez*ctrl.y + Math.pow(ez,2)*end.y;
-    scale   = 2 - ez * 1.1;
-    rotate  = -18 + ez * 18;
-    opacity = progress > 0.88 ? 1 - (progress - 0.88) / 0.12 : 1;
-  }
-
-  const dPath = pathPoints.length > 1
-    ? `M ${pathPoints[0].x} ${pathPoints[0].y} ` + pathPoints.slice(1).map(p=>`L ${p.x} ${p.y}`).join(' ')
-    : '';
-
-  return (
-    <>
-      <svg style={{position:'fixed',inset:0,width:'100%',height:'100%',pointerEvents:'none',zIndex:10998}}>
-        <defs>
-          <linearGradient id="fly-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%"   stopColor="#009bff" stopOpacity="0"/>
-            <stop offset="55%"  stopColor="#009bff" stopOpacity="0.32"/>
-            <stop offset="100%" stopColor="#770bff" stopOpacity="0.82"/>
-          </linearGradient>
-          <filter id="fly-blur" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="4" result="b"/>
-            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-        </defs>
-        {dPath && (
-          <path d={dPath} fill="none" stroke="url(#fly-grad)" strokeWidth="7"
-            strokeLinecap="round" filter="url(#fly-blur)"
-            opacity={progress > 0.88 ? 0 : 1}
-            style={{transition:'opacity 0.12s'}}
-          />
-        )}
-      </svg>
-      <div style={{
-        position:'fixed', left:x, top:y,
-        transform:`translate(-50%,-50%) scale(${scale}) rotate(${rotate}deg)`,
-        fontSize:'26px', pointerEvents:'none', zIndex:10999, opacity,
-        filter:`drop-shadow(0 0 10px rgba(119,11,255,${progress>0.28?0.5:0}))`,
-        willChange:'transform,opacity',
-      }}>
-        {icon}
-      </div>
-    </>
-  );
-}
-
-const GlobalStyles = () => (
-  <style>{`
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-    *,*:before,*:after{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%}
-
-    @keyframes holiBounce{
-      0%  {transform:scale(1)}35%{transform:scale(1.08)}65%{transform:scale(0.95)}82%{transform:scale(1.03)}100%{transform:scale(1)}
-    }
-    .holi-tap .pill-card{animation:holiBounce 0.42s cubic-bezier(0.25,0.46,0.45,0.94) both;transform-origin:center center;}
-
-    @keyframes emojiLabelPop{
-      0%{transform:scale(1) rotate(0deg);}22%{transform:scale(1.45) rotate(-10deg);}
-      48%{transform:scale(0.84) rotate(7deg);}68%{transform:scale(1.18) rotate(-4deg);}
-      84%{transform:scale(0.97) rotate(1deg);}100%{transform:scale(1) rotate(0deg);}
-    }
-    .emoji-label-pop{
-      animation:emojiLabelPop 0.65s cubic-bezier(0.34,1.46,0.64,1) both;
-      transform-origin:center center;
-      display:flex;flex-direction:column;align-items:center;gap:8px;
-    }
-
-    /* 头像被心情 emoji 击中 */
-    @keyframes avatarSnap{
-      0%{transform:scale(1)}28%{transform:scale(1.55) rotate(10deg)}
-      55%{transform:scale(0.87) rotate(-4deg)}78%{transform:scale(1.16) rotate(2deg)}
-      92%{transform:scale(0.97)}100%{transform:scale(1) rotate(0deg)}
-    }
-    .avatar-snap{animation:avatarSnap 0.52s cubic-bezier(0.34,1.56,0.64,1) both;}
-
-    /* 格子被工作状态击中 */
-    @keyframes cellSnap{
-      0%{transform:scale(1)}30%{transform:scale(1.12)}60%{transform:scale(0.94)}80%{transform:scale(1.04)}100%{transform:scale(1)}
-    }
-    .cell-snap{animation:cellSnap 0.38s cubic-bezier(0.34,1.56,0.64,1) both;}
-
-    @keyframes colGlowFade{
-      0%{opacity:0;transform:scaleX(0.92);}12%{opacity:1;transform:scaleX(1);}
-      65%{opacity:0.5;transform:scaleX(1);}85%{opacity:0.3;transform:scaleX(1.01);}100%{opacity:0;transform:scaleX(1);}
-    }
-    .col-glow-overlay{
-      position:fixed;pointer-events:none;z-index:150;border-radius:10px;
-      background:linear-gradient(180deg,rgba(0,229,255,0.055) 0%,rgba(0,155,255,0.07) 30%,rgba(119,11,255,0.07) 70%,rgba(119,11,255,0.04) 100%);
-      box-shadow:inset 0 0 8px 2px rgba(0,155,255,0.32),inset 0 0 18px 4px rgba(119,11,255,0.20),inset 0 0 4px 1px rgba(0,229,255,0.28),0 0 10px 2px rgba(0,155,255,0.10),0 0 20px 5px rgba(119,11,255,0.07);
-      animation:colGlowFade 1.8s cubic-bezier(0.22,0.61,0.36,1) both;will-change:opacity,transform;
-    }
-
-    @keyframes slideInFromRight{from{transform:translateX(52px);opacity:0.3;}to{transform:translateX(0);opacity:1;}}
-    @keyframes slideInFromLeft{from{transform:translateX(-52px);opacity:0.3;}to{transform:translateX(0);opacity:1;}}
-    .td-slide-right{animation:slideInFromRight 0.28s cubic-bezier(0.25,0.46,0.45,0.94) both;}
-    .td-slide-left {animation:slideInFromLeft  0.28s cubic-bezier(0.25,0.46,0.45,0.94) both;}
-
-    @keyframes dropIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
-    @keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-    @keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
-    @keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.4)}50%{box-shadow:0 0 0 4px rgba(34,197,94,0)}}
-
-    .glow-frame{position:fixed;inset:0;pointer-events:none;z-index:9998;opacity:0;
-      box-shadow:inset 0 0 0px 0px rgba(0,155,255,0);will-change:opacity,box-shadow;transform:translateZ(0);}
-
-    body{font-family:'Plus Jakarta Sans','Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;background:#f4f5f7;color:#111827;-webkit-font-smoothing:antialiased;}
-    .nav{height:${NAV_H}px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;padding:0 28px;position:sticky;top:0;z-index:500}
-    .nav-tab{height:${NAV_H}px;display:flex;align-items:center;padding:0 14px;font-size:13px;font-weight:500;font-family:'Plus Jakarta Sans',sans-serif;color:#6b7280;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;white-space:nowrap;user-select:none}
-    .nav-tab:hover{color:#111827}
-    .nav-tab.active{color:transparent;background:linear-gradient(90deg,#009bff,#770bff);-webkit-background-clip:text;background-clip:text;border-image:linear-gradient(90deg,#009bff,#770bff) 1;font-weight:700}
-    .nav-sep{width:1px;height:20px;background:#e5e7eb;margin:0 8px;flex-shrink:0}
-    .nav-right{margin-left:auto;display:flex;align-items:center;gap:10px}
-    .save-txt{font-size:12px;color:#9ca3af;animation:pulse 1.2s infinite}
-    .save-ok{font-size:12px;color:#22c55e;animation:fadeUp 0.2s ease}
-    .stat-pill{display:flex;align-items:center;gap:7px;padding:6px 14px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:100px;font-size:12px;font-weight:600;color:#374151;white-space:nowrap}
-    .stat-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0;animation:pulseDot 2s ease-in-out infinite}
-    .user-chip{display:flex;align-items:center;gap:8px;padding:4px 4px 4px 12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:100px}
-    .user-name{font-size:12px;font-weight:600;color:#374151}
-    .signout-btn{height:26px;padding:0 10px;border-radius:100px;border:none;background:#e5e7eb;color:#6b7280;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s}
-    .signout-btn:hover{background:#d1d5db;color:#374151}
-    .sub-header{height:${SUB_H}px;padding:0 28px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;position:sticky;top:${NAV_H}px;z-index:490}
-    .page-title{font-size:22px;font-weight:800;font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(90deg,#009bff,#770bff);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:-0.03em;}
-    .region-toggle{display:flex;background:#f3f4f6;border-radius:8px;padding:3px;gap:2px}
-    .region-btn{height:28px;padding:0 14px;border-radius:6px;border:none;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s}
-    .region-btn.on{background:linear-gradient(90deg,#009bff,#770bff);color:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.15)}
-    .region-btn.off{background:transparent;color:#9ca3af}
-    .toolbar{height:${TB_H}px;padding:0 28px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:8px;position:sticky;top:${NAV_H+SUB_H}px;z-index:480}
-    .tb-btn{height:32px;padding:0 12px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;font-size:13px;font-weight:400;color:#374151;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center}
-    .tb-btn:hover{background:#f9fafb;border-color:#d1d5db}
-    .tb-btn.today{background:linear-gradient(90deg,#009bff,#770bff);color:#fff;border:none;font-weight:600;padding:0 16px}
-    .tb-btn.today:hover{opacity:0.9}
-    .tb-btn.icon{width:32px;padding:0;font-size:15px;color:#6b7280}
-    .tb-select{height:32px;padding:0 12px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;font-size:13px;color:#374151;cursor:pointer;appearance:none}
-    .tb-month{font-size:15px;font-weight:600;color:#111827;letter-spacing:-0.01em}
-    .legend{height:${LG_H}px;padding:0 28px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:20px;position:sticky;top:${NAV_H+SUB_H+TB_H}px;z-index:470}
-    .leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#9ca3af}
-    .leg-sw{width:20px;height:10px;border-radius:4px}
-    .tbl-outer{background:#f4f5f7;padding-bottom:48px;position:relative}
-    .tbl-hdr-sticky{position:sticky;top:${HEADER_STICKY_TOP}px;z-index:460;background:#f4f5f7;border-bottom:1px solid #ebebeb}
-    .tbl-hdr-row{display:grid;grid-template-columns:200px repeat(7,1fr);min-width:860px;padding:0 28px}
-    .tbl-hdr-namecol{background:#f4f5f7}
-    .tbl-hdr-daycol{padding:14px 4px 10px;text-align:center;background:#f4f5f7}
-    .tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 28px}
-    .main-tbl{width:100%;border-collapse:collapse;table-layout:fixed;min-width:860px}
-    .main-tbl td{padding:0;height:${ROW_H}px;vertical-align:top}
-    .sticky-c{position:sticky;left:0;z-index:100;background:#f4f5f7;overflow:visible}
-    .sticky-c::after{content:'';position:absolute;top:0;right:-16px;bottom:0;width:16px;background:linear-gradient(to right,rgba(0,0,0,0.04),transparent);pointer-events:none}
-    .nw{height:${ROW_H}px;display:flex;align-items:center;gap:10px;padding:0 8px;border-bottom:1px solid #ebebeb;overflow:visible}
-    tr:last-child .nw{border-bottom:none}
-    .n-av-wrap{will-change:transform;transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1),filter 0.3s ease;cursor:pointer;position:relative;}
-    .n-av-wrap.is-me:hover{transform:scale(1.18) rotate(3deg);filter:drop-shadow(0 8px 16px rgba(119,11,255,0.22));}
-    .n-av-wrap.is-me:active{transform:scale(0.92);}
-    .n-name{font-size:13px;font-weight:400;color:#374151;transition:color 0.15s}
-    .n-name.me{font-weight:600;color:#111827}
-    tr:hover .n-name{background:linear-gradient(90deg,#009bff,#770bff);-webkit-background-clip:text;background-clip:text;color:transparent}
-    .n-you{font-size:8px;font-weight:700;background:linear-gradient(90deg,#009bff,#770bff);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:0.06em;margin-top:1px}
-    .emo-tag{position:absolute;bottom:-2px;right:-2px;background:#fff;border-radius:50%;width:17px;height:17px;display:flex;align-items:center;justify-content:center;font-size:10px;box-shadow:0 1px 4px rgba(0,0,0,0.12);border:1.5px solid #fff}
-    .emo-picker{position:absolute;left:54px;top:4px;z-index:10050;background:#fff;border-radius:12px;display:flex;padding:8px;gap:4px;box-shadow:0 8px 24px rgba(0,0,0,0.12);border:1px solid #e5e7eb;animation:dropIn 0.15s ease}
-    .dw{height:${ROW_H}px;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:0 4px;border-bottom:1px solid #ebebeb}
-    tr:last-child .dw{border-bottom:none}
-    .sh{height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;transition:all 0.15s;user-select:none;border:none;cursor:pointer}
-    .sh.mine{background:linear-gradient(135deg,#e8f0fe,#ede8fe);color:#374151}
-    .sh.mine:hover{background:linear-gradient(135deg,#d2e3fc,#ddd6fe);box-shadow:0 4px 12px rgba(119,11,255,0.08);transform:scale(1.02)}
-    .sh.set{cursor:grab}
-    .sh.set:active{cursor:grabbing}
-    .sh.set:hover{filter:brightness(0.97);transform:scale(1.01)}
-    .sh.preview{background:#dbeafe !important;border:2px dashed #0284c7 !important;opacity:0.8}
-    .sh.other{background:#fafafa;color:#d1d5db;border:1.5px solid #f3f4f6;cursor:default}
-    .s-drop{position:absolute;top:42px;left:0;z-index:10001;background:#fff;border-radius:12px;width:200px;padding:6px;max-height:264px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.12);border:1px solid #e5e7eb;animation:dropIn 0.15s ease}
-    .s-opt{padding:8px 10px;cursor:pointer;border-radius:8px;font-size:12px;display:flex;align-items:center;gap:10px;transition:background 0.1s}
-    .s-opt:hover{background:#f9fafb}
-    .s-opt-lbl{font-weight:400;color:#374151}
-    td.ptd{height:1px;padding:0 4px;vertical-align:top;position:relative;}
-    .pill{height:100%;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:pointer;user-select:none;overflow:hidden;}
-    .pill-card{width:100%;flex:1;border-radius:10px;transition:box-shadow 0.2s,filter 0.2s;transform-origin:center center;will-change:transform;}
-    .pill:hover .pill-card{filter:brightness(0.97)}
-    .hol .pill-card{background:linear-gradient(180deg,#fdf2f8,#fce7f3);box-shadow:0 2px 8px rgba(236,72,153,0.12),0 1px 3px rgba(236,72,153,0.06)}
-    .we  .pill-card{background:linear-gradient(180deg,#eff6ff,#dbeafe);box-shadow:0 2px 8px rgba(59,130,246,0.1),0 1px 3px rgba(59,130,246,0.06)}
-    .pill:hover.hol .pill-card{box-shadow:0 8px 24px rgba(236,72,153,0.2)}
-    .pill:hover.we  .pill-card{box-shadow:0 8px 24px rgba(59,130,246,0.16)}
-    .plan-row{padding:9px 11px;margin-bottom:4px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:background 0.15s}
-    .plan-row:hover{background:linear-gradient(90deg,#f0f9ff,#f5f0ff)}
-    .plan-date{font-weight:600;font-size:12px;transition:color 0.15s}
-    .plan-row:hover .plan-date{background:linear-gradient(90deg,#009bff,#770bff);-webkit-background-clip:text;background-clip:text;color:transparent}
-    .ms-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f3f4f6}
-    .ms-card{background:#fff;border-radius:2px;padding:44px;max-width:420px;width:90%;box-shadow:0 2px 6px rgba(0,0,0,0.13),0 0 0 1px rgba(0,0,0,0.04)}
-    .ms-title{font-size:24px;font-weight:600;color:#201f1e;margin:0 0 6px}
-    .ms-sub{font-size:13px;color:#605e5c;margin:0 0 24px}
-    .ms-btn{width:100%;height:40px;background:linear-gradient(90deg,#009bff,#770bff);color:#fff;border:none;border-radius:2px;font-size:14px;font-weight:600;cursor:pointer;transition:opacity 0.15s}
-    .ms-btn:hover{opacity:0.9}
-    .ms-app-row{display:flex;align-items:center;gap:10px;margin-top:28px;padding-top:16px;border-top:1px solid #edebe9}
-    .ms-app-icon{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#009bff,#770bff);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0}
-    .ms-err{margin-top:14px;color:#a4262c;background:#fde7e9;padding:10px 14px;border-radius:2px;font-size:13px;border-left:3px solid #a4262c}
-    @media(max-width:768px){.nav,.sub-header,.toolbar,.legend{padding-left:16px;padding-right:16px}.tbl-scroll,.tbl-hdr-row{padding-left:16px;padding-right:16px}}
-  `}</style>
-);
-
-function LoginScreen({ onLogin, isInitializing, error }) {
-  return (
-    <div className="ms-screen"><GlobalStyles />
-      <div className="ms-card">
-        <div style={{display:'flex',justifyContent:'center',marginBottom:28}}>
-          <img src="https://i.ibb.co/YTQHg15F/Pattern-Logo.png" alt="Pattern" style={{height:40,objectFit:'contain'}}/>
-        </div>
-        <h2 className="ms-title">Sign in</h2>
-        <p className="ms-sub">Use your Pattern Asia work account to continue</p>
-        {isInitializing
-          ? <div style={{fontSize:'13px',color:'#605e5c',textAlign:'center'}}>Initializing...</div>
-          : (
-            <button className="ms-btn" onClick={onLogin} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:10}}>
-              <svg width="18" height="18" viewBox="0 0 21 21" fill="none">
-                <rect x="1" y="1" width="9" height="9" fill="rgba(255,255,255,0.95)"/>
-                <rect x="11" y="1" width="9" height="9" fill="rgba(255,255,255,0.7)"/>
-                <rect x="1" y="11" width="9" height="9" fill="rgba(255,255,255,0.7)"/>
-                <rect x="11" y="11" width="9" height="9" fill="rgba(255,255,255,0.5)"/>
-              </svg>
-              Sign in with Microsoft
-            </button>
-          )
-        }
-        {error && <div className="ms-err">{error}</div>}
-        <div className="ms-app-row">
-          <div className="ms-app-icon">P</div>
-          <div>
-            <div style={{fontSize:'13px',fontWeight:'600',color:'#201f1e'}}>Whereabouts</div>
-            <div style={{fontSize:'11px',color:'#605e5c'}}>Pattern Asia Pacific</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function AccessDeniedScreen({ email, onLogout }) {
-  return (
-    <div className="ms-screen"><GlobalStyles />
-      <div className="ms-card">
-        <h2 className="ms-title">Access denied</h2>
-        <p style={{fontSize:'13px',color:'#605e5c',marginBottom:'20px'}}>
-          <strong>{email}</strong> is not authorised to access Whereabouts.<br/>
-          Please contact your administrator if you believe this is an error.
-        </p>
-        <button className="ms-btn" style={{background:'#f3f2f1',color:'#201f1e',border:'1px solid #8a8886'}} onClick={onLogout}>
-          Sign out and try another account
-        </button>
-      </div>
-    </div>
-  );
-}
-
 export default function App() {
   const [isInit,          setIsInit]          = useState(false);
   const [account,         setAccount]         = useState(null);
@@ -387,24 +65,20 @@ export default function App() {
   const [bouncingDs,      setBouncingDs]      = useState(null);
   const [slideDir,        setSlideDir]        = useState(null);
   const [colXMap,         setColXMap]         = useState({});
-  // 飞行层：{ icon, start, end, type:'mood'|'status', payload }
   const [flight,          setFlight]          = useState(null);
-  // 飞行落地后要执行的回调，存在 ref 里避免闭包问题
+  const [snapCellKey,     setSnapCellKey]     = useState(null);
+
+  const slideTimerRef  = useRef(null);
+  const presenceRef    = useRef(null);
+  const partyTimerRef  = useRef(null);
+  const scrollRef      = useRef(null);
+  const headerRef      = useRef(null);
+  const glowFrameRef   = useRef(null);
+  const glowLevelRef   = useRef(0);
+  const glowRafRef     = useRef(null);
+  const myAvatarRef    = useRef(null);
   const flightOnLandRef = useRef(null);
-  // 格子 snap 动画：存 cell key
-  const [snapCellKey,    setSnapCellKey]      = useState(null);
 
-  const slideTimerRef = useRef(null);
-  const presenceRef   = useRef(null);
-  const partyTimerRef = useRef(null);
-  const scrollRef     = useRef(null);
-  const headerRef     = useRef(null);
-  const glowFrameRef  = useRef(null);
-  const glowLevelRef  = useRef(0);
-  const glowRafRef    = useRef(null);
-  const myAvatarRef   = useRef(null);
-
-  // 读表头 daycol 中心 X
   const measureColX = useCallback(() => {
     const map = {};
     document.querySelectorAll('[data-hdr-ds]').forEach(el => {
@@ -584,7 +258,7 @@ export default function App() {
   if (denied)   return <AccessDeniedScreen email={account?.username||''} onLogout={logout}/>;
   if (!account) return <LoginScreen onLogin={login} isInitializing={!isInit} error={authError}/>;
 
-  const me      = account.username.toLowerCase();
+  const me        = account.username.toLowerCase();
   const superUser = isSuperUser(me);
   const meStaff   = getStaffEntry(me);
 
@@ -599,12 +273,10 @@ export default function App() {
     partyTimerRef.current=setTimeout(()=>{ el.style.transition='transform 0.5s ease'; el.style.transform='scale(1)'; },500);
   };
 
-  // ── 效果A：心情 emoji 飞向头像 ───────────────────────────────────────────
   const triggerMoodFly = (emo, clickedEl) => {
     if (!myAvatarRef.current || !clickedEl) return;
     const srcR = clickedEl.getBoundingClientRect();
     const avR  = myAvatarRef.current.getBoundingClientRect();
-    // 落地回调：upsert emotion + 头像 snap
     flightOnLandRef.current = async () => {
       if (meStaff) await supabase.from('emotions').upsert({ staff_id: meStaff.id, emoji: emo });
       const avEl = myAvatarRef.current;
@@ -623,29 +295,23 @@ export default function App() {
     setSocialMenu(null);
   };
 
-  // ── 效果B：工作状态 icon 飞向对应格子 ────────────────────────────────────
   const triggerStatusFly = (statusId, clickedEl, cellKey) => {
     const cfg = STATUS_CONFIG[statusId];
     if (!cfg || !clickedEl) return;
-    // 终点：格子 DOM，用 data-cell-key 属性找
     const cellEl = document.querySelector(`[data-cell-key="${cellKey}"]`);
     if (!cellEl) return;
     const srcR  = clickedEl.getBoundingClientRect();
     const cellR = cellEl.getBoundingClientRect();
-    // 落地回调：写 records + cell snap + supabase
     flightOnLandRef.current = async () => {
-      // 显示新状态
-      const parts = cellKey.split('-');
+      const parts   = cellKey.split('-');
       const shift   = parts[parts.length-1];
       const staffId = parts[0];
       const date    = parts.slice(1,-1).join('-');
       setRecords(r => ({ ...r, [cellKey]: statusId }));
       setActiveMenu(null);
       setSaveStatus('saving');
-      // cell snap 动画
       setSnapCellKey(cellKey);
       setTimeout(()=>setSnapCellKey(null), 400);
-      // supabase
       await supabase.from('statuses').upsert({ id:cellKey, staff_id:staffId, date, shift, status:statusId });
       setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
     };
@@ -656,16 +322,11 @@ export default function App() {
     });
   };
 
-  // 飞行落地统一入口
   const handleFlightComplete = () => {
     setFlight(null);
-    if (flightOnLandRef.current) {
-      flightOnLandRef.current();
-      flightOnLandRef.current = null;
-    }
+    if (flightOnLandRef.current) { flightOnLandRef.current(); flightOnLandRef.current = null; }
   };
 
-  // 普通状态操作（清除时不飞行）
   const handleStatusClear = async (key, e) => {
     e.stopPropagation();
     if (bulkSelectCells.length > 0) {
@@ -772,7 +433,7 @@ export default function App() {
   const inOffice=(()=>{
     let n=0;
     staffList.forEach(s=>{
-      if (!(!!records[`${s.id}-${today}-AM`] && !!records[`${s.id}-${today}-PM`])) n++;
+      if (!(!!records[`${s.id}-${today}-AM`]&&!!records[`${s.id}-${today}-PM`])) n++;
     });
     return {n,total:staffList.length};
   })();
@@ -809,7 +470,6 @@ export default function App() {
       <GlobalStyles/>
       <div ref={glowFrameRef} className="glow-frame"/>
 
-      {/* 共用飞行层 */}
       {flight && (
         <EmojiFlyLayer
           key={`${flight.start.x}-${flight.start.y}-${Date.now()}`}
@@ -818,7 +478,6 @@ export default function App() {
         />
       )}
 
-      {/* 非工作日 emoji + label 浮层 */}
       {activeTab==='calendar' && nonEditableCols.map(d=>{
         const x = colXMap[d.ds];
         if (!x) return null;
@@ -956,7 +615,6 @@ export default function App() {
                 const isFirst=rowIdx===0;
                 return (
                   <tr key={m.id} id={isMe?'my-row':undefined}>
-                    {/* 名字列：不加 tdSlideClass */}
                     <td className="sticky-c" style={{background:'#f4f5f7',padding:'0 8px 0 0'}}>
                       <div className="nw">
                         <div style={{display:'flex',alignItems:'center',gap:'10px',position:'relative',cursor:isMe?'pointer':'default'}}
@@ -974,7 +632,6 @@ export default function App() {
                             <div className={`n-name${isMe?' me':''}`}>{m.name}</div>
                             {isMe&&<div className="n-you">YOU</div>}
                           </div>
-                          {/* 效果A：心情 picker */}
                           {isMe&&socialMenu===m.id&&(
                             <div className="emo-picker dsz">
                               {['🧘','⚡','☕','🎯','🚀','💪','🌱'].map(emo=>(
@@ -1015,7 +672,6 @@ export default function App() {
                               const isSnapping=snapCellKey===key;
                               return (
                                 <div key={shift} style={{position:'relative'}}>
-                                  {/* data-cell-key 供效果B定位终点 */}
                                   <div
                                     data-cell-key={key}
                                     id={isFirst&&si===0?AM_REF:undefined}
@@ -1039,11 +695,7 @@ export default function App() {
                                       <div style={{padding:'3px 10px 7px',fontSize:'10px',color:'#9ca3af',fontWeight:'600',borderBottom:'1px solid #f0f0f0',marginBottom:'3px',letterSpacing:'0.06em'}}>STATUS</div>
                                       {Object.entries(STATUS_CONFIG).map(([sId,sCfg])=>(
                                         <div key={sId} className="s-opt"
-                                          onClick={e=>{
-                                            e.stopPropagation();
-                                            // 效果B：同步读坐标，触发飞行
-                                            triggerStatusFly(sId, e.currentTarget, key);
-                                          }}>
+                                          onClick={e=>{ e.stopPropagation(); triggerStatusFly(sId, e.currentTarget, key); }}>
                                           <span style={{fontSize:'15px'}}>{sCfg.icon}</span>
                                           <span className="s-opt-lbl">{sCfg.label}</span>
                                         </div>
