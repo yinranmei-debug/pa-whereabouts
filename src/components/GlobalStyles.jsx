@@ -41,17 +41,13 @@ const GlobalStyles = () => (
     }
     .cell-snap{animation:cellSnap 0.38s cubic-bezier(0.34,1.56,0.64,1) both;}
 
-    /* 问题4: 批量填入错落动画 */
     @keyframes cellStagger{
       0%  {opacity:0;transform:scale(0.75) translateY(4px);}
       60% {opacity:1;transform:scale(1.06) translateY(-1px);}
       100%{opacity:1;transform:scale(1)    translateY(0);}
     }
-    .cell-stagger{
-      animation:cellStagger 0.28s cubic-bezier(0.34,1.56,0.64,1) both;
-    }
+    .cell-stagger{animation:cellStagger 0.28s cubic-bezier(0.34,1.56,0.64,1) both;}
 
-    /* 问题3: 预览样式 — 渐变背景 + 呼吸发光轮廓，去掉虚线 */
     @keyframes previewBreath{
       0%,100%{box-shadow:0 0 0 1.5px rgba(0,155,255,0.45),0 0 6px rgba(119,11,255,0.18);}
       50%    {box-shadow:0 0 0 2.5px rgba(119,11,255,0.75),0 0 14px rgba(119,11,255,0.38);}
@@ -62,12 +58,45 @@ const GlobalStyles = () => (
       animation:previewBreath 1.1s ease-in-out infinite !important;
       opacity:1 !important;
     }
-
-    /* 松手后保持高亮 */
     .sh.bulk-selected{
       background:linear-gradient(135deg,rgba(0,155,255,0.2),rgba(119,11,255,0.2)) !important;
       border:none !important;
       box-shadow:0 0 0 2px rgba(119,11,255,0.55),0 0 10px rgba(119,11,255,0.18) !important;
+    }
+
+    @keyframes glint{
+      0%  {left:-150%;}
+      100%{left:150%;}
+    }
+    @keyframes sonar{
+      0%  {transform:scale(1);   opacity:0.8; box-shadow:0 0 0 0    rgba(119,11,255,0.7);}
+      100%{transform:scale(2.5); opacity:0;   box-shadow:0 0 0 20px rgba(119,11,255,0);  }
+    }
+    .tb-btn.today{
+      position:relative;overflow:hidden;
+      background:linear-gradient(90deg,#009bff,#770bff);
+      color:#fff;border:none;font-weight:600;padding:0 16px;
+      transform-origin:center center;
+    }
+    .tb-btn.today:hover{opacity:0.9;}
+    .tb-btn.today:active{
+      transform:scale(0.92) translateY(1px);
+      box-shadow:inset 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .tb-btn.today::after{
+      content:'';position:absolute;top:0;height:100%;width:44px;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,0.45),transparent);
+      transform:skewX(-20deg);left:-150%;pointer-events:none;
+    }
+    .today-glint::after{
+      animation:glint 0.55s ease-in-out;
+    }
+    .sonar-ring{
+      position:absolute;border:2px solid #770bff;border-radius:50%;
+      pointer-events:none;width:30px;height:30px;
+    }
+    .sonar-animate{
+      animation:sonar 1.4s cubic-bezier(0,0,0.2,1) forwards;
     }
 
     @keyframes colGlowFade{
@@ -118,8 +147,6 @@ const GlobalStyles = () => (
     .toolbar{height:${TB_H}px;padding:0 28px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:8px;position:sticky;top:${NAV_H+SUB_H}px;z-index:480}
     .tb-btn{height:32px;padding:0 12px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;font-size:13px;font-weight:400;color:#374151;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center}
     .tb-btn:hover{background:#f9fafb;border-color:#d1d5db}
-    .tb-btn.today{background:linear-gradient(90deg,#009bff,#770bff);color:#fff;border:none;font-weight:600;padding:0 16px}
-    .tb-btn.today:hover{opacity:0.9}
     .tb-btn.icon{width:32px;padding:0;font-size:15px;color:#6b7280}
     .tb-select{height:32px;padding:0 12px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;font-size:13px;color:#374151;cursor:pointer;appearance:none}
     .tb-month{font-size:15px;font-weight:600;color:#111827;letter-spacing:-0.01em}

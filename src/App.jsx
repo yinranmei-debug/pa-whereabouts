@@ -593,21 +593,20 @@ export default function App() {
       </div>
 
       <div className="toolbar">
+        <button className="tb-btn icon" onClick={()=>navigateWeek(-7)}>‹</button>
         <button
-  className="tb-btn today"
-  onClick={e=>{
-    navigateWeek(0,new Date());
-    // glint 光晕扫过
-    const btn = e.currentTarget;
-    btn.classList.remove('today-glint');
-    void btn.offsetWidth;
-    btn.classList.add('today-glint');
-    setTimeout(()=>btn.classList.remove('today-glint'), 600);
-    // sonar 触发
-    setTodaySonar(true);
-    setTimeout(()=>setTodaySonar(false), 2000);
-  }}
->Today</button>
+          className="tb-btn today"
+          onClick={e=>{
+            navigateWeek(0,new Date());
+            const btn=e.currentTarget;
+            btn.classList.remove('today-glint');
+            void btn.offsetWidth;
+            btn.classList.add('today-glint');
+            setTimeout(()=>btn.classList.remove('today-glint'),600);
+            setTodaySonar(true);
+            setTimeout(()=>setTodaySonar(false),2000);
+          }}
+        >Today</button>
         <button className="tb-btn icon" onClick={()=>navigateWeek(7)}>›</button>
         <select className="tb-select" value={viewDate.getMonth()} onChange={e=>{
           const d=new Date(viewDate); d.setMonth(+e.target.value); d.setDate(1); navigateWeek(0,d);
@@ -633,17 +632,17 @@ export default function App() {
                 <div style={{fontSize:'10px',fontWeight:'600',letterSpacing:'0.06em',marginBottom:'5px',color:d.isToday?'#770bff':'#9ca3af'}}>
                   {d.dayName.toUpperCase()}
                 </div>
-               <div style={{position:'relative',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto',width:'30px',height:'30px'}}>
-  {d.isToday && todaySonar && (
-    <>
-      <div className="sonar-ring sonar-animate" style={{animationDelay:'0s'}}/>
-      <div className="sonar-ring sonar-animate" style={{animationDelay:'0.4s'}}/>
-    </>
-  )}
-  <div style={{width:'30px',height:'30px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',background:d.isToday?'linear-gradient(135deg,#009bff,#770bff)':'transparent',color:d.isToday?'#fff':'#111827',fontSize:'14px',fontWeight:'600',position:'relative',zIndex:1}}>
-    {d.num}
-  </div>
-</div>
+                <div style={{position:'relative',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto',width:'30px',height:'30px'}}>
+                  {d.isToday && todaySonar && (
+                    <>
+                      <div className="sonar-ring sonar-animate" style={{animationDelay:'0s'}}/>
+                      <div className="sonar-ring sonar-animate" style={{animationDelay:'0.4s'}}/>
+                    </>
+                  )}
+                  <div style={{width:'30px',height:'30px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',background:d.isToday?'linear-gradient(135deg,#009bff,#770bff)':'transparent',color:d.isToday?'#fff':'#111827',fontSize:'14px',fontWeight:'600',position:'relative',zIndex:1}}>
+                    {d.num}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
