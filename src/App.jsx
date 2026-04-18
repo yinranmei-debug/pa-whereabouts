@@ -312,14 +312,25 @@ export default function App() {
   const meStaff = getStaffEntry(me);
 
   const popAvatar = userId => {
-    const el=document.getElementById(`av-${userId}`);
-    if (!el) return;
-    clearTimeout(partyTimerRef.current);
-    el.style.transition='none'; el.style.transform='scale(1)';
-    el.getBoundingClientRect();
-    el.style.transition='transform 0.12s cubic-bezier(0.34,1.56,0.64,1)';
-    el.style.transform='scale(1.7)';
-    partyTimerRef.current=setTimeout(()=>{ el.style.transition='transform 0.5s ease'; el.style.transform='scale(1)'; },500);
+    // pop table row avatar
+    const el = document.getElementById(`av-${userId}`);
+    if (el) {
+      clearTimeout(partyTimerRef.current);
+      el.style.transition='none'; el.style.transform='scale(1)';
+      el.getBoundingClientRect();
+      el.style.transition='transform 0.12s cubic-bezier(0.34,1.56,0.64,1)';
+      el.style.transform='scale(1.7)';
+      partyTimerRef.current=setTimeout(()=>{ el.style.transition='transform 0.5s ease'; el.style.transform='scale(1)'; },500);
+    }
+    // also pop the matching avatar in the online-pill stack
+    const onlineEl = document.getElementById(`online-av-${userId}`);
+    if (onlineEl) {
+      onlineEl.style.transition='none'; onlineEl.style.transform='scale(1)';
+      onlineEl.getBoundingClientRect();
+      onlineEl.style.transition='transform 0.15s cubic-bezier(0.34,1.56,0.64,1)';
+      onlineEl.style.transform='scale(2.2)';
+      setTimeout(()=>{ onlineEl.style.transition='transform 0.5s ease'; onlineEl.style.transform='scale(1)'; },500);
+    }
   };
 
   const triggerMoodFly = (emo, clickedEl) => {
@@ -669,10 +680,16 @@ export default function App() {
             <div className="online-pill">
               <div className="online-stack">
                 {onlineUsers.slice(0,4).map((u,i)=>(
-                  <div key={u.email} title={u.name} className="online-av" style={{zIndex:10-i}}>
-                    <Avatar name={u.name} photoUrl={staffPhotos[u.id]} size={24}/>
-                  </div>
-                ))}
+            <div
+              key={u.email}
+              id={`online-av-${u.id}`}
+              title={u.name}
+              className="online-av"
+              style={{zIndex:10-i}}
+            >
+              <Avatar name={u.name} photoUrl={staffPhotos[u.id]} size={24}/>
+            </div>
+          ))}
                 {onlineUsers.length>4&&<div className="online-count">+{onlineUsers.length-4}</div>}
               </div>
               <div style={{display:'flex',flexDirection:'column',gap:'1px'}}>
