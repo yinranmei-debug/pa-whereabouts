@@ -99,13 +99,16 @@ const LoginScreen = ({ onLogin, isInitializing, error }) => {
             </>
           )}
 
-          <div style={{width:'100%',paddingTop:28,marginTop:32,borderTop:'1px solid #f1f5f9',display:'flex',alignItems:'center',justifyContent:'center'}}>
+         <div style={{width:'100%',paddingTop:28,marginTop:32,borderTop:'1px solid #f1f5f9',display:'flex',flexDirection:'column',alignItems:'center',gap:8}}>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
               <div style={{width:8,height:8,borderRadius:'50%',background:'#818cf8'}}/>
               <span style={{fontSize:11,fontWeight:700,letterSpacing:'0.12em',color:'#94a3b8',textTransform:'uppercase',fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
                 Whereabouts
               </span>
             </div>
+            <p style={{fontSize:11,color:'#cbd5e1',margin:0,textAlign:'center',fontFamily:"'Plus Jakarta Sans',sans-serif",lineHeight:1.6}}>
+              Built by May Mei · For questions or feedback, feel free to reach out.
+            </p>
           </div>
         </div>
       </div>
