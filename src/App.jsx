@@ -69,7 +69,6 @@ export default function App() {
   const [snapCellKey,     setSnapCellKey]     = useState(null);
   const [todayPopping,    setTodayPopping]    = useState(false);
 
-
   const slideTimerRef   = useRef(null);
   const presenceRef     = useRef(null);
   const partyTimerRef   = useRef(null);
@@ -297,7 +296,6 @@ export default function App() {
     setSocialMenu(null);
   };
 
-  // 问题2修复：单选和批量都走这个函数，都有飞行效果
   const triggerStatusFly = (statusId, clickedEl, cellKey, onLand) => {
     const cfg = STATUS_CONFIG[statusId];
     if (!cfg || !clickedEl) return;
@@ -305,7 +303,6 @@ export default function App() {
     if (!cellEl) return;
     const srcR  = clickedEl.getBoundingClientRect();
     const cellR = cellEl.getBoundingClientRect();
-    // 落地回调存入 ref，飞行结束后执行
     flightOnLandRef.current = onLand;
     setFlight({
       icon:  cfg.icon,
@@ -319,7 +316,6 @@ export default function App() {
     if (flightOnLandRef.current) { flightOnLandRef.current(); flightOnLandRef.current = null; }
   };
 
-  // 单选：飞行后填入 + snap
   const handleStatusSelect = (key, statusId, e) => {
     e.stopPropagation();
     const parts   = key.split('-');
@@ -337,18 +333,15 @@ export default function App() {
     });
   };
 
-  // 批量：第一格飞行，落地后所有格子 stagger 填入
   const handleBulkStatusSelect = (statusId, e) => {
     e.stopPropagation();
     if (bulkSelectCells.length === 0) return;
     const keysToFill = [...bulkSelectCells];
     triggerStatusFly(statusId, e.currentTarget, keysToFill[0], async () => {
-      // 问题4：stagger 错落填入
       const staggerMap = {};
       keysToFill.forEach((k, i) => { staggerMap[k] = i * 45; });
       setStaggerCells(staggerMap);
       setTimeout(() => setStaggerCells({}), keysToFill.length * 45 + 350);
-
       setRecords(r => {
         const upd = { ...r };
         keysToFill.forEach(ck => { upd[ck] = statusId; });
@@ -602,14 +595,14 @@ export default function App() {
       <div className="toolbar">
         <button className="tb-btn icon" onClick={()=>navigateWeek(-7)}>‹</button>
         <button
-  className={`tb-btn today${todayPopping?' today-pop':''}`}
-  onClick={()=>{
-    navigateWeek(0,new Date());
-    setTodayPopping(false);
-    requestAnimationFrame(()=>requestAnimationFrame(()=>setTodayPopping(true)));
-    setTimeout(()=>setTodayPopping(false), 520);
-  }}
->Today</button>
+          className={`tb-btn today${todayPopping?' today-pop':''}`}
+          onClick={()=>{
+            navigateWeek(0,new Date());
+            setTodayPopping(false);
+            requestAnimationFrame(()=>requestAnimationFrame(()=>setTodayPopping(true)));
+            setTimeout(()=>setTodayPopping(false), 520);
+          }}
+        >Today</button>
         <button className="tb-btn icon" onClick={()=>navigateWeek(7)}>›</button>
         <select className="tb-select" value={viewDate.getMonth()} onChange={e=>{
           const d=new Date(viewDate); d.setMonth(+e.target.value); d.setDate(1); navigateWeek(0,d);
@@ -750,7 +743,6 @@ export default function App() {
                                         <div key={sId} className="s-opt"
                                           onClick={e=>{
                                             e.stopPropagation();
-                                            // 问题2修复：单选和批量分开路径，都有飞行
                                             if (bulkSelectCells.length>0) handleBulkStatusSelect(sId,e);
                                             else handleStatusSelect(key,sId,e);
                                           }}>
