@@ -269,7 +269,14 @@ export default function App() {
     presenceRef.current=channel;
     return ()=>{ supabase.removeChannel(channel); };
   }, [account]);
-
+  useEffect(() => {
+  const fn = e => {
+    const { type, text, ds } = e.detail;
+    fireParty({ currentTarget: e.target, stopPropagation: ()=>{} }, type, text, ds);
+  };
+  document.addEventListener('mob-party', fn);
+  return () => document.removeEventListener('mob-party', fn);
+}, []);
   useEffect(() => {
     const fn = e => {
       if (!e.target.closest('.dsz')&&!e.target.closest('.nav-tab')) {
