@@ -83,55 +83,54 @@ const GlobalStyles = () => (
     }
 
     /*
-     * COLUMN RIPPLE — 水环辐射
-     * Three pseudo-rings launched from the vertical center of the column.
-     * Each ring is a ::before/::after on injected ripple divs.
-     * We inject 3 absolutely-positioned divs inside .ptd and animate them.
+     * COLUMN GLOW — 整列荧光棒效果
+     * 一个撑满 td.ptd 的绝对定位 div：
+     *   - 半透明蓝紫渐变背景（整列被"罩住"）
+     *   - inset box-shadow 做边缘发光
+     *   - 动画：瞬间亮起，轻微回弹，1.2s 熄灭
+     * position:fixed + 坐标注入，完全不受 td overflow 限制
      */
-    @keyframes colRipple{
-      0%  { transform:translate(-50%,-50%) scale(0);   opacity:0.7; }
-      70% { transform:translate(-50%,-50%) scale(1);   opacity:0.25;}
-      88% { transform:translate(-50%,-50%) scale(0.92);opacity:0.18;}
-      100%{ transform:translate(-50%,-50%) scale(1.04);opacity:0;  }
+    @keyframes colGlowFade{
+      0%   { opacity:0;   transform:scaleX(0.88); }
+      12%  { opacity:1;   transform:scaleX(1);    }
+      72%  { opacity:0.7; transform:scaleX(1);    }
+      88%  { opacity:0.5; transform:scaleX(1.02); }
+      100% { opacity:0;   transform:scaleX(1);    }
     }
-    .col-ripple-ring{
-      position:absolute;
-      left:50%;
-      top:50%;
-      /* size: tall enough to cover the full column height as a circle */
-      width:340px;
-      height:340px;
-      border-radius:50%;
+    .col-glow-overlay{
+      position:fixed;
       pointer-events:none;
       z-index:150;
-      transform:translate(-50%,-50%) scale(0);
-      background: radial-gradient(circle,
-        rgba(0,229,255,0.55)   0%,
-        rgba(0,155,255,0.45)  28%,
-        rgba(119,11,255,0.30) 55%,
-        rgba(119,11,255,0)    75%
+      border-radius:10px;
+      /* layered glow: semi-transparent fill + strong inset edge light */
+      background: linear-gradient(180deg,
+        rgba(0,229,255,0.10)  0%,
+        rgba(0,155,255,0.13) 30%,
+        rgba(119,11,255,0.13) 70%,
+        rgba(119,11,255,0.08) 100%
       );
-      animation: colRipple 1.2s cubic-bezier(0.22,0.61,0.36,1) both;
+      box-shadow:
+        inset 0 0 18px 4px  rgba(0,155,255,0.55),
+        inset 0 0 40px 8px  rgba(119,11,255,0.35),
+        inset 0 0  8px 2px  rgba(0,229,255,0.45),
+              0 0 24px 6px  rgba(0,155,255,0.18),
+              0 0 48px 12px rgba(119,11,255,0.12);
+      animation: colGlowFade 1.2s cubic-bezier(0.22,0.61,0.36,1) both;
+      will-change: opacity, transform;
     }
-    .col-ripple-ring:nth-child(2){ animation-delay:0.13s; opacity:0.6; }
-    .col-ripple-ring:nth-child(3){ animation-delay:0.26s; opacity:0.45;}
 
     @keyframes dropIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
     @keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
     @keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
     @keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.4)}50%{box-shadow:0 0 0 4px rgba(34,197,94,0)}}
 
-    /*
-     * FRAME GLOW — restored as inset box-shadow, GPU layer via will-change+translateZ
-     * inset:0 so the element exactly covers the viewport, shadow bleeds inward
-     */
+    /* FRAME GLOW — inset:0, GPU layer */
     .glow-frame{
       position:fixed;
       inset:0;
       pointer-events:none;
       z-index:9998;
       opacity:0;
-      border-radius:0;
       box-shadow:inset 0 0 0px 0px rgba(0,155,255,0);
       will-change:opacity,box-shadow;
       transform:translateZ(0);
@@ -203,7 +202,7 @@ const GlobalStyles = () => (
     .s-opt{padding:8px 10px;cursor:pointer;border-radius:8px;font-size:12px;display:flex;align-items:center;gap:10px;transition:background 0.1s}
     .s-opt:hover{background:#f9fafb}
     .s-opt-lbl{font-weight:400;color:#374151}
-    td.ptd{height:1px;padding:0 4px;vertical-align:top;position:relative;overflow:visible;}
+    td.ptd{height:1px;padding:0 4px;vertical-align:top;position:relative;}
     .pill{height:100%;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:pointer;user-select:none;overflow:hidden;}
     .pill-card{width:100%;flex:1;border-radius:10px;transition:box-shadow 0.2s,filter 0.2s;transform-origin:center center;will-change:transform;}
     .pill:hover .pill-card{filter:brightness(0.97)}
@@ -309,7 +308,7 @@ export default function App() {
   const glowLevelRef  = useRef(0);
   const glowRafRef    = useRef(null);
 
-  // ── glow frame decay loop — fully imperative, zero React re-renders ──────
+  // ── glow frame decay loop ─────────────────────────────────────────────────
   useEffect(() => {
     const decay = () => {
       glowLevelRef.current = Math.max(0, glowLevelRef.current - 0.016);
@@ -598,31 +597,32 @@ export default function App() {
     }
   };
 
-  // ── fireParty: pill bounce + column ripple rings + frame glow boost ───────
+  // ── fireParty: pill bounce + column glow overlay + frame glow boost ───────
   const fireParty = (e, type, text='') => {
     const pill = e.currentTarget.closest('.pill');
 
-    // 1. pill-card bounce (unchanged)
+    // 1. pill-card bounce
     if (pill) {
       pill.classList.remove('holi-tap');
       void pill.offsetWidth;
       pill.classList.add('holi-tap');
     }
 
-    // 2. column ripple — inject 3 ring divs into the .ptd td, auto-remove after anim
+    // 2. column glow — measure td.ptd position, inject fixed overlay onto body
+    //    using position:fixed + getBoundingClientRect so td overflow never clips it
     const td = e.currentTarget.closest('td.ptd');
     if (td) {
-      // remove any leftover rings from a previous rapid click
-      td.querySelectorAll('.col-ripple-ring').forEach(r => r.remove());
-      for (let i = 0; i < 3; i++) {
-        const ring = document.createElement('div');
-        ring.className = 'col-ripple-ring';
-        td.appendChild(ring);
-      }
-      // clean up after animation completes (longest = 0.26s delay + 1.2s = 1.46s)
-      setTimeout(() => {
-        td.querySelectorAll('.col-ripple-ring').forEach(r => r.remove());
-      }, 1600);
+      // remove any leftover from rapid clicks
+      document.querySelectorAll('.col-glow-overlay').forEach(el => el.remove());
+      const r = td.getBoundingClientRect();
+      const overlay = document.createElement('div');
+      overlay.className = 'col-glow-overlay';
+      overlay.style.left   = `${r.left}px`;
+      overlay.style.top    = `${r.top}px`;
+      overlay.style.width  = `${r.width}px`;
+      overlay.style.height = `${r.height}px`;
+      document.body.appendChild(overlay);
+      setTimeout(() => overlay.remove(), 1400);
     }
 
     // 3. emoji rain
@@ -631,10 +631,10 @@ export default function App() {
     // 4. avatar pop
     popAvatar(meStaff?.id || 'guest');
 
-    // 5. frame glow boost — stacks on rapid clicks
+    // 5. frame glow boost
     glowLevelRef.current = Math.min(glowLevelRef.current + 0.65, 1);
 
-    // 6. broadcast to other online users
+    // 6. broadcast
     presenceRef.current?.send({ type:'broadcast', event:'party', payload:{ type, text, userId:meStaff?.id||'guest' } });
   };
 
@@ -684,7 +684,7 @@ export default function App() {
     <div style={{minHeight:'100vh', background:'#f4f5f7'}} onMouseUp={handleStatusCellMouseUp}>
       <GlobalStyles />
 
-      {/* frame glow — inset:0, GPU layer, driven by glowLevelRef RAF loop */}
+      {/* frame glow */}
       <div ref={glowFrameRef} className="glow-frame" />
 
       {activeTab === 'calendar' && week.filter(d => !d.editable).map(d => {
@@ -790,7 +790,6 @@ export default function App() {
       </div>
 
       <div className="tbl-outer dsz">
-
         <div className="tbl-hdr-sticky">
           <div ref={headerRef} className="tbl-hdr-row">
             <div className="tbl-hdr-namecol"/>
@@ -926,7 +925,6 @@ export default function App() {
             </tbody>
           </table>
         </div>
-
       </div>
     </div>
   );
