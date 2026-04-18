@@ -69,7 +69,7 @@ const GlobalStyles = () => (
     *,*:before,*:after{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%}
 
-    /* pill-card bounce — only .pill-card scales, .pill container stays fixed */
+    /* pill-card bounce only — .pill container never moves */
     @keyframes holiBounce{
       0%  {transform:scale(1)}
       35% {transform:scale(1.08)}
@@ -83,40 +83,68 @@ const GlobalStyles = () => (
     }
 
     /*
-     * COLUMN GLOW — 整列荧光棒效果
-     * 一个撑满 td.ptd 的绝对定位 div：
-     *   - 半透明蓝紫渐变背景（整列被"罩住"）
-     *   - inset box-shadow 做边缘发光
-     *   - 动画：瞬间亮起，轻微回弹，1.2s 熄灭
-     * position:fixed + 坐标注入，完全不受 td overflow 限制
+     * COLUMN OUTLINE FLASH
+     * A rect border that goes: invisible → thin sharp line → thick glowing frame → fade out
+     * No background fill — pure outline effect, like the column gets "selected" by light
+     *
+     * border-width drives the thickness, box-shadow drives the glow spread
+     * 0%  : 0px border, no glow       (nothing)
+     * 18% : 1.5px border, tight glow  (thin sharp line appears)
+     * 45% : 4px border, fat glow      (peak — thick glowing frame)
+     * 78% : 3px border, medium glow   (slight pull-back / bounce)
+     * 100%: 0px border, no glow       (gone)
      */
-    @keyframes colGlowFade{
-      0%   { opacity:0;   transform:scaleX(0.88); }
-      12%  { opacity:1;   transform:scaleX(1);    }
-      72%  { opacity:0.7; transform:scaleX(1);    }
-      88%  { opacity:0.5; transform:scaleX(1.02); }
-      100% { opacity:0;   transform:scaleX(1);    }
+    @keyframes colOutlineFlash{
+      0%  {
+        border-width:0px;
+        box-shadow:0 0 0px 0px rgba(0,155,255,0), 0 0 0px 0px rgba(119,11,255,0);
+        opacity:1;
+      }
+      18% {
+        border-width:1.5px;
+        box-shadow:
+          0 0 8px  3px  rgba(0,155,255,0.7),
+          0 0 16px 4px  rgba(119,11,255,0.5);
+        opacity:1;
+      }
+      45% {
+        border-width:3.5px;
+        box-shadow:
+          0 0 20px 8px  rgba(0,155,255,0.55),
+          0 0 40px 14px rgba(119,11,255,0.40),
+          0 0  8px 2px  rgba(0,229,255,0.60);
+        opacity:1;
+      }
+      72% {
+        border-width:2.5px;
+        box-shadow:
+          0 0 14px 5px  rgba(0,155,255,0.35),
+          0 0 28px 8px  rgba(119,11,255,0.25);
+        opacity:0.7;
+      }
+      100%{
+        border-width:0px;
+        box-shadow:0 0 0px 0px rgba(0,155,255,0), 0 0 0px 0px rgba(119,11,255,0);
+        opacity:0;
+      }
     }
     .col-glow-overlay{
       position:fixed;
       pointer-events:none;
       z-index:150;
       border-radius:10px;
-      /* layered glow: semi-transparent fill + strong inset edge light */
-      background: linear-gradient(180deg,
-        rgba(0,229,255,0.10)  0%,
-        rgba(0,155,255,0.13) 30%,
-        rgba(119,11,255,0.13) 70%,
-        rgba(119,11,255,0.08) 100%
-      );
-      box-shadow:
-        inset 0 0 18px 4px  rgba(0,155,255,0.55),
-        inset 0 0 40px 8px  rgba(119,11,255,0.35),
-        inset 0 0  8px 2px  rgba(0,229,255,0.45),
-              0 0 24px 6px  rgba(0,155,255,0.18),
-              0 0 48px 12px rgba(119,11,255,0.12);
-      animation: colGlowFade 1.2s cubic-bezier(0.22,0.61,0.36,1) both;
-      will-change: opacity, transform;
+      /* transparent fill — only the border/outline matters */
+      background:transparent;
+      border-style:solid;
+      border-color:transparent; /* driven by animation gradient below */
+      /* gradient border via outline trick using box-shadow instead */
+      border-image: linear-gradient(180deg, #009bff, #770bff) 1;
+      border-radius:10px;
+      /* border-image kills border-radius, so we use box-shadow for the glow
+         and set border-color to a mid-point of the gradient */
+      border-color: #3d6aff;
+      animation: colOutlineFlash 1.2s cubic-bezier(0.22,0.61,0.36,1) both;
+      will-change: opacity, border-width, box-shadow;
     }
 
     @keyframes dropIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
@@ -124,7 +152,7 @@ const GlobalStyles = () => (
     @keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
     @keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.4)}50%{box-shadow:0 0 0 4px rgba(34,197,94,0)}}
 
-    /* FRAME GLOW — inset:0, GPU layer */
+    /* FRAME GLOW — inset box-shadow, GPU layer */
     .glow-frame{
       position:fixed;
       inset:0;
@@ -308,7 +336,6 @@ export default function App() {
   const glowLevelRef  = useRef(0);
   const glowRafRef    = useRef(null);
 
-  // ── glow frame decay loop ─────────────────────────────────────────────────
   useEffect(() => {
     const decay = () => {
       glowLevelRef.current = Math.max(0, glowLevelRef.current - 0.016);
@@ -316,12 +343,9 @@ export default function App() {
       if (el) {
         const lvl = glowLevelRef.current;
         if (lvl > 0.001) {
-          const i1  = lvl * 90;
-          const s1  = lvl * 30;
-          const i2  = lvl * 180;
-          const s2  = lvl * 55;
-          const i3  = lvl * 60;
-          const s3  = lvl * 16;
+          const i1  = lvl * 90;  const s1  = lvl * 30;
+          const i2  = lvl * 180; const s2  = lvl * 55;
+          const i3  = lvl * 60;  const s3  = lvl * 16;
           const op1 = 0.28 + lvl * 0.52;
           const op2 = 0.16 + lvl * 0.44;
           const op3 = lvl  * 0.38;
@@ -597,7 +621,6 @@ export default function App() {
     }
   };
 
-  // ── fireParty: pill bounce + column glow overlay + frame glow boost ───────
   const fireParty = (e, type, text='') => {
     const pill = e.currentTarget.closest('.pill');
 
@@ -608,11 +631,9 @@ export default function App() {
       pill.classList.add('holi-tap');
     }
 
-    // 2. column glow — measure td.ptd position, inject fixed overlay onto body
-    //    using position:fixed + getBoundingClientRect so td overflow never clips it
+    // 2. column outline flash — fixed-position overlay measured from td.ptd
     const td = e.currentTarget.closest('td.ptd');
     if (td) {
-      // remove any leftover from rapid clicks
       document.querySelectorAll('.col-glow-overlay').forEach(el => el.remove());
       const r = td.getBoundingClientRect();
       const overlay = document.createElement('div');
@@ -683,8 +704,6 @@ export default function App() {
   return (
     <div style={{minHeight:'100vh', background:'#f4f5f7'}} onMouseUp={handleStatusCellMouseUp}>
       <GlobalStyles />
-
-      {/* frame glow */}
       <div ref={glowFrameRef} className="glow-frame" />
 
       {activeTab === 'calendar' && week.filter(d => !d.editable).map(d => {
@@ -798,13 +817,7 @@ export default function App() {
                 <div style={{fontSize:'10px',fontWeight:'600',letterSpacing:'0.06em',marginBottom:'5px',color:d.isToday?'#770bff':'#9ca3af'}}>
                   {d.dayName.toUpperCase()}
                 </div>
-                <div style={{
-                  width:'30px',height:'30px',borderRadius:'50%',
-                  margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'center',
-                  background:d.isToday?'linear-gradient(135deg,#009bff,#770bff)':'transparent',
-                  color:d.isToday?'#fff':'#111827',
-                  fontSize:'14px',fontWeight:'600',
-                }}>
+                <div style={{width:'30px',height:'30px',borderRadius:'50%',margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'center',background:d.isToday?'linear-gradient(135deg,#009bff,#770bff)':'transparent',color:d.isToday?'#fff':'#111827',fontSize:'14px',fontWeight:'600'}}>
                   {d.num}
                 </div>
               </div>
@@ -812,12 +825,7 @@ export default function App() {
           </div>
         </div>
 
-        <div
-          ref={scrollRef}
-          className="tbl-scroll dsz"
-          onScroll={handleTableScroll}
-          onMouseLeave={handleStatusCellMouseUp}
-        >
+        <div ref={scrollRef} className="tbl-scroll dsz" onScroll={handleTableScroll} onMouseLeave={handleStatusCellMouseUp}>
           <table className="main-tbl">
             <colgroup>
               <col style={{width:'200px'}}/>
