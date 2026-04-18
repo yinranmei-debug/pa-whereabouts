@@ -27,6 +27,8 @@ const TB_H   = 52;
 const LG_H   = 36;
 const AM_REF = 'am-ref-btn';
 
+// FIX 4: SUB_H reduced since subtitle line removed — keep same value for layout
+// but page-sub div will be gone so visual height will be smaller
 const HEADER_STICKY_TOP = NAV_H + SUB_H + TB_H + LG_H;
 
 const fmt = date => {
@@ -81,10 +83,7 @@ const GlobalStyles = () => (
       transform-origin:center center;
     }
 
-    /*
-     * COLUMN GLOW — gentler, slower
-     * opacity values ~40% lower than previous, blur tighter, 1.8s duration
-     */
+    /* column glow — gentler */
     @keyframes colGlowFade{
       0%   { opacity:0;   transform:scaleX(0.92); }
       12%  { opacity:1;   transform:scaleX(1);    }
@@ -97,7 +96,6 @@ const GlobalStyles = () => (
       pointer-events:none;
       z-index:150;
       border-radius:10px;
-      /* CHANGED: opacity reduced ~40%, inset blur tighter so glow hugs edges more */
       background: linear-gradient(180deg,
         rgba(0,229,255,0.055)  0%,
         rgba(0,155,255,0.07)  30%,
@@ -110,22 +108,18 @@ const GlobalStyles = () => (
         inset 0 0  4px 1px  rgba(0,229,255,0.28),
               0 0 10px 2px  rgba(0,155,255,0.10),
               0 0 20px 5px  rgba(119,11,255,0.07);
-      /* CHANGED: 1.8s instead of 1.2s — slower, more breathlike */
       animation: colGlowFade 1.8s cubic-bezier(0.22,0.61,0.36,1) both;
       will-change: opacity, transform;
     }
 
-    /*
-     * CENTER EMOJI SPRING BOUNCE
-     * Targets the emoji span inside the fixed pill label overlay
-     */
+    /* emoji spring bounce — FIX 1: scale reduced to 1.35 (was 1.55) so it won't clip */
     @keyframes emojiSpring{
-      0%  { transform:scale(1)    rotate(0deg);   }
-      20% { transform:scale(1.55) rotate(-8deg);  }
-      45% { transform:scale(0.88) rotate(5deg);   }
-      65% { transform:scale(1.18) rotate(-3deg);  }
-      82% { transform:scale(0.96) rotate(1deg);   }
-      100%{ transform:scale(1)    rotate(0deg);   }
+      0%  { transform:scale(1)    rotate(0deg);  }
+      20% { transform:scale(1.35) rotate(-8deg); }
+      45% { transform:scale(0.88) rotate(5deg);  }
+      65% { transform:scale(1.14) rotate(-3deg); }
+      82% { transform:scale(0.97) rotate(1deg);  }
+      100%{ transform:scale(1)    rotate(0deg);  }
     }
     .emoji-pop{
       animation: emojiSpring 0.52s cubic-bezier(0.34,1.56,0.64,1) both;
@@ -133,21 +127,31 @@ const GlobalStyles = () => (
       transform-origin:center center;
     }
 
+    /* FIX 3: weekly slide animations */
+    @keyframes slideInFromRight{
+      from { transform:translateX(48px); opacity:0.4; }
+      to   { transform:translateX(0);    opacity:1;   }
+    }
+    @keyframes slideInFromLeft{
+      from { transform:translateX(-48px); opacity:0.4; }
+      to   { transform:translateX(0);     opacity:1;   }
+    }
+    .week-slide-right{
+      animation: slideInFromRight 0.28s cubic-bezier(0.25,0.46,0.45,0.94) both;
+    }
+    .week-slide-left{
+      animation: slideInFromLeft 0.28s cubic-bezier(0.25,0.46,0.45,0.94) both;
+    }
+
     @keyframes dropIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
     @keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
     @keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
     @keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.4)}50%{box-shadow:0 0 0 4px rgba(34,197,94,0)}}
 
-    /* FRAME GLOW — tighter, edge-only. blur kept small so light stays near border */
     .glow-frame{
-      position:fixed;
-      inset:0;
-      pointer-events:none;
-      z-index:9998;
-      opacity:0;
+      position:fixed;inset:0;pointer-events:none;z-index:9998;opacity:0;
       box-shadow:inset 0 0 0px 0px rgba(0,155,255,0);
-      will-change:opacity,box-shadow;
-      transform:translateZ(0);
+      will-change:opacity,box-shadow;transform:translateZ(0);
     }
 
     body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;background:#f4f5f7;color:#111827;-webkit-font-smoothing:antialiased}
@@ -165,14 +169,14 @@ const GlobalStyles = () => (
     .user-name{font-size:12px;font-weight:600;color:#374151}
     .signout-btn{height:26px;padding:0 10px;border-radius:100px;border:none;background:#e5e7eb;color:#6b7280;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s}
     .signout-btn:hover{background:#d1d5db;color:#374151}
-    .sub-header{height:${SUB_H}px;padding:0 28px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;position:sticky;top:${NAV_H}px;z-index:490}
+    /* FIX 4: sub-header height reduced since subtitle removed */
+    .sub-header{height:48px;padding:0 28px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;position:sticky;top:${NAV_H}px;z-index:490}
     .page-title{font-size:20px;font-weight:600;background:linear-gradient(90deg,#009bff,#770bff);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:-0.02em}
-    .page-sub{font-size:11px;color:#9ca3af;letter-spacing:0.04em;margin-top:2px}
     .region-toggle{display:flex;background:#f3f4f6;border-radius:8px;padding:3px;gap:2px}
     .region-btn{height:28px;padding:0 14px;border-radius:6px;border:none;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s}
     .region-btn.on{background:linear-gradient(90deg,#009bff,#770bff);color:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.15)}
     .region-btn.off{background:transparent;color:#9ca3af}
-    .toolbar{height:${TB_H}px;padding:0 28px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:8px;position:sticky;top:${NAV_H+SUB_H}px;z-index:480}
+    .toolbar{height:${TB_H}px;padding:0 28px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:8px;position:sticky;top:${NAV_H+48}px;z-index:480}
     .tb-btn{height:32px;padding:0 12px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;font-size:13px;font-weight:400;color:#374151;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center}
     .tb-btn:hover{background:#f9fafb;border-color:#d1d5db}
     .tb-btn.today{background:linear-gradient(90deg,#009bff,#770bff);color:#fff;border:none;font-weight:600;padding:0 16px}
@@ -180,11 +184,11 @@ const GlobalStyles = () => (
     .tb-btn.icon{width:32px;padding:0;font-size:15px;color:#6b7280}
     .tb-select{height:32px;padding:0 12px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;font-size:13px;color:#374151;cursor:pointer;appearance:none}
     .tb-month{font-size:15px;font-weight:600;color:#111827;letter-spacing:-0.01em}
-    .legend{height:${LG_H}px;padding:0 28px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:20px;position:sticky;top:${NAV_H+SUB_H+TB_H}px;z-index:470}
+    .legend{height:${LG_H}px;padding:0 28px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:20px;position:sticky;top:${NAV_H+48+TB_H}px;z-index:470}
     .leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#9ca3af}
     .leg-sw{width:20px;height:10px;border-radius:4px}
     .tbl-outer{background:#f4f5f7;padding-bottom:48px;position:relative}
-    .tbl-hdr-sticky{position:sticky;top:${HEADER_STICKY_TOP}px;z-index:460;background:#f4f5f7;border-bottom:1px solid #ebebeb}
+    .tbl-hdr-sticky{position:sticky;top:${NAV_H+48+TB_H+LG_H}px;z-index:460;background:#f4f5f7;border-bottom:1px solid #ebebeb}
     .tbl-hdr-row{display:grid;grid-template-columns:200px repeat(7,1fr);min-width:860px;padding:0 28px}
     .tbl-hdr-namecol{background:#f4f5f7}
     .tbl-hdr-daycol{padding:14px 4px 10px;text-align:center;background:#f4f5f7}
@@ -313,9 +317,10 @@ export default function App() {
   const [dragging,        setDragging]        = useState(null);
   const [preview,         setPreview]         = useState([]);
   const [bulkSelectCells, setBulkSelectCells] = useState([]);
-
-  // NEW: track which date's emoji is currently bouncing
   const [bouncingDs,      setBouncingDs]      = useState(null);
+  // FIX 3: track slide direction
+  const [slideDir,        setSlideDir]        = useState(null);
+  const slideTimerRef = useRef(null);
 
   const presenceRef   = useRef(null);
   const partyTimerRef = useRef(null);
@@ -325,7 +330,23 @@ export default function App() {
   const glowLevelRef  = useRef(0);
   const glowRafRef    = useRef(null);
 
-  // ── glow frame decay loop — CHANGED: blur values tightened to edge-only ──
+  // FIX 3: helper to navigate week with slide direction
+  const navigateWeek = (deltaDays, forcedDate = null) => {
+    setViewDate(prev => {
+      const target = forcedDate || (() => {
+        const d = new Date(prev);
+        d.setDate(d.getDate() + deltaDays);
+        return d;
+      })();
+      // determine slide direction
+      const dir = target > prev ? 'right' : 'left';
+      setSlideDir(dir);
+      clearTimeout(slideTimerRef.current);
+      slideTimerRef.current = setTimeout(() => setSlideDir(null), 320);
+      return target;
+    });
+  };
+
   useEffect(() => {
     const decay = () => {
       glowLevelRef.current = Math.max(0, glowLevelRef.current - 0.016);
@@ -333,22 +354,18 @@ export default function App() {
       if (el) {
         const lvl = glowLevelRef.current;
         if (lvl > 0.001) {
-          // CHANGED: blur 25/45/18px (was 90/180/60px) — light hugs edge only
-          const i1  = lvl * 25;   const s1  = lvl * 10;
-          const i2  = lvl * 45;   const s2  = lvl * 16;
-          const i3  = lvl * 18;   const s3  = lvl * 6;
-          const op1 = 0.28 + lvl * 0.52;
-          const op2 = 0.16 + lvl * 0.44;
-          const op3 = lvl  * 0.38;
-          el.style.opacity   = String(Math.min(lvl * 1.5, 1));
+          const i1 = lvl*25; const s1 = lvl*10;
+          const i2 = lvl*45; const s2 = lvl*16;
+          const i3 = lvl*18; const s3 = lvl*6;
+          const op1 = 0.28+lvl*0.52, op2 = 0.16+lvl*0.44, op3 = lvl*0.38;
+          el.style.opacity   = String(Math.min(lvl*1.5,1));
           el.style.boxShadow = [
             `inset 0 0 ${i1}px ${s1}px rgba(0,155,255,${op1})`,
             `inset 0 0 ${i2}px ${s2}px rgba(119,11,255,${op2})`,
             `inset 0 0 ${i3}px ${s3}px rgba(0,229,255,${op3})`,
           ].join(',');
         } else {
-          el.style.opacity   = '0';
-          el.style.boxShadow = 'none';
+          el.style.opacity='0'; el.style.boxShadow='none';
         }
       }
       glowRafRef.current = requestAnimationFrame(decay);
@@ -362,7 +379,7 @@ export default function App() {
       try {
         await msalInstance.initialize(); setIsInit(true);
         const res = await msalInstance.handleRedirectPromise();
-        const isAllowed = em => isSuperUser(em) || isChinaExtra(em) || !!getStaffEntry(em);
+        const isAllowed = em => isSuperUser(em)||isChinaExtra(em)||!!getStaffEntry(em);
         if (res) {
           const em = res.account.username.toLowerCase();
           if (!isAllowed(em)) { setDenied(true); return; }
@@ -390,13 +407,13 @@ export default function App() {
     if (!account) return;
     (async () => {
       let token;
-      try { const r = await msalInstance.acquireTokenSilent({ scopes:['User.ReadBasic.All'], account }); token = r.accessToken; }
-      catch { try { const r = await msalInstance.acquireTokenPopup({ scopes:['User.ReadBasic.All'], account }); token = r.accessToken; } catch(e) { return; } }
-      const photos = {};
+      try { const r = await msalInstance.acquireTokenSilent({scopes:['User.ReadBasic.All'],account}); token=r.accessToken; }
+      catch { try { const r = await msalInstance.acquireTokenPopup({scopes:['User.ReadBasic.All'],account}); token=r.accessToken; } catch(e){return;} }
+      const photos={};
       await Promise.all(RAW_STAFF_LIST.map(async s => {
         try {
-          const r = await fetch(`https://graph.microsoft.com/v1.0/users/${s.email}/photo/$value`, { headers:{ Authorization:`Bearer ${token}` } });
-          if (r.ok) photos[s.id] = URL.createObjectURL(await r.blob());
+          const r = await fetch(`https://graph.microsoft.com/v1.0/users/${s.email}/photo/$value`,{headers:{Authorization:`Bearer ${token}`}});
+          if (r.ok) photos[s.id]=URL.createObjectURL(await r.blob());
         } catch {}
       }));
       setStaffPhotos(photos);
@@ -406,19 +423,19 @@ export default function App() {
   useEffect(() => {
     if (!account) return;
     (async () => {
-      const { data: sData } = await supabase.from('statuses').select('*');
-      if (sData) { const r={}; sData.forEach(row => { r[row.id]=row.status; }); setRecords(r); }
-      const { data: eData } = await supabase.from('emotions').select('*');
-      if (eData) { const e={}; eData.forEach(row => { e[row.staff_id]=row.emoji; }); setEmotions(e); }
+      const {data:sData} = await supabase.from('statuses').select('*');
+      if (sData) { const r={}; sData.forEach(row=>{r[row.id]=row.status;}); setRecords(r); }
+      const {data:eData} = await supabase.from('emotions').select('*');
+      if (eData) { const e={}; eData.forEach(row=>{e[row.staff_id]=row.emoji;}); setEmotions(e); }
       supabase.channel('statuses-changes')
-        .on('postgres_changes', { event:'*', schema:'public', table:'statuses' }, payload => {
-          if (payload.eventType==='DELETE') setRecords(r => { const n={...r}; delete n[payload.old.id]; return n; });
-          else setRecords(r => ({ ...r, [payload.new.id]:payload.new.status }));
+        .on('postgres_changes',{event:'*',schema:'public',table:'statuses'},payload=>{
+          if (payload.eventType==='DELETE') setRecords(r=>{const n={...r};delete n[payload.old.id];return n;});
+          else setRecords(r=>({...r,[payload.new.id]:payload.new.status}));
         }).subscribe();
       supabase.channel('emotions-changes')
-        .on('postgres_changes', { event:'*', schema:'public', table:'emotions' }, payload => {
-          if (payload.eventType==='DELETE') setEmotions(e => { const n={...e}; delete n[payload.old.staff_id]; return n; });
-          else setEmotions(e => ({ ...e, [payload.new.staff_id]:payload.new.emoji }));
+        .on('postgres_changes',{event:'*',schema:'public',table:'emotions'},payload=>{
+          if (payload.eventType==='DELETE') setEmotions(e=>{const n={...e};delete n[payload.old.staff_id];return n;});
+          else setEmotions(e=>({...e,[payload.new.staff_id]:payload.new.emoji}));
         }).subscribe();
     })();
   }, [account]);
@@ -426,321 +443,284 @@ export default function App() {
   useEffect(() => {
     if (!account) return;
     const meStaffLocal = getStaffEntry(account.username.toLowerCase());
-    const channel = supabase.channel('presence-party', { config:{ presence:{ key:account.username.toLowerCase() } } });
+    const channel = supabase.channel('presence-party',{config:{presence:{key:account.username.toLowerCase()}}});
     channel
-      .on('presence', { event:'sync' }, () => {
-        const state = channel.presenceState();
-        setOnlineUsers(Object.values(state).map(arr => arr[0]).filter(Boolean));
+      .on('presence',{event:'sync'},()=>{
+        const state=channel.presenceState();
+        setOnlineUsers(Object.values(state).map(arr=>arr[0]).filter(Boolean));
       })
-      .on('broadcast', { event:'party' }, ({ payload }) => {
-        firePartyLocal(payload.type, payload.text);
+      .on('broadcast',{event:'party'},({payload})=>{
+        firePartyLocal(payload.type,payload.text);
         popAvatar(payload.userId);
-        glowLevelRef.current = Math.min(glowLevelRef.current + 0.65, 1);
+        glowLevelRef.current=Math.min(glowLevelRef.current+0.65,1);
       })
-      .subscribe(async status => {
+      .subscribe(async status=>{
         if (status==='SUBSCRIBED') {
-          await channel.track({ id:meStaffLocal?.id||'guest', name:meStaffLocal?.name||account.name, email:account.username.toLowerCase() });
+          await channel.track({id:meStaffLocal?.id||'guest',name:meStaffLocal?.name||account.name,email:account.username.toLowerCase()});
         }
       });
-    presenceRef.current = channel;
-    return () => { supabase.removeChannel(channel); };
+    presenceRef.current=channel;
+    return ()=>{ supabase.removeChannel(channel); };
   }, [account]);
 
   useEffect(() => {
-    const fn = e => { if (!e.target.closest('.dsz') && !e.target.closest('.nav-tab')) { setActiveMenu(null); setSocialMenu(null); setActiveTab(t => t === 'planner' ? 'calendar' : t); } };
-    document.addEventListener('mousedown', fn);
-    return () => document.removeEventListener('mousedown', fn);
+    const fn = e => { if (!e.target.closest('.dsz')&&!e.target.closest('.nav-tab')) { setActiveMenu(null);setSocialMenu(null);setActiveTab(t=>t==='planner'?'calendar':t); } };
+    document.addEventListener('mousedown',fn);
+    return ()=>document.removeEventListener('mousedown',fn);
   }, []);
 
   useEffect(() => {
     const measure = () => {
-      const rects = {};
-      document.querySelectorAll('[data-pill-ds]').forEach(el => {
-        const r = el.getBoundingClientRect();
-        rects[el.dataset.pillDs] = { top:r.top, bottom:r.bottom, x:r.left+r.width/2, minX:r.left+10, maxX:r.right-10 };
+      const rects={};
+      document.querySelectorAll('[data-pill-ds]').forEach(el=>{
+        const r=el.getBoundingClientRect();
+        rects[el.dataset.pillDs]={top:r.top,bottom:r.bottom,x:r.left+r.width/2,minX:r.left+10,maxX:r.right-10};
       });
       setPillRects(rects);
-      const am = document.getElementById(AM_REF);
+      const am=document.getElementById(AM_REF);
       if (!am) return;
-      const amTop = am.getBoundingClientRect().top;
-      document.querySelectorAll('.pill').forEach(pill => {
-        const offset = amTop - pill.getBoundingClientRect().top;
-        pill.style.paddingTop    = Math.max(0, offset) + 'px';
-        pill.style.paddingBottom = Math.max(0, offset) + 'px';
+      const amTop=am.getBoundingClientRect().top;
+      document.querySelectorAll('.pill').forEach(pill=>{
+        const offset=amTop-pill.getBoundingClientRect().top;
+        pill.style.paddingTop=Math.max(0,offset)+'px';
+        pill.style.paddingBottom=Math.max(0,offset)+'px';
       });
     };
-    requestAnimationFrame(() => requestAnimationFrame(measure));
-    window.addEventListener('resize', measure);
-    window.addEventListener('scroll', measure, true);
-    return () => { window.removeEventListener('resize', measure); window.removeEventListener('scroll', measure, true); };
-  }, [region, viewDate, activeTab]);
+    requestAnimationFrame(()=>requestAnimationFrame(measure));
+    window.addEventListener('resize',measure);
+    window.addEventListener('scroll',measure,true);
+    return ()=>{ window.removeEventListener('resize',measure); window.removeEventListener('scroll',measure,true); };
+  }, [region,viewDate,activeTab]);
 
   useEffect(() => {
     if (!account) return;
-    if (account.username.toLowerCase() === 'arthur.cheung@patternasia.com') return;
-    const t = setTimeout(() => { document.getElementById('my-row')?.scrollIntoView({ behavior:'smooth', block:'center' }); }, 400);
-    return () => clearTimeout(t);
-  }, [account, region]);
+    if (account.username.toLowerCase()==='arthur.cheung@patternasia.com') return;
+    const t=setTimeout(()=>{ document.getElementById('my-row')?.scrollIntoView({behavior:'smooth',block:'center'}); },400);
+    return ()=>clearTimeout(t);
+  }, [account,region]);
 
   const login  = async () => { setAuthError(null); try { await msalInstance.loginRedirect(loginRequest); } catch(e) { setAuthError(e.message); } };
   const logout = () => msalInstance.logoutRedirect();
 
-  if (denied)   return <AccessDeniedScreen email={account?.username||''} onLogout={logout} />;
-  if (!account) return <LoginScreen onLogin={login} isInitializing={!isInit} error={authError} />;
+  if (denied)   return <AccessDeniedScreen email={account?.username||''} onLogout={logout}/>;
+  if (!account) return <LoginScreen onLogin={login} isInitializing={!isInit} error={authError}/>;
 
   const me        = account.username.toLowerCase();
   const superUser = isSuperUser(me);
   const meStaff   = getStaffEntry(me);
 
   const popAvatar = userId => {
-    const el = document.getElementById(`av-${userId}`);
+    const el=document.getElementById(`av-${userId}`);
     if (!el) return;
     clearTimeout(partyTimerRef.current);
-    el.style.transition = 'none';
-    el.style.transform  = 'scale(1)';
+    el.style.transition='none'; el.style.transform='scale(1)';
     el.getBoundingClientRect();
-    el.style.transition = 'transform 0.12s cubic-bezier(0.34,1.56,0.64,1)';
-    el.style.transform  = 'scale(1.7)';
-    partyTimerRef.current = setTimeout(() => {
-      el.style.transition = 'transform 0.5s ease';
-      el.style.transform  = 'scale(1)';
-    }, 500);
+    el.style.transition='transform 0.12s cubic-bezier(0.34,1.56,0.64,1)';
+    el.style.transform='scale(1.7)';
+    partyTimerRef.current=setTimeout(()=>{ el.style.transition='transform 0.5s ease'; el.style.transform='scale(1)'; },500);
   };
 
-  const handleStatus = async (key, val, e) => {
+  const handleStatus = async (key,val,e) => {
     e.stopPropagation();
-    if (bulkSelectCells.length > 0) {
+    if (bulkSelectCells.length>0) {
       setSaveStatus('saving');
-      const updatedRecords = { ...records };
-      bulkSelectCells.forEach(cellKey => { updatedRecords[cellKey] = val; });
-      setRecords(updatedRecords);
-      setActiveMenu(null);
-      setBulkSelectCells([]);
-      (async () => {
+      const updatedRecords={...records};
+      bulkSelectCells.forEach(cellKey=>{updatedRecords[cellKey]=val;});
+      setRecords(updatedRecords); setActiveMenu(null); setBulkSelectCells([]);
+      (async()=>{
         try {
-          await Promise.all(bulkSelectCells.map(cellKey => {
-            const parts = cellKey.split('-');
-            const shift_name = parts[parts.length-1], staffId_name = parts[0], date_name = parts.slice(1,-1).join('-');
-            return supabase.from('statuses').upsert({ id:cellKey, staff_id:staffId_name, date:date_name, shift:shift_name, status:val });
+          await Promise.all(bulkSelectCells.map(cellKey=>{
+            const parts=cellKey.split('-');
+            const shift_name=parts[parts.length-1],staffId_name=parts[0],date_name=parts.slice(1,-1).join('-');
+            return supabase.from('statuses').upsert({id:cellKey,staff_id:staffId_name,date:date_name,shift:shift_name,status:val});
           }));
-          setSaveStatus('saved'); setTimeout(() => setSaveStatus(''), 2000);
-        } catch(e) { setSaveStatus(''); }
+          setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
+        } catch(e){setSaveStatus('');}
       })();
     } else {
       setSaveStatus('saving');
-      if (val === null) { await supabase.from('statuses').delete().eq('id', key); }
+      if (val===null) { await supabase.from('statuses').delete().eq('id',key); }
       else {
-        const parts = key.split('-');
-        const shift = parts[parts.length-1], staffId = parts[0], date = parts.slice(1,-1).join('-');
-        await supabase.from('statuses').upsert({ id:key, staff_id:staffId, date, shift, status:val });
+        const parts=key.split('-');
+        const shift=parts[parts.length-1],staffId=parts[0],date=parts.slice(1,-1).join('-');
+        await supabase.from('statuses').upsert({id:key,staff_id:staffId,date,shift,status:val});
         setActiveMenu(null);
       }
-      setSaveStatus('saved'); setTimeout(() => setSaveStatus(''), 2000);
+      setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
     }
   };
 
-  const handleStatusCellMouseDown = (staffId, dateIdx, shift, status, e) => {
-    if (!account) return;
-    if (staffId !== meStaff?.id) return;
-    setDragging({ staffId, dateIdx, shift, status, isEmptyCell: status === 'none' });
-    setPreview([[staffId, dateIdx, shift]]);
+  const handleStatusCellMouseDown=(staffId,dateIdx,shift,status,e)=>{
+    if (!account||staffId!==meStaff?.id) return;
+    setDragging({staffId,dateIdx,shift,status,isEmptyCell:status==='none'});
+    setPreview([[staffId,dateIdx,shift]]);
   };
 
-  const handleStatusCellMouseOver = (staffId, dateIdx, shift) => {
+  const handleStatusCellMouseOver=(staffId,dateIdx,shift)=>{
     if (!dragging) return;
-    const staffIds = STAFF_LIST.filter(s => s.region === region).map(s => s.id);
-    const startIdx = staffIds.indexOf(dragging.staffId);
-    const endIdx   = staffIds.indexOf(staffId);
-    const minIdx = Math.min(startIdx, endIdx);
-    const maxIdx = Math.max(startIdx, endIdx);
-    const minDate = Math.min(dragging.dateIdx, dateIdx);
-    const maxDate = Math.max(dragging.dateIdx, dateIdx);
-    const minShift = Math.min(dragging.shift==='AM'?0:1, shift==='AM'?0:1);
-    const maxShift = Math.max(dragging.shift==='AM'?0:1, shift==='AM'?0:1);
-    const range = [];
-    for (let r = minIdx; r <= maxIdx; r++) {
-      for (let d = minDate; d <= maxDate; d++) {
-        if (minShift === maxShift) range.push([staffIds[r], d, minShift===0?'AM':'PM']);
-        else { range.push([staffIds[r], d, 'AM']); range.push([staffIds[r], d, 'PM']); }
-      }
+    const staffIds=STAFF_LIST.filter(s=>s.region===region).map(s=>s.id);
+    const minIdx=Math.min(staffIds.indexOf(dragging.staffId),staffIds.indexOf(staffId));
+    const maxIdx=Math.max(staffIds.indexOf(dragging.staffId),staffIds.indexOf(staffId));
+    const minDate=Math.min(dragging.dateIdx,dateIdx), maxDate=Math.max(dragging.dateIdx,dateIdx);
+    const minShift=Math.min(dragging.shift==='AM'?0:1,shift==='AM'?0:1);
+    const maxShift=Math.max(dragging.shift==='AM'?0:1,shift==='AM'?0:1);
+    const range=[];
+    for (let r=minIdx;r<=maxIdx;r++) for (let d=minDate;d<=maxDate;d++) {
+      if (minShift===maxShift) range.push([staffIds[r],d,minShift===0?'AM':'PM']);
+      else { range.push([staffIds[r],d,'AM']); range.push([staffIds[r],d,'PM']); }
     }
     setPreview(range);
   };
 
-  const handleStatusCellMouseUp = () => {
-    if (dragging && preview.length > 1) {
-      const isEmptyCell = dragging.isEmptyCell;
-      const week_arr = week.map(d => d.ds);
+  const handleStatusCellMouseUp=()=>{
+    if (dragging&&preview.length>1) {
+      const isEmptyCell=dragging.isEmptyCell;
+      const week_arr=week.map(d=>d.ds);
       if (isEmptyCell) {
-        const cellKeys = preview.map(([staffId, dateIdx, shift]) => `${staffId}-${week_arr[dateIdx]}-${shift}`);
+        const cellKeys=preview.map(([staffId,dateIdx,shift])=>`${staffId}-${week_arr[dateIdx]}-${shift}`);
         setBulkSelectCells(cellKeys);
-        const firstCell = preview[0];
+        const firstCell=preview[0];
         setActiveMenu(`${firstCell[0]}-${week_arr[firstCell[1]]}-${firstCell[2]}`);
       } else {
-        const updatedRecords = { ...records };
-        preview.forEach(([staffId, dateIdx, shift]) => {
-          delete updatedRecords[`${staffId}-${week_arr[dateIdx]}-${shift}`];
-        });
-        setRecords(updatedRecords);
-        setSaveStatus('saving');
-        setActiveMenu(null);
-        (async () => {
+        const updatedRecords={...records};
+        preview.forEach(([staffId,dateIdx,shift])=>{delete updatedRecords[`${staffId}-${week_arr[dateIdx]}-${shift}`];});
+        setRecords(updatedRecords); setSaveStatus('saving'); setActiveMenu(null);
+        (async()=>{
           try {
-            await Promise.all(preview.map(([staffId, dateIdx, shift]) =>
-              supabase.from('statuses').delete().eq('id', `${staffId}-${week_arr[dateIdx]}-${shift}`)
-            ));
-            setSaveStatus('saved'); setTimeout(() => setSaveStatus(''), 2000);
-          } catch(e) { setSaveStatus(''); }
+            await Promise.all(preview.map(([staffId,dateIdx,shift])=>supabase.from('statuses').delete().eq('id',`${staffId}-${week_arr[dateIdx]}-${shift}`)));
+            setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
+          } catch(e){setSaveStatus('');}
         })();
       }
     }
-    setDragging(null);
-    setPreview([]);
+    setDragging(null); setPreview([]);
   };
 
-  const isPreviewCell = (staffId, dateIdx, shift) =>
-    preview.some(([s, d, sh]) => s === staffId && d === dateIdx && sh === shift);
+  const isPreviewCell=(staffId,dateIdx,shift)=>preview.some(([s,d,sh])=>s===staffId&&d===dateIdx&&sh===shift);
 
-  const firePartyLocal = (type, text='') => {
-    const els = type==='weekend' ? ['🍷','🌟','🎵','🍱'] : ['🎉', text.split(' ')[0]||'✨','✨'];
-    for (let i=0; i<28; i++) {
-      const c = document.body.appendChild(document.createElement('div'));
-      c.innerText = els[Math.floor(Math.random()*els.length)];
-      c.style.cssText = `position:fixed;left:${Math.random()*100}vw;top:-30px;font-size:22px;z-index:11000;pointer-events:none;transition:transform ${Math.random()*2+2}s cubic-bezier(0.1,0.5,0.5,1),opacity 2s;`;
-      setTimeout(() => { c.style.transform=`translateY(105vh) rotate(${Math.random()*900}deg)`; c.style.opacity='0'; }, 20);
-      setTimeout(() => c.remove(), 4000);
+  const firePartyLocal=(type,text='')=>{
+    const els=type==='weekend'?['🍷','🌟','🎵','🍱']:['🎉',text.split(' ')[0]||'✨','✨'];
+    for (let i=0;i<28;i++) {
+      const c=document.body.appendChild(document.createElement('div'));
+      c.innerText=els[Math.floor(Math.random()*els.length)];
+      c.style.cssText=`position:fixed;left:${Math.random()*100}vw;top:-30px;font-size:22px;z-index:11000;pointer-events:none;transition:transform ${Math.random()*2+2}s cubic-bezier(0.1,0.5,0.5,1),opacity 2s;`;
+      setTimeout(()=>{c.style.transform=`translateY(105vh) rotate(${Math.random()*900}deg)`;c.style.opacity='0';},20);
+      setTimeout(()=>c.remove(),4000);
     }
   };
 
-  const fireParty = (e, type, text='', ds='') => {
-    const pill = e.currentTarget.closest('.pill');
-
-    // 1. pill-card bounce
-    if (pill) {
-      pill.classList.remove('holi-tap');
-      void pill.offsetWidth;
-      pill.classList.add('holi-tap');
-    }
-
-    // 2. NEW: center emoji spring bounce — set bouncing ds, clear after animation
-    if (ds) {
-      setBouncingDs(ds);
-      setTimeout(() => setBouncingDs(null), 600);
-    }
-
-    // 3. column glow overlay
-    const td = e.currentTarget.closest('td.ptd');
+  const fireParty=(e,type,text='',ds='')=>{
+    const pill=e.currentTarget.closest('.pill');
+    if (pill) { pill.classList.remove('holi-tap'); void pill.offsetWidth; pill.classList.add('holi-tap'); }
+    if (ds) { setBouncingDs(ds); setTimeout(()=>setBouncingDs(null),600); }
+    const td=e.currentTarget.closest('td.ptd');
     if (td) {
-      document.querySelectorAll('.col-glow-overlay').forEach(el => el.remove());
-      const r = td.getBoundingClientRect();
-      const overlay = document.createElement('div');
-      overlay.className = 'col-glow-overlay';
-      overlay.style.left   = `${r.left}px`;
-      overlay.style.top    = `${r.top}px`;
-      overlay.style.width  = `${r.width}px`;
-      overlay.style.height = `${r.height}px`;
+      document.querySelectorAll('.col-glow-overlay').forEach(el=>el.remove());
+      const r=td.getBoundingClientRect();
+      const overlay=document.createElement('div');
+      overlay.className='col-glow-overlay';
+      overlay.style.left=`${r.left}px`; overlay.style.top=`${r.top}px`;
+      overlay.style.width=`${r.width}px`; overlay.style.height=`${r.height}px`;
       document.body.appendChild(overlay);
-      setTimeout(() => overlay.remove(), 2000);
+      setTimeout(()=>overlay.remove(),2000);
     }
-
-    // 4. emoji rain
-    firePartyLocal(type, text);
-
-    // 5. avatar pop
-    popAvatar(meStaff?.id || 'guest');
-
-    // 6. frame glow boost
-    glowLevelRef.current = Math.min(glowLevelRef.current + 0.65, 1);
-
-    // 7. broadcast
-    presenceRef.current?.send({ type:'broadcast', event:'party', payload:{ type, text, userId:meStaff?.id||'guest' } });
+    firePartyLocal(type,text);
+    popAvatar(meStaff?.id||'guest');
+    glowLevelRef.current=Math.min(glowLevelRef.current+0.65,1);
+    presenceRef.current?.send({type:'broadcast',event:'party',payload:{type,text,userId:meStaff?.id||'guest'}});
   };
 
-  const handleTableScroll = () => {
-    if (headerRef.current && scrollRef.current) {
-      headerRef.current.scrollLeft = scrollRef.current.scrollLeft;
-    }
+  const handleTableScroll=()=>{
+    if (headerRef.current&&scrollRef.current) headerRef.current.scrollLeft=scrollRef.current.scrollLeft;
   };
 
-  const today     = fmt(new Date());
-  const staffList = STAFF_LIST.filter(s => s.region === region);
-  const inOffice  = (() => {
-    let n = 0;
-    staffList.forEach(s => {
-      const absent = st => ['AL','SL','BL','BH','ML','PL','WFH','OL','DV'].includes(st);
-      if (!absent(records[`${s.id}-${today}-AM`]) && !absent(records[`${s.id}-${today}-PM`])) n++;
+  const today=fmt(new Date());
+  const staffList=STAFF_LIST.filter(s=>s.region===region);
+
+  // FIX 2: in-office count — only absent if BOTH AM and PM have absent status
+  const inOffice=(()=>{
+    let n=0;
+    const absent=st=>['AL','SL','BL','BH','ML','PL','WFH','OL','DV'].includes(st);
+    staffList.forEach(s=>{
+      const amAbsent=absent(records[`${s.id}-${today}-AM`]);
+      const pmAbsent=absent(records[`${s.id}-${today}-PM`]);
+      // FIX 2: was &&, now: only count as absent if BOTH slots absent
+      if (!(amAbsent&&pmAbsent)) n++;
     });
-    return { n, total:staffList.length };
+    return {n,total:staffList.length};
   })();
 
-  const week = (() => {
-    const d = new Date(viewDate), day = d.getDay();
-    const mon = new Date(d.setDate(d.getDate()-day+(day===0?-6:1)));
-    return Array.from({length:7}).map((_,i) => {
-      const t = new Date(mon); t.setDate(mon.getDate()+i);
-      const ds = fmt(t);
-      const rd = HOLIDAYS_DATA[region];
-      const hol = rd?.holidays?.[ds];
-      const isAdj = rd?.adjusted_workdays?.includes(ds);
-      const isWE  = (t.getDay()===0||t.getDay()===6)&&!isAdj;
-      return { ds, num:t.getDate(), dayName:t.toLocaleDateString('en-US',{weekday:'short'}), hol, isWE, isToday:ds===today, editable:!hol&&(!(t.getDay()===0||t.getDay()===6)||isAdj), isAdj };
+  const week=(()=>{
+    const d=new Date(viewDate),day=d.getDay();
+    const mon=new Date(d.setDate(d.getDate()-day+(day===0?-6:1)));
+    return Array.from({length:7}).map((_,i)=>{
+      const t=new Date(mon); t.setDate(mon.getDate()+i);
+      const ds=fmt(t);
+      const rd=HOLIDAYS_DATA[region];
+      const hol=rd?.holidays?.[ds];
+      const isAdj=rd?.adjusted_workdays?.includes(ds);
+      const isWE=(t.getDay()===0||t.getDay()===6)&&!isAdj;
+      return {ds,num:t.getDate(),dayName:t.toLocaleDateString('en-US',{weekday:'short'}),hol,isWE,isToday:ds===today,editable:!hol&&(!(t.getDay()===0||t.getDay()===6)||isAdj),isAdj};
     });
   })();
 
-  const plannerList = () => {
-    const h = HOLIDAYS_DATA[region]?.holidays; if (!h) return [];
-    return Object.entries(h).sort((a,b)=>a[0].localeCompare(b[0])).map(([date,name]) => {
-      const d = new Date(date);
-      return { date, name, isWE:d.getDay()===0||d.getDay()===6, day:d.toLocaleDateString('en-US',{weekday:'short'}) };
+  const plannerList=()=>{
+    const h=HOLIDAYS_DATA[region]?.holidays; if (!h) return [];
+    return Object.entries(h).sort((a,b)=>a[0].localeCompare(b[0])).map(([date,name])=>{
+      const d=new Date(date);
+      return {date,name,isWE:d.getDay()===0||d.getDay()===6,day:d.toLocaleDateString('en-US',{weekday:'short'})};
     });
   };
 
-  const jumpToDate = ds => { setViewDate(new Date(ds)); setActiveTab('calendar'); };
-  const VH = window.innerHeight;
+  const jumpToDate=ds=>{setViewDate(new Date(ds));setActiveTab('calendar');};
+  const VH=window.innerHeight;
+
+  // FIX 3: slide class for table
+  const slideClass = slideDir==='right' ? 'week-slide-right' : slideDir==='left' ? 'week-slide-left' : '';
 
   return (
-    <div style={{minHeight:'100vh', background:'#f4f5f7'}} onMouseUp={handleStatusCellMouseUp}>
-      <GlobalStyles />
-      <div ref={glowFrameRef} className="glow-frame" />
+    <div style={{minHeight:'100vh',background:'#f4f5f7'}} onMouseUp={handleStatusCellMouseUp}>
+      <GlobalStyles/>
+      <div ref={glowFrameRef} className="glow-frame"/>
 
-      {activeTab === 'calendar' && week.filter(d => !d.editable).map(d => {
-        const isHol   = !!d.hol;
-        const holName = d.hol ? d.hol.replace(/^\S+\s/, '') : '';
-        const pos = pillRects[d.ds];
+      {activeTab==='calendar'&&week.filter(d=>!d.editable).map(d=>{
+        const isHol=!!d.hol;
+        const holName=d.hol?d.hol.replace(/^\S+\s/,''):'';
+        const pos=pillRects[d.ds];
         if (!pos) return null;
-        const labelH=56, pad=8, idealY=VH/2;
-        const minY=pos.top+pad+labelH/2, maxY=pos.bottom-pad-labelH/2;
-        if (minY > maxY) return null;
-        const clampedY = Math.min(Math.max(idealY, minY), maxY);
-        const isBouncing = bouncingDs === d.ds;
+        const labelH=56,pad=8,idealY=VH/2;
+        const minY=pos.top+pad+labelH/2,maxY=pos.bottom-pad-labelH/2;
+        if (minY>maxY) return null;
+        const clampedY=Math.min(Math.max(idealY,minY),maxY);
+        const isBouncing=bouncingDs===d.ds;
         return (
-          <div key={d.ds} style={{position:'fixed',left:pos.x,top:clampedY,transform:'translate(-50%,-50%)',display:'flex',flexDirection:'column',alignItems:'center',gap:'6px',pointerEvents:'none',zIndex:200,maxWidth:pos.maxX-pos.minX,overflow:'hidden'}}>
-            {/* NEW: emoji-pop class toggled on click */}
+          <div key={d.ds} style={{position:'fixed',left:pos.x,top:clampedY,transform:'translate(-50%,-50%)',display:'flex',flexDirection:'column',alignItems:'center',gap:'6px',pointerEvents:'none',zIndex:200,maxWidth:pos.maxX-pos.minX}}>
+            {/* FIX 1: removed overflow:hidden from parent, emoji has room to bounce */}
             <span
-              key={isBouncing ? `${d.ds}-bounce` : d.ds}
-              className={isBouncing ? 'emoji-pop' : ''}
-              style={{fontSize:'26px', userSelect:'none', display:'inline-block'}}
+              key={isBouncing?`${d.ds}-b`:d.ds}
+              className={isBouncing?'emoji-pop':''}
+              style={{fontSize:'26px',userSelect:'none',display:'inline-block'}}
             >
-              {isHol ? d.hol.split(' ')[0] : '🏝️'}
+              {isHol?d.hol.split(' ')[0]:'🏝️'}
             </span>
-            <span style={{fontSize:'10px',fontWeight:'600',color:isHol?'#be185d':'#1d4ed8',letterSpacing:'0.04em',textAlign:'center',userSelect:'none',wordBreak:'break-word'}}>{isHol ? holName : 'WEEKEND'}</span>
+            <span style={{fontSize:'10px',fontWeight:'600',color:isHol?'#be185d':'#1d4ed8',letterSpacing:'0.04em',textAlign:'center',userSelect:'none',wordBreak:'break-word'}}>{isHol?holName:'WEEKEND'}</span>
           </div>
         );
       })}
 
       <nav className="nav">
-        <div className={`nav-tab${activeTab==='calendar'?' active':''}`} onClick={() => setActiveTab('calendar')}>Calendar</div>
-        <div className={`nav-tab${activeTab==='planner'?' active':''}`} style={{position:'relative'}} onClick={() => setActiveTab(activeTab==='planner'?'calendar':'planner')}>
+        <div className={`nav-tab${activeTab==='calendar'?' active':''}`} onClick={()=>setActiveTab('calendar')}>Calendar</div>
+        <div className={`nav-tab${activeTab==='planner'?' active':''}`} style={{position:'relative'}} onClick={()=>setActiveTab(activeTab==='planner'?'calendar':'planner')}>
           Holiday Planner
-          {activeTab==='planner' && (
+          {activeTab==='planner'&&(
             <div style={{position:'absolute',top:'calc(100% + 2px)',left:0,zIndex:10020,background:'#fff',borderRadius:14,width:310,padding:18,boxShadow:'0 16px 48px rgba(0,0,0,0.12)',border:'1px solid #e5e7eb',animation:'dropIn 0.15s ease'}}
-              onClick={e => e.stopPropagation()}>
+              onClick={e=>e.stopPropagation()}>
               <div style={{fontSize:'10px',fontWeight:'700',color:'#9ca3af',letterSpacing:'0.1em',marginBottom:'12px'}}>{region.toUpperCase()} HOLIDAYS 2026</div>
               <div style={{maxHeight:'340px',overflowY:'auto'}}>
-                {plannerList().map(h => (
+                {plannerList().map(h=>(
                   <div key={h.date} className="plan-row"
                     style={{background:h.isWE?'#f0f9ff':'#f9fafb',borderLeft:`3px solid ${h.isWE?'#009bff':'#e5e7eb'}`}}
-                    onClick={() => jumpToDate(h.date)}>
+                    onClick={()=>jumpToDate(h.date)}>
                     <div>
                       <div className="plan-date" style={{color:h.isWE?'#009bff':'#374151'}}>{h.date}</div>
                       <div style={{fontSize:'10px',color:'#9ca3af',marginTop:'1px'}}>{h.day}</div>
@@ -754,19 +734,19 @@ export default function App() {
         </div>
         <div className="nav-sep"/>
         <div className="nav-right">
-          {saveStatus==='saving' && <span className="save-txt">↻ Saving</span>}
-          {saveStatus==='saved'  && <span className="save-ok">✓ Saved</span>}
+          {saveStatus==='saving'&&<span className="save-txt">↻ Saving</span>}
+          {saveStatus==='saved' &&<span className="save-ok">✓ Saved</span>}
           <div className="stat-pill"><div className="stat-dot"/><span>{inOffice.n} / {inOffice.total} in office</span></div>
-          {onlineUsers.length > 0 && (
+          {onlineUsers.length>0&&(
             <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
               <span style={{fontSize:'11px',color:'#9ca3af'}}>{onlineUsers.length} online</span>
               <div style={{display:'flex',alignItems:'center'}}>
-                {onlineUsers.slice(0,6).map((u,i) => (
+                {onlineUsers.slice(0,6).map((u,i)=>(
                   <div key={u.email} title={u.name} style={{marginLeft:i===0?0:-8,zIndex:10-i,position:'relative',borderRadius:'50%',border:'2px solid #fff',boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}}>
                     <Avatar name={u.name} photoUrl={staffPhotos[u.id]} size={26}/>
                   </div>
                 ))}
-                {onlineUsers.length > 6 && (
+                {onlineUsers.length>6&&(
                   <div style={{marginLeft:-8,width:26,height:26,borderRadius:'50%',background:'#e5e7eb',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'10px',fontWeight:'700',color:'#6b7280',border:'2px solid #fff',zIndex:1}}>
                     +{onlineUsers.length-6}
                   </div>
@@ -782,26 +762,28 @@ export default function App() {
         </div>
       </nav>
 
+      {/* FIX 4: subtitle line removed, sub-header now single line */}
       <div className="sub-header">
-        <div>
-          <div className="page-title">APAC Whereabouts</div>
-          <div className="page-sub">PLAY THE LONG GAME — WORK SMART. LIVE WELL.</div>
-        </div>
-        {superUser && (
+        <div className="page-title">APAC Whereabouts</div>
+        {superUser&&(
           <div className="region-toggle">
-            {['Hong Kong','China'].map(r => (
-              <button key={r} className={`region-btn ${region===r?'on':'off'}`} onClick={() => setRegion(r)}>{r}</button>
+            {['Hong Kong','China'].map(r=>(
+              <button key={r} className={`region-btn ${region===r?'on':'off'}`} onClick={()=>setRegion(r)}>{r}</button>
             ))}
           </div>
         )}
       </div>
 
       <div className="toolbar">
-        <button className="tb-btn icon" onClick={() => { const d=new Date(viewDate); d.setDate(d.getDate()-7); setViewDate(d); }}>‹</button>
-        <button className="tb-btn today" onClick={() => setViewDate(new Date())}>Today</button>
-        <button className="tb-btn icon" onClick={() => { const d=new Date(viewDate); d.setDate(d.getDate()+7); setViewDate(d); }}>›</button>
-        <select className="tb-select" value={viewDate.getMonth()} onChange={e => { const d=new Date(viewDate); d.setMonth(+e.target.value); d.setDate(1); setViewDate(d); }}>
-          {Array.from({length:12}).map((_,i) => <option key={i} value={i}>{new Date(0,i).toLocaleString('default',{month:'long'})}</option>)}
+        {/* FIX 3: use navigateWeek instead of direct setViewDate */}
+        <button className="tb-btn icon" onClick={()=>navigateWeek(-7)}>‹</button>
+        <button className="tb-btn today" onClick={()=>navigateWeek(0,new Date())}>Today</button>
+        <button className="tb-btn icon" onClick={()=>navigateWeek(7)}>›</button>
+        <select className="tb-select" value={viewDate.getMonth()} onChange={e=>{
+          const d=new Date(viewDate); d.setMonth(+e.target.value); d.setDate(1);
+          navigateWeek(0,d);
+        }}>
+          {Array.from({length:12}).map((_,i)=><option key={i} value={i}>{new Date(0,i).toLocaleString('default',{month:'long'})}</option>)}
         </select>
         <span className="tb-month">{viewDate.toLocaleString('default',{month:'long',year:'numeric'})}</span>
       </div>
@@ -815,9 +797,10 @@ export default function App() {
 
       <div className="tbl-outer dsz">
         <div className="tbl-hdr-sticky">
-          <div ref={headerRef} className="tbl-hdr-row">
+          {/* FIX 3: slide class on header row too so header slides with body */}
+          <div ref={headerRef} className={`tbl-hdr-row ${slideClass}`}>
             <div className="tbl-hdr-namecol"/>
-            {week.map(d => (
+            {week.map(d=>(
               <div key={d.ds} className="tbl-hdr-daycol">
                 <div style={{fontSize:'10px',fontWeight:'600',letterSpacing:'0.06em',marginBottom:'5px',color:d.isToday?'#770bff':'#9ca3af'}}>
                   {d.dayName.toUpperCase()}
@@ -831,41 +814,42 @@ export default function App() {
         </div>
 
         <div ref={scrollRef} className="tbl-scroll dsz" onScroll={handleTableScroll} onMouseLeave={handleStatusCellMouseUp}>
-          <table className="main-tbl">
+          {/* FIX 3: slide class on table so rows animate */}
+          <table className={`main-tbl ${slideClass}`}>
             <colgroup>
               <col style={{width:'200px'}}/>
-              {week.map(d => <col key={d.ds}/>)}
+              {week.map(d=><col key={d.ds}/>)}
             </colgroup>
             <tbody>
-              {staffList.map((m, rowIdx) => {
-                const isMe    = m.email.toLowerCase() === me;
-                const isFirst = rowIdx === 0;
+              {staffList.map((m,rowIdx)=>{
+                const isMe=m.email.toLowerCase()===me;
+                const isFirst=rowIdx===0;
                 return (
                   <tr key={m.id} id={isMe?'my-row':undefined}>
                     <td className="sticky-c" style={{background:'#f4f5f7',padding:'0 8px 0 0'}}>
                       <div className="nw">
                         <div style={{display:'flex',alignItems:'center',gap:'10px',position:'relative',cursor:isMe?'pointer':'default'}}
-                          onClick={async () => {
+                          onClick={async()=>{
                             if (!isMe) return;
-                            if (emotions[m.id]) { await supabase.from('emotions').delete().eq('staff_id', m.id); }
-                            else { setSocialMenu(socialMenu===m.id ? null : m.id); }
+                            if (emotions[m.id]) { await supabase.from('emotions').delete().eq('staff_id',m.id); }
+                            else { setSocialMenu(socialMenu===m.id?null:m.id); }
                           }}>
                           <div id={`av-${m.id}`} className="n-av-wrap" style={{position:'relative'}}>
                             <Avatar name={m.name} photoUrl={staffPhotos[m.id]} size={34} isMe={isMe}/>
-                            {emotions[m.id] && <div className="emo-tag">{emotions[m.id]}</div>}
+                            {emotions[m.id]&&<div className="emo-tag">{emotions[m.id]}</div>}
                           </div>
                           <div>
                             <div className={`n-name${isMe?' me':''}`}>{m.name}</div>
-                            {isMe && <div className="n-you">YOU</div>}
+                            {isMe&&<div className="n-you">YOU</div>}
                           </div>
-                          {isMe && socialMenu===m.id && (
+                          {isMe&&socialMenu===m.id&&(
                             <div className="emo-picker dsz">
-                              {['🧘','⚡','☕','🎯','🚀','💪','🌱'].map(emo => (
+                              {['🧘','⚡','☕','🎯','🚀','💪','🌱'].map(emo=>(
                                 <div key={emo}
-                                  onClick={async e => { e.stopPropagation(); await supabase.from('emotions').upsert({ staff_id:m.id, emoji:emo }); setSocialMenu(null); }}
+                                  onClick={async e=>{e.stopPropagation();await supabase.from('emotions').upsert({staff_id:m.id,emoji:emo});setSocialMenu(null);}}
                                   style={{fontSize:'18px',cursor:'pointer',padding:'4px 6px',borderRadius:'6px',transition:'background 0.1s'}}
-                                  onMouseOver={e => e.currentTarget.style.background='#f3f4f6'}
-                                  onMouseOut={e  => e.currentTarget.style.background='transparent'}
+                                  onMouseOver={e=>e.currentTarget.style.background='#f3f4f6'}
+                                  onMouseOut={e=>e.currentTarget.style.background='transparent'}
                                 >{emo}</div>
                               ))}
                             </div>
@@ -873,14 +857,13 @@ export default function App() {
                         </div>
                       </div>
                     </td>
-                    {week.map((d, weekIdx) => {
+                    {week.map((d,weekIdx)=>{
                       if (!d.editable) {
                         if (!isFirst) return null;
-                        const isHol = !!d.hol;
+                        const isHol=!!d.hol;
                         return (
                           <td key={d.ds} className="ptd" rowSpan={staffList.length}>
-                            {/* CHANGED: pass d.ds to fireParty so emoji bounce knows which column */}
-                            <div data-pill-ds={d.ds} className={`pill ${isHol?'hol':'we'}`} onClick={e => fireParty(e, isHol?'holiday':'weekend', d.hol||'', d.ds)}>
+                            <div data-pill-ds={d.ds} className={`pill ${isHol?'hol':'we'}`} onClick={e=>fireParty(e,isHol?'holiday':'weekend',d.hol||'',d.ds)}>
                               <div className="pill-card"/>
                             </div>
                           </td>
@@ -889,37 +872,37 @@ export default function App() {
                       return (
                         <td key={d.ds}>
                           <div className="dw">
-                            {['AM','PM'].map((shift, si) => {
-                              const key       = `${m.id}-${d.ds}-${shift}`;
-                              const sid       = records[key] || 'none';
-                              const cfg       = STATUS_CONFIG[sid];
-                              const open      = activeMenu === key;
-                              const isPreview = isPreviewCell(m.id, weekIdx, shift);
-                              const cls       = !isMe ? 'sh other' : sid!=='none' ? 'sh set' : 'sh mine';
+                            {['AM','PM'].map((shift,si)=>{
+                              const key=`${m.id}-${d.ds}-${shift}`;
+                              const sid=records[key]||'none';
+                              const cfg=STATUS_CONFIG[sid];
+                              const open=activeMenu===key;
+                              const isPreview=isPreviewCell(m.id,weekIdx,shift);
+                              const cls=!isMe?'sh other':sid!=='none'?'sh set':'sh mine';
                               return (
                                 <div key={shift} style={{position:'relative'}}>
                                   <div
-                                    id={isFirst && si===0 ? AM_REF : undefined}
+                                    id={isFirst&&si===0?AM_REF:undefined}
                                     className={`${cls} ${isPreview?'preview':''}`}
-                                    style={sid!=='none' ? {background:cfg.bg,color:cfg.color,border:`1.5px solid ${cfg.color}30`} : {}}
-                                    onMouseDown={e => handleStatusCellMouseDown(m.id, weekIdx, shift, sid, e)}
-                                    onMouseOver={() => handleStatusCellMouseOver(m.id, weekIdx, shift)}
-                                    onClick={e => {
+                                    style={sid!=='none'?{background:cfg.bg,color:cfg.color,border:`1.5px solid ${cfg.color}30`}:{}}
+                                    onMouseDown={e=>handleStatusCellMouseDown(m.id,weekIdx,shift,sid,e)}
+                                    onMouseOver={()=>handleStatusCellMouseOver(m.id,weekIdx,shift)}
+                                    onClick={e=>{
                                       if (!isMe) return;
                                       e.stopPropagation();
-                                      if (preview.length <= 1) {
-                                        if (sid !== 'none') handleStatus(key, null, e);
-                                        else setActiveMenu(open ? null : key);
+                                      if (preview.length<=1) {
+                                        if (sid!=='none') handleStatus(key,null,e);
+                                        else setActiveMenu(open?null:key);
                                       }
                                     }}
                                   >
-                                    {sid !== 'none' ? `${cfg.icon} ${cfg.label}` : shift}
+                                    {sid!=='none'?`${cfg.icon} ${cfg.label}`:shift}
                                   </div>
-                                  {open && isMe && (
+                                  {open&&isMe&&(
                                     <div className="s-drop dsz">
                                       <div style={{padding:'3px 10px 7px',fontSize:'10px',color:'#9ca3af',fontWeight:'600',borderBottom:'1px solid #f0f0f0',marginBottom:'3px',letterSpacing:'0.06em'}}>STATUS</div>
-                                      {Object.entries(STATUS_CONFIG).map(([sId,sCfg]) => (
-                                        <div key={sId} className="s-opt" onClick={e => handleStatus(key,sId,e)}>
+                                      {Object.entries(STATUS_CONFIG).map(([sId,sCfg])=>(
+                                        <div key={sId} className="s-opt" onClick={e=>handleStatus(key,sId,e)}>
                                           <span style={{fontSize:'15px'}}>{sCfg.icon}</span>
                                           <span className="s-opt-lbl">{sCfg.label}</span>
                                         </div>
