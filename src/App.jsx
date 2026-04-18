@@ -27,7 +27,8 @@ const TB_H   = 52;
 const LG_H   = 36;
 const AM_REF = 'am-ref-btn';
  
-const HEADER_STICKY_TOP = NAV_H + SUB_H + TB_H + LG_H;
+// 计算表头吸附的起始位置：所有上方导航元素的高度总和
+const HEADER_STICKY_TOP = NAV_H + SUB_H + TB_H + LG_H; // 等于 216
  
 const fmt = date => {
   const y = date.getFullYear();
@@ -393,6 +394,7 @@ export default function App() {
  
   const handleStatus = async (key, val, e) => {
     e.stopPropagation();
+    
     if (bulkSelectCells.length > 0) {
       setSaveStatus('saving');
       const updatedRecords = { ...records };
@@ -400,6 +402,7 @@ export default function App() {
       setRecords(updatedRecords);
       setActiveMenu(null);
       setBulkSelectCells([]);
+      
       (async () => {
         try {
           await Promise.all(bulkSelectCells.map(cellKey => {
@@ -466,6 +469,7 @@ export default function App() {
         return fmt(t);
       });
     })();
+ 
     if (isEmptyCell) {
       const cellKeys = preview.map(([staffId, dateIdx, shift]) => `${staffId}-${week_arr[dateIdx]}-${shift}`);
       setBulkSelectCells(cellKeys);
@@ -495,248 +499,17 @@ export default function App() {
  
   const isPreviewCell = (staffId, dateIdx, shift) =>
     preview.some(([s, d, sh]) => s === staffId && d === dateIdx && sh === shift);
-
-  // ── REPLACED: firePartyLocal with tech particle ripple canvas overlay ──────
-  const firePartyLocal = (type, text = '') => {
-    // original emoji rain — unchanged
-    const els = type === 'weekend' ? ['🍷','🌟','🎵','🍱'] : ['🎉', text.split(' ')[0] || '✨','✨'];
-    for (let i = 0; i < 28; i++) {
+ 
+  const firePartyLocal = (type, text='') => {
+    const els = type==='weekend' ? ['🍷','🌟','🎵','🍱'] : ['🎉', text.split(' ')[0]||'✨','✨'];
+    for (let i=0; i<28; i++) {
       const c = document.body.appendChild(document.createElement('div'));
-      c.innerText = els[Math.floor(Math.random() * els.length)];
+      c.innerText = els[Math.floor(Math.random()*els.length)];
       c.style.cssText = `position:fixed;left:${Math.random()*100}vw;top:-30px;font-size:22px;z-index:11000;pointer-events:none;transition:transform ${Math.random()*2+2}s cubic-bezier(0.1,0.5,0.5,1),opacity 2s;`;
-      setTimeout(() => { c.style.transform = `translateY(105vh) rotate(${Math.random()*900}deg)`; c.style.opacity = '0'; }, 20);
+      setTimeout(() => { c.style.transform=`translateY(105vh) rotate(${Math.random()*900}deg)`; c.style.opacity='0'; }, 20);
       setTimeout(() => c.remove(), 4000);
     }
-
-    // ── canvas overlay ────────────────────────────────────────────────────────
-    const DURATION = 2800;
-    const W  = window.innerWidth;
-    const H  = window.innerHeight;
-    const cx = W / 2;
-    const cy = H / 2;
-    const DPR = Math.min(window.devicePixelRatio || 1, 2);
-
-    const canvas = document.createElement('canvas');
-    canvas.width  = W * DPR;
-    canvas.height = H * DPR;
-    canvas.style.cssText = `position:fixed;inset:0;width:100%;height:100%;z-index:10999;pointer-events:none;mix-blend-mode:screen;`;
-    document.body.appendChild(canvas);
-    const ctx = canvas.getContext('2d');
-    ctx.scale(DPR, DPR);
-
-    // colour helpers
-    const lerp = (a, b, t) => a + (b - a) * t;
-    const C1 = [0, 155, 255];   // #009bff blue
-    const C2 = [119, 11, 255];  // #770bff purple
-    const C3 = [0, 229, 255];   // #00e5ff cyan
-
-    const lerpColor = (t) => {
-      const s = (Math.sin(t * Math.PI * 2) + 1) / 2;
-      return [
-        Math.round(lerp(C1[0], C2[0], s)),
-        Math.round(lerp(C1[1], C2[1], s)),
-        Math.round(lerp(C1[2], C2[2], s)),
-      ];
-    };
-
-    // ── particles ────────────────────────────────────────────────────────────
-    const PARTICLE_COUNT = 260;
-    const particles = Array.from({ length: PARTICLE_COUNT }, (_, i) => {
-      const angle  = (i / PARTICLE_COUNT) * Math.PI * 2 + Math.random() * 0.35;
-      const speed  = 2.0 + Math.random() * 5.8;
-      const radius = 1.0 + Math.random() * 3.0;
-      const life   = 0.42 + Math.random() * 0.58;
-      const delay  = Math.random() * 0.28;
-      const trail  = Math.random() > 0.5;
-      const colorT = Math.random();
-      return { angle, speed, radius, life, delay, trail, colorT };
-    });
-
-    // ── ripple rings ─────────────────────────────────────────────────────────
-    const rings = Array.from({ length: 6 }, (_, i) => ({
-      delay:  i * 0.11,
-      speed:  300 + i * 65,
-      colorT: i / 5,
-    }));
-
-    // ── hex grid nodes (static, for background circuit feel) ─────────────────
-    const hexNodes = [];
-    const HEX_SPACING = 72;
-    for (let row = -1; row < H / HEX_SPACING + 1; row++) {
-      for (let col = -1; col < W / HEX_SPACING + 1; col++) {
-        const ox = col * HEX_SPACING + (row % 2 === 0 ? 0 : HEX_SPACING / 2);
-        const oy = row * HEX_SPACING * 0.86;
-        const dist = Math.sqrt((ox - cx) ** 2 + (oy - cy) ** 2);
-        hexNodes.push({ x: ox, y: oy, dist, phase: Math.random() * Math.PI * 2 });
-      }
-    }
-
-    const sweep = { done: false };
-    const startTime = performance.now();
-
-    const tick = (now) => {
-      const elapsed = now - startTime;
-      const T = Math.min(elapsed / DURATION, 1);
-      if (T >= 1) { canvas.remove(); return; }
-
-      ctx.clearRect(0, 0, W, H);
-
-      // ── 1. radial glow background ─────────────────────────────────────────
-      const glowAlpha = T < 0.15
-        ? (T / 0.15) * 0.32
-        : T < 0.55
-          ? 0.32
-          : (1 - (T - 0.55) / 0.45) * 0.32;
-      const maxR = Math.sqrt(W * W + H * H) * 0.75;
-      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR);
-      grad.addColorStop(0,   `rgba(${C3.join(',')},${glowAlpha * 0.85})`);
-      grad.addColorStop(0.25,`rgba(${C1.join(',')},${glowAlpha})`);
-      grad.addColorStop(0.6, `rgba(${C2.join(',')},${glowAlpha * 0.65})`);
-      grad.addColorStop(1,   `rgba(0,0,0,0)`);
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, W, H);
-
-      // ── 2. hex grid circuit lines (pulse outward from center) ─────────────
-      const maxDist = Math.sqrt(cx * cx + cy * cy);
-      hexNodes.forEach(node => {
-        const waveFront = T * maxDist * 1.8;
-        const inWave = node.dist < waveFront && node.dist > waveFront - 160;
-        if (!inWave) return;
-        const waveT = 1 - (waveFront - node.dist) / 160;
-        const nodeAlpha = Math.sin(waveT * Math.PI) * 0.55 * glowAlpha * 3.5;
-        if (nodeAlpha <= 0) return;
-        const [rr, gg, bb] = lerpColor(node.phase / (Math.PI * 2) + T * 0.4);
-        // draw small diamond node
-        ctx.save();
-        ctx.translate(node.x, node.y);
-        ctx.rotate(Math.PI / 4);
-        ctx.fillStyle = `rgba(${rr},${gg},${bb},${nodeAlpha})`;
-        const ns = 3.5 * (1 + Math.sin(waveT * Math.PI) * 0.5);
-        ctx.fillRect(-ns / 2, -ns / 2, ns, ns);
-        // draw lines to right and down-right neighbours
-        ctx.restore();
-        ctx.beginPath();
-        ctx.moveTo(node.x, node.y);
-        ctx.lineTo(node.x + HEX_SPACING, node.y);
-        ctx.strokeStyle = `rgba(${rr},${gg},${bb},${nodeAlpha * 0.35})`;
-        ctx.lineWidth = 0.7;
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(node.x, node.y);
-        ctx.lineTo(node.x + HEX_SPACING / 2, node.y + HEX_SPACING * 0.86);
-        ctx.strokeStyle = `rgba(${rr},${gg},${bb},${nodeAlpha * 0.35})`;
-        ctx.lineWidth = 0.7;
-        ctx.stroke();
-      });
-
-      // ── 3. ripple rings ───────────────────────────────────────────────────
-      rings.forEach(ring => {
-        const rt = T - ring.delay;
-        if (rt <= 0) return;
-        const progress = Math.min(rt / 0.65, 1);
-        const r   = ring.speed * progress;
-        const opc = (1 - progress) * 0.8;
-        if (opc <= 0) return;
-        const [rr, gg, bb] = lerpColor(ring.colorT + T * 0.25);
-        // inner sharp ring
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(${rr},${gg},${bb},${opc})`;
-        ctx.lineWidth = 1.8;
-        ctx.stroke();
-        // outer soft glow halo
-        const rg = ctx.createRadialGradient(cx, cy, Math.max(0, r - 20), cx, cy, r + 8);
-        rg.addColorStop(0,   `rgba(${rr},${gg},${bb},0)`);
-        rg.addColorStop(0.5, `rgba(${rr},${gg},${bb},${opc * 0.55})`);
-        rg.addColorStop(1,   `rgba(${rr},${gg},${bb},0)`);
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        ctx.strokeStyle = rg;
-        ctx.lineWidth = 28;
-        ctx.stroke();
-      });
-
-      // ── 4. particles ──────────────────────────────────────────────────────
-      particles.forEach(p => {
-        const pt = T - p.delay;
-        if (pt <= 0) return;
-        const lifeT = Math.min(pt / p.life, 1);
-        const ease  = 1 - lifeT * lifeT;
-        const px = cx + Math.cos(p.angle) * p.speed * lifeT * W * 0.52 * ease;
-        const py = cy + Math.sin(p.angle) * p.speed * lifeT * H * 0.52 * ease;
-        const alpha = lifeT < 0.12
-          ? lifeT / 0.12
-          : (1 - lifeT) * 1.15;
-        if (alpha <= 0.01) return;
-        const [rr, gg, bb] = lerpColor(p.colorT + T * 0.6);
-        const sz = p.radius * (1 - lifeT * 0.45);
-
-        if (p.trail && lifeT < 0.78) {
-          const trailLen = sz * 7 * (1 - lifeT);
-          const tx = px - Math.cos(p.angle) * trailLen;
-          const ty = py - Math.sin(p.angle) * trailLen;
-          const lg = ctx.createLinearGradient(tx, ty, px, py);
-          lg.addColorStop(0, `rgba(${rr},${gg},${bb},0)`);
-          lg.addColorStop(1, `rgba(${rr},${gg},${bb},${alpha * 0.8})`);
-          ctx.beginPath();
-          ctx.moveTo(tx, ty);
-          ctx.lineTo(px, py);
-          ctx.strokeStyle = lg;
-          ctx.lineWidth = sz * 0.85;
-          ctx.lineCap = 'round';
-          ctx.stroke();
-        }
-
-        // glowing dot
-        const dotG = ctx.createRadialGradient(px, py, 0, px, py, sz * 2.5);
-        dotG.addColorStop(0,   `rgba(255,255,255,${alpha})`);
-        dotG.addColorStop(0.35,`rgba(${C3.join(',')},${alpha * 0.9})`);
-        dotG.addColorStop(0.7, `rgba(${rr},${gg},${bb},${alpha * 0.7})`);
-        dotG.addColorStop(1,   `rgba(${rr},${gg},${bb},0)`);
-        ctx.beginPath();
-        ctx.arc(px, py, sz * 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = dotG;
-        ctx.fill();
-      });
-
-      // ── 5. diagonal sweep ─────────────────────────────────────────────────
-      if (!sweep.done) {
-        const sT = T / 0.5;
-        if (sT <= 1) {
-          const diagLen = Math.sqrt(W * W + H * H);
-          const sx = -W * 0.25 + diagLen * sT * 1.35;
-          const sw = W * 0.18;
-          const sg = ctx.createLinearGradient(sx - sw, 0, sx + sw, H);
-          sg.addColorStop(0,   'rgba(255,255,255,0)');
-          sg.addColorStop(0.35,`rgba(${C3.join(',')},0.07)`);
-          sg.addColorStop(0.5, 'rgba(255,255,255,0.12)');
-          sg.addColorStop(0.65,`rgba(${C1.join(',')},0.07)`);
-          sg.addColorStop(1,   'rgba(255,255,255,0)');
-          ctx.save();
-          ctx.translate(cx, cy);
-          ctx.rotate(-Math.PI / 5);
-          ctx.translate(-cx, -cy);
-          ctx.fillStyle = sg;
-          ctx.fillRect(sx - sw, -H * 0.2, sw * 2, H * 1.4);
-          ctx.restore();
-        } else {
-          sweep.done = true;
-        }
-      }
-
-      // ── 6. edge vignette fade-out ─────────────────────────────────────────
-      if (T > 0.68) {
-        const fo = (T - 0.68) / 0.32;
-        ctx.fillStyle = `rgba(244,245,247,${fo * 0.22})`;
-        ctx.fillRect(0, 0, W, H);
-      }
-
-      requestAnimationFrame(tick);
-    };
-
-    requestAnimationFrame(tick);
   };
-  // ── end firePartyLocal ────────────────────────────────────────────────────
  
   const fireParty = (e, type, text='') => {
     const pill = e.currentTarget.closest('.pill');
