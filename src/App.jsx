@@ -667,10 +667,10 @@ export default function App() {
                           <div
                             ref={isMe?myAvatarRef:null}
                             id={`av-${m.id}`}
-                            className={`n-av-wrap${isMe?' is-me':''}`}
+                            className={`n-av-wrap${isMe?' is-me':' is-other'}`}
                             style={{position:'relative'}}
                           >
-                            <Avatar name={m.name} photoUrl={staffPhotos[m.id]} size={34} isMe={isMe}/>
+                            <Avatar name={m.name} photoUrl={staffPhotos[m.id]} size={46} isMe={isMe}/>
                             {emotions[m.id]&&<div className="emo-tag">{emotions[m.id]}</div>}
                           </div>
                           <div>
