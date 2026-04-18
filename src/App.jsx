@@ -20,12 +20,14 @@ const isSuperUser  = em => SUPER_USERS.includes(em.toLowerCase());
 const isChinaExtra = em => CHINA_EXTRA.includes(em.toLowerCase());
 const getStaffEntry = em => RAW_STAFF_LIST.find(s => s.email.toLowerCase() === em.toLowerCase());
 
-const ROW_H  = 104;
-const NAV_H  = 56;
-const SUB_H  = 48;
-const TB_H   = 52;
-const LG_H   = 36;
-const AM_REF = 'am-ref-btn';
+const ROW_H       = 104;
+const NAV_H       = 56;
+const SUB_H       = 48;
+const TB_H        = 52;
+const LG_H        = 36;
+const AM_REF      = 'am-ref-btn';
+const NAME_COL_W  = 200;   // matches <col style={{width:'200px'}}/>
+const TBL_PAD     = 28;    // matches padding:0 28px on .tbl-scroll
 
 const HEADER_STICKY_TOP = NAV_H + SUB_H + TB_H + LG_H;
 
@@ -66,7 +68,6 @@ function Avatar({ name, photoUrl, size=34, isMe=false }) {
 
 const GlobalStyles = () => (
   <style>{`
-    /* FIX 4: Plus Jakarta Sans from Google Fonts */
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
     *,*:before,*:after{box-sizing:border-box;margin:0;padding:0}
@@ -84,7 +85,6 @@ const GlobalStyles = () => (
       transform-origin:center center;
     }
 
-    /* column glow */
     @keyframes colGlowFade{
       0%   {opacity:0;  transform:scaleX(0.92);}
       12%  {opacity:1;  transform:scaleX(1);   }
@@ -100,7 +100,6 @@ const GlobalStyles = () => (
       will-change:opacity,transform;
     }
 
-    /* FIX 1: emoji spring — 48px, smoother, peak 1.45, 0.65s */
     @keyframes emojiSpring{
       0%  {transform:scale(1)    rotate(0deg);  }
       22% {transform:scale(1.45) rotate(-10deg);}
@@ -115,7 +114,6 @@ const GlobalStyles = () => (
       transform-origin:center center;
     }
 
-    /* weekly slide */
     @keyframes slideInFromRight{
       from{transform:translateX(52px);opacity:0.3;}
       to  {transform:translateX(0);   opacity:1;  }
@@ -135,13 +133,8 @@ const GlobalStyles = () => (
     .glow-frame{position:fixed;inset:0;pointer-events:none;z-index:9998;opacity:0;
       box-shadow:inset 0 0 0px 0px rgba(0,155,255,0);will-change:opacity,box-shadow;transform:translateZ(0);}
 
-    body{
-      /* FIX 4: Plus Jakarta Sans as body font for nav */
-      font-family:'Plus Jakarta Sans','Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;
-      background:#f4f5f7;color:#111827;-webkit-font-smoothing:antialiased;
-    }
+    body{font-family:'Plus Jakarta Sans','Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;background:#f4f5f7;color:#111827;-webkit-font-smoothing:antialiased;}
     .nav{height:${NAV_H}px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;padding:0 28px;position:sticky;top:0;z-index:500}
-    /* FIX 4: nav tabs use Plus Jakarta Sans weight 500 */
     .nav-tab{height:${NAV_H}px;display:flex;align-items:center;padding:0 14px;font-size:13px;font-weight:500;font-family:'Plus Jakarta Sans',sans-serif;color:#6b7280;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;white-space:nowrap;user-select:none}
     .nav-tab:hover{color:#111827}
     .nav-tab.active{color:transparent;background:linear-gradient(90deg,#009bff,#770bff);-webkit-background-clip:text;background-clip:text;border-image:linear-gradient(90deg,#009bff,#770bff) 1;font-weight:700}
@@ -156,14 +149,7 @@ const GlobalStyles = () => (
     .signout-btn{height:26px;padding:0 10px;border-radius:100px;border:none;background:#e5e7eb;color:#6b7280;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s}
     .signout-btn:hover{background:#d1d5db;color:#374151}
     .sub-header{height:${SUB_H}px;padding:0 28px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;position:sticky;top:${NAV_H}px;z-index:490}
-    /* FIX 4: title uses Plus Jakarta Sans 800 weight, slightly larger */
-    .page-title{
-      font-size:22px;font-weight:800;
-      font-family:'Plus Jakarta Sans',sans-serif;
-      background:linear-gradient(90deg,#009bff,#770bff);
-      -webkit-background-clip:text;background-clip:text;color:transparent;
-      letter-spacing:-0.03em;
-    }
+    .page-title{font-size:22px;font-weight:800;font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(90deg,#009bff,#770bff);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:-0.03em;}
     .region-toggle{display:flex;background:#f3f4f6;border-radius:8px;padding:3px;gap:2px}
     .region-btn{height:28px;padding:0 14px;border-radius:6px;border:none;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s}
     .region-btn.on{background:linear-gradient(90deg,#009bff,#770bff);color:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.15)}
@@ -241,8 +227,8 @@ function LoginScreen({ onLogin, isInitializing, error }) {
   return (
     <div className="ms-screen"><GlobalStyles />
       <div className="ms-card">
-        <div style={{display:'flex', justifyContent:'center', marginBottom:28}}>
-          <img src="https://i.ibb.co/YTQHg15F/Pattern-Logo.png" alt="Pattern" style={{height:40, objectFit:'contain'}}/>
+        <div style={{display:'flex',justifyContent:'center',marginBottom:28}}>
+          <img src="https://i.ibb.co/YTQHg15F/Pattern-Logo.png" alt="Pattern" style={{height:40,objectFit:'contain'}}/>
         </div>
         <h2 className="ms-title">Sign in</h2>
         <p className="ms-sub">Use your Pattern Asia work account to continue</p>
@@ -303,7 +289,6 @@ export default function App() {
   const [socialMenu,      setSocialMenu]      = useState(null);
   const [emotions,        setEmotions]        = useState({});
   const [saveStatus,      setSaveStatus]      = useState('');
-  const [pillRects,       setPillRects]       = useState({});
   const [staffPhotos,     setStaffPhotos]     = useState({});
   const [onlineUsers,     setOnlineUsers]     = useState([]);
   const [dragging,        setDragging]        = useState(null);
@@ -311,8 +296,12 @@ export default function App() {
   const [bulkSelectCells, setBulkSelectCells] = useState([]);
   const [bouncingDs,      setBouncingDs]      = useState(null);
   const [slideDir,        setSlideDir]        = useState(null);
-  const slideTimerRef  = useRef(null);
 
+  // NEW: layout-math state — only container width and scroll, no per-cell rects
+  const [tblContainerWidth, setTblContainerWidth] = useState(0);
+  const [tblScrollLeft,     setTblScrollLeft]     = useState(0);
+
+  const slideTimerRef = useRef(null);
   const presenceRef   = useRef(null);
   const partyTimerRef = useRef(null);
   const scrollRef     = useRef(null);
@@ -321,7 +310,20 @@ export default function App() {
   const glowLevelRef  = useRef(0);
   const glowRafRef    = useRef(null);
 
-  // FIX 2: clear pillRects on navigate so emoji doesn't show stale coords during slide
+  // NEW: pure layout math — compute X center of a column by its index in the week array
+  // colIndex = index among the 7 week columns (0–6)
+  // containerWidth = scrollRef clientWidth (the visible scroll area width)
+  // scrollLeft = how far user has scrolled horizontally
+  const getColX = (colIndex, containerWidth, scrollLeft) => {
+    const totalTableWidth = Math.max(containerWidth, 860); // matches min-width:860px
+    const dataWidth = totalTableWidth - NAME_COL_W;
+    const colWidth  = dataWidth / 7;
+    // left edge of this column in table space (accounting for padding and name col)
+    const colLeft = TBL_PAD + NAME_COL_W + colIndex * colWidth;
+    // center of column in screen space = left edge - scroll + half width
+    return colLeft - scrollLeft + colWidth / 2;
+  };
+
   const navigateWeek = (deltaDays, forcedDate = null) => {
     setViewDate(prev => {
       const target = forcedDate || (() => {
@@ -329,14 +331,25 @@ export default function App() {
       })();
       const dir = target > prev ? 'right' : 'left';
       setSlideDir(dir);
-      // FIX 2: clear emoji positions immediately — re-measured after slide
-      setPillRects({});
       clearTimeout(slideTimerRef.current);
       slideTimerRef.current = setTimeout(() => setSlideDir(null), 320);
       return target;
     });
   };
 
+  // NEW: measure container width on mount and resize only — not per scroll/animation
+  useEffect(() => {
+    const measureContainer = () => {
+      if (scrollRef.current) {
+        setTblContainerWidth(scrollRef.current.clientWidth);
+      }
+    };
+    measureContainer();
+    window.addEventListener('resize', measureContainer);
+    return () => window.removeEventListener('resize', measureContainer);
+  }, []);
+
+  // glow decay loop
   useEffect(() => {
     const decay = () => {
       glowLevelRef.current = Math.max(0, glowLevelRef.current - 0.016);
@@ -344,8 +357,8 @@ export default function App() {
       if (el) {
         const lvl = glowLevelRef.current;
         if (lvl > 0.001) {
-          const i1=lvl*25, s1=lvl*10, i2=lvl*45, s2=lvl*16, i3=lvl*18, s3=lvl*6;
-          const op1=0.28+lvl*0.52, op2=0.16+lvl*0.44, op3=lvl*0.38;
+          const i1=lvl*25,s1=lvl*10,i2=lvl*45,s2=lvl*16,i3=lvl*18,s3=lvl*6;
+          const op1=0.28+lvl*0.52,op2=0.16+lvl*0.44,op3=lvl*0.38;
           el.style.opacity   = String(Math.min(lvl*1.5,1));
           el.style.boxShadow = [
             `inset 0 0 ${i1}px ${s1}px rgba(0,155,255,${op1})`,
@@ -454,28 +467,27 @@ export default function App() {
     return ()=>document.removeEventListener('mousedown',fn);
   }, []);
 
+  // REMOVED: old measure useEffect that read getBoundingClientRect per cell
+  // KEPT: only the AM_REF padding logic which is still needed for pill vertical alignment
   useEffect(() => {
-    const measure = () => {
-      const rects={};
-      document.querySelectorAll('[data-pill-ds]').forEach(el=>{
-        const r=el.getBoundingClientRect();
-        rects[el.dataset.pillDs]={top:r.top,bottom:r.bottom,x:r.left+r.width/2,minX:r.left+10,maxX:r.right-10};
-      });
-      setPillRects(rects);
-      const am=document.getElementById(AM_REF);
+    const adjustPillPadding = () => {
+      const am = document.getElementById(AM_REF);
       if (!am) return;
-      const amTop=am.getBoundingClientRect().top;
-      document.querySelectorAll('.pill').forEach(pill=>{
-        const offset=amTop-pill.getBoundingClientRect().top;
-        pill.style.paddingTop=Math.max(0,offset)+'px';
-        pill.style.paddingBottom=Math.max(0,offset)+'px';
+      const amTop = am.getBoundingClientRect().top;
+      document.querySelectorAll('.pill').forEach(pill => {
+        const offset = amTop - pill.getBoundingClientRect().top;
+        pill.style.paddingTop    = Math.max(0, offset) + 'px';
+        pill.style.paddingBottom = Math.max(0, offset) + 'px';
       });
     };
-    requestAnimationFrame(()=>requestAnimationFrame(measure));
-    window.addEventListener('resize',measure);
-    window.addEventListener('scroll',measure,true);
-    return ()=>{ window.removeEventListener('resize',measure); window.removeEventListener('scroll',measure,true); };
-  }, [region,viewDate,activeTab]);
+    requestAnimationFrame(() => requestAnimationFrame(adjustPillPadding));
+    window.addEventListener('resize', adjustPillPadding);
+    window.addEventListener('scroll', adjustPillPadding, true);
+    return () => {
+      window.removeEventListener('resize', adjustPillPadding);
+      window.removeEventListener('scroll', adjustPillPadding, true);
+    };
+  }, [region, viewDate, activeTab]);
 
   useEffect(() => {
     if (!account) return;
@@ -598,7 +610,6 @@ export default function App() {
     const pill=e.currentTarget.closest('.pill');
     if (pill) { pill.classList.remove('holi-tap'); void pill.offsetWidth; pill.classList.add('holi-tap'); }
     if (ds) { setBouncingDs(ds); setTimeout(()=>setBouncingDs(null),700); }
-    // FIX 3: only inject overlay if we found a valid td.ptd
     const td=e.currentTarget.closest('td.ptd');
     if (td) {
       document.querySelectorAll('.col-glow-overlay').forEach(el=>el.remove());
@@ -616,8 +627,12 @@ export default function App() {
     presenceRef.current?.send({type:'broadcast',event:'party',payload:{type,text,userId:meStaff?.id||'guest'}});
   };
 
+  // NEW: handleTableScroll also updates tblScrollLeft for emoji X recalculation
   const handleTableScroll=()=>{
-    if (headerRef.current&&scrollRef.current) headerRef.current.scrollLeft=scrollRef.current.scrollLeft;
+    if (headerRef.current&&scrollRef.current) {
+      headerRef.current.scrollLeft=scrollRef.current.scrollLeft;
+      setTblScrollLeft(scrollRef.current.scrollLeft);
+    }
   };
 
   const today=fmt(new Date());
@@ -659,24 +674,25 @@ export default function App() {
   const VH=window.innerHeight;
   const slideClass=slideDir==='right'?'week-slide-right':slideDir==='left'?'week-slide-left':'';
 
+  // NEW: non-editable columns in this week with their index
+  const nonEditableCols = week.reduce((acc,d,i)=>{ if (!d.editable) acc.push({...d,colIndex:i}); return acc; },[]);
+
   return (
     <div style={{minHeight:'100vh',background:'#f4f5f7'}} onMouseUp={handleStatusCellMouseUp}>
       <GlobalStyles/>
       <div ref={glowFrameRef} className="glow-frame"/>
 
-      {/* FIX 1+2: emoji 48px, no overflow:hidden parent, pillRects cleared on navigate */}
-      {activeTab==='calendar'&&week.filter(d=>!d.editable).map(d=>{
+      {/* NEW: emoji positioned via layout math — always centered, immune to slide timing */}
+      {activeTab==='calendar' && tblContainerWidth > 0 && nonEditableCols.map(d=>{
         const isHol=!!d.hol;
         const holName=d.hol?d.hol.replace(/^\S+\s/,''):'';
-        const pos=pillRects[d.ds];
-        if (!pos) return null;
-        const labelH=64,pad=8,idealY=VH/2;
-        const minY=pos.top+pad+labelH/2,maxY=pos.bottom-pad-labelH/2;
-        if (minY>maxY) return null;
-        const clampedY=Math.min(Math.max(idealY,minY),maxY);
-        const isBouncing=bouncingDs===d.ds;
+        // pure math: no getBoundingClientRect, no pillRects
+        const x = getColX(d.colIndex, tblContainerWidth, tblScrollLeft);
+        // Y: always viewport center, clamped to a reasonable range
+        const y = VH / 2;
+        const isBouncing = bouncingDs===d.ds;
         return (
-          <div key={d.ds} style={{position:'fixed',left:pos.x,top:clampedY,transform:'translate(-50%,-50%)',display:'flex',flexDirection:'column',alignItems:'center',gap:'8px',pointerEvents:'none',zIndex:200,maxWidth:pos.maxX-pos.minX}}>
+          <div key={d.ds} style={{position:'fixed',left:x,top:y,transform:'translate(-50%,-50%)',display:'flex',flexDirection:'column',alignItems:'center',gap:'8px',pointerEvents:'none',zIndex:200}}>
             <span
               key={isBouncing?`${d.ds}-b`:d.ds}
               className={isBouncing?'emoji-pop':''}
@@ -745,7 +761,6 @@ export default function App() {
         </div>
       </nav>
 
-      {/* FIX 4: title is now just "Whereabouts", Plus Jakarta Sans 800, no subtitle */}
       <div className="sub-header">
         <div className="page-title">Whereabouts</div>
         {superUser&&(
