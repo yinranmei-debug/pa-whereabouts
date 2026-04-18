@@ -40,8 +40,11 @@ const LoginScreen = ({ onLogin, isInitializing, error }) => {
       <div className="ls-orb" style={{width:400,height:400,background:'#c7d2fe',top:-80,left:-60,animationDelay:'0s'}}/>
       <div className="ls-orb" style={{width:320,height:320,background:'#ddd6fe',bottom:-60,right:-40,animationDelay:'-4s'}}/>
       <div className="ls-orb" style={{width:200,height:200,background:'#e0e7ff',top:'40%',right:'10%',animationDelay:'-8s'}}/>
-
-      <div style={{position:'relative',zIndex:10,width:'100%',maxWidth:900,transition:'all 1s',opacity:show?1:0,transform:show?'translateY(0)':'translateY(40px)'}}>
+      <video autoPlay loop muted playsInline style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',zIndex:0,opacity:0.35}}>
+  <source src="https://hr-support.pattern.com/assets/Pattern_logo_video.mp4" type="video/mp4"/>
+</video>
+<div style={{position:'absolute',inset:0,background:'linear-gradient(to bottom,rgba(248,250,252,0.9),rgba(248,250,252,0.55),rgba(248,250,252,0.9))',zIndex:1}}/>
+      <div style={{position:'relative',zIndex:2,width:'100%',maxWidth:900,transition:'all 1s',opacity:show?1:0,transform:show?'translateY(0)':'translateY(40px)'}}>
         <div style={{marginBottom:48}}>
           <h1 style={{lineHeight:1.4,paddingBottom:8,overflow:'visible',fontSize:'clamp(32px,5vw,56px)',fontWeight:800,color:'#1e293b',letterSpacing:'-0.03em',margin:'0 0 8px'}}>
             <span className="ls-part1" style={{display:'inline-block',marginRight:12}}>Play the</span>
