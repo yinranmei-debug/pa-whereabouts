@@ -74,6 +74,16 @@ const GlobalStyles = () => (
     @keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
     @keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.4)}50%{box-shadow:0 0 0 4px rgba(34,197,94,0)}}
     .holi-tap{animation:holiBounce 0.4s cubic-bezier(0.25,0.46,0.45,0.94) both !important;transform-origin:center center;isolation:isolate}
+    @keyframes glowBreathe{
+      0%,100%{opacity:0.55;box-shadow:inset 0 0 38px 8px rgba(0,155,255,0.28),inset 0 0 80px 16px rgba(119,11,255,0.18),inset 0 0 0px 0px rgba(0,229,255,0);}
+      50%{opacity:1;box-shadow:inset 0 0 60px 16px rgba(0,155,255,0.42),inset 0 0 120px 32px rgba(119,11,255,0.28),inset 0 0 24px 4px rgba(0,229,255,0.15);}
+    }
+    .glow-frame{
+      position:fixed;inset:0;pointer-events:none;z-index:9998;border-radius:0;
+      box-shadow:inset 0 0 38px 8px rgba(0,155,255,0.28),inset 0 0 80px 16px rgba(119,11,255,0.18);
+      animation:glowBreathe 3.2s ease-in-out infinite;
+      transition:box-shadow 0.08s ease-out,opacity 0.08s ease-out;
+    }
     body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;background:#f4f5f7;color:#111827;-webkit-font-smoothing:antialiased}
     .nav{height:${NAV_H}px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;padding:0 28px;position:sticky;top:0;z-index:500}
     .nav-tab{height:${NAV_H}px;display:flex;align-items:center;padding:0 14px;font-size:13px;font-weight:400;color:#6b7280;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;white-space:nowrap;user-select:none}
@@ -238,10 +248,53 @@ export default function App() {
   const [preview,         setPreview]         = useState([]);
   const [bulkSelectCells, setBulkSelectCells] = useState([]);
 
-  const presenceRef   = useRef(null);
-  const partyTimerRef = useRef(null);
-  const scrollRef     = useRef(null);
-  const headerRef     = useRef(null);
+  const presenceRef    = useRef(null);
+  const partyTimerRef  = useRef(null);
+  const scrollRef      = useRef(null);
+  const headerRef      = useRef(null);
+  // glow frame ref — we drive it imperatively to avoid React re-render on every RAF tick
+  const glowFrameRef   = useRef(null);
+  const glowLevelRef   = useRef(0);   // 0 = resting, boosted by clicks, decays over time
+  const glowRafRef     = useRef(null);
+
+  // ── glow decay loop — runs forever once started ──────────────────────────
+  useEffect(() => {
+    const decay = () => {
+      glowLevelRef.current = Math.max(0, glowLevelRef.current - 0.018);
+      if (glowFrameRef.current) {
+        const lvl = glowLevelRef.current;
+        // base breath is handled by CSS animation; we ONLY add extra intensity here
+        // when lvl > 0 we override animation and pump up the box-shadow
+        if (lvl > 0) {
+          const b  = lvl;          // 0→1
+          const i1 = 38 + b * 120; // inset blur 1
+          const s1 = 8  + b * 40;  // spread 1
+          const i2 = 80 + b * 200; // inset blur 2
+          const s2 = 16 + b * 60;  // spread 2
+          const i3 = b * 60;        // cyan accent
+          const s3 = b * 12;
+          const op1 = 0.28 + b * 0.55;
+          const op2 = 0.18 + b * 0.45;
+          const op3 = b * 0.4;
+          glowFrameRef.current.style.animation = 'none';
+          glowFrameRef.current.style.opacity   = String(Math.min(0.55 + b * 0.45, 1));
+          glowFrameRef.current.style.boxShadow = [
+            `inset 0 0 ${i1}px ${s1}px rgba(0,155,255,${op1})`,
+            `inset 0 0 ${i2}px ${s2}px rgba(119,11,255,${op2})`,
+            `inset 0 0 ${i3}px ${s3}px rgba(0,229,255,${op3})`,
+          ].join(',');
+        } else {
+          // restore CSS breathing animation
+          glowFrameRef.current.style.animation = '';
+          glowFrameRef.current.style.opacity   = '';
+          glowFrameRef.current.style.boxShadow = '';
+        }
+      }
+      glowRafRef.current = requestAnimationFrame(decay);
+    };
+    glowRafRef.current = requestAnimationFrame(decay);
+    return () => cancelAnimationFrame(glowRafRef.current);
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -321,6 +374,8 @@ export default function App() {
       .on('broadcast', { event:'party' }, ({ payload }) => {
         firePartyLocal(payload.type, payload.text);
         popAvatar(payload.userId);
+        // remote party also boosts glow
+        glowLevelRef.current = Math.min(glowLevelRef.current + 0.6, 1);
       })
       .subscribe(async status => {
         if (status==='SUBSCRIBED') {
@@ -452,11 +507,8 @@ export default function App() {
     setPreview(range);
   };
 
-  // Issue 1 fix: mouseup 只负责清理拖拽状态
-  // 不再在这里设置 activeMenu，避免与 onClick 竞争
   const handleStatusCellMouseUp = () => {
     if (dragging && preview.length > 1) {
-      // 真正的拖拽：多格操作
       const isEmptyCell = dragging.isEmptyCell;
       const week_arr = week.map(d => d.ds);
       if (isEmptyCell) {
@@ -505,6 +557,8 @@ export default function App() {
     if (pill) { pill.classList.remove('holi-tap'); void pill.offsetWidth; pill.classList.add('holi-tap'); }
     firePartyLocal(type, text);
     popAvatar(meStaff?.id || 'guest');
+    // ── boost glow on every click, capped at 1, stacks with rapid clicks ──
+    glowLevelRef.current = Math.min(glowLevelRef.current + 0.65, 1);
     presenceRef.current?.send({ type:'broadcast', event:'party', payload:{ type, text, userId:meStaff?.id||'guest' } });
   };
 
@@ -553,6 +607,9 @@ export default function App() {
   return (
     <div style={{minHeight:'100vh', background:'#f4f5f7'}} onMouseUp={handleStatusCellMouseUp}>
       <GlobalStyles />
+
+      {/* ── always-on glow frame — driven imperatively via glowFrameRef ── */}
+      <div ref={glowFrameRef} className="glow-frame" />
 
       {activeTab === 'calendar' && week.filter(d => !d.editable).map(d => {
         const isHol   = !!d.hol;
@@ -658,7 +715,6 @@ export default function App() {
 
       <div className="tbl-outer dsz">
 
-        {/* Issue 2 fix: 独立 sticky 表头，在 tbl-scroll 之外，无 overflow */}
         <div className="tbl-hdr-sticky">
           <div ref={headerRef} className="tbl-hdr-row">
             <div className="tbl-hdr-namecol"/>
@@ -762,8 +818,6 @@ export default function App() {
                                     onClick={e => {
                                       if (!isMe) return;
                                       e.stopPropagation();
-                                      // Issue 1 fix: preview.length <= 1 是单击，直接切换菜单
-                                      // preview.length > 1 是拖拽，mouseUp 已处理，click 不做任何事
                                       if (preview.length <= 1) {
                                         if (sid !== 'none') handleStatus(key, null, e);
                                         else setActiveMenu(open ? null : key);
