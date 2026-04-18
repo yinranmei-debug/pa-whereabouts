@@ -269,14 +269,26 @@ export default function App() {
     presenceRef.current=channel;
     return ()=>{ supabase.removeChannel(channel); };
   }, [account]);
-  useEffect(() => {
+ // mobile party event
+const firePartyRef = useRef(null);
+useEffect(() => {
+  firePartyRef.current = fireParty;
+});
+useEffect(() => {
   const fn = e => {
     const { type, text, ds } = e.detail;
-    fireParty({ currentTarget: e.target, stopPropagation: ()=>{} }, type, text, ds);
+    if (firePartyRef.current) {
+      // create a synthetic event-like object
+      firePartyRef.current(
+        { currentTarget: e.target, stopPropagation: ()=>{} },
+        type, text, ds
+      );
+    }
   };
   document.addEventListener('mob-party', fn);
   return () => document.removeEventListener('mob-party', fn);
 }, []);
+  
   useEffect(() => {
     const fn = e => {
       if (!e.target.closest('.dsz')&&!e.target.closest('.nav-tab')) {
