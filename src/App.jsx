@@ -491,7 +491,7 @@ export default function App() {
   const nonEditableCols=week.reduce((acc,d,i)=>{ if (!d.editable) acc.push({...d,colIndex:i}); return acc; },[]);
 
   return (
-    <div style={{minHeight:'100vh',background:'#f4f5f7'}} onMouseUp={handleStatusCellMouseUp}>
+    <div style={{minHeight:'100vh',background:'#F8FAFC'}} onMouseUp={handleStatusCellMouseUp}>
       <GlobalStyles/>
       <div ref={glowFrameRef} className="glow-frame"/>
 
@@ -503,6 +503,7 @@ export default function App() {
         />
       )}
 
+      {/* weekend/holiday emoji overlay */}
       {activeTab==='calendar' && nonEditableCols.map(d=>{
         const x = colXMap[d.ds];
         if (!x) return null;
@@ -527,12 +528,13 @@ export default function App() {
         );
       })}
 
+      {/* ── NAV ── */}
       <nav className="nav">
         <div className={`nav-tab${activeTab==='calendar'?' active':''}`} onClick={()=>setActiveTab('calendar')}>Calendar</div>
         <div className={`nav-tab${activeTab==='planner'?' active':''}`} style={{position:'relative'}} onClick={()=>setActiveTab(activeTab==='planner'?'calendar':'planner')}>
           Holiday Planner
           {activeTab==='planner'&&(
-            <div style={{position:'absolute',top:'calc(100% + 2px)',left:0,zIndex:10020,background:'#fff',borderRadius:14,width:310,padding:18,boxShadow:'0 16px 48px rgba(0,0,0,0.12)',border:'1px solid #e5e7eb',animation:'dropIn 0.15s ease'}}
+            <div style={{position:'absolute',top:'calc(100% + 2px)',left:0,zIndex:10020,background:'#fff',borderRadius:16,width:310,padding:18,boxShadow:'0 16px 48px rgba(0,0,0,0.1)',border:'1px solid rgba(226,232,240,0.8)',animation:'dropIn 0.15s ease'}}
               onClick={e=>e.stopPropagation()}>
               <div style={{fontSize:'10px',fontWeight:'700',color:'#9ca3af',letterSpacing:'0.1em',marginBottom:'12px'}}>{region.toUpperCase()} HOLIDAYS 2026</div>
               <div style={{maxHeight:'340px',overflowY:'auto'}}>
@@ -555,24 +557,30 @@ export default function App() {
         <div className="nav-right">
           {saveStatus==='saving'&&<span className="save-txt">↻ Saving</span>}
           {saveStatus==='saved' &&<span className="save-ok">✓ Saved</span>}
-          <div className="stat-pill"><div className="stat-dot"/><span>{inOffice.n} / {inOffice.total} in office</span></div>
+
+          {/* online users */}
           {onlineUsers.length>0&&(
-            <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
-              <span style={{fontSize:'11px',color:'#9ca3af'}}>{onlineUsers.length} online</span>
-              <div style={{display:'flex',alignItems:'center'}}>
-                {onlineUsers.slice(0,6).map((u,i)=>(
-                  <div key={u.email} title={u.name} style={{marginLeft:i===0?0:-8,zIndex:10-i,position:'relative',borderRadius:'50%',border:'2px solid #fff',boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}}>
-                    <Avatar name={u.name} photoUrl={staffPhotos[u.id]} size={26}/>
+            <div style={{display:'flex',alignItems:'center',gap:'8px',padding:'5px 12px',background:'#fff',border:'1px solid rgba(226,232,240,0.9)',borderRadius:'100px',boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
+              <div className="online-stack">
+                {onlineUsers.slice(0,5).map((u,i)=>(
+                  <div key={u.email} title={u.name} className="online-av" style={{zIndex:10-i}}>
+                    <Avatar name={u.name} photoUrl={staffPhotos[u.id]} size={22}/>
                   </div>
                 ))}
-                {onlineUsers.length>6&&(
-                  <div style={{marginLeft:-8,width:26,height:26,borderRadius:'50%',background:'#e5e7eb',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'10px',fontWeight:'700',color:'#6b7280',border:'2px solid #fff',zIndex:1}}>
-                    +{onlineUsers.length-6}
-                  </div>
+                {onlineUsers.length>5&&(
+                  <div className="online-count">+{onlineUsers.length-5}</div>
                 )}
+              </div>
+              <div style={{display:'flex',flexDirection:'column',gap:'1px'}}>
+                <div style={{display:'flex',alignItems:'center',gap:'4px'}}>
+                  <div style={{width:'6px',height:'6px',borderRadius:'50%',background:'#22c55e',animation:'pulseDot 2s infinite'}}/>
+                  <span style={{fontSize:'10px',fontWeight:'700',color:'#16a34a',letterSpacing:'0.04em'}}>LIVE</span>
+                </div>
+                <span style={{fontSize:'10px',color:'#9ca3af',fontWeight:'500'}}>{onlineUsers.length} online</span>
               </div>
             </div>
           )}
+
           <div className="user-chip">
             <span className="user-name">{account.name}</span>
             <Avatar name={meStaff?.name||account.name} photoUrl={staffPhotos[meStaff?.id]} size={26}/>
@@ -581,6 +589,7 @@ export default function App() {
         </div>
       </nav>
 
+      {/* ── SUB HEADER ── */}
       <div className="sub-header">
         <div className="page-title">Whereabouts</div>
         {superUser&&(
@@ -592,6 +601,7 @@ export default function App() {
         )}
       </div>
 
+      {/* ── TOOLBAR ── */}
       <div className="toolbar">
         <button className="tb-btn icon" onClick={()=>navigateWeek(-7)}>‹</button>
         <button
@@ -614,170 +624,183 @@ export default function App() {
           {Array.from({length:12}).map((_,i)=><option key={i} value={i}>{new Date(0,i).toLocaleString('default',{month:'long'})}</option>)}
         </select>
         <span className="tb-month">{viewDate.toLocaleString('default',{month:'long',year:'numeric'})}</span>
+
+        {/* team summary banner */}
+        <div className="team-summary">
+          <div className="team-summary-dot"/>
+          <span>{inOffice.n} / {inOffice.total} in office today</span>
+        </div>
       </div>
 
+      {/* ── LEGEND ── */}
       <div className="legend">
-        <div className="leg-item"><div className="leg-sw" style={{background:'linear-gradient(135deg,#fdf2f8,#fce7f3)',border:'1.5px solid #f9a8d4'}}></div>Holiday</div>
-        <div className="leg-item"><div className="leg-sw" style={{background:'linear-gradient(135deg,#eff6ff,#dbeafe)',border:'1.5px solid #93c5fd'}}></div>Weekend</div>
-        <div className="leg-item"><div className="leg-sw" style={{background:'linear-gradient(135deg,#e8f0fe,#ede8fe)'}}></div>My days</div>
-        <div className="leg-item"><div className="leg-sw" style={{background:'#fafafa',border:'1.5px solid #f3f4f6'}}></div>Team days</div>
+        <div className="leg-item"><div className="leg-sw" style={{background:'linear-gradient(135deg,#fdf2f8,#fce7f3)',border:'1.5px solid #f9a8d4'}}/>Holiday</div>
+        <div className="leg-item"><div className="leg-sw" style={{background:'linear-gradient(135deg,#eff6ff,#dbeafe)',border:'1.5px solid #93c5fd'}}/>Weekend</div>
+        <div className="leg-item"><div className="leg-sw" style={{background:'linear-gradient(135deg,#e8f0fe,#ede8fe)'}}/>My days</div>
+        <div className="leg-item"><div className="leg-sw" style={{background:'#fafafa',border:'1.5px solid #f3f4f6'}}/>Team days</div>
       </div>
 
+      {/* ── TABLE ── */}
       <div className="tbl-outer dsz">
-        <div className="tbl-hdr-sticky">
-          <div ref={headerRef} className="tbl-hdr-row">
-            <div className="tbl-hdr-namecol"/>
-            {week.map(d=>(
-              <div key={d.ds} data-hdr-ds={d.ds} className="tbl-hdr-daycol">
-                <div style={{fontSize:'10px',fontWeight:'600',letterSpacing:'0.06em',marginBottom:'5px',color:d.isToday?'#770bff':'#9ca3af'}}>
-                  {d.dayName.toUpperCase()}
-                </div>
-                <div style={{position:'relative',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto',width:'30px',height:'30px'}}>
-                  {d.isToday && todaySonar && (
-                    <>
-                      <div className="sonar-ring sonar-animate" style={{animationDelay:'0s'}}/>
-                      <div className="sonar-ring sonar-animate" style={{animationDelay:'0.4s'}}/>
-                    </>
-                  )}
-                  <div style={{width:'30px',height:'30px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',background:d.isToday?'linear-gradient(135deg,#009bff,#770bff)':'transparent',color:d.isToday?'#fff':'#111827',fontSize:'14px',fontWeight:'600',position:'relative',zIndex:1}}>
-                    {d.num}
+        <div className="tbl-card">
+
+          {/* sticky table header */}
+          <div className="tbl-hdr-sticky">
+            <div ref={headerRef} className="tbl-hdr-row">
+              <div className="tbl-hdr-namecol"/>
+              {week.map(d=>(
+                <div key={d.ds} data-hdr-ds={d.ds} className="tbl-hdr-daycol">
+                  <div style={{fontSize:'10px',fontWeight:'700',letterSpacing:'0.06em',marginBottom:'5px',color:d.isToday?'#770bff':'#9ca3af'}}>
+                    {d.dayName.toUpperCase()}
+                  </div>
+                  <div style={{position:'relative',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto',width:'30px',height:'30px'}}>
+                    {d.isToday && todaySonar && (
+                      <>
+                        <div className="sonar-ring sonar-animate" style={{animationDelay:'0s'}}/>
+                        <div className="sonar-ring sonar-animate" style={{animationDelay:'0.4s'}}/>
+                      </>
+                    )}
+                    <div style={{width:'30px',height:'30px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',background:d.isToday?'linear-gradient(135deg,#009bff,#770bff)':'transparent',color:d.isToday?'#fff':'#111827',fontSize:'14px',fontWeight:'600',position:'relative',zIndex:1}}>
+                      {d.num}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div ref={scrollRef} className="tbl-scroll dsz" onScroll={handleTableScroll} onMouseLeave={handleStatusCellMouseUp}>
-          <table className="main-tbl">
-            <colgroup>
-              <col style={{width:'200px'}}/>
-              {week.map(d=><col key={d.ds}/>)}
-            </colgroup>
-            <tbody>
-              {staffList.map((m,rowIdx)=>{
-                const isMe=m.email.toLowerCase()===me;
-                const isFirst=rowIdx===0;
-                return (
-                  <tr key={m.id} id={isMe?'my-row':undefined}>
-                    <td className="sticky-c" style={{background:'#f4f5f7',padding:'0 8px 0 0'}}>
-                      <div className="nw">
-                        <div style={{display:'flex',alignItems:'center',gap:'10px',position:'relative',cursor:isMe?'pointer':'default'}}
-                          onClick={()=>{ if (!isMe) return; setSocialMenu(socialMenu===m.id?null:m.id); }}>
-                          <div
-  ref={isMe?myAvatarRef:null}
-  id={`av-${m.id}`}
-  className={`n-av-wrap${isMe?' is-me':' is-other'}`}
-  style={{position:'relative'}}
-  onMouseEnter={e=>{ if (!isMe) e.currentTarget.style.transform='scale(1.1)'; }}
-  onMouseLeave={e=>{ if (!isMe) e.currentTarget.style.transform='scale(1)'; }}
->
-                            <Avatar name={m.name} photoUrl={staffPhotos[m.id]} size={60} isMe={isMe}/>
-                            {emotions[m.id]&&<div className="emo-tag">{emotions[m.id]}</div>}
-                          </div>
-                          <div>
-                            <div className={`n-name${isMe?' me':''}`}>{m.name}</div>
-                            {isMe&&<div className="n-you">YOU</div>}
-                          </div>
-                          {isMe&&socialMenu===m.id&&(
-                            <div className="emo-picker dsz">
-                              {['🧘','⚡','☕','🎯','🚀','💪','🌱'].map(emo=>(
-                                <div key={emo}
-                                  onClick={e=>{ e.stopPropagation(); triggerMoodFly(emo, e.currentTarget); }}
-                                  style={{fontSize:'18px',cursor:'pointer',padding:'4px 6px',borderRadius:'6px',transition:'all 0.15s'}}
-                                  onMouseOver={e=>{e.currentTarget.style.background='#f3f4f6';e.currentTarget.style.transform='scale(1.25)';}}
-                                  onMouseOut={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.transform='scale(1)';}}
-                                >{emo}</div>
-                              ))}
+          <div ref={scrollRef} className="tbl-scroll dsz" onScroll={handleTableScroll} onMouseLeave={handleStatusCellMouseUp}>
+            <table className="main-tbl">
+              <colgroup>
+                <col style={{width:'200px'}}/>
+                {week.map(d=><col key={d.ds}/>)}
+              </colgroup>
+              <tbody>
+                {staffList.map((m,rowIdx)=>{
+                  const isMe=m.email.toLowerCase()===me;
+                  const isFirst=rowIdx===0;
+                  return (
+                    <tr key={m.id} id={isMe?'my-row':undefined}>
+                      <td className="sticky-c" style={{background:'#fff',padding:'0 8px 0 0'}}>
+                        <div className="nw">
+                          <div style={{display:'flex',alignItems:'center',gap:'10px',position:'relative',cursor:isMe?'pointer':'default'}}
+                            onClick={()=>{ if (!isMe) return; setSocialMenu(socialMenu===m.id?null:m.id); }}>
+                            <div
+                              ref={isMe?myAvatarRef:null}
+                              id={`av-${m.id}`}
+                              className={`n-av-wrap${isMe?' is-me':' is-other'}`}
+                              style={{position:'relative'}}
+                              onMouseEnter={e=>{ if (!isMe) e.currentTarget.style.transform='scale(1.1)'; }}
+                              onMouseLeave={e=>{ if (!isMe) e.currentTarget.style.transform='scale(1)'; }}
+                            >
+                              <Avatar name={m.name} photoUrl={staffPhotos[m.id]} size={60} isMe={isMe}/>
+                              {emotions[m.id]&&<div className="emo-tag">{emotions[m.id]}</div>}
                             </div>
-                          )}
+                            <div>
+                              <div className={`n-name${isMe?' me':''}`}>{m.name}</div>
+                              {isMe&&<div className="n-you">YOU</div>}
+                            </div>
+                            {isMe&&socialMenu===m.id&&(
+                              <div className="emo-picker dsz">
+                                {['🧘','⚡','☕','🎯','🚀','💪','🌱'].map(emo=>(
+                                  <div key={emo}
+                                    onClick={e=>{ e.stopPropagation(); triggerMoodFly(emo, e.currentTarget); }}
+                                    style={{fontSize:'18px',cursor:'pointer',padding:'4px 6px',borderRadius:'6px',transition:'all 0.15s'}}
+                                    onMouseOver={e=>{e.currentTarget.style.background='#f3f4f6';e.currentTarget.style.transform='scale(1.25)';}}
+                                    onMouseOut={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.transform='scale(1)';}}
+                                  >{emo}</div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    {week.map((d,weekIdx)=>{
-                      if (!d.editable) {
-                        if (!isFirst) return null;
-                        const isHol=!!d.hol;
+                      </td>
+                      {week.map((d,weekIdx)=>{
+                        if (!d.editable) {
+                          if (!isFirst) return null;
+                          const isHol=!!d.hol;
+                          return (
+                            <td key={d.ds} className={`ptd ${tdSlideClass}`} rowSpan={staffList.length}>
+                              <div data-pill-ds={d.ds} className={`pill ${isHol?'hol':'we'}`} onClick={e=>fireParty(e,isHol?'holiday':'weekend',d.hol||'',d.ds)}>
+                                <div className="pill-card"/>
+                              </div>
+                            </td>
+                          );
+                        }
                         return (
-                          <td key={d.ds} className={`ptd ${tdSlideClass}`} rowSpan={staffList.length}>
-                            <div data-pill-ds={d.ds} className={`pill ${isHol?'hol':'we'}`} onClick={e=>fireParty(e,isHol?'holiday':'weekend',d.hol||'',d.ds)}>
-                              <div className="pill-card"/>
+                          <td key={d.ds} className={tdSlideClass}>
+                            <div className="dw">
+                              {['AM','PM'].map((shift,si)=>{
+                                const key=`${m.id}-${d.ds}-${shift}`;
+                                const sid=records[key]||'none';
+                                const cfg=STATUS_CONFIG[sid];
+                                const open=activeMenu===key;
+                                const isPreview=isPreviewCell(m.id,weekIdx,shift);
+                                const isBulkSelected=bulkSelectCells.includes(key);
+                                const isSnapping=snapCellKey===key;
+                                const staggerDelay=staggerCells[key];
+                                const cls=!isMe?'sh other':sid!=='none'?'sh set':'sh mine';
+                                return (
+                                  <div key={shift} style={{position:'relative'}}>
+                                    <div
+                                      data-cell-key={key}
+                                      id={isFirst&&si===0?AM_REF:undefined}
+                                      className={[
+                                        cls,
+                                        isPreview      ? 'preview'       : '',
+                                        isSnapping     ? 'cell-snap'     : '',
+                                        isBulkSelected ? 'bulk-selected' : '',
+                                        staggerDelay!==undefined ? 'cell-stagger' : '',
+                                      ].filter(Boolean).join(' ')}
+                                      style={{
+                                        ...(sid!=='none'?{background:cfg.bg,color:cfg.color,border:`1.5px solid ${cfg.color}30`}:{}),
+                                        ...(staggerDelay!==undefined?{animationDelay:`${staggerDelay}ms`}:{}),
+                                      }}
+                                      onMouseDown={e=>handleStatusCellMouseDown(m.id,weekIdx,shift,sid,e)}
+                                      onMouseOver={()=>handleStatusCellMouseOver(m.id,weekIdx,shift)}
+                                      onClick={e=>{
+                                        if (!isMe) return;
+                                        e.stopPropagation();
+                                        if (preview.length<=1) {
+                                          if (sid!=='none') handleStatusClear(key,e);
+                                          else setActiveMenu(open?null:key);
+                                        }
+                                      }}
+                                    >
+                                      {sid!=='none'?`${cfg.icon} ${cfg.label}`:shift}
+                                    </div>
+                                    {open&&isMe&&(
+                                      <div className="s-drop dsz">
+                                        <div style={{padding:'3px 10px 7px',fontSize:'10px',color:'#9ca3af',fontWeight:'600',borderBottom:'1px solid #f0f0f0',marginBottom:'3px',letterSpacing:'0.06em'}}>
+                                          {bulkSelectCells.length>0?`${bulkSelectCells.length} CELLS`:'STATUS'}
+                                        </div>
+                                        {Object.entries(STATUS_CONFIG).map(([sId,sCfg])=>(
+                                          <div key={sId} className="s-opt"
+                                            onClick={e=>{
+                                              e.stopPropagation();
+                                              if (bulkSelectCells.length>0) handleBulkStatusSelect(sId,e);
+                                              else handleStatusSelect(key,sId,e);
+                                            }}>
+                                            <span style={{fontSize:'15px'}}>{sCfg.icon}</span>
+                                            <span className="s-opt-lbl">{sCfg.label}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
                             </div>
                           </td>
                         );
-                      }
-                      return (
-                        <td key={d.ds} className={tdSlideClass}>
-                          <div className="dw">
-                            {['AM','PM'].map((shift,si)=>{
-                              const key=`${m.id}-${d.ds}-${shift}`;
-                              const sid=records[key]||'none';
-                              const cfg=STATUS_CONFIG[sid];
-                              const open=activeMenu===key;
-                              const isPreview=isPreviewCell(m.id,weekIdx,shift);
-                              const isBulkSelected=bulkSelectCells.includes(key);
-                              const isSnapping=snapCellKey===key;
-                              const staggerDelay=staggerCells[key];
-                              const cls=!isMe?'sh other':sid!=='none'?'sh set':'sh mine';
-                              return (
-                                <div key={shift} style={{position:'relative'}}>
-                                  <div
-                                    data-cell-key={key}
-                                    id={isFirst&&si===0?AM_REF:undefined}
-                                    className={[
-                                      cls,
-                                      isPreview      ? 'preview'       : '',
-                                      isSnapping     ? 'cell-snap'     : '',
-                                      isBulkSelected ? 'bulk-selected' : '',
-                                      staggerDelay!==undefined ? 'cell-stagger' : '',
-                                    ].filter(Boolean).join(' ')}
-                                    style={{
-                                      ...(sid!=='none'?{background:cfg.bg,color:cfg.color,border:`1.5px solid ${cfg.color}30`}:{}),
-                                      ...(staggerDelay!==undefined?{animationDelay:`${staggerDelay}ms`}:{}),
-                                    }}
-                                    onMouseDown={e=>handleStatusCellMouseDown(m.id,weekIdx,shift,sid,e)}
-                                    onMouseOver={()=>handleStatusCellMouseOver(m.id,weekIdx,shift)}
-                                    onClick={e=>{
-                                      if (!isMe) return;
-                                      e.stopPropagation();
-                                      if (preview.length<=1) {
-                                        if (sid!=='none') handleStatusClear(key,e);
-                                        else setActiveMenu(open?null:key);
-                                      }
-                                    }}
-                                  >
-                                    {sid!=='none'?`${cfg.icon} ${cfg.label}`:shift}
-                                  </div>
-                                  {open&&isMe&&(
-                                    <div className="s-drop dsz">
-                                      <div style={{padding:'3px 10px 7px',fontSize:'10px',color:'#9ca3af',fontWeight:'600',borderBottom:'1px solid #f0f0f0',marginBottom:'3px',letterSpacing:'0.06em'}}>
-                                        {bulkSelectCells.length>0?`${bulkSelectCells.length} CELLS`:'STATUS'}
-                                      </div>
-                                      {Object.entries(STATUS_CONFIG).map(([sId,sCfg])=>(
-                                        <div key={sId} className="s-opt"
-                                          onClick={e=>{
-                                            e.stopPropagation();
-                                            if (bulkSelectCells.length>0) handleBulkStatusSelect(sId,e);
-                                            else handleStatusSelect(key,sId,e);
-                                          }}>
-                                          <span style={{fontSize:'15px'}}>{sCfg.icon}</span>
-                                          <span className="s-opt-lbl">{sCfg.label}</span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
         </div>
       </div>
     </div>
