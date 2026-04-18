@@ -25,14 +25,14 @@ const STEPS = [
   {
     id: 'status',
     title: '🗓 Set Your Status',
-    desc: 'Click any AM or PM cell in your row to set your work status. Try it — there\'s a fun flying effect!',
+    desc: "Click any AM or PM cell in your row to set your work status. Try it — there's a fun flying effect!",
     position: 'top',
     highlight: () => document.querySelector('#my-row .sh.mine') || document.querySelector('.sh.mine'),
   },
   {
     id: 'mood',
     title: '😊 Share Your Mood',
-    desc: 'Click your avatar to pick a mood emoji. It shows as a badge so your team knows how you\'re feeling.',
+    desc: "Click your avatar to pick a mood emoji. It shows as a badge so your team knows how you're feeling.",
     position: 'right',
     highlight: () => document.querySelector('.n-av-wrap.is-me'),
   },
@@ -46,7 +46,7 @@ const STEPS = [
   {
     id: 'online',
     title: '🟢 Live Presence',
-    desc: 'See who\'s online right now in real time. The green dot means they\'re active.',
+    desc: "See who's online right now in real time. The green dot means they're active.",
     position: 'bottom-left',
     highlight: () => document.querySelector('.online-pill'),
   },
@@ -72,8 +72,9 @@ const TourOverlay = ({ onDone }) => {
       height: r.height + PAD * 2,
     });
 
-    const TIP_W = 300, TIP_H = 200;
-    const pos = current.position;
+    const TIP_W = 300;
+    const TIP_H = 200;
+    const pos   = current.position;
     let top, left;
 
     if (pos === 'bottom' || pos === 'bottom-left') {
@@ -96,40 +97,46 @@ const TourOverlay = ({ onDone }) => {
   };
 
   useEffect(() => {
-    measure();
-    window.addEventListener('resize',  measure);
-    window.addEventListener('scroll',  measure, true);
+    // small delay so DOM is ready for newly-visible elements
+    const t = setTimeout(measure, 80);
+    window.addEventListener('resize', measure);
+    window.addEventListener('scroll', measure, true);
     return () => {
-      window.removeEventListener('resize',  measure);
-      window.removeEventListener('scroll',  measure, true);
+      clearTimeout(t);
+      window.removeEventListener('resize', measure);
+      window.removeEventListener('scroll', measure, true);
     };
   }, [step]);
 
   const next = () => step < STEPS.length - 1 ? setStep(s => s + 1) : onDone();
   const prev = () => { if (step > 0) setStep(s => s - 1); };
 
-  // spotlight: four dark rectangles around the highlighted box
-  const W = window.innerWidth;
-  const H = window.innerHeight;
-
+  // four dark rectangles that leave a bright cutout
   const renderSpotlight = () => {
-    if (!box) return (
-      <div style={{position:'fixed',inset:0,background:'rgba(10,15,30,0.75)',zIndex:11000,cursor:'pointer'}} onClick={next}/>
-    );
+    if (!box) {
+      return (
+        <div
+          style={{position:'fixed',inset:0,background:'rgba(10,15,30,0.75)',zIndex:11000,cursor:'pointer'}}
+          onClick={next}
+        />
+      );
+    }
+
     const { top, left, width, height } = box;
     const right  = left + width;
     const bottom = top  + height;
-    const style  = { position:'fixed', background:'rgba(10,15,30,0.78)', zIndex:11000, cursor:'pointer' };
+    const s = { position:'fixed', background:'rgba(10,15,30,0.78)', zIndex:11000, cursor:'pointer' };
+
     return (
       <>
-        {/* top */}
-        <div style={{...style, top:0, left:0, right:0, height:Math.max(0,top)}} onClick={next}/>
-        {/* bottom */}
-        <div style={{...style, top:bottom, left:0, right:0, bottom:0}} onClick={next}/>
-        {/* left */}
-        <div style={{...style, top:Math.max(0,top), left:0, width:Math.max(0,left), height:height}} onClick={next}/>
-        {/* right */}
-        <div style={{...style, top:Math.max(0,top), left:right, right:0, height:height}} onClick={next}/>
+        {/* top strip */}
+        <div style={{...s, top:0, left:0, right:0, height:Math.max(0,top)}} onClick={next}/>
+        {/* bottom strip */}
+        <div style={{...s, top:Math.max(0,bottom), left:0, right:0, bottom:0}} onClick={next}/>
+        {/* left strip */}
+        <div style={{...s, top:Math.max(0,top), left:0, width:Math.max(0,left), height:Math.max(0,height)}} onClick={next}/>
+        {/* right strip */}
+        <div style={{...s, top:Math.max(0,top), left:Math.max(0,right), right:0, height:Math.max(0,height)}} onClick={next}/>
       </>
     );
   };
@@ -139,8 +146,8 @@ const TourOverlay = ({ onDone }) => {
       <style>{`
         @keyframes tourTipIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
         @keyframes spotlightPulse{
-          0%,100%{box-shadow:0 0 0 0 rgba(0,155,255,0.6),0 0 0 0 rgba(119,11,255,0.3);}
-          50%{box-shadow:0 0 0 6px rgba(0,155,255,0.15),0 0 0 12px rgba(119,11,255,0.08);}
+          0%,100%{box-shadow:0 0 0 0 rgba(0,155,255,0.55),0 0 0 0 rgba(119,11,255,0.25);}
+          50%{box-shadow:0 0 0 7px rgba(0,155,255,0.12),0 0 0 14px rgba(119,11,255,0.06);}
         }
         .tour-ring{animation:spotlightPulse 2s ease-in-out infinite;}
       `}</style>
@@ -148,64 +155,101 @@ const TourOverlay = ({ onDone }) => {
       {/* spotlight panels */}
       {renderSpotlight()}
 
-      {/* glowing ring around highlight */}
+      {/* glowing ring around highlighted element */}
       {box && (
-        <div className="tour-ring" style={{
-          position:'fixed',
-          top:box.top, left:box.left,
-          width:box.width, height:box.height,
-          border:'2px solid rgba(0,155,255,0.8)',
-          borderRadius:10,
-          zIndex:11001,
-          pointerEvents:'none',
-          boxSizing:'border-box',
-        }}/>
+        <div
+          className="tour-ring"
+          style={{
+            position:'fixed',
+            top:    box.top,
+            left:   box.left,
+            width:  box.width,
+            height: box.height,
+            border: '2px solid rgba(0,155,255,0.85)',
+            borderRadius: 10,
+            zIndex: 11001,
+            pointerEvents: 'none',
+            boxSizing: 'border-box',
+          }}
+        />
       )}
 
-      {/* tooltip */}
-      <div style={{
-        position:'fixed',
-        top:tipPos.top, left:tipPos.left,
-        width:300,
-        background:'#fff',
-        borderRadius:18,
-        padding:'20px 22px 18px',
-        zIndex:11002,
-        boxShadow:'0 16px 48px rgba(0,0,0,0.2)',
-        animation:'tourTipIn 0.25s ease',
-        fontFamily:"'Plus Jakarta Sans',sans-serif",
-      }}>
-        <div style={{position:'absolute',top:0,left:0,right:0,height:3,background:'linear-gradient(90deg,#009bff,#770bff)',borderRadius:'18px 18px 0 0'}}/>
+      {/* tooltip card */}
+      <div
+        style={{
+          position:   'fixed',
+          top:        tipPos.top,
+          left:       tipPos.left,
+          width:      300,
+          background: '#fff',
+          borderRadius: 18,
+          padding:    '20px 22px 18px',
+          zIndex:     11002,
+          boxShadow:  '0 16px 48px rgba(0,0,0,0.2)',
+          animation:  'tourTipIn 0.25s ease',
+          fontFamily: "'Plus Jakarta Sans',sans-serif",
+        }}
+      >
+        {/* gradient top bar */}
+        <div style={{
+          position:'absolute',top:0,left:0,right:0,height:3,
+          background:'linear-gradient(90deg,#009bff,#770bff)',
+          borderRadius:'18px 18px 0 0',
+        }}/>
 
-        {/* dots */}
+        {/* progress dots + counter */}
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
           <div style={{display:'flex',gap:5}}>
-            {STEPS.map((_,i)=>(
+            {STEPS.map((_,i) => (
               <div key={i} style={{
-                width:i===step?18:6, height:6, borderRadius:3,
-                transition:'all 0.25s',
-                background: i===step ? 'linear-gradient(90deg,#009bff,#770bff)' : i<step ? '#c7d2fe' : '#e5e7eb',
+                width:  i === step ? 18 : 6,
+                height: 6,
+                borderRadius: 3,
+                transition: 'all 0.25s',
+                background: i === step
+                  ? 'linear-gradient(90deg,#009bff,#770bff)'
+                  : i < step ? '#c7d2fe' : '#e5e7eb',
               }}/>
             ))}
           </div>
-          <span style={{fontSize:11,color:'#9ca3af',fontWeight:500}}>{step+1} / {STEPS.length}</span>
+          <span style={{fontSize:11,color:'#9ca3af',fontWeight:500}}>
+            {step + 1} / {STEPS.length}
+          </span>
         </div>
 
-        <div style={{fontSize:15,fontWeight:700,color:'#111827',marginBottom:8}}>{current.title}</div>
-        <p style={{fontSize:13,lineHeight:1.6,color:'#6b7280',margin:'0 0 18px'}}>{current.desc}</p>
+        <div style={{fontSize:15,fontWeight:700,color:'#111827',marginBottom:8}}>
+          {current.title}
+        </div>
+        <p style={{fontSize:13,lineHeight:1.6,color:'#6b7280',margin:'0 0 18px'}}>
+          {current.desc}
+        </p>
 
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-          <button onClick={e=>{e.stopPropagation();onDone();}} style={{fontSize:12,color:'#9ca3af',background:'none',border:'none',cursor:'pointer',fontWeight:500,padding:0}}>
+          <button
+            onClick={e => { e.stopPropagation(); onDone(); }}
+            style={{fontSize:12,color:'#9ca3af',background:'none',border:'none',cursor:'pointer',fontWeight:500,padding:0}}
+          >
             Skip tour
           </button>
           <div style={{display:'flex',gap:8}}>
             {step > 0 && (
-              <button onClick={e=>{e.stopPropagation();prev();}} style={{height:34,padding:'0 14px',borderRadius:9,border:'1.5px solid #e5e7eb',background:'#fff',fontSize:13,fontWeight:600,color:'#374151',cursor:'pointer'}}>
+              <button
+                onClick={e => { e.stopPropagation(); prev(); }}
+                style={{height:34,padding:'0 14px',borderRadius:9,border:'1.5px solid #e5e7eb',background:'#fff',fontSize:13,fontWeight:600,color:'#374151',cursor:'pointer'}}
+              >
                 Back
               </button>
             )}
-            <button onClick={e=>{e.stopPropagation();next();}} style={{height:34,padding:'0 18px',borderRadius:9,border:'none',background:'linear-gradient(90deg,#009bff,#770bff)',fontSize:13,fontWeight:700,color:'#fff',cursor:'pointer',boxShadow:'0 4px 12px rgba(119,11,255,0.25)'}}>
-              {step === STEPS.length-1 ? "Let's go 🚀" : 'Next'}
+            <button
+              onClick={e => { e.stopPropagation(); next(); }}
+              style={{
+                height:34,padding:'0 18px',borderRadius:9,border:'none',
+                background:'linear-gradient(90deg,#009bff,#770bff)',
+                fontSize:13,fontWeight:700,color:'#fff',cursor:'pointer',
+                boxShadow:'0 4px 12px rgba(119,11,255,0.25)',
+              }}
+            >
+              {step === STEPS.length - 1 ? "Let's go 🚀" : 'Next'}
             </button>
           </div>
         </div>

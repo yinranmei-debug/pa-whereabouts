@@ -201,14 +201,11 @@ export default function App() {
     return () => clearTimeout(t);
   }, [account]);
 
-  // tour — first time only per user
+  // tour — show every login for testing
   useEffect(() => {
     if (!account) return;
-    const key = `tour-done-${account.username}`;
-    if (!localStorage.getItem(key)) {
-      const t = setTimeout(() => setShowTour(true), 2800);
-      return () => clearTimeout(t);
-    }
+    const t = setTimeout(() => setShowTour(true), 2800);
+    return () => clearTimeout(t);
   }, [account]);
 
   useEffect(() => {
@@ -269,26 +266,7 @@ export default function App() {
     presenceRef.current=channel;
     return ()=>{ supabase.removeChannel(channel); };
   }, [account]);
- // mobile party event
-const firePartyRef = useRef(null);
-useEffect(() => {
-  firePartyRef.current = fireParty;
-});
-useEffect(() => {
-  const fn = e => {
-    const { type, text, ds } = e.detail;
-    if (firePartyRef.current) {
-      // create a synthetic event-like object
-      firePartyRef.current(
-        { currentTarget: e.target, stopPropagation: ()=>{} },
-        type, text, ds
-      );
-    }
-  };
-  document.addEventListener('mob-party', fn);
-  return () => document.removeEventListener('mob-party', fn);
-}, []);
-  
+
   useEffect(() => {
     const fn = e => {
       if (!e.target.closest('.dsz')&&!e.target.closest('.nav-tab')) {
@@ -518,6 +496,19 @@ useEffect(() => {
     presenceRef.current?.send({type:'broadcast',event:'party',payload:{type,text,userId:meStaff?.id||'guest'}});
   };
 
+  // mobile party event — defined after fireParty
+  useEffect(() => {
+    const fn = e => {
+      const { type, text, ds } = e.detail;
+      fireParty(
+        { currentTarget: e.target, stopPropagation: ()=>{} },
+        type, text, ds
+      );
+    };
+    document.addEventListener('mob-party', fn);
+    return () => document.removeEventListener('mob-party', fn);
+  });
+
   const handleTableScroll=()=>{
     if (headerRef.current&&scrollRef.current)
       headerRef.current.scrollLeft=scrollRef.current.scrollLeft;
@@ -571,7 +562,8 @@ useEffect(() => {
       {showTour && (
         <TourOverlay onDone={()=>{
           setShowTour(false);
-          localStorage.setItem(`tour-done-${account.username}`,'1');
+          // TODO: restore before production:
+          // localStorage.setItem(`tour-done-${account.username}`,'1');
         }}/>
       )}
 
