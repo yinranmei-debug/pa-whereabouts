@@ -4,6 +4,7 @@ import { msalConfig, loginRequest } from "./authConfig";
 import HOLIDAYS_DATA from './data/holidays.json';
 import RAW_STAFF_LIST from './data/staff.json';
 import STATUS_CONFIG from './data/status.json';
+import TIPS_DATA from './data/tips.json';
 import { createClient } from '@supabase/supabase-js';
 
 import GlobalStyles       from './components/GlobalStyles';
@@ -40,6 +41,35 @@ const fmt = date => {
   return `${y}-${m}-${d}`;
 };
 
+// pick 3 tips from different categories seeded by date
+const getDailyTips = () => {
+  const today = new Date();
+  const seed  = today.getFullYear()*10000 + (today.getMonth()+1)*100 + today.getDate();
+  const categories = [...new Set(TIPS_DATA.map(t=>t.category))];
+  const seededPick = (arr, s) => arr[Math.abs(s*2654435761 >>> 0) % arr.length];
+  const picked = [];
+  const usedCats = [];
+  let s = seed;
+  while (picked.length < 3 && usedCats.length < categories.length) {
+    const cat = seededPick(categories.filter(c=>!usedCats.includes(c)), s);
+    if (!cat) break;
+    usedCats.push(cat);
+    const catTips = TIPS_DATA.filter(t=>t.category===cat);
+    const tip = seededPick(catTips, s+picked.length);
+    if (tip) picked.push(tip);
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+  }
+  return picked;
+};
+
+// Lightbulb SVG icon
+const BulbIcon = ({ size=20, color='#fbbf24' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 21h6M12 3a6 6 0 0 1 6 6c0 2.22-1.21 4.16-3 5.2V17H9v-2.8C7.21 13.16 6 11.22 6 9a6 6 0 0 1 6-6z"/>
+    <path d="M9 17h6"/>
+  </svg>
+);
+
 export default function App() {
   const [isInit,          setIsInit]          = useState(false);
   const [account,         setAccount]         = useState(null);
@@ -65,6 +95,13 @@ export default function App() {
   const [flight,          setFlight]          = useState(null);
   const [snapCellKey,     setSnapCellKey]     = useState(null);
   const [todaySonar,      setTodaySonar]      = useState(false);
+
+  // tips state
+  const [showTips,        setShowTips]        = useState(false);
+  const [tipIdx,          setTipIdx]          = useState(0);
+  const [tipSlideClass,   setTipSlideClass]   = useState('tip-slide-in-right');
+  const [tipVisible,      setTipVisible]      = useState(true);
+  const dailyTips = useRef(getDailyTips());
 
   const slideTimerRef   = useRef(null);
   const presenceRef     = useRef(null);
@@ -153,6 +190,13 @@ export default function App() {
     })();
   }, []);
 
+  // auto-show tips on login
+  useEffect(() => {
+    if (!account) return;
+    const t = setTimeout(() => { setShowTips(true); setTipIdx(0); }, 1200);
+    return () => clearTimeout(t);
+  }, [account]);
+
   useEffect(() => {
     if (!account) return;
     (async () => {
@@ -214,7 +258,7 @@ export default function App() {
 
   useEffect(() => {
     const fn = e => {
-      if (!e.target.closest('.dsz')&&!e.target.closest('.nav-tab')&&!e.target.closest('.hol-planner-btn')) {
+      if (!e.target.closest('.dsz')&&!e.target.closest('.nav-tab')) {
         setActiveMenu(null); setSocialMenu(null);
         setActiveTab(t=>t==='planner'?'calendar':t);
       }
@@ -246,6 +290,15 @@ export default function App() {
     const t=setTimeout(()=>{ document.getElementById('my-row')?.scrollIntoView({behavior:'smooth',block:'center'}); },400);
     return ()=>clearTimeout(t);
   }, [account,region]);
+
+  const navigateTip = (dir) => {
+    const nextIdx = dir === 'next'
+      ? (tipIdx + 1) % dailyTips.current.length
+      : (tipIdx - 1 + dailyTips.current.length) % dailyTips.current.length;
+    setTipSlideClass(dir === 'next' ? 'tip-slide-in-right' : 'tip-slide-in-left');
+    setTipVisible(false);
+    setTimeout(() => { setTipIdx(nextIdx); setTipVisible(true); }, 50);
+  };
 
   const login  = async () => { setAuthError(null); try { await msalInstance.loginRedirect(loginRequest); } catch(e) { setAuthError(e.message); } };
   const logout = () => msalInstance.logoutRedirect();
@@ -473,8 +526,8 @@ export default function App() {
   const jumpToDate=ds=>{setViewDate(new Date(ds));setActiveTab('calendar');};
   const VH=window.innerHeight;
   const tdSlideClass=slideDir==='right'?'td-slide-right':slideDir==='left'?'td-slide-left':'';
-  // fix bug 5: always show overlay regardless of activeTab
   const nonEditableCols=week.reduce((acc,d,i)=>{ if (!d.editable) acc.push({...d,colIndex:i}); return acc; },[]);
+  const currentTip = dailyTips.current[tipIdx];
 
   return (
     <div style={{minHeight:'100vh',background:'#F0F4FF'}} onMouseUp={handleStatusCellMouseUp}>
@@ -489,7 +542,7 @@ export default function App() {
         />
       )}
 
-      {/* fix bug 5: removed activeTab==='calendar' condition so overlay always shows */}
+      {/* weekend/holiday emoji overlay — always visible */}
       {nonEditableCols.map(d=>{
         const x = colXMap[d.ds];
         if (!x) return null;
@@ -498,14 +551,8 @@ export default function App() {
         const isBouncing=bouncingDs===d.ds;
         return (
           <div key={d.ds} style={{position:'fixed',left:x,top:VH/2,transform:'translate(-50%,-50%)',pointerEvents:'none',zIndex:200}}>
-            <div
-              key={isBouncing?`${d.ds}-b`:d.ds}
-              className={isBouncing?'emoji-label-pop':''}
-              style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'8px'}}
-            >
-              <span style={{fontSize:'48px',userSelect:'none',display:'inline-block',lineHeight:1}}>
-                {isHol?d.hol.split(' ')[0]:'🏝️'}
-              </span>
+            <div key={isBouncing?`${d.ds}-b`:d.ds} className={isBouncing?'emoji-label-pop':''} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'8px'}}>
+              <span style={{fontSize:'48px',userSelect:'none',display:'inline-block',lineHeight:1}}>{isHol?d.hol.split(' ')[0]:'🏝️'}</span>
               <span style={{fontSize:'10px',fontWeight:'700',color:isHol?'#be185d':'#1d4ed8',letterSpacing:'0.06em',textAlign:'center',userSelect:'none',fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
                 {isHol?holName:'WEEKEND'}
               </span>
@@ -514,48 +561,107 @@ export default function App() {
         );
       })}
 
+      {/* ── TIPS PANEL ── */}
+      {showTips && currentTip && (
+        <div style={{position:'fixed',inset:0,zIndex:10500,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(15,23,42,0.45)',backdropFilter:'blur(4px)',animation:'dropIn 0.2s ease'}}>
+          <div style={{background:'#fff',borderRadius:24,width:400,padding:'32px 28px 28px',boxShadow:'0 24px 64px rgba(0,0,0,0.18)',position:'relative',overflow:'hidden'}}>
+            {/* gradient top bar */}
+            <div style={{position:'absolute',top:0,left:0,right:0,height:4,background:'linear-gradient(90deg,#009bff,#770bff)'}}/>
+
+            {/* close button */}
+            <button
+              onClick={()=>setShowTips(false)}
+              style={{position:'absolute',top:16,right:16,width:28,height:28,borderRadius:'50%',border:'none',background:'#f1f5f9',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.15s',fontSize:14,color:'#64748b'}}
+              onMouseOver={e=>{e.currentTarget.style.background='#e2e8f0';}}
+              onMouseOut={e=>{e.currentTarget.style.background='#f1f5f9';}}
+            >✕</button>
+
+            {/* header */}
+            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:20}}>
+              <div style={{width:36,height:36,borderRadius:10,background:'linear-gradient(135deg,rgba(0,155,255,0.1),rgba(119,11,255,0.1))',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                <BulbIcon size={18} color='#770bff'/>
+              </div>
+              <div>
+                <div style={{fontSize:11,fontWeight:700,color:'#9ca3af',letterSpacing:'0.08em',textTransform:'uppercase'}}>Daily Tip</div>
+                <div style={{fontSize:13,fontWeight:700,color:'#111827'}}>
+                  {tipIdx+1} of {dailyTips.current.length}
+                </div>
+              </div>
+            </div>
+
+            {/* tip content */}
+            <div
+              key={tipIdx}
+              className={tipVisible ? tipSlideClass : ''}
+              style={{minHeight:120,marginBottom:24}}
+            >
+              {/* category badge */}
+              <div style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 10px',borderRadius:'100px',background:'linear-gradient(135deg,rgba(0,155,255,0.08),rgba(119,11,255,0.08))',border:'1px solid rgba(119,11,255,0.12)',marginBottom:12}}>
+                <span style={{fontSize:14}}>{currentTip.icon}</span>
+                <span style={{fontSize:11,fontWeight:700,color:'#5b21b6',letterSpacing:'0.04em'}}>{currentTip.category}</span>
+              </div>
+              <p style={{fontSize:15,lineHeight:1.65,color:'#334155',fontWeight:400,margin:0}}>
+                {currentTip.text}
+              </p>
+            </div>
+
+            {/* navigation dots + arrows */}
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+              <button
+                onClick={()=>navigateTip('prev')}
+                style={{width:36,height:36,borderRadius:10,border:'1.5px solid #e5e7eb',background:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,color:'#6b7280',transition:'all 0.15s'}}
+                onMouseOver={e=>{e.currentTarget.style.borderColor='#009bff';e.currentTarget.style.color='#009bff';}}
+                onMouseOut={e=>{e.currentTarget.style.borderColor='#e5e7eb';e.currentTarget.style.color='#6b7280';}}
+              >‹</button>
+
+              <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                {dailyTips.current.map((_,i)=>(
+                  <div
+                    key={i}
+                    onClick={()=>{
+                      setTipSlideClass(i>tipIdx?'tip-slide-in-right':'tip-slide-in-left');
+                      setTipVisible(false);
+                      setTimeout(()=>{setTipIdx(i);setTipVisible(true);},50);
+                    }}
+                    style={{width:i===tipIdx?20:8,height:8,borderRadius:4,cursor:'pointer',transition:'all 0.3s',background:i===tipIdx?'linear-gradient(90deg,#009bff,#770bff)':'#e5e7eb'}}
+                  />
+                ))}
+              </div>
+
+              <button
+                onClick={()=>navigateTip('next')}
+                style={{width:36,height:36,borderRadius:10,border:'1.5px solid #e5e7eb',background:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,color:'#6b7280',transition:'all 0.15s'}}
+                onMouseOver={e=>{e.currentTarget.style.borderColor='#770bff';e.currentTarget.style.color='#770bff';}}
+                onMouseOut={e=>{e.currentTarget.style.borderColor='#e5e7eb';e.currentTarget.style.color='#6b7280';}}
+              >›</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── NAV ── */}
       <nav className="nav">
         <span className="nav-logo-text">Whereabouts</span>
 
-        <div className={`nav-tab${activeTab==='calendar'?' active':''}`} onClick={()=>setActiveTab('calendar')}>
-          Calendar
-        </div>
+        <div className={`nav-tab${activeTab==='calendar'?' active':''}`} onClick={()=>setActiveTab('calendar')}>Calendar</div>
 
-        {/* holiday planner — same style as Calendar tab */}
         <div style={{position:'relative'}}>
-          <div
-            className={`nav-tab${activeTab==='planner'?' active':''}`}
-            onClick={()=>setActiveTab(activeTab==='planner'?'calendar':'planner')}
-          >
+          <div className={`nav-tab${activeTab==='planner'?' active':''}`} onClick={()=>setActiveTab(activeTab==='planner'?'calendar':'planner')}>
             Holiday Planner
           </div>
           {activeTab==='planner'&&(
-            <div
-              className="dsz"
-              style={{position:'absolute',top:'calc(100% + 4px)',left:0,zIndex:10020,background:'#fff',borderRadius:16,width:320,padding:16,boxShadow:'0 16px 48px rgba(0,0,0,0.12)',border:'1px solid rgba(226,232,240,0.8)',animation:'dropIn 0.18s ease'}}
-              onClick={e=>e.stopPropagation()}
-            >
+            <div className="dsz" style={{position:'absolute',top:'calc(100% + 4px)',left:0,zIndex:10020,background:'#fff',borderRadius:16,width:320,padding:16,boxShadow:'0 16px 48px rgba(0,0,0,0.12)',border:'1px solid rgba(226,232,240,0.8)',animation:'dropIn 0.18s ease'}} onClick={e=>e.stopPropagation()}>
               <div style={{fontSize:'10px',fontWeight:'700',color:'#9ca3af',letterSpacing:'0.1em',marginBottom:'10px',padding:'0 4px'}}>
                 {region.toUpperCase()} PUBLIC HOLIDAYS 2026
               </div>
               <div style={{maxHeight:'360px',overflowY:'auto',display:'flex',flexDirection:'column',gap:'2px'}}>
                 {plannerList().map(h=>(
-                  <div
-                    key={h.date}
-                    className="plan-row"
-                    onClick={()=>jumpToDate(h.date)}
-                  >
+                  <div key={h.date} className="plan-row" onClick={()=>jumpToDate(h.date)}>
                     <div>
                       <div className="plan-date">{h.date}</div>
                       <div className="plan-name">{h.day}</div>
                     </div>
-                    <div style={{
-                      padding:'3px 10px',borderRadius:'8px',
-                      background:'linear-gradient(135deg,rgba(0,155,255,0.1),rgba(119,11,255,0.1))',
-                      fontSize:'11px',fontWeight:'600',
-                      color:'#5b21b6',
-                    }}>
+                    <div style={{padding:'3px 10px',borderRadius:'8px',background:'linear-gradient(135deg,rgba(0,155,255,0.1),rgba(119,11,255,0.1))',fontSize:'11px',fontWeight:'600',color:'#5b21b6'}}>
                       {h.name}
                     </div>
                   </div>
@@ -570,6 +676,11 @@ export default function App() {
           {saveStatus==='saving'&&<span className="save-txt">↻ Saving</span>}
           {saveStatus==='saved' &&<span className="save-ok">✓ Saved</span>}
 
+          {/* bulb tip button */}
+          <button className="bulb-btn" onClick={()=>{setTipIdx(0);setShowTips(true);}} title="Daily Tips">
+            <BulbIcon size={18} color='#fbbf24'/>
+          </button>
+
           {onlineUsers.length>0&&(
             <div className="online-pill">
               <div className="online-stack">
@@ -581,10 +692,7 @@ export default function App() {
                 {onlineUsers.length>4&&<div className="online-count">+{onlineUsers.length-4}</div>}
               </div>
               <div style={{display:'flex',flexDirection:'column',gap:'1px'}}>
-                <div className="online-live-label">
-                  <div className="online-live-dot"/>
-                  LIVE NOW
-                </div>
+                <div className="online-live-label"><div className="online-live-dot"/>LIVE NOW</div>
                 <span className="online-live-count">{onlineUsers.length} Online</span>
               </div>
             </div>
@@ -598,51 +706,33 @@ export default function App() {
         </div>
       </nav>
 
-      {/* ── TOOLBAR ── */}
+      {/* ── TOOLBAR — restored simple style ── */}
       <div className="toolbar">
-        {/* today/nav group with elevation */}
-        <div className="nav-group">
-          <button className="nav-group-arrow" onClick={()=>navigateWeek(-7)}>‹</button>
-          <div className="nav-group-div"/>
-          <button
-            className="tb-btn today"
-            style={{borderRadius:0,height:'44px'}}
-            onClick={e=>{
-              navigateWeek(0,new Date());
-              const btn=e.currentTarget;
-              btn.classList.remove('today-glint');
-              void btn.offsetWidth;
-              btn.classList.add('today-glint');
-              setTimeout(()=>btn.classList.remove('today-glint'),600);
-              setTodaySonar(true);
-              setTimeout(()=>setTodaySonar(false),2000);
-            }}
-          >Today</button>
-          <div className="nav-group-div" style={{background:'rgba(255,255,255,0.25)'}}/>
-          <button className="nav-group-arrow" onClick={()=>navigateWeek(7)}>›</button>
-        </div>
-
-        {/* month display — english */}
-        <span className="tb-month">
-          {viewDate.toLocaleString('en-US',{month:'long',year:'numeric'})}
-        </span>
-
-        {/* month select — english */}
-        <select
-          className="tb-select"
-          value={viewDate.getMonth()}
-          onChange={e=>{
-            const d=new Date(viewDate); d.setMonth(+e.target.value); d.setDate(1); navigateWeek(0,d);
+        <button className="tb-btn icon" onClick={()=>navigateWeek(-7)}>‹</button>
+        <button
+          className="tb-btn today"
+          onClick={e=>{
+            navigateWeek(0,new Date());
+            const btn=e.currentTarget;
+            btn.classList.remove('today-glint'); void btn.offsetWidth;
+            btn.classList.add('today-glint');
+            setTimeout(()=>btn.classList.remove('today-glint'),600);
+            setTodaySonar(true);
+            setTimeout(()=>setTodaySonar(false),2000);
           }}
-        >
+        >Today</button>
+        <button className="tb-btn icon" onClick={()=>navigateWeek(7)}>›</button>
+
+        <span className="tb-month">{viewDate.toLocaleString('en-US',{month:'long',year:'numeric'})}</span>
+
+        <select className="tb-select" value={viewDate.getMonth()} onChange={e=>{
+          const d=new Date(viewDate); d.setMonth(+e.target.value); d.setDate(1); navigateWeek(0,d);
+        }}>
           {Array.from({length:12}).map((_,i)=>(
-            <option key={i} value={i}>
-              {new Date(2026,i,1).toLocaleString('en-US',{month:'long'})}
-            </option>
+            <option key={i} value={i}>{new Date(2026,i,1).toLocaleString('en-US',{month:'long'})}</option>
           ))}
         </select>
 
-        {/* team summary */}
         <div className="team-summary">
           <div className="team-summary-dot"/>
           <span>TEAM SUMMARY: {inOffice.n} / {inOffice.total} IN OFFICE TODAY</span>
@@ -651,22 +741,10 @@ export default function App() {
 
       {/* ── LEGEND ── */}
       <div className="legend">
-        <div className="leg-item">
-          <div className="leg-dot" style={{background:'linear-gradient(135deg,#fdf2f8,#fce7f3)',border:'1.5px solid #f9a8d4'}}/>
-          Holiday
-        </div>
-        <div className="leg-item">
-          <div className="leg-dot" style={{background:'linear-gradient(135deg,#eff6ff,#dbeafe)',border:'1.5px solid #93c5fd'}}/>
-          Weekend
-        </div>
-        <div className="leg-item">
-          <div className="leg-dot" style={{background:'linear-gradient(135deg,#e8f0fe,#ede8fe)'}}/>
-          My days
-        </div>
-        <div className="leg-item">
-          <div className="leg-dot" style={{background:'#fafafa',border:'1.5px solid #f3f4f6'}}/>
-          Team days
-        </div>
+        <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#fdf2f8,#fce7f3)',border:'1.5px solid #f9a8d4'}}/>Holiday</div>
+        <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#eff6ff,#dbeafe)',border:'1.5px solid #93c5fd'}}/>Weekend</div>
+        <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#e8f0fe,#ede8fe)'}}/>My days</div>
+        <div className="leg-item"><div className="leg-dot" style={{background:'#fafafa',border:'1.5px solid #f3f4f6'}}/>Team days</div>
       </div>
 
       {/* ── TABLE ── */}
@@ -677,9 +755,7 @@ export default function App() {
               <div className="tbl-hdr-namecol"/>
               {week.map(d=>(
                 <div key={d.ds} data-hdr-ds={d.ds} className="tbl-hdr-daycol">
-                  <div style={{fontSize:'11px',fontWeight:'700',letterSpacing:'0.06em',marginBottom:'6px',color:d.isToday?'#770bff':'#9ca3af'}}>
-                    {d.dayName.toUpperCase()}
-                  </div>
+                  <div style={{fontSize:'11px',fontWeight:'700',letterSpacing:'0.06em',marginBottom:'6px',color:d.isToday?'#770bff':'#9ca3af'}}>{d.dayName.toUpperCase()}</div>
                   <div style={{position:'relative',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto',width:'34px',height:'34px'}}>
                     {d.isToday && todaySonar && (
                       <>
@@ -710,10 +786,7 @@ export default function App() {
                     <tr key={m.id} id={isMe?'my-row':undefined}>
                       <td className="sticky-c" style={{background:'#fff',padding:'0 8px 0 0'}}>
                         <div className="nw">
-                          <div
-                            style={{display:'flex',alignItems:'center',gap:'10px',position:'relative',cursor:isMe?'pointer':'default'}}
-                            onClick={()=>{ if (!isMe) return; setSocialMenu(socialMenu===m.id?null:m.id); }}
-                          >
+                          <div style={{display:'flex',alignItems:'center',gap:'10px',position:'relative',cursor:isMe?'pointer':'default'}} onClick={()=>{ if (!isMe) return; setSocialMenu(socialMenu===m.id?null:m.id); }}>
                             <div
                               ref={isMe?myAvatarRef:null}
                               id={`av-${m.id}`}
@@ -732,8 +805,7 @@ export default function App() {
                             {isMe&&socialMenu===m.id&&(
                               <div className="emo-picker dsz">
                                 {['🧘','⚡','☕','🎯','🚀','💪','🌱'].map(emo=>(
-                                  <div key={emo}
-                                    onClick={e=>{ e.stopPropagation(); triggerMoodFly(emo, e.currentTarget); }}
+                                  <div key={emo} onClick={e=>{ e.stopPropagation(); triggerMoodFly(emo, e.currentTarget); }}
                                     style={{fontSize:'18px',cursor:'pointer',padding:'4px 6px',borderRadius:'6px',transition:'all 0.15s'}}
                                     onMouseOver={e=>{e.currentTarget.style.background='#f3f4f6';e.currentTarget.style.transform='scale(1.25)';}}
                                     onMouseOut={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.transform='scale(1)';}}
@@ -790,7 +862,6 @@ export default function App() {
                                         }
                                       }}
                                     >
-                                      {/* item 9: only show emoji + shift, no text label */}
                                       {sid!=='none' ? `${cfg.icon} ${shift}` : shift}
                                     </div>
                                     {open&&isMe&&(
@@ -799,15 +870,9 @@ export default function App() {
                                           {bulkSelectCells.length>0?`${bulkSelectCells.length} CELLS`:'STATUS'}
                                         </div>
                                         {Object.entries(STATUS_CONFIG).map(([sId,sCfg])=>(
-                                          <div key={sId} className="s-opt"
-                                            onClick={e=>{
-                                              e.stopPropagation();
-                                              if (bulkSelectCells.length>0) handleBulkStatusSelect(sId,e);
-                                              else handleStatusSelect(key,sId,e);
-                                            }}>
-                                            {/* dropdown shows emoji only, large */}
-                                            <span style={{fontSize:'20px'}}>{sCfg.icon}</span>
-                                            <span style={{fontSize:'12px',color:'#374151',fontWeight:'500'}}>{sCfg.label}</span>
+                                          <div key={sId} className="s-opt" onClick={e=>{ e.stopPropagation(); if (bulkSelectCells.length>0) handleBulkStatusSelect(sId,e); else handleStatusSelect(key,sId,e); }}>
+                                            <span style={{fontSize:'22px'}}>{sCfg.icon}</span>
+                                            <span className="s-opt-label">{sCfg.label}</span>
                                           </div>
                                         ))}
                                       </div>
