@@ -69,7 +69,6 @@ const GlobalStyles = () => (
     *,*:before,*:after{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%}
 
-    /* pill-card bounce only — .pill container never moves */
     @keyframes holiBounce{
       0%  {transform:scale(1)}
       35% {transform:scale(1.08)}
@@ -83,68 +82,55 @@ const GlobalStyles = () => (
     }
 
     /*
-     * COLUMN OUTLINE FLASH
-     * A rect border that goes: invisible → thin sharp line → thick glowing frame → fade out
-     * No background fill — pure outline effect, like the column gets "selected" by light
-     *
-     * border-width drives the thickness, box-shadow drives the glow spread
-     * 0%  : 0px border, no glow       (nothing)
-     * 18% : 1.5px border, tight glow  (thin sharp line appears)
-     * 45% : 4px border, fat glow      (peak — thick glowing frame)
-     * 78% : 3px border, medium glow   (slight pull-back / bounce)
-     * 100%: 0px border, no glow       (gone)
+     * COLUMN GLOW — gentler, slower
+     * opacity values ~40% lower than previous, blur tighter, 1.8s duration
      */
-    @keyframes colOutlineFlash{
-      0%  {
-        border-width:0px;
-        box-shadow:0 0 0px 0px rgba(0,155,255,0), 0 0 0px 0px rgba(119,11,255,0);
-        opacity:1;
-      }
-      18% {
-        border-width:1.5px;
-        box-shadow:
-          0 0 8px  3px  rgba(0,155,255,0.7),
-          0 0 16px 4px  rgba(119,11,255,0.5);
-        opacity:1;
-      }
-      45% {
-        border-width:3.5px;
-        box-shadow:
-          0 0 20px 8px  rgba(0,155,255,0.55),
-          0 0 40px 14px rgba(119,11,255,0.40),
-          0 0  8px 2px  rgba(0,229,255,0.60);
-        opacity:1;
-      }
-      72% {
-        border-width:2.5px;
-        box-shadow:
-          0 0 14px 5px  rgba(0,155,255,0.35),
-          0 0 28px 8px  rgba(119,11,255,0.25);
-        opacity:0.7;
-      }
-      100%{
-        border-width:0px;
-        box-shadow:0 0 0px 0px rgba(0,155,255,0), 0 0 0px 0px rgba(119,11,255,0);
-        opacity:0;
-      }
+    @keyframes colGlowFade{
+      0%   { opacity:0;   transform:scaleX(0.92); }
+      12%  { opacity:1;   transform:scaleX(1);    }
+      65%  { opacity:0.5; transform:scaleX(1);    }
+      85%  { opacity:0.3; transform:scaleX(1.01); }
+      100% { opacity:0;   transform:scaleX(1);    }
     }
     .col-glow-overlay{
       position:fixed;
       pointer-events:none;
       z-index:150;
       border-radius:10px;
-      /* transparent fill — only the border/outline matters */
-      background:transparent;
-      border-style:solid;
-      border-color:transparent; /* driven by animation gradient below */
-      /* gradient border via outline trick using box-shadow instead */
-      border-image: linear-gradient(180deg, #009bff, #770bff) 1;
-      border-radius:10px;
-      /* border-image kills border-radius, so we use box-shadow for the glow
-         and set border-color to a mid-point of the gradient */
-      border-color: #3d6aff;
-      animation: colOutlineFlash 1.2s cubic-bezier(0.22,0.61,0.36,1) both;
-      will-change: opacity, border-width, box-shadow;
+      /* CHANGED: opacity reduced ~40%, inset blur tighter so glow hugs edges more */
+      background: linear-gradient(180deg,
+        rgba(0,229,255,0.055)  0%,
+        rgba(0,155,255,0.07)  30%,
+        rgba(119,11,255,0.07) 70%,
+        rgba(119,11,255,0.04) 100%
+      );
+      box-shadow:
+        inset 0 0  8px 2px  rgba(0,155,255,0.32),
+        inset 0 0 18px 4px  rgba(119,11,255,0.20),
+        inset 0 0  4px 1px  rgba(0,229,255,0.28),
+              0 0 10px 2px  rgba(0,155,255,0.10),
+              0 0 20px 5px  rgba(119,11,255,0.07);
+      /* CHANGED: 1.8s instead of 1.2s — slower, more breathlike */
+      animation: colGlowFade 1.8s cubic-bezier(0.22,0.61,0.36,1) both;
+      will-change: opacity, transform;
+    }
+
+    /*
+     * CENTER EMOJI SPRING BOUNCE
+     * Targets the emoji span inside the fixed pill label overlay
+     */
+    @keyframes emojiSpring{
+      0%  { transform:scale(1)    rotate(0deg);   }
+      20% { transform:scale(1.55) rotate(-8deg);  }
+      45% { transform:scale(0.88) rotate(5deg);   }
+      65% { transform:scale(1.18) rotate(-3deg);  }
+      82% { transform:scale(0.96) rotate(1deg);   }
+      100%{ transform:scale(1)    rotate(0deg);   }
+    }
+    .emoji-pop{
+      animation: emojiSpring 0.52s cubic-bezier(0.34,1.56,0.64,1) both;
+      display:inline-block;
+      transform-origin:center center;
     }
 
     @keyframes dropIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
@@ -152,7 +138,7 @@ const GlobalStyles = () => (
     @keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
     @keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.4)}50%{box-shadow:0 0 0 4px rgba(34,197,94,0)}}
 
-    /* FRAME GLOW — inset box-shadow, GPU layer */
+    /* FRAME GLOW — tighter, edge-only. blur kept small so light stays near border */
     .glow-frame{
       position:fixed;
       inset:0;
@@ -328,6 +314,9 @@ export default function App() {
   const [preview,         setPreview]         = useState([]);
   const [bulkSelectCells, setBulkSelectCells] = useState([]);
 
+  // NEW: track which date's emoji is currently bouncing
+  const [bouncingDs,      setBouncingDs]      = useState(null);
+
   const presenceRef   = useRef(null);
   const partyTimerRef = useRef(null);
   const scrollRef     = useRef(null);
@@ -336,6 +325,7 @@ export default function App() {
   const glowLevelRef  = useRef(0);
   const glowRafRef    = useRef(null);
 
+  // ── glow frame decay loop — CHANGED: blur values tightened to edge-only ──
   useEffect(() => {
     const decay = () => {
       glowLevelRef.current = Math.max(0, glowLevelRef.current - 0.016);
@@ -343,9 +333,10 @@ export default function App() {
       if (el) {
         const lvl = glowLevelRef.current;
         if (lvl > 0.001) {
-          const i1  = lvl * 90;  const s1  = lvl * 30;
-          const i2  = lvl * 180; const s2  = lvl * 55;
-          const i3  = lvl * 60;  const s3  = lvl * 16;
+          // CHANGED: blur 25/45/18px (was 90/180/60px) — light hugs edge only
+          const i1  = lvl * 25;   const s1  = lvl * 10;
+          const i2  = lvl * 45;   const s2  = lvl * 16;
+          const i3  = lvl * 18;   const s3  = lvl * 6;
           const op1 = 0.28 + lvl * 0.52;
           const op2 = 0.16 + lvl * 0.44;
           const op3 = lvl  * 0.38;
@@ -621,7 +612,7 @@ export default function App() {
     }
   };
 
-  const fireParty = (e, type, text='') => {
+  const fireParty = (e, type, text='', ds='') => {
     const pill = e.currentTarget.closest('.pill');
 
     // 1. pill-card bounce
@@ -631,7 +622,13 @@ export default function App() {
       pill.classList.add('holi-tap');
     }
 
-    // 2. column outline flash — fixed-position overlay measured from td.ptd
+    // 2. NEW: center emoji spring bounce — set bouncing ds, clear after animation
+    if (ds) {
+      setBouncingDs(ds);
+      setTimeout(() => setBouncingDs(null), 600);
+    }
+
+    // 3. column glow overlay
     const td = e.currentTarget.closest('td.ptd');
     if (td) {
       document.querySelectorAll('.col-glow-overlay').forEach(el => el.remove());
@@ -643,19 +640,19 @@ export default function App() {
       overlay.style.width  = `${r.width}px`;
       overlay.style.height = `${r.height}px`;
       document.body.appendChild(overlay);
-      setTimeout(() => overlay.remove(), 1400);
+      setTimeout(() => overlay.remove(), 2000);
     }
 
-    // 3. emoji rain
+    // 4. emoji rain
     firePartyLocal(type, text);
 
-    // 4. avatar pop
+    // 5. avatar pop
     popAvatar(meStaff?.id || 'guest');
 
-    // 5. frame glow boost
+    // 6. frame glow boost
     glowLevelRef.current = Math.min(glowLevelRef.current + 0.65, 1);
 
-    // 6. broadcast
+    // 7. broadcast
     presenceRef.current?.send({ type:'broadcast', event:'party', payload:{ type, text, userId:meStaff?.id||'guest' } });
   };
 
@@ -715,9 +712,17 @@ export default function App() {
         const minY=pos.top+pad+labelH/2, maxY=pos.bottom-pad-labelH/2;
         if (minY > maxY) return null;
         const clampedY = Math.min(Math.max(idealY, minY), maxY);
+        const isBouncing = bouncingDs === d.ds;
         return (
           <div key={d.ds} style={{position:'fixed',left:pos.x,top:clampedY,transform:'translate(-50%,-50%)',display:'flex',flexDirection:'column',alignItems:'center',gap:'6px',pointerEvents:'none',zIndex:200,maxWidth:pos.maxX-pos.minX,overflow:'hidden'}}>
-            <span style={{fontSize:'26px',userSelect:'none'}}>{isHol ? d.hol.split(' ')[0] : '🏝️'}</span>
+            {/* NEW: emoji-pop class toggled on click */}
+            <span
+              key={isBouncing ? `${d.ds}-bounce` : d.ds}
+              className={isBouncing ? 'emoji-pop' : ''}
+              style={{fontSize:'26px', userSelect:'none', display:'inline-block'}}
+            >
+              {isHol ? d.hol.split(' ')[0] : '🏝️'}
+            </span>
             <span style={{fontSize:'10px',fontWeight:'600',color:isHol?'#be185d':'#1d4ed8',letterSpacing:'0.04em',textAlign:'center',userSelect:'none',wordBreak:'break-word'}}>{isHol ? holName : 'WEEKEND'}</span>
           </div>
         );
@@ -874,7 +879,8 @@ export default function App() {
                         const isHol = !!d.hol;
                         return (
                           <td key={d.ds} className="ptd" rowSpan={staffList.length}>
-                            <div data-pill-ds={d.ds} className={`pill ${isHol?'hol':'we'}`} onClick={e => fireParty(e, isHol?'holiday':'weekend', d.hol||'')}>
+                            {/* CHANGED: pass d.ds to fireParty so emoji bounce knows which column */}
+                            <div data-pill-ds={d.ds} className={`pill ${isHol?'hol':'we'}`} onClick={e => fireParty(e, isHol?'holiday':'weekend', d.hol||'', d.ds)}>
                               <div className="pill-card"/>
                             </div>
                           </td>
