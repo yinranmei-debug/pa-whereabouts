@@ -12,25 +12,88 @@ const GlobalStyles = () => (
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
     *,*:before,*:after{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%}
-    @keyframes holiBounce{0%{transform:scale(1)}35%{transform:scale(1.08)}65%{transform:scale(0.95)}82%{transform:scale(1.03)}100%{transform:scale(1)}}
+
+    @keyframes holiBounce{
+      0%{transform:scale(1)}35%{transform:scale(1.08)}65%{transform:scale(0.95)}82%{transform:scale(1.03)}100%{transform:scale(1)}
+    }
     .holi-tap .pill-card{animation:holiBounce 0.42s cubic-bezier(0.25,0.46,0.45,0.94) both;transform-origin:center center;}
-    @keyframes emojiLabelPop{0%{transform:scale(1) rotate(0deg);}22%{transform:scale(1.45) rotate(-10deg);}48%{transform:scale(0.84) rotate(7deg);}68%{transform:scale(1.18) rotate(-4deg);}84%{transform:scale(0.97) rotate(1deg);}100%{transform:scale(1) rotate(0deg);}}
-    .emoji-label-pop{animation:emojiLabelPop 0.65s cubic-bezier(0.34,1.46,0.64,1) both;transform-origin:center center;display:flex;flex-direction:column;align-items:center;gap:8px;}
-    @keyframes avatarSnap{0%{transform:scale(1)}28%{transform:scale(1.55) rotate(10deg)}55%{transform:scale(0.87) rotate(-4deg)}78%{transform:scale(1.16) rotate(2deg)}92%{transform:scale(0.97)}100%{transform:scale(1) rotate(0deg)}}
+
+    @keyframes emojiLabelPop{
+      0%{transform:scale(1) rotate(0deg);}22%{transform:scale(1.45) rotate(-10deg);}
+      48%{transform:scale(0.84) rotate(7deg);}68%{transform:scale(1.18) rotate(-4deg);}
+      84%{transform:scale(0.97) rotate(1deg);}100%{transform:scale(1) rotate(0deg);}
+    }
+    .emoji-label-pop{
+      animation:emojiLabelPop 0.65s cubic-bezier(0.34,1.46,0.64,1) both;
+      transform-origin:center center;
+      display:flex;flex-direction:column;align-items:center;gap:8px;
+    }
+
+    @keyframes avatarSnap{
+      0%{transform:scale(1)}28%{transform:scale(1.55) rotate(10deg)}
+      55%{transform:scale(0.87) rotate(-4deg)}78%{transform:scale(1.16) rotate(2deg)}
+      92%{transform:scale(0.97)}100%{transform:scale(1) rotate(0deg)}
+    }
     .avatar-snap{animation:avatarSnap 0.52s cubic-bezier(0.34,1.56,0.64,1) both;}
-    @keyframes cellSnap{0%{transform:scale(1)}30%{transform:scale(1.12)}60%{transform:scale(0.94)}80%{transform:scale(1.04)}100%{transform:scale(1)}}
+
+    @keyframes cellSnap{
+      0%{transform:scale(1)}30%{transform:scale(1.12)}60%{transform:scale(0.94)}80%{transform:scale(1.04)}100%{transform:scale(1)}
+    }
     .cell-snap{animation:cellSnap 0.38s cubic-bezier(0.34,1.56,0.64,1) both;}
-    @keyframes colGlowFade{0%{opacity:0;transform:scaleX(0.92);}12%{opacity:1;transform:scaleX(1);}65%{opacity:0.5;transform:scaleX(1);}85%{opacity:0.3;transform:scaleX(1.01);}100%{opacity:0;transform:scaleX(1);}}
-    .col-glow-overlay{position:fixed;pointer-events:none;z-index:150;border-radius:10px;background:linear-gradient(180deg,rgba(0,229,255,0.055) 0%,rgba(0,155,255,0.07) 30%,rgba(119,11,255,0.07) 70%,rgba(119,11,255,0.04) 100%);box-shadow:inset 0 0 8px 2px rgba(0,155,255,0.32),inset 0 0 18px 4px rgba(119,11,255,0.20),inset 0 0 4px 1px rgba(0,229,255,0.28),0 0 10px 2px rgba(0,155,255,0.10),0 0 20px 5px rgba(119,11,255,0.07);animation:colGlowFade 1.8s cubic-bezier(0.22,0.61,0.36,1) both;will-change:opacity,transform;}
+
+    /* 问题4: 批量填入错落动画 */
+    @keyframes cellStagger{
+      0%  {opacity:0;transform:scale(0.75) translateY(4px);}
+      60% {opacity:1;transform:scale(1.06) translateY(-1px);}
+      100%{opacity:1;transform:scale(1)    translateY(0);}
+    }
+    .cell-stagger{
+      animation:cellStagger 0.28s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
+    /* 问题3: 预览样式 — 渐变背景 + 呼吸发光轮廓，去掉虚线 */
+    @keyframes previewBreath{
+      0%,100%{box-shadow:0 0 0 1.5px rgba(0,155,255,0.45),0 0 6px rgba(119,11,255,0.18);}
+      50%    {box-shadow:0 0 0 2.5px rgba(119,11,255,0.75),0 0 14px rgba(119,11,255,0.38);}
+    }
+    .sh.preview{
+      background:linear-gradient(135deg,rgba(0,155,255,0.14),rgba(119,11,255,0.14)) !important;
+      border:none !important;
+      animation:previewBreath 1.1s ease-in-out infinite !important;
+      opacity:1 !important;
+    }
+
+    /* 松手后保持高亮 */
+    .sh.bulk-selected{
+      background:linear-gradient(135deg,rgba(0,155,255,0.2),rgba(119,11,255,0.2)) !important;
+      border:none !important;
+      box-shadow:0 0 0 2px rgba(119,11,255,0.55),0 0 10px rgba(119,11,255,0.18) !important;
+    }
+
+    @keyframes colGlowFade{
+      0%{opacity:0;transform:scaleX(0.92);}12%{opacity:1;transform:scaleX(1);}
+      65%{opacity:0.5;transform:scaleX(1);}85%{opacity:0.3;transform:scaleX(1.01);}100%{opacity:0;transform:scaleX(1);}
+    }
+    .col-glow-overlay{
+      position:fixed;pointer-events:none;z-index:150;border-radius:10px;
+      background:linear-gradient(180deg,rgba(0,229,255,0.055) 0%,rgba(0,155,255,0.07) 30%,rgba(119,11,255,0.07) 70%,rgba(119,11,255,0.04) 100%);
+      box-shadow:inset 0 0 8px 2px rgba(0,155,255,0.32),inset 0 0 18px 4px rgba(119,11,255,0.20),inset 0 0 4px 1px rgba(0,229,255,0.28),0 0 10px 2px rgba(0,155,255,0.10),0 0 20px 5px rgba(119,11,255,0.07);
+      animation:colGlowFade 1.8s cubic-bezier(0.22,0.61,0.36,1) both;will-change:opacity,transform;
+    }
+
     @keyframes slideInFromRight{from{transform:translateX(52px);opacity:0.3;}to{transform:translateX(0);opacity:1;}}
     @keyframes slideInFromLeft{from{transform:translateX(-52px);opacity:0.3;}to{transform:translateX(0);opacity:1;}}
     .td-slide-right{animation:slideInFromRight 0.28s cubic-bezier(0.25,0.46,0.45,0.94) both;}
-    .td-slide-left{animation:slideInFromLeft 0.28s cubic-bezier(0.25,0.46,0.45,0.94) both;}
+    .td-slide-left {animation:slideInFromLeft  0.28s cubic-bezier(0.25,0.46,0.45,0.94) both;}
+
     @keyframes dropIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
     @keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
     @keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
     @keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.4)}50%{box-shadow:0 0 0 4px rgba(34,197,94,0)}}
-    .glow-frame{position:fixed;inset:0;pointer-events:none;z-index:9998;opacity:0;box-shadow:inset 0 0 0px 0px rgba(0,155,255,0);will-change:opacity,box-shadow;transform:translateZ(0);}
+
+    .glow-frame{position:fixed;inset:0;pointer-events:none;z-index:9998;opacity:0;
+      box-shadow:inset 0 0 0px 0px rgba(0,155,255,0);will-change:opacity,box-shadow;transform:translateZ(0);}
+
     body{font-family:'Plus Jakarta Sans','Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;background:#f4f5f7;color:#111827;-webkit-font-smoothing:antialiased;}
     .nav{height:${NAV_H}px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;padding:0 28px;position:sticky;top:0;z-index:500}
     .nav-tab{height:${NAV_H}px;display:flex;align-items:center;padding:0 14px;font-size:13px;font-weight:500;font-family:'Plus Jakarta Sans',sans-serif;color:#6b7280;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;white-space:nowrap;user-select:none}
@@ -92,7 +155,6 @@ const GlobalStyles = () => (
     .sh.set{cursor:grab}
     .sh.set:active{cursor:grabbing}
     .sh.set:hover{filter:brightness(0.97);transform:scale(1.01)}
-    .sh.preview{background:#dbeafe !important;border:2px dashed #0284c7 !important;opacity:0.8}
     .sh.other{background:#fafafa;color:#d1d5db;border:1.5px solid #f3f4f6;cursor:default}
     .s-drop{position:absolute;top:42px;left:0;z-index:10001;background:#fff;border-radius:12px;width:200px;padding:6px;max-height:264px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.12);border:1px solid #e5e7eb;animation:dropIn 0.15s ease}
     .s-opt{padding:8px 10px;cursor:pointer;border-radius:8px;font-size:12px;display:flex;align-items:center;gap:10px;transition:background 0.1s}
@@ -103,9 +165,9 @@ const GlobalStyles = () => (
     .pill-card{width:100%;flex:1;border-radius:10px;transition:box-shadow 0.2s,filter 0.2s;transform-origin:center center;will-change:transform;}
     .pill:hover .pill-card{filter:brightness(0.97)}
     .hol .pill-card{background:linear-gradient(180deg,#fdf2f8,#fce7f3);box-shadow:0 2px 8px rgba(236,72,153,0.12),0 1px 3px rgba(236,72,153,0.06)}
-    .we .pill-card{background:linear-gradient(180deg,#eff6ff,#dbeafe);box-shadow:0 2px 8px rgba(59,130,246,0.1),0 1px 3px rgba(59,130,246,0.06)}
+    .we  .pill-card{background:linear-gradient(180deg,#eff6ff,#dbeafe);box-shadow:0 2px 8px rgba(59,130,246,0.1),0 1px 3px rgba(59,130,246,0.06)}
     .pill:hover.hol .pill-card{box-shadow:0 8px 24px rgba(236,72,153,0.2)}
-    .pill:hover.we .pill-card{box-shadow:0 8px 24px rgba(59,130,246,0.16)}
+    .pill:hover.we  .pill-card{box-shadow:0 8px 24px rgba(59,130,246,0.16)}
     .plan-row{padding:9px 11px;margin-bottom:4px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:background 0.15s}
     .plan-row:hover{background:linear-gradient(90deg,#f0f9ff,#f5f0ff)}
     .plan-date{font-weight:600;font-size:12px;transition:color 0.15s}

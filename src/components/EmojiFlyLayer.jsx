@@ -15,7 +15,8 @@ function EmojiFlyLayer({ flight, onComplete }) {
       const p = Math.min((now - t0) / DURATION, 1);
       setProgress(p);
       const { start, end } = flight;
-      const ctrl = { x: start.x + (end.x - start.x) * 0.2, y: Math.max(start.y, end.y) + 160 };
+      // 向上弧线控制点
+      const ctrl = { x: (start.x + end.x) / 2, y: Math.min(start.y, end.y) - 120 };
       if (p >= 0.25) {
         const t  = (p - 0.25) / 0.75;
         const ez = t < 0.5 ? 8*t*t*t*t : 1 - Math.pow(-2*t+2,4)/2;
@@ -35,7 +36,7 @@ function EmojiFlyLayer({ flight, onComplete }) {
   if (!flight) return null;
 
   const { start, end, icon } = flight;
-  const ctrl = { x: start.x + (end.x - start.x) * 0.2, y: Math.max(start.y, end.y) + 160 };
+  const ctrl = { x: (start.x + end.x) / 2, y: Math.min(start.y, end.y) - 120 };
 
   let x, y, scale, rotate, opacity;
   if (progress < 0.25) {

@@ -68,15 +68,15 @@ export default function App() {
   const [flight,          setFlight]          = useState(null);
   const [snapCellKey,     setSnapCellKey]     = useState(null);
 
-  const slideTimerRef  = useRef(null);
-  const presenceRef    = useRef(null);
-  const partyTimerRef  = useRef(null);
-  const scrollRef      = useRef(null);
-  const headerRef      = useRef(null);
-  const glowFrameRef   = useRef(null);
-  const glowLevelRef   = useRef(0);
-  const glowRafRef     = useRef(null);
-  const myAvatarRef    = useRef(null);
+  const slideTimerRef   = useRef(null);
+  const presenceRef     = useRef(null);
+  const partyTimerRef   = useRef(null);
+  const scrollRef       = useRef(null);
+  const headerRef       = useRef(null);
+  const glowFrameRef    = useRef(null);
+  const glowLevelRef    = useRef(0);
+  const glowRafRef      = useRef(null);
+  const myAvatarRef     = useRef(null);
   const flightOnLandRef = useRef(null);
 
   const measureColX = useCallback(() => {
@@ -295,26 +295,16 @@ export default function App() {
     setSocialMenu(null);
   };
 
-  const triggerStatusFly = (statusId, clickedEl, cellKey) => {
+  // 问题2修复：单选和批量都走这个函数，都有飞行效果
+  const triggerStatusFly = (statusId, clickedEl, cellKey, onLand) => {
     const cfg = STATUS_CONFIG[statusId];
     if (!cfg || !clickedEl) return;
     const cellEl = document.querySelector(`[data-cell-key="${cellKey}"]`);
     if (!cellEl) return;
     const srcR  = clickedEl.getBoundingClientRect();
     const cellR = cellEl.getBoundingClientRect();
-    flightOnLandRef.current = async () => {
-      const parts   = cellKey.split('-');
-      const shift   = parts[parts.length-1];
-      const staffId = parts[0];
-      const date    = parts.slice(1,-1).join('-');
-      setRecords(r => ({ ...r, [cellKey]: statusId }));
-      setActiveMenu(null);
-      setSaveStatus('saving');
-      setSnapCellKey(cellKey);
-      setTimeout(()=>setSnapCellKey(null), 400);
-      await supabase.from('statuses').upsert({ id:cellKey, staff_id:staffId, date, shift, status:statusId });
-      setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
-    };
+    // 落地回调存入 ref，飞行结束后执行
+    flightOnLandRef.current = onLand;
     setFlight({
       icon:  cfg.icon,
       start: { x: srcR.left  + srcR.width/2,  y: srcR.top  + srcR.height/2 },
@@ -327,53 +317,53 @@ export default function App() {
     if (flightOnLandRef.current) { flightOnLandRef.current(); flightOnLandRef.current = null; }
   };
 
-  const handleStatus = async (key, val, e) => {
+  // 单选：飞行后填入 + snap
+  const handleStatusSelect = (key, statusId, e) => {
     e.stopPropagation();
-    if (bulkSelectCells.length > 0) {
-      // 批量：第一格飞行，其余 stagger 填入
-      const cfg = STATUS_CONFIG[val];
-      if (cfg) triggerStatusFly(val, e.currentTarget, bulkSelectCells[0]);
-
-      const keysToFill = [...bulkSelectCells];
-      flightOnLandRef.current = async () => {
-        // stagger 动画 map
-        const staggerMap = {};
-        keysToFill.forEach((k, i) => { staggerMap[k] = i * 40; });
-        setStaggerCells(staggerMap);
-        setTimeout(() => setStaggerCells({}), keysToFill.length * 40 + 300);
-
-        // 填入所有格子
-        setRecords(r => {
-          const upd = { ...r };
-          keysToFill.forEach(ck => { upd[ck] = val; });
-          return upd;
-        });
-        setActiveMenu(null);
-        setBulkSelectCells([]);
-        setSaveStatus('saving');
-        await Promise.all(keysToFill.map(ck => {
-          const parts   = ck.split('-');
-          const shift   = parts[parts.length-1];
-          const staffId = parts[0];
-          const date    = parts.slice(1,-1).join('-');
-          return supabase.from('statuses').upsert({id:ck,staff_id:staffId,date,shift,status:val});
-        }));
-        setSaveStatus('saved');
-        setTimeout(()=>setSaveStatus(''),2000);
-      };
-    } else {
+    const parts   = key.split('-');
+    const shift   = parts[parts.length-1];
+    const staffId = parts[0];
+    const date    = parts.slice(1,-1).join('-');
+    triggerStatusFly(statusId, e.currentTarget, key, async () => {
+      setRecords(r => ({ ...r, [key]: statusId }));
+      setActiveMenu(null);
+      setSnapCellKey(key);
+      setTimeout(()=>setSnapCellKey(null), 400);
       setSaveStatus('saving');
-      if (val===null) {
-        setRecords(r=>{const n={...r};delete n[key];return n;});
-        await supabase.from('statuses').delete().eq('id',key);
-      } else {
-        const parts=key.split('-');
-        const shift=parts[parts.length-1],staffId=parts[0],date=parts.slice(1,-1).join('-');
-        await supabase.from('statuses').upsert({id:key,staff_id:staffId,date,shift,status:val});
-        setActiveMenu(null);
-      }
+      await supabase.from('statuses').upsert({ id:key, staff_id:staffId, date, shift, status:statusId });
       setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
-    }
+    });
+  };
+
+  // 批量：第一格飞行，落地后所有格子 stagger 填入
+  const handleBulkStatusSelect = (statusId, e) => {
+    e.stopPropagation();
+    if (bulkSelectCells.length === 0) return;
+    const keysToFill = [...bulkSelectCells];
+    triggerStatusFly(statusId, e.currentTarget, keysToFill[0], async () => {
+      // 问题4：stagger 错落填入
+      const staggerMap = {};
+      keysToFill.forEach((k, i) => { staggerMap[k] = i * 45; });
+      setStaggerCells(staggerMap);
+      setTimeout(() => setStaggerCells({}), keysToFill.length * 45 + 350);
+
+      setRecords(r => {
+        const upd = { ...r };
+        keysToFill.forEach(ck => { upd[ck] = statusId; });
+        return upd;
+      });
+      setActiveMenu(null);
+      setBulkSelectCells([]);
+      setSaveStatus('saving');
+      await Promise.all(keysToFill.map(ck => {
+        const parts   = ck.split('-');
+        const shift   = parts[parts.length-1];
+        const staffId = parts[0];
+        const date    = parts.slice(1,-1).join('-');
+        return supabase.from('statuses').upsert({id:ck,staff_id:staffId,date,shift,status:statusId});
+      }));
+      setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
+    });
   };
 
   const handleStatusClear = async (key, e) => {
@@ -415,11 +405,6 @@ export default function App() {
         setBulkSelectCells(cellKeys);
         const firstCell=preview[0];
         setActiveMenu(`${firstCell[0]}-${week_arr[firstCell[1]]}-${firstCell[2]}`);
-        // stagger 预分配，松手时立即给格子加呼吸动画视觉反馈
-        const staggerMap={};
-        cellKeys.forEach((k,i)=>{staggerMap[k]=i*40;});
-        setStaggerCells(staggerMap);
-        setTimeout(()=>setStaggerCells({}), cellKeys.length*40+300);
       } else {
         const upd={...records};
         preview.forEach(([staffId,dateIdx,shift])=>{ delete upd[`${staffId}-${week_arr[dateIdx]}-${shift}`]; });
@@ -724,11 +709,11 @@ export default function App() {
                                     id={isFirst&&si===0?AM_REF:undefined}
                                     className={[
                                       cls,
-                                      isPreview     ? 'preview'       : '',
-                                      isSnapping    ? 'cell-snap'     : '',
-                                      isBulkSelected? 'bulk-selected' : '',
+                                      isPreview      ? 'preview'       : '',
+                                      isSnapping     ? 'cell-snap'     : '',
+                                      isBulkSelected ? 'bulk-selected' : '',
                                       staggerDelay!==undefined ? 'cell-stagger' : '',
-                                    ].join(' ')}
+                                    ].filter(Boolean).join(' ')}
                                     style={{
                                       ...(sid!=='none'?{background:cfg.bg,color:cfg.color,border:`1.5px solid ${cfg.color}30`}:{}),
                                       ...(staggerDelay!==undefined?{animationDelay:`${staggerDelay}ms`}:{}),
@@ -748,10 +733,17 @@ export default function App() {
                                   </div>
                                   {open&&isMe&&(
                                     <div className="s-drop dsz">
-                                      <div style={{padding:'3px 10px 7px',fontSize:'10px',color:'#9ca3af',fontWeight:'600',borderBottom:'1px solid #f0f0f0',marginBottom:'3px',letterSpacing:'0.06em'}}>STATUS</div>
+                                      <div style={{padding:'3px 10px 7px',fontSize:'10px',color:'#9ca3af',fontWeight:'600',borderBottom:'1px solid #f0f0f0',marginBottom:'3px',letterSpacing:'0.06em'}}>
+                                        {bulkSelectCells.length>0?`${bulkSelectCells.length} CELLS`:'STATUS'}
+                                      </div>
                                       {Object.entries(STATUS_CONFIG).map(([sId,sCfg])=>(
                                         <div key={sId} className="s-opt"
-                                          onClick={e=>{ e.stopPropagation(); handleStatus(key,sId,e); }}>
+                                          onClick={e=>{
+                                            e.stopPropagation();
+                                            // 问题2修复：单选和批量分开路径，都有飞行
+                                            if (bulkSelectCells.length>0) handleBulkStatusSelect(sId,e);
+                                            else handleStatusSelect(key,sId,e);
+                                          }}>
                                           <span style={{fontSize:'15px'}}>{sCfg.icon}</span>
                                           <span className="s-opt-lbl">{sCfg.label}</span>
                                         </div>
