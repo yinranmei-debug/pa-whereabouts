@@ -5,49 +5,49 @@ import HOLIDAYS_DATA from './data/holidays.json';
 import RAW_STAFF_LIST from './data/staff.json';
 import STATUS_CONFIG from './data/status.json';
 import { createClient } from '@supabase/supabase-js';
-
+ 
 const supabase = createClient(
   'https://vzdrpydtxlamoqtukgld.supabase.co',
   'sb_publishable_o1d0wmxwLrJCuTQ84uY38g__dqoj2dD'
 );
-
+ 
 const msalInstance = new PublicClientApplication(msalConfig);
 const STAFF_LIST = RAW_STAFF_LIST.filter(p => p.id !== 'arthur');
 const SUPER_USERS = ['arthur.cheung@patternasia.com', 'brenda.lee@patternasia.com'];
 const CHINA_EXTRA = ['jessica.rao@patternasia.com'];
-
+ 
 const isSuperUser  = em => SUPER_USERS.includes(em.toLowerCase());
 const isChinaExtra = em => CHINA_EXTRA.includes(em.toLowerCase());
 const getStaffEntry = em => RAW_STAFF_LIST.find(s => s.email.toLowerCase() === em.toLowerCase());
-
+ 
 const ROW_H  = 104;
 const NAV_H  = 56;
 const SUB_H  = 72;
 const TB_H   = 52;
 const LG_H   = 36;
 const AM_REF = 'am-ref-btn';
-
+ 
 const HEADER_STICKY_TOP = NAV_H + SUB_H + TB_H + LG_H;
-
+ 
 const fmt = date => {
   const y = date.getFullYear();
   const m = String(date.getMonth()+1).padStart(2,'0');
   const d = String(date.getDate()).padStart(2,'0');
   return `${y}-${m}-${d}`;
 };
-
+ 
 const TEAMS_COLORS = ['#B3CEE0','#D1A7C8','#A7C8A0','#E0C8A7','#A7B9E0','#E0A7A7','#C8D1A7','#A7D1CE','#D1C8A7','#B9A7E0','#A7C8D1','#E0B9A7'];
 const teamsColor = name => {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
   return TEAMS_COLORS[Math.abs(h) % TEAMS_COLORS.length];
 };
-
+ 
 const initials = name => {
   const p = name.trim().split(' ');
   return p.length >= 2 ? (p[0][0] + p[p.length-1][0]).toUpperCase() : name[0].toUpperCase();
 };
-
+ 
 function Avatar({ name, photoUrl, size=34, isMe=false }) {
   if (!name) return null;
   return (
@@ -63,7 +63,7 @@ function Avatar({ name, photoUrl, size=34, isMe=false }) {
     </div>
   );
 }
-
+ 
 const GlobalStyles = () => (
   <style>{`
     *,*:before,*:after{box-sizing:border-box;margin:0;padding:0}
@@ -103,20 +103,19 @@ const GlobalStyles = () => (
     .tb-btn.today:hover{opacity:0.9}
     .tb-btn.icon{width:32px;padding:0;font-size:15px;color:#6b7280}
     .tb-select{height:32px;padding:0 12px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;font-size:13px;color:#374151;cursor:pointer;appearance:none}
+    .tb-select:focus {outline:none;border-color:#770bff}
     .tb-month{font-size:15px;font-weight:600;color:#111827;letter-spacing:-0.01em}
     .legend{height:${LG_H}px;padding:0 28px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:20px;position:sticky;top:${NAV_H+SUB_H+TB_H}px;z-index:470}
     .leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#9ca3af}
     .leg-sw{width:20px;height:10px;border-radius:4px}
-    .tbl-outer{background:#f4f5f7;padding-bottom:48px;position:relative}
-    .tbl-hdr-sticky{position:sticky;top:${HEADER_STICKY_TOP}px;z-index:460;background:#f4f5f7;border-bottom:1px solid #ebebeb}
-    .tbl-hdr-row{display:grid;grid-template-columns:200px repeat(7,1fr);min-width:860px;padding:0 28px}
-    .tbl-hdr-namecol{background:#f4f5f7}
-    .tbl-hdr-daycol{padding:14px 4px 10px;text-align:center;background:#f4f5f7}
-    .tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 28px}
+    .tbl-outer{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 28px 48px;background:#f4f5f7}
     .main-tbl{width:100%;border-collapse:collapse;table-layout:fixed;min-width:860px}
+    .main-tbl thead{position:sticky;top:${HEADER_STICKY_TOP}px;z-index:460;background:#f4f5f7}
+    .main-tbl th{padding:14px 4px 10px;text-align:center;font-size:10px;font-weight:600;color:#9ca3af;letter-spacing:0.06em;background:#f4f5f7}
     .main-tbl td{padding:0;height:${ROW_H}px;vertical-align:top}
+    .sticky-h{position:sticky;left:0;top:${HEADER_STICKY_TOP}px;z-index:461;background:#f4f5f7}
     .sticky-c{position:sticky;left:0;z-index:100;background:#f4f5f7;overflow:visible}
-    .sticky-c::after{content:'';position:absolute;top:0;right:-16px;bottom:0;width:16px;background:linear-gradient(to right,rgba(0,0,0,0.04),transparent);pointer-events:none}
+    .sticky-c::after,.sticky-h::after{content:'';position:absolute;top:0;right:-16px;bottom:0;width:16px;background:linear-gradient(to right,rgba(0,0,0,0.04),transparent);pointer-events:none}
     .nw{height:${ROW_H}px;display:flex;align-items:center;gap:10px;padding:0 8px;border-bottom:1px solid #ebebeb;overflow:visible}
     tr:last-child .nw{border-bottom:none}
     .n-av-wrap{will-change:transform}
@@ -156,15 +155,17 @@ const GlobalStyles = () => (
     .ms-card{background:#fff;border-radius:2px;padding:44px;max-width:420px;width:90%;box-shadow:0 2px 6px rgba(0,0,0,0.13),0 0 0 1px rgba(0,0,0,0.04)}
     .ms-title{font-size:24px;font-weight:600;color:#201f1e;margin:0 0 6px}
     .ms-sub{font-size:13px;color:#605e5c;margin:0 0 24px}
+    .ms-fake-input{width:100%;height:40px;border:1px solid #8a8886;border-radius:2px;padding:0 12px;margin-bottom:16px;display:flex;align-items:center;color:#605e5c;font-size:14px;background:#fff;cursor:pointer;transition:border-color 0.1s}
+    .ms-fake-input:hover{border-color:#0078d4}
     .ms-btn{width:100%;height:40px;background:linear-gradient(90deg,#009bff,#770bff);color:#fff;border:none;border-radius:2px;font-size:14px;font-weight:600;cursor:pointer;transition:opacity 0.15s}
     .ms-btn:hover{opacity:0.9}
     .ms-app-row{display:flex;align-items:center;gap:10px;margin-top:28px;padding-top:16px;border-top:1px solid #edebe9}
     .ms-app-icon{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#009bff,#770bff);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0}
     .ms-err{margin-top:14px;color:#a4262c;background:#fde7e9;padding:10px 14px;border-radius:2px;font-size:13px;border-left:3px solid #a4262c}
-    @media(max-width:768px){.nav,.sub-header,.toolbar,.legend{padding-left:16px;padding-right:16px}.tbl-scroll,.tbl-hdr-row{padding-left:16px;padding-right:16px}}
+    @media(max-width:768px){.nav,.sub-header,.toolbar,.legend,.tbl-outer{padding-left:16px;padding-right:16px}}
   `}</style>
 );
-
+ 
 function LoginScreen({ onLogin, isInitializing, error }) {
   return (
     <div className="ms-screen"><GlobalStyles />
@@ -200,7 +201,7 @@ function LoginScreen({ onLogin, isInitializing, error }) {
     </div>
   );
 }
-
+ 
 function AccessDeniedScreen({ email, onLogout }) {
   return (
     <div className="ms-screen"><GlobalStyles />
@@ -217,32 +218,30 @@ function AccessDeniedScreen({ email, onLogout }) {
     </div>
   );
 }
-
+ 
 export default function App() {
-  const [isInit,          setIsInit]          = useState(false);
-  const [account,         setAccount]         = useState(null);
-  const [authError,       setAuthError]       = useState(null);
-  const [denied,          setDenied]          = useState(false);
-  const [activeTab,       setActiveTab]       = useState('calendar');
-  const [viewDate,        setViewDate]        = useState(new Date());
-  const [region,          setRegion]          = useState('Hong Kong');
-  const [records,         setRecords]         = useState({});
-  const [activeMenu,      setActiveMenu]      = useState(null);
-  const [socialMenu,      setSocialMenu]      = useState(null);
-  const [emotions,        setEmotions]        = useState({});
-  const [saveStatus,      setSaveStatus]      = useState('');
-  const [pillRects,       setPillRects]       = useState({});
-  const [staffPhotos,     setStaffPhotos]     = useState({});
-  const [onlineUsers,     setOnlineUsers]     = useState([]);
-  const [dragging,        setDragging]        = useState(null);
-  const [preview,         setPreview]         = useState([]);
-  const [bulkSelectCells, setBulkSelectCells] = useState([]);
-
+  const [isInit,              setIsInit]              = useState(false);
+  const [account,             setAccount]             = useState(null);
+  const [authError,           setAuthError]           = useState(null);
+  const [denied,              setDenied]              = useState(false);
+  const [activeTab,           setActiveTab]           = useState('calendar');
+  const [viewDate,            setViewDate]            = useState(new Date());
+  const [region,              setRegion]              = useState('Hong Kong');
+  const [records,             setRecords]             = useState({});
+  const [activeMenu,          setActiveMenu]          = useState(null);
+  const [socialMenu,          setSocialMenu]          = useState(null);
+  const [emotions,            setEmotions]            = useState({});
+  const [saveStatus,          setSaveStatus]          = useState('');
+  const [pillRects,           setPillRects]           = useState({});
+  const [staffPhotos,         setStaffPhotos]         = useState({});
+  const [onlineUsers,         setOnlineUsers]         = useState([]);
+  const [dragging,            setDragging]            = useState(null);
+  const [preview,             setPreview]             = useState([]);
+  const [bulkSelectCells,     setBulkSelectCells]     = useState([]);
+  
   const presenceRef   = useRef(null);
   const partyTimerRef = useRef(null);
-  const scrollRef     = useRef(null);
-  const headerRef     = useRef(null);
-
+ 
   useEffect(() => {
     (async () => {
       try {
@@ -263,7 +262,7 @@ export default function App() {
       } catch(e) { setAuthError('Initialization failed. Please refresh.'); }
     })();
   }, []);
-
+ 
   useEffect(() => {
     if (!account) return;
     const em = account.username.toLowerCase();
@@ -271,7 +270,7 @@ export default function App() {
     else if (isChinaExtra(em)) setRegion('China');
     else { const s = getStaffEntry(em); if (s) setRegion(s.region); }
   }, [account]);
-
+ 
   useEffect(() => {
     if (!account) return;
     (async () => {
@@ -288,7 +287,7 @@ export default function App() {
       setStaffPhotos(photos);
     })();
   }, [account]);
-
+ 
   useEffect(() => {
     if (!account) return;
     (async () => {
@@ -303,12 +302,12 @@ export default function App() {
         }).subscribe();
       supabase.channel('emotions-changes')
         .on('postgres_changes', { event:'*', schema:'public', table:'emotions' }, payload => {
-          if (payload.eventType==='DELETE') setEmotions(e => { const n={...e}; delete n[payload.old.staff_id]; return n; });
+          if (payload.eventType === 'DELETE') setEmotions(e => { const n={...e}; delete n[payload.old.staff_id]; return n; });
           else setEmotions(e => ({ ...e, [payload.new.staff_id]:payload.new.emoji }));
         }).subscribe();
     })();
   }, [account]);
-
+ 
   useEffect(() => {
     if (!account) return;
     const meStaffLocal = getStaffEntry(account.username.toLowerCase());
@@ -330,13 +329,13 @@ export default function App() {
     presenceRef.current = channel;
     return () => { supabase.removeChannel(channel); };
   }, [account]);
-
+ 
   useEffect(() => {
     const fn = e => { if (!e.target.closest('.dsz') && !e.target.closest('.nav-tab')) { setActiveMenu(null); setSocialMenu(null); setActiveTab(t => t === 'planner' ? 'calendar' : t); } };
     document.addEventListener('mousedown', fn);
     return () => document.removeEventListener('mousedown', fn);
   }, []);
-
+ 
   useEffect(() => {
     const measure = () => {
       const rects = {};
@@ -359,24 +358,24 @@ export default function App() {
     window.addEventListener('scroll', measure, true);
     return () => { window.removeEventListener('resize', measure); window.removeEventListener('scroll', measure, true); };
   }, [region, viewDate, activeTab]);
-
+ 
   useEffect(() => {
     if (!account) return;
     if (account.username.toLowerCase() === 'arthur.cheung@patternasia.com') return;
     const t = setTimeout(() => { document.getElementById('my-row')?.scrollIntoView({ behavior:'smooth', block:'center' }); }, 400);
     return () => clearTimeout(t);
   }, [account, region]);
-
+ 
   const login  = async () => { setAuthError(null); try { await msalInstance.loginRedirect(loginRequest); } catch(e) { setAuthError(e.message); } };
   const logout = () => msalInstance.logoutRedirect();
-
+ 
   if (denied)   return <AccessDeniedScreen email={account?.username||''} onLogout={logout} />;
   if (!account) return <LoginScreen onLogin={login} isInitializing={!isInit} error={authError} />;
-
+ 
   const me        = account.username.toLowerCase();
   const superUser = isSuperUser(me);
   const meStaff   = getStaffEntry(me);
-
+ 
   const popAvatar = userId => {
     const el = document.getElementById(`av-${userId}`);
     if (!el) return;
@@ -391,7 +390,7 @@ export default function App() {
       el.style.transform  = 'scale(1)';
     }, 500);
   };
-
+ 
   const handleStatus = async (key, val, e) => {
     e.stopPropagation();
     if (bulkSelectCells.length > 0) {
@@ -423,83 +422,322 @@ export default function App() {
       setSaveStatus('saved'); setTimeout(() => setSaveStatus(''), 2000);
     }
   };
-
+ 
   const handleStatusCellMouseDown = (staffId, dateIdx, shift, status, e) => {
     if (!account) return;
     if (staffId !== meStaff?.id) return;
     setDragging({ staffId, dateIdx, shift, status, isEmptyCell: status === 'none' });
     setPreview([[staffId, dateIdx, shift]]);
   };
-
+ 
   const handleStatusCellMouseOver = (staffId, dateIdx, shift) => {
     if (!dragging) return;
     const staffIds = STAFF_LIST.filter(s => s.region === region).map(s => s.id);
     const startIdx = staffIds.indexOf(dragging.staffId);
-    const endIdx   = staffIds.indexOf(staffId);
+    const endIdx = staffIds.indexOf(staffId);
     const minIdx = Math.min(startIdx, endIdx);
     const maxIdx = Math.max(startIdx, endIdx);
-    const minDate = Math.min(dragging.dateIdx, dateIdx);
-    const maxDate = Math.max(dragging.dateIdx, dateIdx);
-    const minShift = Math.min(dragging.shift==='AM'?0:1, shift==='AM'?0:1);
-    const maxShift = Math.max(dragging.shift==='AM'?0:1, shift==='AM'?0:1);
+    const startDate = dragging.dateIdx;
+    const endDate = dateIdx;
+    const minDate = Math.min(startDate, endDate);
+    const maxDate = Math.max(startDate, endDate);
+    const startShift = dragging.shift === 'AM' ? 0 : 1;
+    const endShift = shift === 'AM' ? 0 : 1;
+    const minShift = Math.min(startShift, endShift);
+    const maxShift = Math.max(startShift, endShift);
     const range = [];
     for (let r = minIdx; r <= maxIdx; r++) {
       for (let d = minDate; d <= maxDate; d++) {
-        if (minShift === maxShift) range.push([staffIds[r], d, minShift===0?'AM':'PM']);
+        if (minShift === maxShift) range.push([staffIds[r], d, minShift === 0 ? 'AM' : 'PM']);
         else { range.push([staffIds[r], d, 'AM']); range.push([staffIds[r], d, 'PM']); }
       }
     }
     setPreview(range);
   };
-
-  // Issue 1 fix: mouseup 只负责清理拖拽状态
-  // 不再在这里设置 activeMenu，避免与 onClick 竞争
-  const handleStatusCellMouseUp = () => {
-    if (dragging && preview.length > 1) {
-      // 真正的拖拽：多格操作
-      const isEmptyCell = dragging.isEmptyCell;
-      const week_arr = week.map(d => d.ds);
-      if (isEmptyCell) {
-        const cellKeys = preview.map(([staffId, dateIdx, shift]) => `${staffId}-${week_arr[dateIdx]}-${shift}`);
-        setBulkSelectCells(cellKeys);
-        const firstCell = preview[0];
-        setActiveMenu(`${firstCell[0]}-${week_arr[firstCell[1]]}-${firstCell[2]}`);
-      } else {
-        const updatedRecords = { ...records };
-        preview.forEach(([staffId, dateIdx, shift]) => {
-          delete updatedRecords[`${staffId}-${week_arr[dateIdx]}-${shift}`];
-        });
-        setRecords(updatedRecords);
-        setSaveStatus('saving');
-        setActiveMenu(null);
-        (async () => {
-          try {
-            await Promise.all(preview.map(([staffId, dateIdx, shift]) =>
-              supabase.from('statuses').delete().eq('id', `${staffId}-${week_arr[dateIdx]}-${shift}`)
-            ));
-            setSaveStatus('saved'); setTimeout(() => setSaveStatus(''), 2000);
-          } catch(e) { setSaveStatus(''); }
-        })();
-      }
+ 
+  const handleStatusCellMouseUp = async () => {
+    if (!dragging || preview.length === 0) { setDragging(null); setPreview([]); return; }
+    const isEmptyCell = dragging.isEmptyCell;
+    const week_arr = (() => {
+      const d = new Date(viewDate), day = d.getDay();
+      const mon = new Date(d.setDate(d.getDate()-day+(day===0?-6:1)));
+      return Array.from({length:7}).map((_,i) => {
+        const t = new Date(mon); t.setDate(mon.getDate()+i);
+        return fmt(t);
+      });
+    })();
+    if (isEmptyCell) {
+      const cellKeys = preview.map(([staffId, dateIdx, shift]) => `${staffId}-${week_arr[dateIdx]}-${shift}`);
+      setBulkSelectCells(cellKeys);
+      const firstCell = preview[0];
+      const key = `${firstCell[0]}-${week_arr[firstCell[1]]}-${firstCell[2]}`;
+      setActiveMenu(key);
+      setDragging(null); setPreview([]);
+    } else {
+      const updatedRecords = { ...records };
+      preview.forEach(([staffId, dateIdx, shift]) => {
+        const key = `${staffId}-${week_arr[dateIdx]}-${shift}`;
+        delete updatedRecords[key];
+      });
+      setRecords(updatedRecords);
+      setSaveStatus('saving'); setDragging(null); setPreview([]); setActiveMenu(null);
+      (async () => {
+        try {
+          await Promise.all(preview.map(([staffId, dateIdx, shift]) => {
+            const key = `${staffId}-${week_arr[dateIdx]}-${shift}`;
+            return supabase.from('statuses').delete().eq('id', key);
+          }));
+          setSaveStatus('saved'); setTimeout(() => setSaveStatus(''), 2000);
+        } catch(e) { setSaveStatus(''); }
+      })();
     }
-    setDragging(null);
-    setPreview([]);
   };
-
+ 
   const isPreviewCell = (staffId, dateIdx, shift) =>
     preview.some(([s, d, sh]) => s === staffId && d === dateIdx && sh === shift);
 
-  const firePartyLocal = (type, text='') => {
-    const els = type==='weekend' ? ['🍷','🌟','🎵','🍱'] : ['🎉', text.split(' ')[0]||'✨','✨'];
-    for (let i=0; i<28; i++) {
+  // ── REPLACED: firePartyLocal with tech particle ripple canvas overlay ──────
+  const firePartyLocal = (type, text = '') => {
+    // original emoji rain — unchanged
+    const els = type === 'weekend' ? ['🍷','🌟','🎵','🍱'] : ['🎉', text.split(' ')[0] || '✨','✨'];
+    for (let i = 0; i < 28; i++) {
       const c = document.body.appendChild(document.createElement('div'));
-      c.innerText = els[Math.floor(Math.random()*els.length)];
+      c.innerText = els[Math.floor(Math.random() * els.length)];
       c.style.cssText = `position:fixed;left:${Math.random()*100}vw;top:-30px;font-size:22px;z-index:11000;pointer-events:none;transition:transform ${Math.random()*2+2}s cubic-bezier(0.1,0.5,0.5,1),opacity 2s;`;
-      setTimeout(() => { c.style.transform=`translateY(105vh) rotate(${Math.random()*900}deg)`; c.style.opacity='0'; }, 20);
+      setTimeout(() => { c.style.transform = `translateY(105vh) rotate(${Math.random()*900}deg)`; c.style.opacity = '0'; }, 20);
       setTimeout(() => c.remove(), 4000);
     }
-  };
 
+    // ── canvas overlay ────────────────────────────────────────────────────────
+    const DURATION = 2800;
+    const W  = window.innerWidth;
+    const H  = window.innerHeight;
+    const cx = W / 2;
+    const cy = H / 2;
+    const DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+    const canvas = document.createElement('canvas');
+    canvas.width  = W * DPR;
+    canvas.height = H * DPR;
+    canvas.style.cssText = `position:fixed;inset:0;width:100%;height:100%;z-index:10999;pointer-events:none;mix-blend-mode:screen;`;
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+    ctx.scale(DPR, DPR);
+
+    // colour helpers
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const C1 = [0, 155, 255];   // #009bff blue
+    const C2 = [119, 11, 255];  // #770bff purple
+    const C3 = [0, 229, 255];   // #00e5ff cyan
+
+    const lerpColor = (t) => {
+      const s = (Math.sin(t * Math.PI * 2) + 1) / 2;
+      return [
+        Math.round(lerp(C1[0], C2[0], s)),
+        Math.round(lerp(C1[1], C2[1], s)),
+        Math.round(lerp(C1[2], C2[2], s)),
+      ];
+    };
+
+    // ── particles ────────────────────────────────────────────────────────────
+    const PARTICLE_COUNT = 260;
+    const particles = Array.from({ length: PARTICLE_COUNT }, (_, i) => {
+      const angle  = (i / PARTICLE_COUNT) * Math.PI * 2 + Math.random() * 0.35;
+      const speed  = 2.0 + Math.random() * 5.8;
+      const radius = 1.0 + Math.random() * 3.0;
+      const life   = 0.42 + Math.random() * 0.58;
+      const delay  = Math.random() * 0.28;
+      const trail  = Math.random() > 0.5;
+      const colorT = Math.random();
+      return { angle, speed, radius, life, delay, trail, colorT };
+    });
+
+    // ── ripple rings ─────────────────────────────────────────────────────────
+    const rings = Array.from({ length: 6 }, (_, i) => ({
+      delay:  i * 0.11,
+      speed:  300 + i * 65,
+      colorT: i / 5,
+    }));
+
+    // ── hex grid nodes (static, for background circuit feel) ─────────────────
+    const hexNodes = [];
+    const HEX_SPACING = 72;
+    for (let row = -1; row < H / HEX_SPACING + 1; row++) {
+      for (let col = -1; col < W / HEX_SPACING + 1; col++) {
+        const ox = col * HEX_SPACING + (row % 2 === 0 ? 0 : HEX_SPACING / 2);
+        const oy = row * HEX_SPACING * 0.86;
+        const dist = Math.sqrt((ox - cx) ** 2 + (oy - cy) ** 2);
+        hexNodes.push({ x: ox, y: oy, dist, phase: Math.random() * Math.PI * 2 });
+      }
+    }
+
+    const sweep = { done: false };
+    const startTime = performance.now();
+
+    const tick = (now) => {
+      const elapsed = now - startTime;
+      const T = Math.min(elapsed / DURATION, 1);
+      if (T >= 1) { canvas.remove(); return; }
+
+      ctx.clearRect(0, 0, W, H);
+
+      // ── 1. radial glow background ─────────────────────────────────────────
+      const glowAlpha = T < 0.15
+        ? (T / 0.15) * 0.32
+        : T < 0.55
+          ? 0.32
+          : (1 - (T - 0.55) / 0.45) * 0.32;
+      const maxR = Math.sqrt(W * W + H * H) * 0.75;
+      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR);
+      grad.addColorStop(0,   `rgba(${C3.join(',')},${glowAlpha * 0.85})`);
+      grad.addColorStop(0.25,`rgba(${C1.join(',')},${glowAlpha})`);
+      grad.addColorStop(0.6, `rgba(${C2.join(',')},${glowAlpha * 0.65})`);
+      grad.addColorStop(1,   `rgba(0,0,0,0)`);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      // ── 2. hex grid circuit lines (pulse outward from center) ─────────────
+      const maxDist = Math.sqrt(cx * cx + cy * cy);
+      hexNodes.forEach(node => {
+        const waveFront = T * maxDist * 1.8;
+        const inWave = node.dist < waveFront && node.dist > waveFront - 160;
+        if (!inWave) return;
+        const waveT = 1 - (waveFront - node.dist) / 160;
+        const nodeAlpha = Math.sin(waveT * Math.PI) * 0.55 * glowAlpha * 3.5;
+        if (nodeAlpha <= 0) return;
+        const [rr, gg, bb] = lerpColor(node.phase / (Math.PI * 2) + T * 0.4);
+        // draw small diamond node
+        ctx.save();
+        ctx.translate(node.x, node.y);
+        ctx.rotate(Math.PI / 4);
+        ctx.fillStyle = `rgba(${rr},${gg},${bb},${nodeAlpha})`;
+        const ns = 3.5 * (1 + Math.sin(waveT * Math.PI) * 0.5);
+        ctx.fillRect(-ns / 2, -ns / 2, ns, ns);
+        // draw lines to right and down-right neighbours
+        ctx.restore();
+        ctx.beginPath();
+        ctx.moveTo(node.x, node.y);
+        ctx.lineTo(node.x + HEX_SPACING, node.y);
+        ctx.strokeStyle = `rgba(${rr},${gg},${bb},${nodeAlpha * 0.35})`;
+        ctx.lineWidth = 0.7;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(node.x, node.y);
+        ctx.lineTo(node.x + HEX_SPACING / 2, node.y + HEX_SPACING * 0.86);
+        ctx.strokeStyle = `rgba(${rr},${gg},${bb},${nodeAlpha * 0.35})`;
+        ctx.lineWidth = 0.7;
+        ctx.stroke();
+      });
+
+      // ── 3. ripple rings ───────────────────────────────────────────────────
+      rings.forEach(ring => {
+        const rt = T - ring.delay;
+        if (rt <= 0) return;
+        const progress = Math.min(rt / 0.65, 1);
+        const r   = ring.speed * progress;
+        const opc = (1 - progress) * 0.8;
+        if (opc <= 0) return;
+        const [rr, gg, bb] = lerpColor(ring.colorT + T * 0.25);
+        // inner sharp ring
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(${rr},${gg},${bb},${opc})`;
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+        // outer soft glow halo
+        const rg = ctx.createRadialGradient(cx, cy, Math.max(0, r - 20), cx, cy, r + 8);
+        rg.addColorStop(0,   `rgba(${rr},${gg},${bb},0)`);
+        rg.addColorStop(0.5, `rgba(${rr},${gg},${bb},${opc * 0.55})`);
+        rg.addColorStop(1,   `rgba(${rr},${gg},${bb},0)`);
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.strokeStyle = rg;
+        ctx.lineWidth = 28;
+        ctx.stroke();
+      });
+
+      // ── 4. particles ──────────────────────────────────────────────────────
+      particles.forEach(p => {
+        const pt = T - p.delay;
+        if (pt <= 0) return;
+        const lifeT = Math.min(pt / p.life, 1);
+        const ease  = 1 - lifeT * lifeT;
+        const px = cx + Math.cos(p.angle) * p.speed * lifeT * W * 0.52 * ease;
+        const py = cy + Math.sin(p.angle) * p.speed * lifeT * H * 0.52 * ease;
+        const alpha = lifeT < 0.12
+          ? lifeT / 0.12
+          : (1 - lifeT) * 1.15;
+        if (alpha <= 0.01) return;
+        const [rr, gg, bb] = lerpColor(p.colorT + T * 0.6);
+        const sz = p.radius * (1 - lifeT * 0.45);
+
+        if (p.trail && lifeT < 0.78) {
+          const trailLen = sz * 7 * (1 - lifeT);
+          const tx = px - Math.cos(p.angle) * trailLen;
+          const ty = py - Math.sin(p.angle) * trailLen;
+          const lg = ctx.createLinearGradient(tx, ty, px, py);
+          lg.addColorStop(0, `rgba(${rr},${gg},${bb},0)`);
+          lg.addColorStop(1, `rgba(${rr},${gg},${bb},${alpha * 0.8})`);
+          ctx.beginPath();
+          ctx.moveTo(tx, ty);
+          ctx.lineTo(px, py);
+          ctx.strokeStyle = lg;
+          ctx.lineWidth = sz * 0.85;
+          ctx.lineCap = 'round';
+          ctx.stroke();
+        }
+
+        // glowing dot
+        const dotG = ctx.createRadialGradient(px, py, 0, px, py, sz * 2.5);
+        dotG.addColorStop(0,   `rgba(255,255,255,${alpha})`);
+        dotG.addColorStop(0.35,`rgba(${C3.join(',')},${alpha * 0.9})`);
+        dotG.addColorStop(0.7, `rgba(${rr},${gg},${bb},${alpha * 0.7})`);
+        dotG.addColorStop(1,   `rgba(${rr},${gg},${bb},0)`);
+        ctx.beginPath();
+        ctx.arc(px, py, sz * 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = dotG;
+        ctx.fill();
+      });
+
+      // ── 5. diagonal sweep ─────────────────────────────────────────────────
+      if (!sweep.done) {
+        const sT = T / 0.5;
+        if (sT <= 1) {
+          const diagLen = Math.sqrt(W * W + H * H);
+          const sx = -W * 0.25 + diagLen * sT * 1.35;
+          const sw = W * 0.18;
+          const sg = ctx.createLinearGradient(sx - sw, 0, sx + sw, H);
+          sg.addColorStop(0,   'rgba(255,255,255,0)');
+          sg.addColorStop(0.35,`rgba(${C3.join(',')},0.07)`);
+          sg.addColorStop(0.5, 'rgba(255,255,255,0.12)');
+          sg.addColorStop(0.65,`rgba(${C1.join(',')},0.07)`);
+          sg.addColorStop(1,   'rgba(255,255,255,0)');
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(-Math.PI / 5);
+          ctx.translate(-cx, -cy);
+          ctx.fillStyle = sg;
+          ctx.fillRect(sx - sw, -H * 0.2, sw * 2, H * 1.4);
+          ctx.restore();
+        } else {
+          sweep.done = true;
+        }
+      }
+
+      // ── 6. edge vignette fade-out ─────────────────────────────────────────
+      if (T > 0.68) {
+        const fo = (T - 0.68) / 0.32;
+        ctx.fillStyle = `rgba(244,245,247,${fo * 0.22})`;
+        ctx.fillRect(0, 0, W, H);
+      }
+
+      requestAnimationFrame(tick);
+    };
+
+    requestAnimationFrame(tick);
+  };
+  // ── end firePartyLocal ────────────────────────────────────────────────────
+ 
   const fireParty = (e, type, text='') => {
     const pill = e.currentTarget.closest('.pill');
     if (pill) { pill.classList.remove('holi-tap'); void pill.offsetWidth; pill.classList.add('holi-tap'); }
@@ -507,16 +745,10 @@ export default function App() {
     popAvatar(meStaff?.id || 'guest');
     presenceRef.current?.send({ type:'broadcast', event:'party', payload:{ type, text, userId:meStaff?.id||'guest' } });
   };
-
-  const handleTableScroll = () => {
-    if (headerRef.current && scrollRef.current) {
-      headerRef.current.scrollLeft = scrollRef.current.scrollLeft;
-    }
-  };
-
+ 
   const today     = fmt(new Date());
   const staffList = STAFF_LIST.filter(s => s.region === region);
-  const inOffice  = (() => {
+  const inOffice = (() => {
     let n = 0;
     staffList.forEach(s => {
       const absent = st => ['AL','SL','BL','BH','ML','PL','WFH','OL','DV'].includes(st);
@@ -524,7 +756,7 @@ export default function App() {
     });
     return { n, total:staffList.length };
   })();
-
+ 
   const week = (() => {
     const d = new Date(viewDate), day = d.getDay();
     const mon = new Date(d.setDate(d.getDate()-day+(day===0?-6:1)));
@@ -534,11 +766,11 @@ export default function App() {
       const rd = HOLIDAYS_DATA[region];
       const hol = rd?.holidays?.[ds];
       const isAdj = rd?.adjusted_workdays?.includes(ds);
-      const isWE  = (t.getDay()===0||t.getDay()===6)&&!isAdj;
+      const isWE = (t.getDay()===0||t.getDay()===6)&&!isAdj;
       return { ds, num:t.getDate(), dayName:t.toLocaleDateString('en-US',{weekday:'short'}), hol, isWE, isToday:ds===today, editable:!hol&&(!(t.getDay()===0||t.getDay()===6)||isAdj), isAdj };
     });
   })();
-
+ 
   const plannerList = () => {
     const h = HOLIDAYS_DATA[region]?.holidays; if (!h) return [];
     return Object.entries(h).sort((a,b)=>a[0].localeCompare(b[0])).map(([date,name]) => {
@@ -546,16 +778,15 @@ export default function App() {
       return { date, name, isWE:d.getDay()===0||d.getDay()===6, day:d.toLocaleDateString('en-US',{weekday:'short'}) };
     });
   };
-
+ 
   const jumpToDate = ds => { setViewDate(new Date(ds)); setActiveTab('calendar'); };
   const VH = window.innerHeight;
-
+ 
   return (
     <div style={{minHeight:'100vh', background:'#f4f5f7'}} onMouseUp={handleStatusCellMouseUp}>
       <GlobalStyles />
-
       {activeTab === 'calendar' && week.filter(d => !d.editable).map(d => {
-        const isHol   = !!d.hol;
+        const isHol = !!d.hol;
         const holName = d.hol ? d.hol.replace(/^\S+\s/, '') : '';
         const pos = pillRects[d.ds];
         if (!pos) return null;
@@ -570,7 +801,6 @@ export default function App() {
           </div>
         );
       })}
-
       <nav className="nav">
         <div className={`nav-tab${activeTab==='calendar'?' active':''}`} onClick={() => setActiveTab('calendar')}>Calendar</div>
         <div className={`nav-tab${activeTab==='planner'?' active':''}`} style={{position:'relative'}} onClick={() => setActiveTab(activeTab==='planner'?'calendar':'planner')}>
@@ -624,7 +854,6 @@ export default function App() {
           </div>
         </div>
       </nav>
-
       <div className="sub-header">
         <div>
           <div className="page-title">APAC Whereabouts</div>
@@ -638,7 +867,6 @@ export default function App() {
           </div>
         )}
       </div>
-
       <div className="toolbar">
         <button className="tb-btn icon" onClick={() => { const d=new Date(viewDate); d.setDate(d.getDate()-7); setViewDate(d); }}>‹</button>
         <button className="tb-btn today" onClick={() => setViewDate(new Date())}>Today</button>
@@ -648,155 +876,127 @@ export default function App() {
         </select>
         <span className="tb-month">{viewDate.toLocaleString('default',{month:'long',year:'numeric'})}</span>
       </div>
-
       <div className="legend">
         <div className="leg-item"><div className="leg-sw" style={{background:'linear-gradient(135deg,#fdf2f8,#fce7f3)',border:'1.5px solid #f9a8d4'}}></div>Holiday</div>
         <div className="leg-item"><div className="leg-sw" style={{background:'linear-gradient(135deg,#eff6ff,#dbeafe)',border:'1.5px solid #93c5fd'}}></div>Weekend</div>
         <div className="leg-item"><div className="leg-sw" style={{background:'linear-gradient(135deg,#e8f0fe,#ede8fe)'}}></div>My days</div>
         <div className="leg-item"><div className="leg-sw" style={{background:'#fafafa',border:'1.5px solid #f3f4f6'}}></div>Team days</div>
       </div>
-
-      <div className="tbl-outer dsz">
-
-        {/* Issue 2 fix: 独立 sticky 表头，在 tbl-scroll 之外，无 overflow */}
-        <div className="tbl-hdr-sticky">
-          <div ref={headerRef} className="tbl-hdr-row">
-            <div className="tbl-hdr-namecol"/>
-            {week.map(d => (
-              <div key={d.ds} className="tbl-hdr-daycol">
-                <div style={{fontSize:'10px',fontWeight:'600',letterSpacing:'0.06em',marginBottom:'5px',color:d.isToday?'#770bff':'#9ca3af'}}>
-                  {d.dayName.toUpperCase()}
-                </div>
-                <div style={{
-                  width:'30px',height:'30px',borderRadius:'50%',
-                  margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'center',
-                  background:d.isToday?'linear-gradient(135deg,#009bff,#770bff)':'transparent',
-                  color:d.isToday?'#fff':'#111827',
-                  fontSize:'14px',fontWeight:'600',
-                }}>
-                  {d.num}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div
-          ref={scrollRef}
-          className="tbl-scroll dsz"
-          onScroll={handleTableScroll}
-          onMouseLeave={handleStatusCellMouseUp}
-        >
-          <table className="main-tbl">
-            <colgroup>
-              <col style={{width:'200px'}}/>
-              {week.map(d => <col key={d.ds}/>)}
-            </colgroup>
-            <tbody>
-              {staffList.map((m, rowIdx) => {
-                const isMe    = m.email.toLowerCase() === me;
-                const isFirst = rowIdx === 0;
-                return (
-                  <tr key={m.id} id={isMe?'my-row':undefined}>
-                    <td className="sticky-c" style={{background:'#f4f5f7',padding:'0 8px 0 0'}}>
-                      <div className="nw">
-                        <div style={{display:'flex',alignItems:'center',gap:'10px',position:'relative',cursor:isMe?'pointer':'default'}}
-                          onClick={async () => {
-                            if (!isMe) return;
-                            if (emotions[m.id]) { await supabase.from('emotions').delete().eq('staff_id', m.id); }
-                            else { setSocialMenu(socialMenu===m.id ? null : m.id); }
-                          }}>
-                          <div id={`av-${m.id}`} className="n-av-wrap" style={{position:'relative'}}>
-                            <Avatar name={m.name} photoUrl={staffPhotos[m.id]} size={34} isMe={isMe}/>
-                            {emotions[m.id] && <div className="emo-tag">{emotions[m.id]}</div>}
-                          </div>
-                          <div>
-                            <div className={`n-name${isMe?' me':''}`}>{m.name}</div>
-                            {isMe && <div className="n-you">YOU</div>}
-                          </div>
-                          {isMe && socialMenu===m.id && (
-                            <div className="emo-picker dsz">
-                              {['🧘','⚡','☕','🎯','🚀','💪','🌱'].map(emo => (
-                                <div key={emo}
-                                  onClick={async e => { e.stopPropagation(); await supabase.from('emotions').upsert({ staff_id:m.id, emoji:emo }); setSocialMenu(null); }}
-                                  style={{fontSize:'18px',cursor:'pointer',padding:'4px 6px',borderRadius:'6px',transition:'background 0.1s'}}
-                                  onMouseOver={e => e.currentTarget.style.background='#f3f4f6'}
-                                  onMouseOut={e  => e.currentTarget.style.background='transparent'}
-                                >{emo}</div>
-                              ))}
-                            </div>
-                          )}
+      <div className="tbl-outer dsz" onMouseLeave={handleStatusCellMouseUp}>
+        <table className="main-tbl">
+          <colgroup>
+            <col style={{width:'200px'}}/>
+            {week.map(d => <col key={d.ds}/>)}
+          </colgroup>
+          <thead style={{position:'sticky',top:`${HEADER_STICKY_TOP}px`,zIndex:460,background:'#f4f5f7'}}>
+            <tr>
+              <th className="sticky-h" style={{textAlign:'left'}}></th>
+              {week.map(d => (
+                <th key={d.ds}>
+                  <div style={{fontSize:'10px',fontWeight:'600',color:d.isToday?'#770bff':'#9ca3af',marginBottom:'5px',letterSpacing:'0.06em'}}>{d.dayName.toUpperCase()}</div>
+                  <div style={{width:'30px',height:'30px',borderRadius:'50%',margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'center',background:d.isToday?'linear-gradient(135deg,#009bff,#770bff)':'transparent',color:d.isToday?'#fff':'#111827',fontSize:'14px',fontWeight:'600'}}>{d.num}</div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {staffList.map((m, rowIdx) => {
+              const isMe    = m.email.toLowerCase() === me;
+              const isFirst = rowIdx === 0;
+              return (
+                <tr key={m.id} id={isMe?'my-row':undefined}>
+                  <td className="sticky-c" style={{background:'#f4f5f7',padding:'0 8px 0 0'}}>
+                    <div className="nw">
+                      <div style={{display:'flex',alignItems:'center',gap:'10px',position:'relative',cursor:isMe?'pointer':'default'}}
+                        onClick={async () => {
+                          if (!isMe) return;
+                          if (emotions[m.id]) { await supabase.from('emotions').delete().eq('staff_id', m.id); }
+                          else { setSocialMenu(socialMenu===m.id ? null : m.id); }
+                        }}>
+                        <div id={`av-${m.id}`} className="n-av-wrap" style={{position:'relative'}}>
+                          <Avatar name={m.name} photoUrl={staffPhotos[m.id]} size={34} isMe={isMe}/>
+                          {emotions[m.id] && <div className="emo-tag">{emotions[m.id]}</div>}
                         </div>
+                        <div>
+                          <div className={`n-name${isMe?' me':''}`}>{m.name}</div>
+                          {isMe && <div className="n-you">YOU</div>}
+                        </div>
+                        {isMe && socialMenu===m.id && (
+                          <div className="emo-picker dsz">
+                            {['🧘','⚡','☕','🎯','🚀','💪','🌱'].map(emo => (
+                              <div key={emo}
+                                onClick={async e => { e.stopPropagation(); await supabase.from('emotions').upsert({ staff_id:m.id, emoji:emo }); setSocialMenu(null); }}
+                                style={{fontSize:'18px',cursor:'pointer',padding:'4px 6px',borderRadius:'6px',transition:'background 0.1s'}}
+                                onMouseOver={e => e.currentTarget.style.background='#f3f4f6'}
+                                onMouseOut={e  => e.currentTarget.style.background='transparent'}
+                              >{emo}</div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    </td>
-                    {week.map((d, weekIdx) => {
-                      if (!d.editable) {
-                        if (!isFirst) return null;
-                        const isHol = !!d.hol;
-                        return (
-                          <td key={d.ds} className="ptd" rowSpan={staffList.length}>
-                            <div data-pill-ds={d.ds} className={`pill ${isHol?'hol':'we'}`} onClick={e => fireParty(e, isHol?'holiday':'weekend', d.hol||'')}>
-                              <div className="pill-card"/>
-                            </div>
-                          </td>
-                        );
-                      }
+                    </div>
+                  </td>
+                  {week.map((d, weekIdx) => {
+                    if (!d.editable) {
+                      if (!isFirst) return null;
+                      const isHol = !!d.hol;
                       return (
-                        <td key={d.ds}>
-                          <div className="dw">
-                            {['AM','PM'].map((shift, si) => {
-                              const key       = `${m.id}-${d.ds}-${shift}`;
-                              const sid       = records[key] || 'none';
-                              const cfg       = STATUS_CONFIG[sid];
-                              const open      = activeMenu === key;
-                              const isPreview = isPreviewCell(m.id, weekIdx, shift);
-                              const cls       = !isMe ? 'sh other' : sid!=='none' ? 'sh set' : 'sh mine';
-                              return (
-                                <div key={shift} style={{position:'relative'}}>
-                                  <div
-                                    id={isFirst && si===0 ? AM_REF : undefined}
-                                    className={`${cls} ${isPreview?'preview':''}`}
-                                    style={sid!=='none' ? {background:cfg.bg,color:cfg.color,border:`1.5px solid ${cfg.color}30`} : {}}
-                                    onMouseDown={e => handleStatusCellMouseDown(m.id, weekIdx, shift, sid, e)}
-                                    onMouseOver={() => handleStatusCellMouseOver(m.id, weekIdx, shift)}
-                                    onClick={e => {
-                                      if (!isMe) return;
-                                      e.stopPropagation();
-                                      // Issue 1 fix: preview.length <= 1 是单击，直接切换菜单
-                                      // preview.length > 1 是拖拽，mouseUp 已处理，click 不做任何事
-                                      if (preview.length <= 1) {
-                                        if (sid !== 'none') handleStatus(key, null, e);
-                                        else setActiveMenu(open ? null : key);
-                                      }
-                                    }}
-                                  >
-                                    {sid !== 'none' ? `${cfg.icon} ${cfg.label}` : shift}
-                                  </div>
-                                  {open && isMe && (
-                                    <div className="s-drop dsz">
-                                      <div style={{padding:'3px 10px 7px',fontSize:'10px',color:'#9ca3af',fontWeight:'600',borderBottom:'1px solid #f0f0f0',marginBottom:'3px',letterSpacing:'0.06em'}}>STATUS</div>
-                                      {Object.entries(STATUS_CONFIG).map(([sId,sCfg]) => (
-                                        <div key={sId} className="s-opt" onClick={e => handleStatus(key,sId,e)}>
-                                          <span style={{fontSize:'15px'}}>{sCfg.icon}</span>
-                                          <span className="s-opt-lbl">{sCfg.label}</span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
+                        <td key={d.ds} className="ptd" rowSpan={staffList.length}>
+                          <div data-pill-ds={d.ds} className={`pill ${isHol?'hol':'we'}`} onClick={e => fireParty(e, isHol?'holiday':'weekend', d.hol||'')}>
+                            <div className="pill-card"/>
                           </div>
                         </td>
                       );
-                    })}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
+                    }
+                    return (
+                      <td key={d.ds}>
+                        <div className="dw">
+                          {['AM','PM'].map((shift, si) => {
+                            const key  = `${m.id}-${d.ds}-${shift}`;
+                            const sid  = records[key] || 'none';
+                            const cfg  = STATUS_CONFIG[sid];
+                            const open = activeMenu === key;
+                            const isPreview = isPreviewCell(m.id, weekIdx, shift);
+                            const cls  = !isMe ? 'sh other' : sid!=='none' ? 'sh set' : 'sh mine';
+                            return (
+                              <div key={shift} style={{position:'relative'}}>
+                                <div
+                                  id={isFirst && si===0 ? AM_REF : undefined}
+                                  className={`${cls} ${isPreview ? 'preview' : ''}`}
+                                  style={sid!=='none' ? {background:cfg.bg,color:cfg.color,border:`1.5px solid ${cfg.color}30`} : {}}
+                                  onMouseDown={(e) => handleStatusCellMouseDown(m.id, weekIdx, shift, sid, e)}
+                                  onMouseOver={() => handleStatusCellMouseOver(m.id, weekIdx, shift)}
+                                  onClick={e => {
+                                    if (!isMe) return;
+                                    if (sid !== 'none') handleStatus(key, null, e);
+                                    else { e.stopPropagation(); setActiveMenu(open?null:key); }
+                                  }}
+                                >
+                                  {sid !== 'none' ? `${cfg.icon} ${cfg.label}` : shift}
+                                </div>
+                                {open && isMe && (
+                                  <div className="s-drop dsz">
+                                    <div style={{padding:'3px 10px 7px',fontSize:'10px',color:'#9ca3af',fontWeight:'600',borderBottom:'1px solid #f0f0f0',marginBottom:'3px',letterSpacing:'0.06em'}}>STATUS</div>
+                                    {Object.entries(STATUS_CONFIG).map(([sId,sCfg]) => (
+                                      <div key={sId} className="s-opt" onClick={e => handleStatus(key,sId,e)}>
+                                        <span style={{fontSize:'15px'}}>{sCfg.icon}</span>
+                                        <span className="s-opt-lbl">{sCfg.label}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );

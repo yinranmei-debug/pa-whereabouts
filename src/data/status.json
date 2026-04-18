@@ -5,7 +5,6 @@
   "BT": { "label": "Business Trip", "icon": "✈️", "color": "#1a73e8", "bg": "#e8f0fe" },
   "MT": { "label": "Meeting", "icon": "🤝", "color": "#770bff", "bg": "#f3e8ff" },
   "BL": { "label": "Birthday Leave", "icon": "🎂", "color": "#d01884", "bg": "#fde7f3" },
-  "BH": { "label": "Bank Holiday", "icon": "🏦", "color": "#3c4043", "bg": "#f1f3f4" },
   "OL": { "label": "Other Location", "icon": "🌍", "color": "#e67c73", "bg": "#feefe3" },
   "ML": { "label": "Maternity Leave", "icon": "🤱", "color": "#6f42c1", "bg": "#f3f0ff" },
   "PL": { "label": "Parental Leave", "icon": "🍼", "color": "#087f5b", "bg": "#e6fcf5" },
