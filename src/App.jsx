@@ -193,9 +193,13 @@ export default function App() {
   }, [account]);
 
   // tour — show every login for testing, restore localStorage check for production
+  // tour — show every login for testing
   useEffect(() => {
     if (!account) return;
-    const t = setTimeout(() => setShowTour(true), 2800);
+    const t = setTimeout(() => {
+      setShowTips(false); // close tips first so tour spotlight is visible
+      setShowTour(true);
+    }, 2800);
     return () => clearTimeout(t);
   }, [account]);
 
@@ -615,7 +619,7 @@ export default function App() {
       {/* tips panel */}
       {showTips && currentTip && (
         <div style={{position:'fixed',inset:0,zIndex:10500,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(15,23,42,0.45)',backdropFilter:'blur(4px)',animation:'dropIn 0.2s ease'}}>
-          <div style={{background:'#fff',borderRadius:24,width:420,padding:'32px 28px 28px',boxShadow:'0 24px 64px rgba(0,0,0,0.18)',position:'relative',overflow:'hidden'}}>
+          <div style={{background:'#fff',borderRadius:24,width:480,maxWidth:'92vw',padding:'36px 32px 30px',boxShadow:'0 24px 64px rgba(0,0,0,0.18)',position:'relative',overflow:'hidden'}}>
             <div style={{position:'absolute',top:0,left:0,right:0,height:4,background:'linear-gradient(90deg,#009bff,#770bff)'}}/>
             <button onClick={()=>setShowTips(false)} style={{position:'absolute',top:16,right:16,width:28,height:28,borderRadius:'50%',border:'none',background:'#f1f5f9',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:'#64748b'}} onMouseOver={e=>{e.currentTarget.style.background='#e2e8f0';}} onMouseOut={e=>{e.currentTarget.style.background='#f1f5f9';}}>✕</button>
             <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:22}}>
@@ -623,16 +627,16 @@ export default function App() {
                 <BulbIcon size={20} color='#770bff'/>
               </div>
               <div>
-                <div style={{fontSize:16,fontWeight:700,color:'#111827',letterSpacing:'-0.01em'}}>Wellbeing Daily Tips</div>
-                <div style={{fontSize:11,fontWeight:500,color:'#9ca3af',marginTop:'2px'}}>{tipIdx+1} of {dailyTips.current.length} today</div>
+                <div style={{fontSize:18,fontWeight:700,color:'#111827',letterSpacing:'-0.01em'}}>Wellbeing Daily Tips</div>
+                <div style={{fontSize:12,fontWeight:500,color:'#9ca3af',marginTop:'3px'}}>{tipIdx+1} of {dailyTips.current.length} today</div>
               </div>
             </div>
             <div key={tipIdx} className={tipVisible?tipSlideClass:''} style={{minHeight:120,marginBottom:24}}>
               <div style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 10px',borderRadius:'100px',background:'linear-gradient(135deg,rgba(0,155,255,0.08),rgba(119,11,255,0.08))',border:'1px solid rgba(119,11,255,0.12)',marginBottom:12}}>
                 <span style={{fontSize:15}}>{currentTip.icon}</span>
-                <span style={{fontSize:11,fontWeight:700,color:'#5b21b6',letterSpacing:'0.04em'}}>{currentTip.category}</span>
+                <span style={{fontSize:12,fontWeight:700,color:'#5b21b6',letterSpacing:'0.04em'}}>{currentTip.category}</span>
               </div>
-              <p style={{fontSize:15,lineHeight:1.65,color:'#334155',fontWeight:400,margin:0}}>{currentTip.text}</p>
+              <p style={{fontSize:17,lineHeight:1.7,color:'#334155',fontWeight:400,margin:0}}>{currentTip.text}</p>
             </div>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
               <button onClick={()=>navigateTip('prev')} style={{width:36,height:36,borderRadius:10,border:'1.5px solid #e5e7eb',background:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,color:'#6b7280'}} onMouseOver={e=>{e.currentTarget.style.borderColor='#009bff';e.currentTarget.style.color='#009bff';}} onMouseOut={e=>{e.currentTarget.style.borderColor='#e5e7eb';e.currentTarget.style.color='#6b7280';}}>‹</button>
