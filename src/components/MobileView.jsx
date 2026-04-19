@@ -144,7 +144,7 @@ const MobileView = ({
   const EDIT_W   = Math.max(44, Math.floor((screenW - NAME_W - PADDING - nonEdit * NON_W) / Math.max(workdays, 1)));
   const totalW   = NAME_W + workdays * EDIT_W + nonEdit * NON_W;
 
-  const ROW_H = 82; a
+  const ROW_H = 82;
 
   return (
     <div style={{
