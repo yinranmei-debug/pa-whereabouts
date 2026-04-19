@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import ReactDOM from 'react-dom';
 import { PublicClientApplication } from "@azure/msal-browser";
 import { msalConfig, loginRequest } from "./authConfig";
 import HOLIDAYS_DATA from './data/holidays.json';
@@ -72,7 +73,7 @@ const CONFETTI_COLORS = [
 
 const rand = (min, max) => Math.random() * (max - min) + min;
 
-function WelcomeConfetti() {
+const WelcomeConfetti = React.memo(function WelcomeConfetti() {
   const canvasRef = useRef(null);
   const rafRef    = useRef(null);
 
@@ -220,7 +221,7 @@ function WelcomeConfetti() {
       `}</style>
     </>
   );
-}
+});
 export default function App() {
   const [isInit,          setIsInit]          = useState(false);
   const [account,         setAccount]         = useState(null);
@@ -748,7 +749,7 @@ export default function App() {
         }}/>
       )}
 
-      {showWelcome && <WelcomeConfetti/>}
+     {showWelcome && ReactDOM.createPortal(<WelcomeConfetti/>, document.body)}
 
       {flight && (
         <EmojiFlyLayer
