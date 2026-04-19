@@ -116,11 +116,11 @@ const MobileView = ({
   const screenW  = typeof window !== 'undefined' ? window.innerWidth : 390;
   const NAME_W   = 110;
   const PADDING  = 16;
-  // workday cols fill screen, non-editable cols are narrow (scrollable)
   const workdays  = week.filter(d => d.editable).length;
   const nonEdit   = week.length - workdays;
-  const NON_W     = 36;
-  const EDIT_W    = Math.max(44, Math.floor((screenW - NAME_W - PADDING - nonEdit * NON_W) / Math.max(workdays, 1)));
+  const NON_W     = 52; // weekend/holiday col width when scrolled to
+  // EDIT_W fills the full screen — weekend cols are off-screen to the right
+  const EDIT_W    = Math.max(44, Math.floor((screenW - NAME_W - PADDING) / Math.max(workdays, 1)));
   const totalW    = NAME_W + workdays * EDIT_W + nonEdit * NON_W;
 
   const ROW_H = 82;
