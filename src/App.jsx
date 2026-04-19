@@ -15,6 +15,10 @@ import EmojiFlyLayer      from './components/EmojiFlyLayer';
 import TourOverlay        from './components/TourOverlay';
 import MobileView         from './components/MobileView';
 
+// 🆕 BREACH: dimensional wall system
+import { useDimensionalBreach }   from './hooks/useDimensionalBreach';
+import DimensionalBreachOverlay   from './components/DimensionalBreachOverlay';
+
 const supabase = createClient(
   'https://vzdrpydtxlamoqtukgld.supabase.co',
   'sb_publishable_o1d0wmxwLrJCuTQ84uY38g__dqoj2dD'
@@ -174,6 +178,9 @@ export default function App() {
   const [isMobile,        setIsMobile]        = useState(() => window.matchMedia('(max-width: 768px)').matches);
   const dailyTips = useRef(getDailyTips());
 
+  // 🆕 BREACH: dimensional wall system
+  const { activeBreach, registerClick: registerBreachClick } = useDimensionalBreach();
+
   const slideTimerRef   = useRef(null);
   const presenceRef     = useRef(null);
   const partyTimerRef   = useRef(null);
@@ -326,6 +333,32 @@ export default function App() {
   }, [account]);
 
   useEffect(() => {
+    if (!account) return;
+    const meStaffLocal = getStaffEntry(account.username.toLowerCase());
+    const channel = supabase.channel('presence-party',{config:{presence:{key:account.username.toLowerCase()}}});
+    channel
+      .on('presence',{event:'sync'},()=>{
+        const state=channel.presenceState();
+        setOnlineUsers(Object.values(state).map(arr=>arr[0]).filter(Boolean));
+      })
+      .on('broadcast',{event:'party'},({payload})=>{
+        firePartyLocal(payload.type,payload.text);
+        popAvatar(payload.userId);
+        glowLevelRef.current=Math.min(glowLevelRef.current+0.65,1);
+      })
+      // 🆕 BREACH: listen for other users' pill clicks
+      .on('broadcast',{event:'pill-click'},({payload})=>{
+        registerBreachClick(payload.key, payload.userId, null);
+      })
+      .subscribe(async status=>{
+        if (status==='SUBSCRIBED')
+          await channel.track({id:meStaffLocal?.id||'guest',name:meStaffLocal?.name||account.name,email:account.username.toLowerCase()});
+      });
+    presenceRef.current=channel;
+    return ()=>{ supabase.removeChannel(channel); };
+  }, [account]);
+
+  useEffect(() => {
     const fn = e => {
       if (!e.target.closest('.dsz')&&!e.target.closest('.nav-tab')) {
         setActiveMenu(null); setSocialMenu(null);
@@ -359,28 +392,6 @@ export default function App() {
     const t=setTimeout(()=>{ document.getElementById('my-row')?.scrollIntoView({behavior:'smooth',block:'center'}); },400);
     return ()=>clearTimeout(t);
   }, [account,region]);
-
-  useEffect(() => {
-    if (!account) return;
-    const meStaffLocal = getStaffEntry(account.username.toLowerCase());
-    const channel = supabase.channel('presence-party',{config:{presence:{key:account.username.toLowerCase()}}});
-    channel
-      .on('presence',{event:'sync'},()=>{
-        const state=channel.presenceState();
-        setOnlineUsers(Object.values(state).map(arr=>arr[0]).filter(Boolean));
-      })
-      .on('broadcast',{event:'party'},({payload})=>{
-        firePartyLocal(payload.type,payload.text);
-        popAvatar(payload.userId);
-        glowLevelRef.current=Math.min(glowLevelRef.current+0.65,1);
-      })
-      .subscribe(async status=>{
-        if (status==='SUBSCRIBED')
-          await channel.track({id:meStaffLocal?.id||'guest',name:meStaffLocal?.name||account.name,email:account.username.toLowerCase()});
-      });
-    presenceRef.current=channel;
-    return ()=>{ supabase.removeChannel(channel); };
-  }, [account]);
 
   // mobile party — before early returns
   useEffect(() => {
@@ -626,6 +637,16 @@ export default function App() {
     popAvatar(meStaff?.id||'guest');
     glowLevelRef.current=Math.min(glowLevelRef.current+0.65,1);
     presenceRef.current?.send({type:'broadcast',event:'party',payload:{type,text,userId:meStaff?.id||'guest'}});
+
+    // 🆕 BREACH: register click toward dimensional wall
+    const breachKey = `${ds}-${type}`;
+    const userId = meStaff?.id || 'guest';
+    registerBreachClick(breachKey, userId, pill);
+    presenceRef.current?.send({
+      type: 'broadcast',
+      event: 'pill-click',
+      payload: { key: breachKey, userId },
+    });
   };
 
   const handleTableScroll=()=>{
@@ -1042,6 +1063,9 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* 🆕 BREACH: dimensional wall overlay (always last) */}
+      <DimensionalBreachOverlay breach={activeBreach} />
     </div>
   );
 }
