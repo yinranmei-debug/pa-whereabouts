@@ -806,7 +806,9 @@ export default function App() {
           <div className="user-chip">
             <span className="user-name">{account.name}</span>
             <Avatar name={meStaff?.name||account.name} photoUrl={staffPhotos[meStaff?.id]} size={28}/>
-            <button className="signout-btn" onClick={logout}>Sign out</button>
+            <button className="signout-btn" onClick={logout} title="Sign out">
+              {isMobile ? '→' : 'Sign out'}
+            </button>
           </div>
         </div>
       </nav>
