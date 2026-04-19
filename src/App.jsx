@@ -283,9 +283,11 @@ export default function App() {
     return () => clearTimeout(t);
   }, [account]);
 
-  // tour — show every login for testing
+  // tour — first time only
   useEffect(() => {
     if (!account) return;
+    const key = `tour-done-${account.username}`;
+    if (localStorage.getItem(key)) return;
     const t = setTimeout(() => {
       setShowTips(false);
       setShowTour(true);
@@ -683,12 +685,11 @@ export default function App() {
       <div ref={glowFrameRef} className="glow-frame"/>
 
       {showTour && (
-        <TourOverlay onDone={()=>{
+       <TourOverlay onDone={()=>{
           setShowTour(false);
           setShowWelcome(true);
           setTimeout(()=>setShowWelcome(false), 3500);
-          // TODO: restore before production:
-          // localStorage.setItem(`tour-done-${account.username}`,'1');
+          localStorage.setItem(`tour-done-${account.username}`,'1');
         }}/>
       )}
 
