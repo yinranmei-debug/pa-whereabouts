@@ -115,7 +115,7 @@ const MobileView = ({
   };
 
   const screenW  = typeof window !== 'undefined' ? window.innerWidth : 390;
-  const NAME_W   = 96;
+  const NAME_W   = 108;
   const PADDING  = 16;
   const NON_W    = 52;
 
@@ -314,7 +314,7 @@ const MobileView = ({
                           style={{position:'relative',cursor:isMe?'pointer':'default',flexShrink:0}}
                           onClick={()=>{ if (isMe) setSocialMenu(socialMenu===m.id?null:m.id); }}
                         >
-                          <Avatar name={m.name} photoUrl={staffPhotos[m.id]} size={34} isMe={isMe}/>
+                          <Avatar name={m.name} photoUrl={staffPhotos[m.id]} size={28} isMe={isMe}/>
                           {emotions[m.id] && (
                             <div style={{
                               position:'absolute',bottom:-3,right:-3,
