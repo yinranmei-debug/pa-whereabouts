@@ -13,6 +13,7 @@ import LoginScreen        from './components/LoginScreen';
 import AccessDeniedScreen from './components/AccessDeniedScreen';
 import EmojiFlyLayer      from './components/EmojiFlyLayer';
 import TourOverlay        from './components/TourOverlay';
+import MobileView         from './components/MobileView';
 
 const supabase = createClient(
   'https://vzdrpydtxlamoqtukgld.supabase.co',
@@ -65,6 +66,7 @@ const BulbIcon = ({ size=20, color='#fbbf24' }) => (
     <path d="M9 17h6"/>
   </svg>
 );
+
 const CONFETTI_COLORS = [
   '#009bff','#770bff','#00e5ff','#a78bfa','#60a5fa',
   '#f472b6','#34d399','#fbbf24','#f87171','#818cf8',
@@ -106,7 +108,6 @@ function WelcomeConfetti() {
         }
       `}</style>
 
-      {/* particles */}
       <div style={{position:'fixed',inset:0,pointerEvents:'none',zIndex:12000,overflow:'hidden'}}>
         {items.current.map(p => (
           <div
@@ -115,7 +116,7 @@ function WelcomeConfetti() {
               position: 'absolute',
               left: `${p.left}%`,
               top: '-16px',
-              width:  p.shape === 'rect' ? p.size : p.size,
+              width:  p.size,
               height: p.shape === 'rect' ? p.size * 0.6 : p.size,
               borderRadius: p.shape === 'circle' ? '50%' : '2px',
               background: p.color,
@@ -128,7 +129,6 @@ function WelcomeConfetti() {
         ))}
       </div>
 
-      {/* welcome card */}
       <div style={{position:'fixed',inset:0,display:'flex',alignItems:'center',justifyContent:'center',zIndex:12001,pointerEvents:'none'}}>
         <div style={{
           background:'linear-gradient(135deg,#009bff,#770bff)',
@@ -145,6 +145,7 @@ function WelcomeConfetti() {
     </>
   );
 }
+
 export default function App() {
   const [isInit,          setIsInit]          = useState(false);
   const [account,         setAccount]         = useState(null);
@@ -176,6 +177,7 @@ export default function App() {
   const [tipVisible,      setTipVisible]      = useState(true);
   const [showTour,        setShowTour]        = useState(false);
   const [showWelcome,     setShowWelcome]     = useState(false);
+  const [isMobile,        setIsMobile]        = useState(window.innerWidth <= 768);
   const dailyTips = useRef(getDailyTips());
 
   const slideTimerRef   = useRef(null);
@@ -189,6 +191,13 @@ export default function App() {
   const myAvatarRef     = useRef(null);
   const flightOnLandRef = useRef(null);
   const touchDragRef    = useRef(null);
+
+  // responsive detection via state (not window.innerWidth inline)
+  useEffect(() => {
+    const fn = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', fn);
+    return () => window.removeEventListener('resize', fn);
+  }, []);
 
   const measureColX = useCallback(() => {
     const map = {};
@@ -272,12 +281,11 @@ export default function App() {
     return () => clearTimeout(t);
   }, [account]);
 
-  // tour — show every login for testing, restore localStorage check for production
   // tour — show every login for testing
   useEffect(() => {
     if (!account) return;
     const t = setTimeout(() => {
-      setShowTips(false); // close tips first so tour spotlight is visible
+      setShowTips(false);
       setShowTour(true);
     }, 2800);
     return () => clearTimeout(t);
@@ -396,7 +404,6 @@ export default function App() {
   const meStaff = getStaffEntry(me);
 
   const popAvatar = userId => {
-    // pop table row avatar
     const el = document.getElementById(`av-${userId}`);
     if (el) {
       clearTimeout(partyTimerRef.current);
@@ -406,7 +413,6 @@ export default function App() {
       el.style.transform='scale(1.7)';
       partyTimerRef.current=setTimeout(()=>{ el.style.transition='transform 0.5s ease'; el.style.transform='scale(1)'; },500);
     }
-    // also pop the matching avatar in the online-pill stack
     const onlineEl = document.getElementById(`online-av-${userId}`);
     if (onlineEl) {
       onlineEl.style.transition='none'; onlineEl.style.transform='scale(1)';
@@ -504,7 +510,6 @@ export default function App() {
     setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
   };
 
-  // ── mouse drag ──────────────────────────────────────────────────────
   const handleStatusCellMouseDown=(staffId,dateIdx,shift,status,e)=>{
     if (!account||staffId!==meStaff?.id) return;
     setDragging({staffId,dateIdx,shift,status,isEmptyCell:status==='none'});
@@ -549,7 +554,6 @@ export default function App() {
     setDragging(null); setPreview([]);
   };
 
-  // ── touch drag — mirrors mouse logic exactly ────────────────────────
   const handleStatusCellTouchStart=(staffId,dateIdx,shift,status,e)=>{
     if (!account||staffId!==meStaff?.id) return;
     touchDragRef.current = { staffId, dateIdx, shift, status, isEmptyCell: status==='none' };
@@ -559,7 +563,7 @@ export default function App() {
 
   const handleStatusCellTouchMove=(e)=>{
     if (!touchDragRef.current) return;
-    e.preventDefault(); // prevent scroll while dragging
+    e.preventDefault();
     const touch = e.touches[0];
     const el = document.elementFromPoint(touch.clientX, touch.clientY);
     if (!el) return;
@@ -609,6 +613,16 @@ export default function App() {
     presenceRef.current?.send({type:'broadcast',event:'party',payload:{type,text,userId:meStaff?.id||'guest'}});
   };
 
+  // mobile party event — must be after fireParty, no deps so always fresh
+  useEffect(() => {
+    const fn = e => {
+      const { type, text, ds } = e.detail;
+      fireParty({ currentTarget: e.target, stopPropagation: ()=>{} }, type, text, ds);
+    };
+    document.addEventListener('mob-party', fn);
+    return () => document.removeEventListener('mob-party', fn);
+  });
+
   const handleTableScroll=()=>{
     if (headerRef.current&&scrollRef.current)
       headerRef.current.scrollLeft=scrollRef.current.scrollLeft;
@@ -654,11 +668,7 @@ export default function App() {
   const currentTip = dailyTips.current[tipIdx];
 
   return (
-    <div
-      style={{minHeight:'100vh',background:'#F0F4FF'}}
-      onMouseUp={handleStatusCellMouseUp}
-      onTouchEnd={handleStatusCellTouchEnd}
-    >
+    <div style={{minHeight:'100vh',background:'#F0F4FF'}} onMouseUp={handleStatusCellMouseUp} onTouchEnd={handleStatusCellTouchEnd}>
       <GlobalStyles/>
       <div ref={glowFrameRef} className="glow-frame"/>
 
@@ -682,7 +692,6 @@ export default function App() {
         />
       )}
 
-      {/* weekend/holiday emoji overlay */}
       {nonEditableCols.map(d=>{
         const x = colXMap[d.ds];
         if (!x) return null;
@@ -701,7 +710,6 @@ export default function App() {
         );
       })}
 
-      {/* tips panel */}
       {showTips && currentTip && (
         <div style={{position:'fixed',inset:0,zIndex:10500,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(15,23,42,0.45)',backdropFilter:'blur(4px)',animation:'dropIn 0.2s ease'}}>
           <div style={{background:'#fff',borderRadius:24,width:480,maxWidth:'92vw',padding:'36px 32px 30px',boxShadow:'0 24px 64px rgba(0,0,0,0.18)',position:'relative',overflow:'hidden'}}>
@@ -766,36 +774,25 @@ export default function App() {
             <BulbIcon size={18} color='#fbbf24'/>
           </button>
           <div className="online-pill">
-  <div className="online-stack">
-    {onlineUsers.length === 0 ? (
-      <div
-        id={`online-av-${meStaff?.id}`}
-        title={account.name}
-        className="online-av"
-        style={{zIndex:10,marginLeft:0}}
-      >
-        <Avatar name={account.name} photoUrl={staffPhotos[meStaff?.id]} size={24}/>
-      </div>
-    ) : (
-      onlineUsers.slice(0,4).map((u,i)=>(
-        <div
-          key={u.email}
-          id={`online-av-${u.id}`}
-          title={u.name}
-          className="online-av"
-          style={{zIndex:10-i}}
-        >
-          <Avatar name={u.name} photoUrl={staffPhotos[u.id]} size={24}/>
-        </div>
-      ))
-    )}
-    {onlineUsers.length>4&&<div className="online-count">+{onlineUsers.length-4}</div>}
-  </div>
-  <div style={{display:'flex',alignItems:'center',gap:6}}>
+            <div className="online-stack">
+              {onlineUsers.length === 0 ? (
+                <div id={`online-av-${meStaff?.id}`} title={account.name} className="online-av" style={{zIndex:10,marginLeft:0}}>
+                  <Avatar name={account.name} photoUrl={staffPhotos[meStaff?.id]} size={24}/>
+                </div>
+              ) : (
+                onlineUsers.slice(0,4).map((u,i)=>(
+                  <div key={u.email} id={`online-av-${u.id}`} title={u.name} className="online-av" style={{zIndex:10-i}}>
+                    <Avatar name={u.name} photoUrl={staffPhotos[u.id]} size={24}/>
+                  </div>
+                ))
+              )}
+              {onlineUsers.length>4&&<div className="online-count">+{onlineUsers.length-4}</div>}
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:6}}>
               <div className="online-live-dot"/>
               <span className="online-live-count" style={{fontSize:11,color:'rgba(255,255,255,0.5)',fontWeight:500}}>{Math.max(onlineUsers.length,1)} online</span>
             </div>
-</div>
+          </div>
           <div className="user-chip">
             <span className="user-name">{account.name}</span>
             <Avatar name={meStaff?.name||account.name} photoUrl={staffPhotos[meStaff?.id]} size={28}/>
@@ -807,18 +804,15 @@ export default function App() {
       {/* TOOLBAR */}
       <div className="toolbar">
         <button className="tb-btn icon" onClick={()=>navigateWeek(-7)}>‹</button>
-        <button
-          className="tb-btn today"
-          onClick={e=>{
-            navigateWeek(0,new Date());
-            const btn=e.currentTarget;
-            btn.classList.remove('today-glint'); void btn.offsetWidth;
-            btn.classList.add('today-glint');
-            setTimeout(()=>btn.classList.remove('today-glint'),600);
-            setTodaySonar(true);
-            setTimeout(()=>setTodaySonar(false),2000);
-          }}
-        >Today</button>
+        <button className="tb-btn today" onClick={e=>{
+          navigateWeek(0,new Date());
+          const btn=e.currentTarget;
+          btn.classList.remove('today-glint'); void btn.offsetWidth;
+          btn.classList.add('today-glint');
+          setTimeout(()=>btn.classList.remove('today-glint'),600);
+          setTodaySonar(true);
+          setTimeout(()=>setTodaySonar(false),2000);
+        }}>Today</button>
         <button className="tb-btn icon" onClick={()=>navigateWeek(7)}>›</button>
         <span className="tb-month">{viewDate.toLocaleString('en-US',{month:'long',year:'numeric'})}</span>
         <select className="tb-select" value={viewDate.getMonth()} onChange={e=>{
@@ -844,171 +838,196 @@ export default function App() {
         <div className="leg-item"><div className="leg-dot" style={{background:'#fafafa',border:'1.5px solid #f3f4f6'}}/>Team days</div>
       </div>
 
-      {/* TABLE */}
-      <div className="tbl-outer dsz">
-        <div className="tbl-card">
-          <div className="tbl-hdr-sticky">
-            <div ref={headerRef} className="tbl-hdr-row">
-              <div className="tbl-hdr-namecol"/>
-              {week.map(d=>(
-                <div key={d.ds} data-hdr-ds={d.ds} className="tbl-hdr-daycol">
-                  <div style={{fontSize:'11px',fontWeight:'700',letterSpacing:'0.06em',marginBottom:'6px',color:d.isToday?'#770bff':'#9ca3af'}}>{d.dayName.toUpperCase()}</div>
-                  <div style={{position:'relative',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto',width:'34px',height:'34px'}}>
-                    {d.isToday && todaySonar && (
-                      <>
-                        <div className="sonar-ring sonar-animate" style={{animationDelay:'0s',width:'34px',height:'34px'}}/>
-                        <div className="sonar-ring sonar-animate" style={{animationDelay:'0.4s',width:'34px',height:'34px'}}/>
-                      </>
-                    )}
-                    <div style={{width:'34px',height:'34px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',background:d.isToday?'linear-gradient(135deg,#009bff,#770bff)':'transparent',color:d.isToday?'#fff':'#111827',fontSize:'15px',fontWeight:'700',position:'relative',zIndex:1}}>
-                      {d.num}
+      {/* MOBILE OR DESKTOP */}
+      {isMobile ? (
+        <MobileView
+          staffList={staffList}
+          week={week}
+          records={records}
+          me={me}
+          meStaff={meStaff}
+          STATUS_CONFIG={STATUS_CONFIG}
+          onStatusSelect={(key, sId) => {
+            const parts=key.split('-');
+            const shift=parts[parts.length-1],staffId=parts[0],date=parts.slice(1,-1).join('-');
+            setRecords(r=>({...r,[key]:sId}));
+            setSaveStatus('saving');
+            supabase.from('statuses').upsert({id:key,staff_id:staffId,date,shift,status:sId})
+              .then(()=>{ setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000); });
+          }}
+          onStatusClear={(key) => {
+            setRecords(r=>{const n={...r};delete n[key];return n;});
+            setSaveStatus('saving');
+            supabase.from('statuses').delete().eq('id',key)
+              .then(()=>{ setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000); });
+          }}
+          emotions={emotions}
+          staffPhotos={staffPhotos}
+          socialMenu={socialMenu}
+          setSocialMenu={setSocialMenu}
+          triggerMoodFly={triggerMoodFly}
+          onlineUsers={onlineUsers}
+        />
+      ) : (
+        <div className="tbl-outer dsz">
+          <div className="tbl-card">
+            <div className="tbl-hdr-sticky">
+              <div ref={headerRef} className="tbl-hdr-row">
+                <div className="tbl-hdr-namecol"/>
+                {week.map(d=>(
+                  <div key={d.ds} data-hdr-ds={d.ds} className="tbl-hdr-daycol">
+                    <div style={{fontSize:'11px',fontWeight:'700',letterSpacing:'0.06em',marginBottom:'6px',color:d.isToday?'#770bff':'#9ca3af'}}>{d.dayName.toUpperCase()}</div>
+                    <div style={{position:'relative',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto',width:'34px',height:'34px'}}>
+                      {d.isToday && todaySonar && (
+                        <>
+                          <div className="sonar-ring sonar-animate" style={{animationDelay:'0s',width:'34px',height:'34px'}}/>
+                          <div className="sonar-ring sonar-animate" style={{animationDelay:'0.4s',width:'34px',height:'34px'}}/>
+                        </>
+                      )}
+                      <div style={{width:'34px',height:'34px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',background:d.isToday?'linear-gradient(135deg,#009bff,#770bff)':'transparent',color:d.isToday?'#fff':'#111827',fontSize:'15px',fontWeight:'700',position:'relative',zIndex:1}}>
+                        {d.num}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
 
-          <div
-            ref={scrollRef}
-            className="tbl-scroll dsz"
-            onScroll={handleTableScroll}
-            onMouseLeave={handleStatusCellMouseUp}
-            onTouchMove={handleStatusCellTouchMove}
-          >
-            <table className="main-tbl">
-              <colgroup>
-                <col style={{width:'220px'}}/>
-                {week.map(d=><col key={d.ds}/>)}
-              </colgroup>
-              <tbody>
-                {staffList.map((m,rowIdx)=>{
-                  const isMe=m.email.toLowerCase()===me;
-                  const isFirst=rowIdx===0;
-                  return (
-                    <tr key={m.id} id={isMe?'my-row':undefined}>
-                      <td className="sticky-c" style={{background:'#fff',padding:'0 8px 0 0'}}>
-                        <div className="nw">
-                          <div style={{display:'flex',alignItems:'center',gap:'10px',position:'relative',cursor:isMe?'pointer':'default'}} onClick={()=>{ if (!isMe) return; setSocialMenu(socialMenu===m.id?null:m.id); }}>
-                            <div
-                              ref={isMe?myAvatarRef:null}
-                              id={`av-${m.id}`}
-                              className={`n-av-wrap${isMe?' is-me':' is-other'}`}
-                              style={{position:'relative'}}
-                              onMouseEnter={e=>{ if (!isMe) e.currentTarget.style.transform='scale(1.1)'; }}
-                              onMouseLeave={e=>{ if (!isMe) e.currentTarget.style.transform='scale(1)'; }}
-                            >
-                              <Avatar name={m.name} photoUrl={staffPhotos[m.id]} size={60} isMe={isMe}/>
-                              {emotions[m.id]&&<div className="emo-tag">{emotions[m.id]}</div>}
-                            </div>
-                            <div>
-                              <div className={`n-name${isMe?' me':''}`}>{m.name}</div>
-                              {isMe&&<div className="n-you">YOU</div>}
-                            </div>
-                            {isMe&&socialMenu===m.id&&(
-                              <div className="emo-picker dsz">
-                                {['🧘','⚡','☕','🎯','🚀','💪','🌱'].map(emo=>(
-                                  <div key={emo} onClick={e=>{ e.stopPropagation(); triggerMoodFly(emo, e.currentTarget); }}
-                                    style={{fontSize:'18px',cursor:'pointer',padding:'4px 6px',borderRadius:'6px',transition:'all 0.15s'}}
-                                    onMouseOver={e=>{e.currentTarget.style.background='#f3f4f6';e.currentTarget.style.transform='scale(1.25)';}}
-                                    onMouseOut={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.transform='scale(1)';}}
-                                  >{emo}</div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      {week.map((d,weekIdx)=>{
-                        if (!d.editable) {
-                          if (!isFirst) return null;
-                          const isHol=!!d.hol;
-                          return (
-                            <td key={d.ds} className={`ptd ${tdSlideClass}`} rowSpan={staffList.length}>
+            <div ref={scrollRef} className="tbl-scroll dsz" onScroll={handleTableScroll} onMouseLeave={handleStatusCellMouseUp} onTouchMove={handleStatusCellTouchMove}>
+              <table className="main-tbl">
+                <colgroup>
+                  <col style={{width:'220px'}}/>
+                  {week.map(d=><col key={d.ds}/>)}
+                </colgroup>
+                <tbody>
+                  {staffList.map((m,rowIdx)=>{
+                    const isMe=m.email.toLowerCase()===me;
+                    const isFirst=rowIdx===0;
+                    return (
+                      <tr key={m.id} id={isMe?'my-row':undefined}>
+                        <td className="sticky-c" style={{background:'#fff',padding:'0 8px 0 0'}}>
+                          <div className="nw">
+                            <div style={{display:'flex',alignItems:'center',gap:'10px',position:'relative',cursor:isMe?'pointer':'default'}} onClick={()=>{ if (!isMe) return; setSocialMenu(socialMenu===m.id?null:m.id); }}>
                               <div
-                                data-pill-ds={d.ds}
-                                className={`pill ${isHol?'hol':'we'}`}
-                                onClick={e=>fireParty(e,isHol?'holiday':'weekend',d.hol||'',d.ds)}
-                                onTouchEnd={e=>{ e.preventDefault(); fireParty({currentTarget:e.currentTarget,stopPropagation:()=>{}},isHol?'holiday':'weekend',d.hol||'',d.ds); }}
+                                ref={isMe?myAvatarRef:null}
+                                id={`av-${m.id}`}
+                                className={`n-av-wrap${isMe?' is-me':' is-other'}`}
+                                style={{position:'relative'}}
+                                onMouseEnter={e=>{ if (!isMe) e.currentTarget.style.transform='scale(1.1)'; }}
+                                onMouseLeave={e=>{ if (!isMe) e.currentTarget.style.transform='scale(1)'; }}
                               >
-                                <div className="pill-card"/>
+                                <Avatar name={m.name} photoUrl={staffPhotos[m.id]} size={60} isMe={isMe}/>
+                                {emotions[m.id]&&<div className="emo-tag">{emotions[m.id]}</div>}
+                              </div>
+                              <div>
+                                <div className={`n-name${isMe?' me':''}`}>{m.name}</div>
+                                {isMe&&<div className="n-you">YOU</div>}
+                              </div>
+                              {isMe&&socialMenu===m.id&&(
+                                <div className="emo-picker dsz">
+                                  {['🧘','⚡','☕','🎯','🚀','💪','🌱'].map(emo=>(
+                                    <div key={emo} onClick={e=>{ e.stopPropagation(); triggerMoodFly(emo, e.currentTarget); }}
+                                      style={{fontSize:'18px',cursor:'pointer',padding:'4px 6px',borderRadius:'6px',transition:'all 0.15s'}}
+                                      onMouseOver={e=>{e.currentTarget.style.background='#f3f4f6';e.currentTarget.style.transform='scale(1.25)';}}
+                                      onMouseOut={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.transform='scale(1)';}}
+                                    >{emo}</div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        {week.map((d,weekIdx)=>{
+                          if (!d.editable) {
+                            if (!isFirst) return null;
+                            const isHol=!!d.hol;
+                            return (
+                              <td key={d.ds} className={`ptd ${tdSlideClass}`} rowSpan={staffList.length}>
+                                <div
+                                  data-pill-ds={d.ds}
+                                  className={`pill ${isHol?'hol':'we'}`}
+                                  onClick={e=>fireParty(e,isHol?'holiday':'weekend',d.hol||'',d.ds)}
+                                  onTouchEnd={e=>{ e.preventDefault(); fireParty({currentTarget:e.currentTarget,stopPropagation:()=>{}},isHol?'holiday':'weekend',d.hol||'',d.ds); }}
+                                >
+                                  <div className="pill-card"/>
+                                </div>
+                              </td>
+                            );
+                          }
+                          return (
+                            <td key={d.ds} className={tdSlideClass}>
+                              <div className="dw">
+                                {['AM','PM'].map((shift,si)=>{
+                                  const key=`${m.id}-${d.ds}-${shift}`;
+                                  const sid=records[key]||'none';
+                                  const cfg=STATUS_CONFIG[sid];
+                                  const open=activeMenu===key;
+                                  const isPreview=isPreviewCell(m.id,weekIdx,shift);
+                                  const isBulkSelected=bulkSelectCells.includes(key);
+                                  const isSnapping=snapCellKey===key;
+                                  const staggerDelay=staggerCells[key];
+                                  const cls=!isMe?'sh other':sid!=='none'?'sh set':'sh mine';
+                                  return (
+                                    <div key={shift} style={{position:'relative'}}>
+                                      <div
+                                        data-cell-key={key}
+                                        data-cell-touch="1"
+                                        data-staff-id={m.id}
+                                        data-date-idx={weekIdx}
+                                        data-shift={shift}
+                                        id={isFirst&&si===0?AM_REF:undefined}
+                                        className={[cls,isPreview?'preview':'',isSnapping?'cell-snap':'',isBulkSelected?'bulk-selected':'',staggerDelay!==undefined?'cell-stagger':''].filter(Boolean).join(' ')}
+                                        style={{
+                                          ...(sid!=='none'?{background:cfg.bg,color:cfg.color,border:`1.5px solid ${cfg.color}30`}:{}),
+                                          ...(staggerDelay!==undefined?{animationDelay:`${staggerDelay}ms`}:{}),
+                                          touchAction:'none',
+                                        }}
+                                        onMouseDown={e=>handleStatusCellMouseDown(m.id,weekIdx,shift,sid,e)}
+                                        onMouseOver={()=>handleStatusCellMouseOver(m.id,weekIdx,shift)}
+                                        onTouchStart={e=>handleStatusCellTouchStart(m.id,weekIdx,shift,sid,e)}
+                                        onClick={e=>{
+                                          if (!isMe) return;
+                                          e.stopPropagation();
+                                          if (preview.length<=1) {
+                                            if (sid!=='none') handleStatusClear(key,e);
+                                            else setActiveMenu(open?null:key);
+                                          }
+                                        }}
+                                      >
+                                        {sid!=='none'
+                                          ? <><span className="sh-icon">{cfg.icon}</span><span>{shift}</span></>
+                                          : shift
+                                        }
+                                      </div>
+                                      {open&&isMe&&(
+                                        <div className="s-drop dsz">
+                                          <div style={{padding:'3px 10px 7px',fontSize:'10px',color:'#9ca3af',fontWeight:'600',borderBottom:'1px solid #f0f0f0',marginBottom:'3px',letterSpacing:'0.06em'}}>
+                                            {bulkSelectCells.length>0?`${bulkSelectCells.length} CELLS`:'STATUS'}
+                                          </div>
+                                          {Object.entries(STATUS_CONFIG).map(([sId,sCfg])=>(
+                                            <div key={sId} className="s-opt" onClick={e=>{ e.stopPropagation(); if (bulkSelectCells.length>0) handleBulkStatusSelect(sId,e); else handleStatusSelect(key,sId,e); }}>
+                                              <span className="s-opt-icon">{sCfg.icon}</span>
+                                              <span className="s-opt-label">{sCfg.label}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
                               </div>
                             </td>
                           );
-                        }
-                        return (
-                          <td key={d.ds} className={tdSlideClass}>
-                            <div className="dw">
-                              {['AM','PM'].map((shift,si)=>{
-                                const key=`${m.id}-${d.ds}-${shift}`;
-                                const sid=records[key]||'none';
-                                const cfg=STATUS_CONFIG[sid];
-                                const open=activeMenu===key;
-                                const isPreview=isPreviewCell(m.id,weekIdx,shift);
-                                const isBulkSelected=bulkSelectCells.includes(key);
-                                const isSnapping=snapCellKey===key;
-                                const staggerDelay=staggerCells[key];
-                                const cls=!isMe?'sh other':sid!=='none'?'sh set':'sh mine';
-                                return (
-                                  <div key={shift} style={{position:'relative'}}>
-                                    <div
-                                      data-cell-key={key}
-                                      data-cell-touch="1"
-                                      data-staff-id={m.id}
-                                      data-date-idx={weekIdx}
-                                      data-shift={shift}
-                                      id={isFirst&&si===0?AM_REF:undefined}
-                                      className={[cls,isPreview?'preview':'',isSnapping?'cell-snap':'',isBulkSelected?'bulk-selected':'',staggerDelay!==undefined?'cell-stagger':''].filter(Boolean).join(' ')}
-                                      style={{
-                                        ...(sid!=='none'?{background:cfg.bg,color:cfg.color,border:`1.5px solid ${cfg.color}30`}:{}),
-                                        ...(staggerDelay!==undefined?{animationDelay:`${staggerDelay}ms`}:{}),
-                                        touchAction:'none',
-                                      }}
-                                      onMouseDown={e=>handleStatusCellMouseDown(m.id,weekIdx,shift,sid,e)}
-                                      onMouseOver={()=>handleStatusCellMouseOver(m.id,weekIdx,shift)}
-                                      onTouchStart={e=>handleStatusCellTouchStart(m.id,weekIdx,shift,sid,e)}
-                                      onClick={e=>{
-                                        if (!isMe) return;
-                                        e.stopPropagation();
-                                        if (preview.length<=1) {
-                                          if (sid!=='none') handleStatusClear(key,e);
-                                          else setActiveMenu(open?null:key);
-                                        }
-                                      }}
-                                    >
-                                      {sid!=='none'
-                                        ? <><span className="sh-icon">{cfg.icon}</span><span>{shift}</span></>
-                                        : shift
-                                      }
-                                    </div>
-                                    {open&&isMe&&(
-                                      <div className="s-drop dsz">
-                                        <div style={{padding:'3px 10px 7px',fontSize:'10px',color:'#9ca3af',fontWeight:'600',borderBottom:'1px solid #f0f0f0',marginBottom:'3px',letterSpacing:'0.06em'}}>
-                                          {bulkSelectCells.length>0?`${bulkSelectCells.length} CELLS`:'STATUS'}
-                                        </div>
-                                        {Object.entries(STATUS_CONFIG).map(([sId,sCfg])=>(
-                                          <div key={sId} className="s-opt" onClick={e=>{ e.stopPropagation(); if (bulkSelectCells.length>0) handleBulkStatusSelect(sId,e); else handleStatusSelect(key,sId,e); }}>
-                                            <span className="s-opt-icon">{sCfg.icon}</span>
-                                            <span className="s-opt-label">{sCfg.label}</span>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
