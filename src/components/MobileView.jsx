@@ -13,11 +13,11 @@ const MobileView = ({
   const [activeCell,  setActiveCell]  = useState(null);
   const [dragPreview, setDragPreview] = useState([]);
   const [isDragging,  setIsDragging]  = useState(false);
-  const [dayOffset,   setDayOffset]   = useState(0);
   const dragStartRef = useRef(null);
   const longPressRef = useRef(null);
   const scrollRef    = useRef(null);
   const headerRef    = useRef(null);
+  const [dayOffset, setDayOffset] = useState(0);
 
   useEffect(() => {
     const fn = e => {
@@ -107,48 +107,44 @@ const MobileView = ({
     setDragPreview([]);
   };
 
+  // sync header scroll with body scroll
   const handleBodyScroll = () => {
     if (headerRef.current && scrollRef.current) {
       headerRef.current.scrollLeft = scrollRef.current.scrollLeft;
     }
   };
 
-  // column sizing
-  const screenW      = typeof window !== 'undefined' ? window.innerWidth : 390;
-  const NAME_W       = 96;
-  const PADDING      = 16;
-  const NON_W        = 52;
-  const DAYS_PER_VIEW = 5;
+  const screenW  = typeof window !== 'undefined' ? window.innerWidth : 390;
+  const NAME_W   = 96;
+  const PADDING  = 16;
+  const NON_W    = 52;
 
-  // split week into editable / non-editable
-  const editableDays = week.filter(d => d.editable);
-  const maxOffset    = Math.max(0, editableDays.length - DAYS_PER_VIEW);
-
-  // visible editable days window
+  // visible 5 days based on offset
+  // offset 0: show Mon-Fri (first 5 editable days)
+  // offset 1: show remaining days (Wed-Sun style)
+  const editableDays    = week.filter(d => d.editable);
+  const nonEditableDays = week.filter(d => !d.editable);
+  const DAYS_PER_VIEW   = 5;
+  const maxOffset       = Math.max(0, editableDays.length - DAYS_PER_VIEW);
   const visibleEditable = editableDays.slice(dayOffset, dayOffset + DAYS_PER_VIEW);
-  const visibleDsSet    = new Set(visibleEditable.map(d => d.ds));
-  const firstDs         = visibleEditable[0]?.ds;
-  const lastDs          = visibleEditable[visibleEditable.length - 1]?.ds;
 
-  // include non-editable days that fall within the visible range
+  // rebuild visible week: interleave non-editable in original order
+  const visibleDsSet = new Set(visibleEditable.map(d => d.ds));
+  // always show non-editable that fall within the range
+  const firstDs = visibleEditable[0]?.ds;
+  const lastDs  = visibleEditable[visibleEditable.length-1]?.ds;
   const visibleWeek = week.filter(d => {
     if (d.editable) return visibleDsSet.has(d.ds);
+    // show non-editable if it falls between first and last visible day
     return d.ds >= firstDs && d.ds <= lastDs;
   });
 
-  const visWorkdays = visibleWeek.filter(d => d.editable).length;
-  const visNonEdit  = visibleWeek.filter(d => !d.editable).length;
-  const EDIT_W      = Math.max(44, Math.floor(
-    (screenW - NAME_W - PADDING - visNonEdit * NON_W) / Math.max(visWorkdays, 1)
-  ));
-  const totalW = NAME_W + visWorkdays * EDIT_W + visNonEdit * NON_W;
+  const workdays = visibleWeek.filter(d => d.editable).length;
+  const nonEdit  = visibleWeek.filter(d => !d.editable).length;
+  const EDIT_W   = Math.max(44, Math.floor((screenW - NAME_W - PADDING - nonEdit * NON_W) / Math.max(workdays, 1)));
+  const totalW   = NAME_W + workdays * EDIT_W + nonEdit * NON_W;
 
-  const ROW_H = 82;
-
-  // label for toggle bar
-  const rangeLabel = visibleEditable.length > 0
-    ? `${visibleEditable[0].dayName} – ${visibleEditable[visibleEditable.length-1].dayName}`
-    : '';
+  const ROW_H = 82; a
 
   return (
     <div style={{
@@ -201,16 +197,6 @@ const MobileView = ({
           padding:8px 14px; margin:8px 8px 4px;
           background:rgba(15,23,42,0.04); border-radius:12px;
         }
-        .mob-nav-btn {
-          width:28px; height:28px; border-radius:8px;
-          border:1.5px solid #e5e7eb;
-          display:flex; align-items:center; justify-content:center;
-          font-size:14px; cursor:pointer;
-          transition:all 0.15s;
-          background:#fff; color:#374151;
-        }
-        .mob-nav-btn:disabled { background:#f9fafb; color:#d1d5db; cursor:default; }
-        .mob-nav-btn:not(:disabled):active { transform:scale(0.9); }
       `}</style>
 
       {/* online bar */}
@@ -229,49 +215,8 @@ const MobileView = ({
         </div>
       )}
 
-      {/* day range toggle bar */}
-      <div style={{
-        display:'flex', alignItems:'center', justifyContent:'space-between',
-        padding:'6px 12px 4px',
-      }}>
-        <span style={{fontSize:11,fontWeight:600,color:'#6b7280',letterSpacing:'0.02em'}}>
-          {rangeLabel}
-        </span>
-        <div style={{display:'flex',gap:6,alignItems:'center'}}>
-          {/* dot indicators */}
-          <div style={{display:'flex',gap:4,marginRight:4}}>
-            {Array.from({length: maxOffset + 1}).map((_,i) => (
-              <div
-                key={i}
-                onClick={() => setDayOffset(i)}
-                style={{
-                  width: i === dayOffset ? 16 : 6,
-                  height: 6,
-                  borderRadius: 3,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  background: i === dayOffset
-                    ? 'linear-gradient(90deg,#009bff,#770bff)'
-                    : '#e5e7eb',
-                }}
-              />
-            ))}
-          </div>
-          <button
-            className="mob-nav-btn"
-            disabled={dayOffset === 0}
-            onClick={() => setDayOffset(o => Math.max(0, o - 1))}
-          >‹</button>
-          <button
-            className="mob-nav-btn"
-            disabled={dayOffset >= maxOffset}
-            onClick={() => setDayOffset(o => Math.min(maxOffset, o + 1))}
-          >›</button>
-        </div>
-      </div>
-
       {/* card wrapper */}
-      <div style={{margin:'0 8px 8px',background:'#fff',borderRadius:16,border:'1px solid rgba(226,232,240,0.8)',boxShadow:'0 2px 12px rgba(0,0,0,0.05)'}}>
+      <div style={{margin:'8px',background:'#fff',borderRadius:16,border:'1px solid rgba(226,232,240,0.8)',boxShadow:'0 2px 12px rgba(0,0,0,0.05)'}}>
 
         {/* ── STICKY HEADER — independent div, not inside table ── */}
         <div
@@ -283,12 +228,14 @@ const MobileView = ({
             background: '#fafbff',
             borderBottom: '1px solid #e5e7eb',
             borderRadius: '16px 16px 0 0',
-            overflowX: 'hidden',
+            overflowX: 'hidden', // clips visually but scrollLeft still works
             display: 'flex',
           }}
         >
+          {/* name col placeholder */}
           <div style={{width: NAME_W, flexShrink: 0}}/>
-          {visibleWeek.map(d => (
+          {/* day headers */}
+          {week.map(d => (
             <div
               key={d.ds}
               style={{
@@ -328,12 +275,19 @@ const MobileView = ({
         <div
           ref={scrollRef}
           onScroll={handleBodyScroll}
-          style={{overflowX:'auto',WebkitOverflowScrolling:'touch'}}
+          style={{
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
+          }}
         >
-          <table style={{borderCollapse:'collapse',width:totalW,tableLayout:'fixed'}}>
+          <table style={{
+            borderCollapse: 'collapse',
+            width: totalW,
+            tableLayout: 'fixed',
+          }}>
             <colgroup>
               <col style={{width: NAME_W}}/>
-              {visibleWeek.map(d => (
+              {week.map(d => (
                 <col key={d.ds} style={{width: d.editable ? EDIT_W : NON_W}}/>
               ))}
             </colgroup>
@@ -345,26 +299,29 @@ const MobileView = ({
                 return (
                   <tr key={m.id}>
                     {/* sticky name col */}
-                    <td style={{position:'sticky',left:0,zIndex:50,background:'#fff',padding:0}}>
+                    <td style={{
+                      position: 'sticky', left: 0, zIndex: 50,
+                      background: '#fff', padding: 0,
+                    }}>
                       <div style={{
                         height: ROW_H,
-                        display:'flex',alignItems:'center',gap:8,
-                        padding:'0 6px 0 8px',
-                        borderBottom:'1px solid #f1f5f9',
-                        overflow:'visible',
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        padding: '0 6px 0 8px',
+                        borderBottom: '1px solid #f1f5f9',
+                        overflow: 'visible',
                       }}>
                         <div
                           style={{position:'relative',cursor:isMe?'pointer':'default',flexShrink:0}}
                           onClick={()=>{ if (isMe) setSocialMenu(socialMenu===m.id?null:m.id); }}
                         >
-                          <Avatar name={m.name} photoUrl={staffPhotos[m.id]} size={32} isMe={isMe}/>
+                          <Avatar name={m.name} photoUrl={staffPhotos[m.id]} size={34} isMe={isMe}/>
                           {emotions[m.id] && (
                             <div style={{
                               position:'absolute',bottom:-3,right:-3,
                               background:'#fff',borderRadius:'50%',
-                              width:15,height:15,
+                              width:16,height:16,
                               display:'flex',alignItems:'center',justifyContent:'center',
-                              fontSize:10,boxShadow:'0 1px 4px rgba(0,0,0,0.12)',
+                              fontSize:11,boxShadow:'0 1px 4px rgba(0,0,0,0.12)',
                               border:'1.5px solid #fff',
                             }}>
                               {emotions[m.id]}
@@ -393,10 +350,9 @@ const MobileView = ({
                         </div>
                         <div style={{minWidth:0,flex:1}}>
                           <div style={{
-                            fontSize:10,fontWeight:isMe?700:500,
+                            fontSize:9,fontWeight:isMe?700:500,
                             color:isMe?'#111827':'#374151',
                             overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',
-                            lineHeight:1.3,
                           }}>
                             {m.name}
                           </div>
@@ -412,8 +368,8 @@ const MobileView = ({
                       </div>
                     </td>
 
-                    {/* day cols — use visibleWeek */}
-                    {visibleWeek.map((d, weekIdx) => {
+                    {/* day cols */}
+                    {week.map((d, weekIdx) => {
                       if (!d.editable) {
                         if (!isFirst) return <td key={d.ds} style={{padding:0}}/>;
                         const isHol = !!d.hol;
@@ -424,12 +380,10 @@ const MobileView = ({
                             style={{padding:'3px 2px',verticalAlign:'top',height: ROW_H * staffList.length}}
                           >
                             <div
+                              className={`mob-pill ${isHol?'hol':'we'}`}
                               style={{
                                 height:'100%',minHeight:76,
                                 borderRadius:10,
-                                background: isHol
-                                  ? 'linear-gradient(180deg,#fdf2f8,#fce7f3)'
-                                  : 'linear-gradient(180deg,#eff6ff,#dbeafe)',
                                 display:'flex',flexDirection:'column',
                                 alignItems:'center',justifyContent:'center',
                                 gap:2,cursor:'pointer',
