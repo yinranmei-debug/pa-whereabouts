@@ -326,28 +326,6 @@ export default function App() {
   }, [account]);
 
   useEffect(() => {
-    if (!account) return;
-    const meStaffLocal = getStaffEntry(account.username.toLowerCase());
-    const channel = supabase.channel('presence-party',{config:{presence:{key:account.username.toLowerCase()}}});
-    channel
-      .on('presence',{event:'sync'},()=>{
-        const state=channel.presenceState();
-        setOnlineUsers(Object.values(state).map(arr=>arr[0]).filter(Boolean));
-      })
-      .on('broadcast',{event:'party'},({payload})=>{
-        firePartyLocal(payload.type,payload.text);
-        popAvatar(payload.userId);
-        glowLevelRef.current=Math.min(glowLevelRef.current+0.65,1);
-      })
-      .subscribe(async status=>{
-        if (status==='SUBSCRIBED')
-          await channel.track({id:meStaffLocal?.id||'guest',name:meStaffLocal?.name||account.name,email:account.username.toLowerCase()});
-      });
-    presenceRef.current=channel;
-    return ()=>{ supabase.removeChannel(channel); };
-  }, [account]);
-
-  useEffect(() => {
     const fn = e => {
       if (!e.target.closest('.dsz')&&!e.target.closest('.nav-tab')) {
         setActiveMenu(null); setSocialMenu(null);
