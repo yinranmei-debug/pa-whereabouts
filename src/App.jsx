@@ -680,28 +680,37 @@ export default function App() {
           <button className="bulb-btn" onClick={()=>{setTipIdx(0);setShowTips(true);}} title="Wellbeing Daily Tips">
             <BulbIcon size={18} color='#fbbf24'/>
           </button>
-          {onlineUsers.length>0&&(
-            <div className="online-pill">
-              <div className="online-stack">
-                {onlineUsers.slice(0,4).map((u,i)=>(
-            <div
-              key={u.email}
-              id={`online-av-${u.id}`}
-              title={u.name}
-              className="online-av"
-              style={{zIndex:10-i}}
-            >
-              <Avatar name={u.name} photoUrl={staffPhotos[u.id]} size={24}/>
-            </div>
-          ))}
-                {onlineUsers.length>4&&<div className="online-count">+{onlineUsers.length-4}</div>}
-              </div>
-              <div style={{display:'flex',flexDirection:'column',gap:'1px'}}>
-                <div className="online-live-label"><div className="online-live-dot"/>LIVE NOW</div>
-                <span className="online-live-count">{onlineUsers.length} Online</span>
-              </div>
-            </div>
-          )}
+          <div className="online-pill">
+  <div className="online-stack">
+    {onlineUsers.length === 0 ? (
+      <div
+        id={`online-av-${meStaff?.id}`}
+        title={account.name}
+        className="online-av"
+        style={{zIndex:10,marginLeft:0}}
+      >
+        <Avatar name={account.name} photoUrl={staffPhotos[meStaff?.id]} size={24}/>
+      </div>
+    ) : (
+      onlineUsers.slice(0,4).map((u,i)=>(
+        <div
+          key={u.email}
+          id={`online-av-${u.id}`}
+          title={u.name}
+          className="online-av"
+          style={{zIndex:10-i}}
+        >
+          <Avatar name={u.name} photoUrl={staffPhotos[u.id]} size={24}/>
+        </div>
+      ))
+    )}
+    {onlineUsers.length>4&&<div className="online-count">+{onlineUsers.length-4}</div>}
+  </div>
+  <div style={{display:'flex',flexDirection:'column',gap:'1px'}}>
+    <div className="online-live-label"><div className="online-live-dot"/>LIVE NOW</div>
+    <span className="online-live-count">{Math.max(onlineUsers.length,1)} Online</span>
+  </div>
+</div>
           <div className="user-chip">
             <span className="user-name">{account.name}</span>
             <Avatar name={meStaff?.name||account.name} photoUrl={staffPhotos[meStaff?.id]} size={28}/>
