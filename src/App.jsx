@@ -79,40 +79,72 @@ function WelcomeConfetti() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const ctx = canvas.getContext('2d', { alpha: true });
 
-    // create particles
-    const particles = Array.from({ length: 120 }).map(() => ({
-      x:       rand(0, canvas.width),
-      y:       rand(-canvas.height * 0.5, -20),
-      w:       rand(6, 14),
-      h:       rand(6, 14),
-      color:   CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
-      shape:   Math.random() > 0.5 ? 'rect' : 'circle',
-      vx:      rand(-2.5, 2.5),
-      vy:      rand(2, 6),
-      vr:      rand(-0.15, 0.15),
-      rot:     rand(0, Math.PI * 2),
-      opacity: 1,
-      wobble:  rand(0, Math.PI * 2),
-      wobbleSpeed: rand(0.05, 0.12),
-    }));
+    const DPR = window.devicePixelRatio || 1;
+    const W   = window.innerWidth;
+    const H   = window.innerHeight;
+    canvas.width  = W * DPR;
+    canvas.height = H * DPR;
+    canvas.style.width  = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.scale(DPR, DPR);
 
-    let frame = 0;
+    const origins = [
+      { x: W * 0.2, y: H * 0.35 },
+      { x: W * 0.5, y: H * 0.3  },
+      { x: W * 0.8, y: H * 0.35 },
+    ];
 
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      frame++;
+    const particles = Array.from({ length: 90 }).map((_, i) => {
+      const origin = origins[i % origins.length];
+      const angle  = rand(-Math.PI * 0.9, Math.PI * 0.1);
+      const speed  = rand(4, 11);
+      return {
+        x:      origin.x + rand(-20, 20),
+        y:      origin.y,
+        vx:     Math.cos(angle) * speed,
+        vy:     Math.sin(angle) * speed - rand(2, 5),
+        w:      rand(7, 13),
+        h:      rand(5, 11),
+        color:  CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+        shape:  Math.random() > 0.4 ? 'rect' : 'circle',
+        rot:    rand(0, Math.PI * 2),
+        vr:     rand(-0.14, 0.14),
+        wobble: rand(0, Math.PI * 2),
+        wSpeed: rand(0.04, 0.09),
+        drag:   rand(0.97, 0.99),
+        opacity: 1,
+      };
+    });
 
-      particles.forEach(p => {
-        p.wobble += p.wobbleSpeed;
-        p.x  += p.vx + Math.sin(p.wobble) * 0.8;
-        p.y  += p.vy;
-        p.vy += 0.08; // gravity
-        p.rot += p.vr;
-        if (frame > 80) p.opacity = Math.max(0, p.opacity - 0.018);
+    let startTime = null;
+    const DURATION = 2800;
+
+    const draw = (ts) => {
+      if (!startTime) startTime = ts;
+      const elapsed  = ts - startTime;
+      const progress = Math.min(elapsed / DURATION, 1);
+
+      ctx.clearRect(0, 0, W, H);
+
+      let allGone = true;
+
+      for (const p of particles) {
+        p.wobble += p.wSpeed;
+        p.vx     *= p.drag;
+        p.vy     += 0.28;
+        p.vy     *= p.drag;
+        p.x      += p.vx + Math.sin(p.wobble) * 0.6;
+        p.y      += p.vy;
+        p.rot    += p.vr;
+
+        if (progress > 0.6) {
+          p.opacity = Math.max(0, 1 - (progress - 0.6) / 0.4);
+        }
+
+        if (p.opacity <= 0 || p.y > H + 20) continue;
+        allGone = false;
 
         ctx.save();
         ctx.globalAlpha = p.opacity;
@@ -121,24 +153,24 @@ function WelcomeConfetti() {
         ctx.fillStyle = p.color;
 
         if (p.shape === 'rect') {
-          ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
         } else {
           ctx.beginPath();
-          ctx.arc(0, 0, p.w/2, 0, Math.PI * 2);
+          ctx.arc(0, 0, p.w / 2, 0, Math.PI * 2);
           ctx.fill();
         }
         ctx.restore();
-      });
+      }
 
-      if (frame < 160) {
+      if (!allGone && progress < 1) {
         rafRef.current = requestAnimationFrame(draw);
       } else {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, W, H);
       }
     };
 
     rafRef.current = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(rafRef.current);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, []);
 
   return (
@@ -147,9 +179,9 @@ function WelcomeConfetti() {
         ref={canvasRef}
         style={{
           position: 'fixed', inset: 0,
-          width: '100%', height: '100%',
           pointerEvents: 'none',
           zIndex: 12000,
+          willChange: 'transform',
         }}
       />
       <div style={{
@@ -162,15 +194,15 @@ function WelcomeConfetti() {
           borderRadius: 24,
           padding: '28px 40px',
           boxShadow: '0 24px 64px rgba(119,11,255,0.35)',
-          animation: 'welcomePop 0.5s cubic-bezier(0.34,1.56,0.64,1) both',
+          animation: 'welcomePop 0.5s cubic-bezier(0.34,1.56,0.64,1) both, welcomeFade 0.4s ease 2.4s both',
           textAlign: 'center',
           fontFamily: "'Plus Jakarta Sans',sans-serif",
         }}>
-          <div style={{fontSize: 32, marginBottom: 8}}>✦</div>
-          <div style={{fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em', marginBottom: 6}}>
+          <div style={{fontSize:32,marginBottom:8}}>✦</div>
+          <div style={{fontSize:22,fontWeight:800,color:'#fff',letterSpacing:'-0.02em',marginBottom:6}}>
             Welcome to Whereabouts!
           </div>
-          <div style={{fontSize: 14, color: 'rgba(255,255,255,0.75)', fontWeight: 500}}>
+          <div style={{fontSize:14,color:'rgba(255,255,255,0.75)',fontWeight:500}}>
             You're all set. Have a great day 🎯
           </div>
         </div>
@@ -180,6 +212,10 @@ function WelcomeConfetti() {
           0%{opacity:0;transform:scale(0.6) translateY(30px);}
           60%{transform:scale(1.06) translateY(-4px);}
           100%{opacity:1;transform:scale(1) translateY(0);}
+        }
+        @keyframes welcomeFade{
+          from{opacity:1;transform:scale(1);}
+          to{opacity:0;transform:scale(0.92);}
         }
       `}</style>
     </>
