@@ -65,7 +65,126 @@ const BulbIcon = ({ size=20, color='#fbbf24' }) => (
     <path d="M9 17h6"/>
   </svg>
 );
+const CONFETTI_COLORS = [
+  '#009bff','#770bff','#00e5ff','#a78bfa','#60a5fa',
+  '#f472b6','#34d399','#fbbf24','#f87171','#818cf8',
+];
 
+const rand = (min, max) => Math.random() * (max - min) + min;
+
+function WelcomeConfetti() {
+  const canvasRef = useRef(null);
+  const rafRef    = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // create particles
+    const particles = Array.from({ length: 120 }).map(() => ({
+      x:       rand(0, canvas.width),
+      y:       rand(-canvas.height * 0.5, -20),
+      w:       rand(6, 14),
+      h:       rand(6, 14),
+      color:   CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+      shape:   Math.random() > 0.5 ? 'rect' : 'circle',
+      vx:      rand(-2.5, 2.5),
+      vy:      rand(2, 6),
+      vr:      rand(-0.15, 0.15),
+      rot:     rand(0, Math.PI * 2),
+      opacity: 1,
+      wobble:  rand(0, Math.PI * 2),
+      wobbleSpeed: rand(0.05, 0.12),
+    }));
+
+    let frame = 0;
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      frame++;
+
+      particles.forEach(p => {
+        p.wobble += p.wobbleSpeed;
+        p.x  += p.vx + Math.sin(p.wobble) * 0.8;
+        p.y  += p.vy;
+        p.vy += 0.08; // gravity
+        p.rot += p.vr;
+        if (frame > 80) p.opacity = Math.max(0, p.opacity - 0.018);
+
+        ctx.save();
+        ctx.globalAlpha = p.opacity;
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+
+        if (p.shape === 'rect') {
+          ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+        } else {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.w/2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      });
+
+      if (frame < 160) {
+        rafRef.current = requestAnimationFrame(draw);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    };
+
+    rafRef.current = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
+
+  return (
+    <>
+      <canvas
+        ref={canvasRef}
+        style={{
+          position: 'fixed', inset: 0,
+          width: '100%', height: '100%',
+          pointerEvents: 'none',
+          zIndex: 12000,
+        }}
+      />
+      <div style={{
+        position: 'fixed', inset: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 12001, pointerEvents: 'none',
+      }}>
+        <div style={{
+          background: 'linear-gradient(135deg,#009bff,#770bff)',
+          borderRadius: 24,
+          padding: '28px 40px',
+          boxShadow: '0 24px 64px rgba(119,11,255,0.35)',
+          animation: 'welcomePop 0.5s cubic-bezier(0.34,1.56,0.64,1) both',
+          textAlign: 'center',
+          fontFamily: "'Plus Jakarta Sans',sans-serif",
+        }}>
+          <div style={{fontSize: 32, marginBottom: 8}}>✦</div>
+          <div style={{fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em', marginBottom: 6}}>
+            Welcome to Whereabouts!
+          </div>
+          <div style={{fontSize: 14, color: 'rgba(255,255,255,0.75)', fontWeight: 500}}>
+            You're all set. Have a great day 🎯
+          </div>
+        </div>
+      </div>
+      <style>{`
+        @keyframes welcomePop{
+          0%{opacity:0;transform:scale(0.6) translateY(30px);}
+          60%{transform:scale(1.06) translateY(-4px);}
+          100%{opacity:1;transform:scale(1) translateY(0);}
+        }
+      `}</style>
+    </>
+  );
+}
 export default function App() {
   const [isInit,          setIsInit]          = useState(false);
   const [account,         setAccount]         = useState(null);
@@ -96,6 +215,7 @@ export default function App() {
   const [tipSlideClass,   setTipSlideClass]   = useState('tip-slide-in-right');
   const [tipVisible,      setTipVisible]      = useState(true);
   const [showTour,        setShowTour]        = useState(false);
+  const [showWelcome,     setShowWelcome]     = useState(false);
   const dailyTips = useRef(getDailyTips());
 
   const slideTimerRef   = useRef(null);
@@ -585,9 +705,14 @@ export default function App() {
       {showTour && (
         <TourOverlay onDone={()=>{
           setShowTour(false);
-          // restore for production: localStorage.setItem(`tour-done-${account.username}`,'1');
+          setShowWelcome(true);
+          setTimeout(()=>setShowWelcome(false), 3500);
+          // TODO: restore before production:
+          // localStorage.setItem(`tour-done-${account.username}`,'1');
         }}/>
       )}
+
+      {showWelcome && <WelcomeConfetti/>}
 
       {flight && (
         <EmojiFlyLayer
@@ -706,10 +831,10 @@ export default function App() {
     )}
     {onlineUsers.length>4&&<div className="online-count">+{onlineUsers.length-4}</div>}
   </div>
-  <div style={{display:'flex',flexDirection:'column',gap:'1px'}}>
-    <div className="online-live-label"><div className="online-live-dot"/>LIVE NOW</div>
-    <span className="online-live-count">{Math.max(onlineUsers.length,1)} Online</span>
-  </div>
+  <div style={{display:'flex',alignItems:'center',gap:6}}>
+              <div className="online-live-dot"/>
+              <span className="online-live-count" style={{fontSize:11,color:'rgba(255,255,255,0.5)',fontWeight:500}}>{Math.max(onlineUsers.length,1)} online</span>
+            </div>
 </div>
           <div className="user-chip">
             <span className="user-name">{account.name}</span>
