@@ -107,35 +107,29 @@ function WelcomeConfetti() {
           to   { opacity:0; transform:scale(0.92); }
         }
       `}</style>
-
       <div style={{position:'fixed',inset:0,pointerEvents:'none',zIndex:12000,overflow:'hidden'}}>
         {items.current.map(p => (
           <div
             key={p.id}
             style={{
-              position: 'absolute',
-              left: `${p.left}%`,
-              top: '-16px',
-              width:  p.size,
-              height: p.shape === 'rect' ? p.size * 0.6 : p.size,
-              borderRadius: p.shape === 'circle' ? '50%' : '2px',
+              position:'absolute', left:`${p.left}%`, top:'-16px',
+              width: p.size, height: p.shape==='rect' ? p.size*0.6 : p.size,
+              borderRadius: p.shape==='circle' ? '50%' : '2px',
               background: p.color,
-              '--drift': `${p.drift}px`,
-              '--spin':  `${p.spin}deg`,
+              '--drift': `${p.drift}px`, '--spin': `${p.spin}deg`,
               animation: `confettiFall ${p.duration}s ${p.delay}s cubic-bezier(0.25,0.46,0.45,0.94) both`,
               willChange: 'transform, opacity',
             }}
           />
         ))}
       </div>
-
       <div style={{position:'fixed',inset:0,display:'flex',alignItems:'center',justifyContent:'center',zIndex:12001,pointerEvents:'none'}}>
         <div style={{
           background:'linear-gradient(135deg,#009bff,#770bff)',
-          borderRadius:24,padding:'28px 40px',
+          borderRadius:24, padding:'28px 40px',
           boxShadow:'0 24px 64px rgba(119,11,255,0.35)',
           animation:'welcomePop 0.5s cubic-bezier(0.34,1.56,0.64,1) both, welcomeFade 0.4s ease 2.4s both',
-          textAlign:'center',fontFamily:"'Plus Jakarta Sans',sans-serif",
+          textAlign:'center', fontFamily:"'Plus Jakarta Sans',sans-serif",
         }}>
           <div style={{fontSize:32,marginBottom:8}}>✦</div>
           <div style={{fontSize:22,fontWeight:800,color:'#fff',letterSpacing:'-0.02em',marginBottom:6}}>Welcome to Whereabouts!</div>
@@ -192,10 +186,9 @@ export default function App() {
   const flightOnLandRef = useRef(null);
   const touchDragRef    = useRef(null);
 
-  // responsive detection via matchMedia — more reliable on mobile
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 768px)');
-    const fn = (e) => setIsMobile(e.matches);
+    const fn = e => setIsMobile(e.matches);
     mq.addEventListener('change', fn);
     setIsMobile(mq.matches);
     return () => mq.removeEventListener('change', fn);
@@ -389,15 +382,34 @@ export default function App() {
     return ()=>clearTimeout(t);
   }, [account,region]);
 
-  // mobile party — before early returns, uses firePartyLocal directly
+  useEffect(() => {
+    if (!account) return;
+    const meStaffLocal = getStaffEntry(account.username.toLowerCase());
+    const channel = supabase.channel('presence-party',{config:{presence:{key:account.username.toLowerCase()}}});
+    channel
+      .on('presence',{event:'sync'},()=>{
+        const state=channel.presenceState();
+        setOnlineUsers(Object.values(state).map(arr=>arr[0]).filter(Boolean));
+      })
+      .on('broadcast',{event:'party'},({payload})=>{
+        firePartyLocal(payload.type,payload.text);
+        popAvatar(payload.userId);
+        glowLevelRef.current=Math.min(glowLevelRef.current+0.65,1);
+      })
+      .subscribe(async status=>{
+        if (status==='SUBSCRIBED')
+          await channel.track({id:meStaffLocal?.id||'guest',name:meStaffLocal?.name||account.name,email:account.username.toLowerCase()});
+      });
+    presenceRef.current=channel;
+    return ()=>{ supabase.removeChannel(channel); };
+  }, [account]);
+
+  // mobile party — before early returns
   useEffect(() => {
     const fn = e => {
       const { type, text, ds } = e.detail;
       firePartyLocal(type, text);
-      if (ds) {
-        setBouncingDs(ds);
-        setTimeout(() => setBouncingDs(null), 700);
-      }
+      if (ds) { setBouncingDs(ds); setTimeout(()=>setBouncingDs(null), 700); }
       glowLevelRef.current = Math.min(glowLevelRef.current + 0.65, 1);
     };
     document.addEventListener('mob-party', fn);
@@ -443,6 +455,12 @@ export default function App() {
   };
 
   const triggerMoodFly = (emo, clickedEl) => {
+    if (emo === null) {
+      if (meStaff) supabase.from('emotions').delete().eq('staff_id', meStaff.id)
+        .then(() => setEmotions(em => { const n={...em}; delete n[meStaff.id]; return n; }));
+      setSocialMenu(null);
+      return;
+    }
     if (!myAvatarRef.current || !clickedEl) return;
     const srcR = clickedEl.getBoundingClientRect();
     const avR  = myAvatarRef.current.getBoundingClientRect();
@@ -632,9 +650,6 @@ export default function App() {
     presenceRef.current?.send({type:'broadcast',event:'party',payload:{type,text,userId:meStaff?.id||'guest'}});
   };
 
-  // mobile party event — must be after fireParty, no deps so always fresh
-  
-
   const handleTableScroll=()=>{
     if (headerRef.current&&scrollRef.current)
       headerRef.current.scrollLeft=scrollRef.current.scrollLeft;
@@ -685,7 +700,7 @@ export default function App() {
       <div ref={glowFrameRef} className="glow-frame"/>
 
       {showTour && (
-       <TourOverlay onDone={()=>{
+        <TourOverlay onDone={()=>{
           setShowTour(false);
           setShowWelcome(true);
           setTimeout(()=>setShowWelcome(false), 3500);
@@ -938,6 +953,14 @@ export default function App() {
                               </div>
                               {isMe&&socialMenu===m.id&&(
                                 <div className="emo-picker dsz">
+                                  {emotions[meStaff?.id] && (
+                                    <div key="clear" onClick={e=>{ e.stopPropagation(); triggerMoodFly(null, null); }}
+                                      style={{fontSize:'15px',cursor:'pointer',padding:'4px 6px',borderRadius:'6px',opacity:0.5,transition:'opacity 0.15s'}}
+                                      onMouseOver={e=>e.currentTarget.style.opacity='1'}
+                                      onMouseOut={e=>e.currentTarget.style.opacity='0.5'}
+                                      title="Clear mood"
+                                    >✕</div>
+                                  )}
                                   {['🧘','⚡','☕','🎯','🚀','💪','🌱'].map(emo=>(
                                     <div key={emo} onClick={e=>{ e.stopPropagation(); triggerMoodFly(emo, e.currentTarget); }}
                                       style={{fontSize:'18px',cursor:'pointer',padding:'4px 6px',borderRadius:'6px',transition:'all 0.15s'}}
