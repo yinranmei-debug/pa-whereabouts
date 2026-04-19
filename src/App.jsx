@@ -177,7 +177,7 @@ export default function App() {
   const [tipVisible,      setTipVisible]      = useState(true);
   const [showTour,        setShowTour]        = useState(false);
   const [showWelcome,     setShowWelcome]     = useState(false);
-  const [isMobile,        setIsMobile]        = useState(window.innerWidth <= 768);
+  const [isMobile,        setIsMobile]        = useState(() => window.matchMedia('(max-width: 768px)').matches);
   const dailyTips = useRef(getDailyTips());
 
   const slideTimerRef   = useRef(null);
@@ -192,11 +192,13 @@ export default function App() {
   const flightOnLandRef = useRef(null);
   const touchDragRef    = useRef(null);
 
-  // responsive detection via state (not window.innerWidth inline)
+  // responsive detection via matchMedia — more reliable on mobile
   useEffect(() => {
-    const fn = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', fn);
-    return () => window.removeEventListener('resize', fn);
+    const mq = window.matchMedia('(max-width: 768px)');
+    const fn = (e) => setIsMobile(e.matches);
+    mq.addEventListener('change', fn);
+    setIsMobile(mq.matches);
+    return () => mq.removeEventListener('change', fn);
   }, []);
 
   const measureColX = useCallback(() => {
