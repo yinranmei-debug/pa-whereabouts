@@ -387,6 +387,21 @@ export default function App() {
     return ()=>clearTimeout(t);
   }, [account,region]);
 
+  // mobile party — before early returns, uses firePartyLocal directly
+  useEffect(() => {
+    const fn = e => {
+      const { type, text, ds } = e.detail;
+      firePartyLocal(type, text);
+      if (ds) {
+        setBouncingDs(ds);
+        setTimeout(() => setBouncingDs(null), 700);
+      }
+      glowLevelRef.current = Math.min(glowLevelRef.current + 0.65, 1);
+    };
+    document.addEventListener('mob-party', fn);
+    return () => document.removeEventListener('mob-party', fn);
+  }, []);
+
   const navigateTip = (dir) => {
     const nextIdx = dir==='next'
       ? (tipIdx+1) % dailyTips.current.length
@@ -616,14 +631,7 @@ export default function App() {
   };
 
   // mobile party event — must be after fireParty, no deps so always fresh
-  useEffect(() => {
-    const fn = e => {
-      const { type, text, ds } = e.detail;
-      fireParty({ currentTarget: e.target, stopPropagation: ()=>{} }, type, text, ds);
-    };
-    document.addEventListener('mob-party', fn);
-    return () => document.removeEventListener('mob-party', fn);
-  });
+  
 
   const handleTableScroll=()=>{
     if (headerRef.current&&scrollRef.current)
