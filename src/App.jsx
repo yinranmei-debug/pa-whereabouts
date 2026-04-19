@@ -167,6 +167,8 @@ const WelcomeConfetti = React.memo(function WelcomeConfetti() {
         rafRef.current = requestAnimationFrame(draw);
       } else {
         ctx.clearRect(0, 0, W, H);
+        // hide canvas silently without unmounting
+        if (canvas) canvas.style.display = 'none';
       }
     };
 
@@ -252,7 +254,7 @@ export default function App() {
   const [tipSlideClass,   setTipSlideClass]   = useState('tip-slide-in-right');
   const [tipVisible,      setTipVisible]      = useState(true);
   const [showTour,        setShowTour]        = useState(false);
-  const [showWelcome,     setShowWelcome]     = useState(false);
+  setShowWelcome(true);
   const dailyTips = useRef(getDailyTips());
 
   const slideTimerRef   = useRef(null);
