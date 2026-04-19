@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import ReactDOM from 'react-dom';
 import { PublicClientApplication } from "@azure/msal-browser";
 import { msalConfig, loginRequest } from "./authConfig";
 import HOLIDAYS_DATA from './data/holidays.json';
@@ -752,8 +751,7 @@ export default function App() {
         }}/>
       )}
 
-     {showWelcome && ReactDOM.createPortal(<WelcomeConfetti/>, document.body)}
-
+{showWelcome && <WelcomeConfetti/>}
       {flight && (
         <EmojiFlyLayer
           key={`${flight.start.x}-${flight.start.y}-${Date.now()}`}
