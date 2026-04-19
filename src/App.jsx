@@ -66,140 +66,6 @@ const BulbIcon = ({ size=20, color='#fbbf24' }) => (
   </svg>
 );
 
-const CONFETTI_COLORS = [
-  '#009bff','#770bff','#00e5ff','#a78bfa','#60a5fa',
-  '#f472b6','#34d399','#fbbf24','#f87171','#818cf8',
-];
-
-const rand = (min, max) => Math.random() * (max - min) + min;
-
-const WelcomeConfetti = React.memo(function WelcomeConfetti() {
-  const canvasRef = useRef(null);
-  const rafRef    = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d', { alpha: true });
-
-    const DPR = window.devicePixelRatio || 1;
-    const W   = window.innerWidth;
-    const H   = window.innerHeight;
-    canvas.width  = W * DPR;
-    canvas.height = H * DPR;
-    canvas.style.width  = W + 'px';
-    canvas.style.height = H + 'px';
-    ctx.scale(DPR, DPR);
-
-    const origins = [
-      { x: W * 0.2, y: H * 0.35 },
-      { x: W * 0.5, y: H * 0.3  },
-      { x: W * 0.8, y: H * 0.35 },
-    ];
-
-    const particles = Array.from({ length: 90 }).map((_, i) => {
-      const origin = origins[i % origins.length];
-      const angle  = rand(-Math.PI * 0.9, Math.PI * 0.1);
-      const speed  = rand(4, 11);
-      return {
-        x:       origin.x + rand(-20, 20),
-        y:       origin.y,
-        vx:      Math.cos(angle) * speed,
-        vy:      Math.sin(angle) * speed - rand(2, 5),
-        w:       rand(7, 13),
-        h:       rand(5, 11),
-        color:   CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
-        shape:   Math.random() > 0.4 ? 'rect' : 'circle',
-        rot:     rand(0, Math.PI * 2),
-        vr:      rand(-0.14, 0.14),
-        wobble:  rand(0, Math.PI * 2),
-        wSpeed:  rand(0.04, 0.09),
-        drag:    rand(0.97, 0.99),
-        opacity: 1,
-      };
-    });
-
-    let startTime = null;
-    const DURATION = 2800;
-
-    const draw = (ts) => {
-      if (!startTime) startTime = ts;
-      const elapsed  = ts - startTime;
-      const progress = Math.min(elapsed / DURATION, 1);
-
-      ctx.clearRect(0, 0, W, H);
-      let allGone = true;
-
-      for (const p of particles) {
-        p.wobble += p.wSpeed;
-        p.vx     *= p.drag;
-        p.vy     += 0.28;
-        p.vy     *= p.drag;
-        p.x      += p.vx + Math.sin(p.wobble) * 0.6;
-        p.y      += p.vy;
-        p.rot    += p.vr;
-
-        if (progress > 0.6) {
-          p.opacity = Math.max(0, 1 - (progress - 0.6) / 0.4);
-        }
-
-        if (p.opacity <= 0 || p.y > H + 20) continue;
-        allGone = false;
-
-        ctx.globalAlpha = p.opacity;
-        ctx.fillStyle   = p.color;
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.rot);
-        if (p.shape === 'rect') {
-          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-        } else {
-          ctx.beginPath();
-          ctx.arc(0, 0, p.w / 2, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        ctx.restore();
-      }
-
-      if (!allGone && progress < 1) {
-        rafRef.current = requestAnimationFrame(draw);
-      } else {
-        ctx.clearRect(0, 0, W, H);
-        if (canvas) canvas.style.display = 'none';
-      }
-    };
-
-    rafRef.current = requestAnimationFrame(draw);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, []);
-
-  return (
-    <>
-      <canvas
-        ref={canvasRef}
-        style={{position:'fixed',inset:0,pointerEvents:'none',zIndex:12000,willChange:'transform'}}
-      />
-      <div style={{position:'fixed',inset:0,display:'flex',alignItems:'center',justifyContent:'center',zIndex:12001,pointerEvents:'none'}}>
-        <div style={{
-          background:'linear-gradient(135deg,#009bff,#770bff)',
-          borderRadius:24,padding:'28px 40px',
-          boxShadow:'0 24px 64px rgba(119,11,255,0.35)',
-          animation:'welcomePop 0.5s cubic-bezier(0.34,1.56,0.64,1) both, welcomeFade 0.4s ease 2.4s both',
-          textAlign:'center',fontFamily:"'Plus Jakarta Sans',sans-serif",
-        }}>
-          <div style={{fontSize:32,marginBottom:8}}>✦</div>
-          <div style={{fontSize:22,fontWeight:800,color:'#fff',letterSpacing:'-0.02em',marginBottom:6}}>Welcome to Whereabouts!</div>
-          <div style={{fontSize:14,color:'rgba(255,255,255,0.75)',fontWeight:500}}>You're all set. Have a great day 🎯</div>
-        </div>
-      </div>
-      <style>{`
-        @keyframes welcomePop{0%{opacity:0;transform:scale(0.6) translateY(30px);}60%{transform:scale(1.06) translateY(-4px);}100%{opacity:1;transform:scale(1) translateY(0);}}
-        @keyframes welcomeFade{from{opacity:1;transform:scale(1);}to{opacity:0;transform:scale(0.92);}}
-      `}</style>
-    </>
-  );
-});
-
 export default function App() {
   const [isInit,          setIsInit]          = useState(false);
   const [account,         setAccount]         = useState(null);
@@ -231,7 +97,6 @@ export default function App() {
   const [tipVisible,      setTipVisible]      = useState(true);
   const [showTour,        setShowTour]        = useState(false);
   const [showWelcome,     setShowWelcome]     = useState(false);
-  // ↑ removed the illegal setShowWelcome(true) call that was here
   const dailyTips = useRef(getDailyTips());
 
   const slideTimerRef   = useRef(null);
@@ -328,11 +193,12 @@ export default function App() {
     return () => clearTimeout(t);
   }, [account]);
 
+  // tour — show every login for testing, restore localStorage check for production
   // tour — show every login for testing
   useEffect(() => {
     if (!account) return;
     const t = setTimeout(() => {
-      setShowTips(false);
+      setShowTips(false); // close tips first so tour spotlight is visible
       setShowTour(true);
     }, 2800);
     return () => clearTimeout(t);
@@ -451,6 +317,7 @@ export default function App() {
   const meStaff = getStaffEntry(me);
 
   const popAvatar = userId => {
+    // pop table row avatar
     const el = document.getElementById(`av-${userId}`);
     if (el) {
       clearTimeout(partyTimerRef.current);
@@ -460,6 +327,7 @@ export default function App() {
       el.style.transform='scale(1.7)';
       partyTimerRef.current=setTimeout(()=>{ el.style.transition='transform 0.5s ease'; el.style.transform='scale(1)'; },500);
     }
+    // also pop the matching avatar in the online-pill stack
     const onlineEl = document.getElementById(`online-av-${userId}`);
     if (onlineEl) {
       onlineEl.style.transition='none'; onlineEl.style.transform='scale(1)';
@@ -557,6 +425,7 @@ export default function App() {
     setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
   };
 
+  // ── mouse drag ──────────────────────────────────────────────────────
   const handleStatusCellMouseDown=(staffId,dateIdx,shift,status,e)=>{
     if (!account||staffId!==meStaff?.id) return;
     setDragging({staffId,dateIdx,shift,status,isEmptyCell:status==='none'});
@@ -601,6 +470,7 @@ export default function App() {
     setDragging(null); setPreview([]);
   };
 
+  // ── touch drag — mirrors mouse logic exactly ────────────────────────
   const handleStatusCellTouchStart=(staffId,dateIdx,shift,status,e)=>{
     if (!account||staffId!==meStaff?.id) return;
     touchDragRef.current = { staffId, dateIdx, shift, status, isEmptyCell: status==='none' };
@@ -610,7 +480,7 @@ export default function App() {
 
   const handleStatusCellTouchMove=(e)=>{
     if (!touchDragRef.current) return;
-    e.preventDefault();
+    e.preventDefault(); // prevent scroll while dragging
     const touch = e.touches[0];
     const el = document.elementFromPoint(touch.clientX, touch.clientY);
     if (!el) return;
@@ -660,16 +530,6 @@ export default function App() {
     presenceRef.current?.send({type:'broadcast',event:'party',payload:{type,text,userId:meStaff?.id||'guest'}});
   };
 
-  // mobile party event — after fireParty definition, no deps array = always fresh closure
-  useEffect(() => {
-    const fn = e => {
-      const { type, text, ds } = e.detail;
-      fireParty({ currentTarget: e.target, stopPropagation: ()=>{} }, type, text, ds);
-    };
-    document.addEventListener('mob-party', fn);
-    return () => document.removeEventListener('mob-party', fn);
-  });
-
   const handleTableScroll=()=>{
     if (headerRef.current&&scrollRef.current)
       headerRef.current.scrollLeft=scrollRef.current.scrollLeft;
@@ -715,7 +575,11 @@ export default function App() {
   const currentTip = dailyTips.current[tipIdx];
 
   return (
-    <div style={{minHeight:'100vh',background:'#F0F4FF'}} onMouseUp={handleStatusCellMouseUp} onTouchEnd={handleStatusCellTouchEnd}>
+    <div
+      style={{minHeight:'100vh',background:'#F0F4FF'}}
+      onMouseUp={handleStatusCellMouseUp}
+      onTouchEnd={handleStatusCellTouchEnd}
+    >
       <GlobalStyles/>
       <div ref={glowFrameRef} className="glow-frame"/>
 
@@ -723,6 +587,7 @@ export default function App() {
         <TourOverlay onDone={()=>{
           setShowTour(false);
           setShowWelcome(true);
+          setTimeout(()=>setShowWelcome(false), 3500);
           // TODO: restore before production:
           // localStorage.setItem(`tour-done-${account.username}`,'1');
         }}/>
@@ -738,6 +603,7 @@ export default function App() {
         />
       )}
 
+      {/* weekend/holiday emoji overlay */}
       {nonEditableCols.map(d=>{
         const x = colXMap[d.ds];
         if (!x) return null;
@@ -756,6 +622,7 @@ export default function App() {
         );
       })}
 
+      {/* tips panel */}
       {showTips && currentTip && (
         <div style={{position:'fixed',inset:0,zIndex:10500,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(15,23,42,0.45)',backdropFilter:'blur(4px)',animation:'dropIn 0.2s ease'}}>
           <div style={{background:'#fff',borderRadius:24,width:480,maxWidth:'92vw',padding:'36px 32px 30px',boxShadow:'0 24px 64px rgba(0,0,0,0.18)',position:'relative',overflow:'hidden'}}>
@@ -792,6 +659,7 @@ export default function App() {
         </div>
       )}
 
+      {/* NAV */}
       <nav className="nav">
         <span className="nav-logo-text">Whereabouts</span>
         <div className={`nav-tab${activeTab==='calendar'?' active':''}`} onClick={()=>setActiveTab('calendar')}>Calendar</div>
@@ -819,25 +687,36 @@ export default function App() {
             <BulbIcon size={18} color='#fbbf24'/>
           </button>
           <div className="online-pill">
-            <div className="online-stack">
-              {onlineUsers.length === 0 ? (
-                <div id={`online-av-${meStaff?.id}`} title={account.name} className="online-av" style={{zIndex:10,marginLeft:0}}>
-                  <Avatar name={account.name} photoUrl={staffPhotos[meStaff?.id]} size={24}/>
-                </div>
-              ) : (
-                onlineUsers.slice(0,4).map((u,i)=>(
-                  <div key={u.email} id={`online-av-${u.id}`} title={u.name} className="online-av" style={{zIndex:10-i}}>
-                    <Avatar name={u.name} photoUrl={staffPhotos[u.id]} size={24}/>
-                  </div>
-                ))
-              )}
-              {onlineUsers.length>4&&<div className="online-count">+{onlineUsers.length-4}</div>}
-            </div>
-            <div style={{display:'flex',alignItems:'center',gap:6}}>
+  <div className="online-stack">
+    {onlineUsers.length === 0 ? (
+      <div
+        id={`online-av-${meStaff?.id}`}
+        title={account.name}
+        className="online-av"
+        style={{zIndex:10,marginLeft:0}}
+      >
+        <Avatar name={account.name} photoUrl={staffPhotos[meStaff?.id]} size={24}/>
+      </div>
+    ) : (
+      onlineUsers.slice(0,4).map((u,i)=>(
+        <div
+          key={u.email}
+          id={`online-av-${u.id}`}
+          title={u.name}
+          className="online-av"
+          style={{zIndex:10-i}}
+        >
+          <Avatar name={u.name} photoUrl={staffPhotos[u.id]} size={24}/>
+        </div>
+      ))
+    )}
+    {onlineUsers.length>4&&<div className="online-count">+{onlineUsers.length-4}</div>}
+  </div>
+  <div style={{display:'flex',alignItems:'center',gap:6}}>
               <div className="online-live-dot"/>
               <span className="online-live-count" style={{fontSize:11,color:'rgba(255,255,255,0.5)',fontWeight:500}}>{Math.max(onlineUsers.length,1)} online</span>
             </div>
-          </div>
+</div>
           <div className="user-chip">
             <span className="user-name">{account.name}</span>
             <Avatar name={meStaff?.name||account.name} photoUrl={staffPhotos[meStaff?.id]} size={28}/>
@@ -846,17 +725,21 @@ export default function App() {
         </div>
       </nav>
 
+      {/* TOOLBAR */}
       <div className="toolbar">
         <button className="tb-btn icon" onClick={()=>navigateWeek(-7)}>‹</button>
-        <button className="tb-btn today" onClick={e=>{
-          navigateWeek(0,new Date());
-          const btn=e.currentTarget;
-          btn.classList.remove('today-glint'); void btn.offsetWidth;
-          btn.classList.add('today-glint');
-          setTimeout(()=>btn.classList.remove('today-glint'),600);
-          setTodaySonar(true);
-          setTimeout(()=>setTodaySonar(false),2000);
-        }}>Today</button>
+        <button
+          className="tb-btn today"
+          onClick={e=>{
+            navigateWeek(0,new Date());
+            const btn=e.currentTarget;
+            btn.classList.remove('today-glint'); void btn.offsetWidth;
+            btn.classList.add('today-glint');
+            setTimeout(()=>btn.classList.remove('today-glint'),600);
+            setTodaySonar(true);
+            setTimeout(()=>setTodaySonar(false),2000);
+          }}
+        >Today</button>
         <button className="tb-btn icon" onClick={()=>navigateWeek(7)}>›</button>
         <span className="tb-month">{viewDate.toLocaleString('en-US',{month:'long',year:'numeric'})}</span>
         <select className="tb-select" value={viewDate.getMonth()} onChange={e=>{
@@ -874,6 +757,7 @@ export default function App() {
         )}
       </div>
 
+      {/* LEGEND */}
       <div className="legend">
         <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#fdf2f8,#fce7f3)',border:'1.5px solid #f9a8d4'}}/>Holiday</div>
         <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#eff6ff,#dbeafe)',border:'1.5px solid #93c5fd'}}/>Weekend</div>
@@ -881,6 +765,7 @@ export default function App() {
         <div className="leg-item"><div className="leg-dot" style={{background:'#fafafa',border:'1.5px solid #f3f4f6'}}/>Team days</div>
       </div>
 
+      {/* TABLE */}
       <div className="tbl-outer dsz">
         <div className="tbl-card">
           <div className="tbl-hdr-sticky">
@@ -905,7 +790,13 @@ export default function App() {
             </div>
           </div>
 
-          <div ref={scrollRef} className="tbl-scroll dsz" onScroll={handleTableScroll} onMouseLeave={handleStatusCellMouseUp} onTouchMove={handleStatusCellTouchMove}>
+          <div
+            ref={scrollRef}
+            className="tbl-scroll dsz"
+            onScroll={handleTableScroll}
+            onMouseLeave={handleStatusCellMouseUp}
+            onTouchMove={handleStatusCellTouchMove}
+          >
             <table className="main-tbl">
               <colgroup>
                 <col style={{width:'220px'}}/>
