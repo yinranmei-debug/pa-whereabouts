@@ -254,6 +254,7 @@ export default function App() {
   const [tipSlideClass,   setTipSlideClass]   = useState('tip-slide-in-right');
   const [tipVisible,      setTipVisible]      = useState(true);
   const [showTour,        setShowTour]        = useState(false);
+  const [showWelcome,     setShowWelcome]     = useState(false);
   setShowWelcome(true);
   const dailyTips = useRef(getDailyTips());
 
