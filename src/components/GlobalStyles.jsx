@@ -108,7 +108,7 @@ const GlobalStyles = () => (
 
     .online-pill{display:flex;align-items:center;gap:10px;padding:7px 14px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:100px;}
     .online-stack{display:flex;align-items:center;}
-    .online-av{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,0.15);margin-left:-7px;background:#334155;overflow:hidden;flex-shrink:0;}
+    .online-av{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,0.15);margin-left:-7px;background:#334155;overflow:visible;flex-shrink:0;}
     .online-av:first-child{margin-left:0;}
     .online-count{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,0.15);margin-left:-7px;background:#334155;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;}
     .online-live-label{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:#4ade80;letter-spacing:0.06em;}
@@ -206,18 +206,21 @@ const GlobalStyles = () => (
     .ms-err{margin-top:14px;color:#a4262c;background:#fde7e9;padding:10px 14px;border-radius:8px;font-size:13px;border-left:3px solid #a4262c;}
 
     @media(max-width:768px){
-      .nav,.toolbar,.legend{padding-left:16px;padding-right:16px;}
-      .tbl-scroll,.tbl-hdr-row{padding-left:16px;padding-right:16px;}
-      .tbl-outer{padding:16px 16px 48px;}
-      .nav-logo-text{font-size:16px;margin-right:12px;}
-      .nav-tab{padding:0 10px;font-size:13px;}
+      .nav,.toolbar,.legend{padding-left:12px;padding-right:12px;}
+      .tbl-outer{padding:8px 8px 48px;}
+      .nav-logo-text{font-size:15px;margin-right:8px;}
+      .nav-tab{padding:0 8px;font-size:12px;}
       .online-pill{display:none;}
       .team-summary{display:none;}
-      .tb-month{font-size:13px;}
-      .toolbar{gap:6px;padding:0 16px;}
-      .tb-btn{height:30px;font-size:12px;}
-      .legend{gap:12px;padding:0 16px;}
-      .leg-item{font-size:11px;}
+      .tb-month{font-size:12px;}
+      .toolbar{gap:4px;padding:0 12px;}
+      .tb-btn{height:28px;font-size:11px;padding:0 8px;}
+      .tb-select{height:28px;font-size:11px;padding:0 6px;max-width:80px;}
+      .legend{gap:10px;padding:0 12px;}
+      .leg-item{font-size:10px;}
+      .user-name{display:none;}
+      .signout-btn{font-size:10px;padding:0 8px;}
+      .save-txt,.save-ok{display:none;}
     }
   `}</style>
 );

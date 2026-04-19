@@ -10,10 +10,9 @@ const MobileView = ({
   const [activeCell,  setActiveCell]  = useState(null);
   const [dragPreview, setDragPreview] = useState([]);
   const [isDragging,  setIsDragging]  = useState(false);
-  const dragStartRef  = useRef(null);
-  const longPressRef  = useRef(null);
+  const dragStartRef = useRef(null);
+  const longPressRef = useRef(null);
 
-  // close picker on outside tap
   useEffect(() => {
     const fn = e => {
       if (
@@ -32,7 +31,6 @@ const MobileView = ({
     };
   }, []);
 
-  // find cell key at touch point using live getBoundingClientRect
   const cellKeyAtPoint = (x, y) => {
     const els = document.querySelectorAll('[data-mob-cell]');
     for (const el of els) {
@@ -46,7 +44,6 @@ const MobileView = ({
 
   const handleTouchStart = (e, key, sid, isMe) => {
     if (!isMe) return;
-    // clear long press safety timer
     clearTimeout(longPressRef.current);
     dragStartRef.current = { key, sid, startTime: Date.now() };
     setIsDragging(false);
@@ -56,14 +53,11 @@ const MobileView = ({
 
   const handleTouchMove = (e, isMe) => {
     if (!isMe || !dragStartRef.current) return;
-    e.preventDefault(); // critical: stops page scroll during drag
+    e.preventDefault();
     const touch = e.touches[0];
     const over = cellKeyAtPoint(touch.clientX, touch.clientY);
     if (!over || over === dragStartRef.current.key) return;
-
     setIsDragging(true);
-
-    // build ordered range between start and current
     const allCells = Array.from(document.querySelectorAll('[data-mob-cell]'))
       .map(el => el.dataset.mobCell);
     const si = allCells.indexOf(dragStartRef.current.key);
@@ -75,27 +69,20 @@ const MobileView = ({
 
   const handleTouchEnd = (e, key, sid, isMe) => {
     if (!isMe || !dragStartRef.current) return;
-    e.preventDefault(); // prevent ghost click
-
+    e.preventDefault();
     const wasDrag = isDragging && dragPreview.length > 1;
-
     if (wasDrag) {
-      // bulk select → show picker
       setActiveCell(dragPreview[0]);
     } else {
-      // single tap
       if (sid !== 'none') {
-        // filled → clear directly
         onStatusClear(key);
         setActiveCell(null);
         setDragPreview([]);
       } else {
-        // empty → open picker
         setActiveCell(prev => prev === key ? null : key);
         setDragPreview([key]);
       }
     }
-
     setIsDragging(false);
     dragStartRef.current = null;
   };
@@ -107,23 +94,26 @@ const MobileView = ({
     setDragPreview([]);
   };
 
+  // fix: clear ALL selected cells not just first
   const handleClear = () => {
-    if (activeCell) onStatusClear(activeCell);
+    const keys = dragPreview.length > 1 ? dragPreview : activeCell ? [activeCell] : [];
+    keys.forEach(k => onStatusClear(k));
     setActiveCell(null);
     setDragPreview([]);
   };
 
-  // compute column widths to fit all 7 days on screen without scrolling
   const screenW   = typeof window !== 'undefined' ? window.innerWidth : 390;
-  const NAME_W    = 76;
-  const PADDING   = 16; // total horizontal padding
+  const NAME_W    = 110;
+  const PADDING   = 16;
   const available = screenW - NAME_W - PADDING;
   const editDays  = week.filter(d => d.editable).length;
   const nonEdit   = week.length - editDays;
-  const NON_W     = Math.max(28, Math.floor(available * 0.12)); // non-editable cols narrower
-  const EDIT_W    = Math.max(48, Math.floor((available - nonEdit * NON_W) / Math.max(editDays, 1)));
+  const NON_W     = Math.max(28, Math.floor(available * 0.1));
+  const EDIT_W    = Math.max(44, Math.floor((available - nonEdit * NON_W) / Math.max(editDays, 1)));
 
-  const today = new Date().toISOString().split('T')[0];
+  // sticky header offset = nav + toolbar + legend
+  const NAV_H = 72, TB_H = 56, LG_H = 40;
+  const STICKY_TOP = NAV_H + TB_H + LG_H;
 
   return (
     <div style={{
@@ -161,12 +151,17 @@ const MobileView = ({
           text-align: center;
           background: #fafbff;
           border-bottom: 1px solid #e5e7eb;
-          position: sticky; top: 0; z-index: 60;
+          position: sticky;
+          top: ${STICKY_TOP}px;
+          z-index: 60;
         }
         .mob-hdr-name {
           background: #fafbff;
           border-bottom: 1px solid #e5e7eb;
-          position: sticky; top: 0; z-index: 61;
+          position: sticky;
+          top: ${STICKY_TOP}px;
+          left: 0;
+          z-index: 62;
         }
 
         .mob-name-cell {
@@ -254,19 +249,21 @@ const MobileView = ({
         </div>
       )}
 
-      {/* table card */}
+      {/* table — overflow:visible so sticky header works */}
       <div style={{
         margin: '8px 8px',
         background: '#fff',
         borderRadius: 16,
         border: '1px solid rgba(226,232,240,0.8)',
         boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
-        overflow: 'hidden',
+        overflow: 'visible',
       }}>
         <table style={{
           borderCollapse: 'collapse',
           width: '100%',
           tableLayout: 'fixed',
+          borderRadius: 16,
+          overflow: 'hidden',
         }}>
           <colgroup>
             <col style={{width: NAME_W}}/>
@@ -275,7 +272,6 @@ const MobileView = ({
             ))}
           </colgroup>
 
-          {/* header */}
           <thead>
             <tr>
               <th className="mob-hdr-name" style={{width: NAME_W}}/>
@@ -315,7 +311,6 @@ const MobileView = ({
 
               return (
                 <tr key={m.id}>
-                  {/* sticky name col */}
                   <td className="mob-name-cell">
                     <div className="mob-row-name">
                       <div
@@ -335,7 +330,6 @@ const MobileView = ({
                             {emotions[m.id]}
                           </div>
                         )}
-                        {/* mood picker */}
                         {isMe && socialMenu === m.id && (
                           <div style={{
                             position:'absolute',top:'calc(100% + 6px)',left:0,
@@ -349,17 +343,8 @@ const MobileView = ({
                             {['🧘','⚡','☕','🎯','🚀','💪','🌱'].map(emo => (
                               <div
                                 key={emo}
-                                onTouchEnd={e=>{
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  triggerMoodFly(emo, e.currentTarget);
-                                  setSocialMenu(null);
-                                }}
-                                onClick={e=>{
-                                  e.stopPropagation();
-                                  triggerMoodFly(emo, e.currentTarget);
-                                  setSocialMenu(null);
-                                }}
+                                onTouchEnd={e=>{e.preventDefault();e.stopPropagation();triggerMoodFly(emo,e.currentTarget);setSocialMenu(null);}}
+                                onClick={e=>{e.stopPropagation();triggerMoodFly(emo,e.currentTarget);setSocialMenu(null);}}
                                 style={{fontSize:18,cursor:'pointer',padding:'4px',borderRadius:6}}
                               >{emo}</div>
                             ))}
@@ -372,7 +357,7 @@ const MobileView = ({
                           color:isMe?'#111827':'#374151',
                           overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',
                         }}>
-                          {m.name.split(' ')[0]}
+                          {m.name}
                         </div>
                         {isMe && (
                           <div style={{
@@ -386,11 +371,8 @@ const MobileView = ({
                     </div>
                   </td>
 
-                  {/* day cols */}
                   {week.map((d, weekIdx) => {
-                    // non-editable: holiday or weekend
                     if (!d.editable) {
-                      // only render pill on first row, others get empty td
                       if (!isFirst) return <td key={d.ds} style={{padding:0}}/>;
                       const isHol = !!d.hol;
                       return (
@@ -402,19 +384,19 @@ const MobileView = ({
                         >
                           <div
                             className={`mob-pill ${isHol?'hol':'we'}`}
-                            style={{height: '100%', minHeight: 76}}
-                            onTouchEnd={e => {
+                            style={{height:'100%',minHeight:76}}
+                            onTouchEnd={e=>{
                               e.preventDefault();
-                              const evt = new CustomEvent('mob-party', {
-                                detail: { type: isHol?'holiday':'weekend', text: d.hol||'', ds: d.ds },
-                                bubbles: true,
+                              const evt = new CustomEvent('mob-party',{
+                                detail:{type:isHol?'holiday':'weekend',text:d.hol||'',ds:d.ds},
+                                bubbles:true,
                               });
                               e.currentTarget.dispatchEvent(evt);
                             }}
-                            onClick={e => {
-                              const evt = new CustomEvent('mob-party', {
-                                detail: { type: isHol?'holiday':'weekend', text: d.hol||'', ds: d.ds },
-                                bubbles: true,
+                            onClick={e=>{
+                              const evt = new CustomEvent('mob-party',{
+                                detail:{type:isHol?'holiday':'weekend',text:d.hol||'',ds:d.ds},
+                                bubbles:true,
                               });
                               e.currentTarget.dispatchEvent(evt);
                             }}
@@ -424,8 +406,7 @@ const MobileView = ({
                               fontSize:7,fontWeight:700,
                               color:isHol?'#be185d':'#2563eb',
                               textTransform:'uppercase',textAlign:'center',
-                              padding:'0 2px',letterSpacing:'0.03em',
-                              lineHeight:1.2,
+                              padding:'0 2px',letterSpacing:'0.03em',lineHeight:1.2,
                             }}>
                               {isHol ? d.hol.replace(/^\S+\s/,'').slice(0,8) : 'Wknd'}
                             </span>
@@ -434,16 +415,14 @@ const MobileView = ({
                       );
                     }
 
-                    // editable day
                     return (
                       <td key={d.ds} style={{padding:0,verticalAlign:'top'}}>
                         <div className="mob-row-cells">
                           {['AM','PM'].map(shift => {
-                            const key  = `${m.id}-${d.ds}-${shift}`;
-                            const sid  = records[key] || 'none';
-                            const cfg  = STATUS_CONFIG[sid];
+                            const key    = `${m.id}-${d.ds}-${shift}`;
+                            const sid    = records[key] || 'none';
+                            const cfg    = STATUS_CONFIG[sid];
                             const inPrev = dragPreview.includes(key);
-
                             const cellClass = [
                               'mob-cell',
                               !isMe ? 'mob-cell-other' : sid !== 'none' ? 'mob-cell-set' : 'mob-cell-mine',
@@ -455,16 +434,11 @@ const MobileView = ({
                                 key={shift}
                                 data-mob-cell={key}
                                 className={cellClass}
-                                style={sid !== 'none' ? {
-                                  background: cfg.bg,
-                                  color: cfg.color,
-                                  border: `1.5px solid ${cfg.color}40`,
-                                } : {}}
+                                style={sid !== 'none' ? {background:cfg.bg,color:cfg.color,border:`1.5px solid ${cfg.color}40`} : {}}
                                 onTouchStart={e => handleTouchStart(e, key, sid, isMe)}
                                 onTouchMove={e  => handleTouchMove(e, isMe)}
                                 onTouchEnd={e   => handleTouchEnd(e, key, sid, isMe)}
                                 onClick={() => {
-                                  // desktop fallback only
                                   if (!isMe) return;
                                   if (sid !== 'none') { onStatusClear(key); }
                                   else { setActiveCell(p => p===key?null:key); setDragPreview([key]); }
@@ -493,10 +467,7 @@ const MobileView = ({
         <div className="mob-picker-wrap" onClick={e => e.stopPropagation()}>
           <div className="mob-picker-handle"/>
           {dragPreview.length > 1 && (
-            <div style={{
-              textAlign:'center',marginBottom:12,
-              fontSize:12,fontWeight:700,color:'#5b21b6',
-            }}>
+            <div style={{textAlign:'center',marginBottom:12,fontSize:12,fontWeight:700,color:'#5b21b6'}}>
               {dragPreview.length} cells selected
             </div>
           )}
@@ -505,8 +476,8 @@ const MobileView = ({
               <div
                 key={sId}
                 className="mob-picker-opt"
-                onTouchEnd={e => { e.preventDefault(); handleStatusPick(sId); }}
-                onClick={() => handleStatusPick(sId)}
+                onTouchEnd={e=>{e.preventDefault();handleStatusPick(sId);}}
+                onClick={()=>handleStatusPick(sId)}
               >
                 <span style={{fontSize:22,lineHeight:1}}>{sCfg.icon}</span>
                 <span style={{fontSize:9,fontWeight:700,color:'#6b7280',textAlign:'center'}}>{sCfg.label}</span>
@@ -514,7 +485,7 @@ const MobileView = ({
             ))}
             <div
               className="mob-picker-opt mob-picker-clear"
-              onTouchEnd={e => { e.preventDefault(); handleClear(); }}
+              onTouchEnd={e=>{e.preventDefault();handleClear();}}
               onClick={handleClear}
             >
               <span style={{fontSize:20,lineHeight:1}}>✕</span>
