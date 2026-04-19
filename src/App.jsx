@@ -80,7 +80,7 @@ function WelcomeConfetti() {
       left: rand(2, 98),
       delay: rand(0, 0.8),
       duration: rand(1.8, 3.2),
-      size: rand(6, 13),
+      size: rand(12, 22),
       shape: Math.random() > 0.4 ? 'rect' : 'circle',
       drift: rand(-120, 120),
       spin: rand(180, 720) * (Math.random() > 0.5 ? 1 : -1),
