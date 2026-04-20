@@ -179,8 +179,7 @@ export default function App() {
   const dailyTips = useRef(getDailyTips());
 
   // 🆕 BREACH: dimensional wall system
-  const { activeBreach, registerClick: registerBreachClick } = useDimensionalBreach();
-
+  const { activeBreach, chargingState, registerClick: registerBreachClick } = useDimensionalBreach();
   const slideTimerRef   = useRef(null);
   const presenceRef     = useRef(null);
   const partyTimerRef   = useRef(null);
@@ -1064,8 +1063,7 @@ export default function App() {
         </div>
       )}
 
-      {/* 🆕 BREACH: dimensional wall overlay (always last) */}
-      <DimensionalBreachOverlay breach={activeBreach} />
-    </div>
+      {/* 🆕 BREACH: dimensional wa~l overlay (always last) */}
+<DimensionalBreachOverlay breach={activeBreach} chargingState={chargingState} />    </div>
   );
 }

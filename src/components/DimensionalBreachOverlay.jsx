@@ -7,19 +7,22 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
   const currentSizeRef = useRef(0);
   const rafRef = useRef();
 
-  // Decide what phase to render
+  // 🔬 DEBUG: log what we're receiving
+  useEffect(() => {
+    console.log('[BREACH DEBUG]', { breach, chargingState });
+  }, [breach, chargingState]);
+
   const isExploding = !!breach && (
     breach.phase === 'EXPLODING' ||
     breach.phase === 'IMPLODING' ||
     breach.phase === 'FLOATING'
   );
 
-  // Charging state visible when there's progress but no active breach
-  const isCharging = !breach && chargingState && chargingState.progress > 1;
+  const isCharging = !breach && !!chargingState && chargingState.progress > 0.5;
   const chargingProgress = chargingState?.progress || 0;
   const chargingUserCount = chargingState?.userCount || 0;
 
-  // Portal size animation — drives both charging and exploding states
+  // Portal size animation
   useEffect(() => {
     const loop = () => {
       const el = portalRef.current;
@@ -36,7 +39,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
       } else if (breach?.phase === 'IMPLODING' || breach?.phase === 'FLOATING') {
         target = 0;
       } else if (isCharging) {
-        // Charging: gently grow from 80px to 50% of viewport as progress goes 0-100
         const minSize = 80;
         const maxSize = viewportMax * 0.5;
         target = minSize + (maxSize - minSize) * Math.pow(chargingProgress / 100, 0.7);
@@ -50,10 +52,9 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
       el.style.width = `${newVal}px`;
       el.style.height = `${newVal}px`;
 
-      // Opacity: during charging, fade in based on progress
       let opacity = 0;
       if (breach?.phase === 'EXPLODING') opacity = 1;
-      else if (isCharging) opacity = Math.min(1, chargingProgress / 15);
+      else if (isCharging) opacity = Math.min(1, chargingProgress / 10);
       el.style.opacity = opacity;
 
       rafRef.current = requestAnimationFrame(loop);
@@ -62,12 +63,34 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
     return () => cancelAnimationFrame(rafRef.current);
   }, [breach, isCharging, chargingProgress]);
 
-  // Nothing to show
   if (!breach && !isCharging) return null;
 
   return (
     <>
-      {/* Full-screen flash - only on explosion */}
+      {/* 🔬 DEBUG STATUS BAR — remove after confirming it works */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 8,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 99999,
+          background: 'rgba(168,85,247,0.95)',
+          color: 'white',
+          padding: '4px 12px',
+          borderRadius: 20,
+          fontSize: 11,
+          fontFamily: 'monospace',
+          fontWeight: 700,
+          pointerEvents: 'none',
+        }}
+      >
+        {breach
+          ? `BREACH: ${breach.phase}`
+          : `CHARGING: ${chargingProgress.toFixed(1)}% · ${chargingUserCount} user(s)`}
+      </div>
+
+      {/* Flash */}
       {breach?.phase === 'EXPLODING' && (
         <div
           style={{
@@ -82,25 +105,24 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
         />
       )}
 
-      {/* Dark veil - more intense during explosion, lighter during charging */}
+      {/* Dark veil */}
       <div
         style={{
           position: 'fixed',
           inset: 0,
-          background:
-            'radial-gradient(circle at center, rgba(10,0,30,0.85) 0%, rgba(0,0,0,0.95) 70%)',
+          background: 'radial-gradient(circle at center, rgba(10,0,30,0.85) 0%, rgba(0,0,0,0.95) 70%)',
           zIndex: 11550,
           pointerEvents: 'none',
           opacity: isExploding
-            ? (breach.phase === 'EXPLODING' ? 1 : breach.phase === 'IMPLODING' ? 0.5 : 0)
+            ? breach.phase === 'EXPLODING' ? 1 : breach.phase === 'IMPLODING' ? 0.5 : 0
             : isCharging
-            ? Math.min(0.55, chargingProgress / 100 * 0.7)  // gentle darken during charge
+            ? Math.min(0.6, (chargingProgress / 100) * 0.7)
             : 0,
           transition: 'opacity 400ms ease-out',
         }}
       />
 
-      {/* Portal core */}
+      {/* Portal */}
       <div
         style={{
           position: 'fixed',
@@ -112,15 +134,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
           zIndex: 11600,
         }}
       >
-        <div
-          ref={portalRef}
-          style={{
-            width: 0,
-            height: 0,
-            position: 'relative',
-          }}
-        >
-          {/* Outer glow ring */}
+        <div ref={portalRef} style={{ width: 0, height: 0, position: 'relative' }}>
           <div
             style={{
               position: 'absolute',
@@ -131,7 +145,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
               animation: 'breachPulse 1.5s ease-in-out infinite',
             }}
           />
-          {/* Purple spinning ring */}
           <div
             style={{
               position: 'absolute',
@@ -143,7 +156,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
               animation: 'breachSpin 0.8s linear infinite',
             }}
           />
-          {/* Blue spinning ring */}
           <div
             style={{
               position: 'absolute',
@@ -155,7 +167,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
               animation: 'breachSpin 0.45s linear infinite reverse',
             }}
           />
-          {/* Core */}
           <div
             style={{
               position: 'absolute',
@@ -163,8 +174,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
               borderRadius: '50%',
               overflow: 'hidden',
               background: 'radial-gradient(circle at 50% 50%, #1e1b4b 0%, #000 70%)',
-              boxShadow:
-                'inset 0 0 30% rgba(168,85,247,0.9), inset 0 0 12% rgba(59,130,246,0.6)',
+              boxShadow: 'inset 0 0 30% rgba(168,85,247,0.9), inset 0 0 12% rgba(59,130,246,0.6)',
             }}
           >
             <div
@@ -180,8 +190,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
               style={{
                 position: 'absolute',
                 inset: 0,
-                background:
-                  'conic-gradient(from 0deg, transparent 0%, rgba(168,85,247,0.4) 25%, transparent 50%, rgba(59,130,246,0.4) 75%, transparent 100%)',
+                background: 'conic-gradient(from 0deg, transparent 0%, rgba(168,85,247,0.4) 25%, transparent 50%, rgba(59,130,246,0.4) 75%, transparent 100%)',
                 animation: 'breachSpin 3s linear infinite',
               }}
             />
@@ -189,7 +198,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
         </div>
       </div>
 
-      {/* 🆕 Charging status text — small, elegant, beneath the portal */}
+      {/* Charging status + progress bar */}
       {isCharging && (
         <div
           style={{
@@ -206,13 +215,13 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
           <div
             style={{
               fontFamily: "'Plus Jakarta Sans', sans-serif",
-              fontSize: '11px',
+              fontSize: 11,
               fontWeight: 800,
               letterSpacing: '0.5em',
               textTransform: 'uppercase',
               color: 'rgba(199,210,254,0.9)',
               textShadow: '0 0 20px rgba(129,140,248,0.6), 0 2px 10px rgba(0,0,0,0.8)',
-              marginBottom: '8px',
+              marginBottom: 8,
               animation: 'chargingGlow 2s ease-in-out infinite',
             }}
           >
@@ -223,7 +232,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
           <div
             style={{
               fontFamily: "'Plus Jakarta Sans', sans-serif",
-              fontSize: '9px',
+              fontSize: 9,
               fontWeight: 500,
               letterSpacing: '0.3em',
               color: 'rgba(255,255,255,0.4)',
@@ -236,13 +245,12 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
               ? 'the rift is widening'
               : 'almost there'}
           </div>
-          {/* Progress bar */}
           <div
             style={{
-              width: '200px',
-              height: '2px',
+              width: 200,
+              height: 2,
               background: 'rgba(255,255,255,0.1)',
-              borderRadius: '2px',
+              borderRadius: 2,
               margin: '14px auto 0',
               overflow: 'hidden',
             }}
@@ -271,13 +279,13 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
             justifyContent: 'center',
             pointerEvents: 'none',
             zIndex: 11700,
-            padding: '48px',
+            padding: 48,
             opacity: breach.phase === 'IMPLODING' ? 0 : 1,
             transform: breach.phase === 'IMPLODING' ? 'scale(0.7)' : 'scale(1)',
             transition: 'opacity 500ms ease-out, transform 600ms cubic-bezier(0.7,0,0.3,1)',
           }}
         >
-          <div className="breach-pop" style={{ textAlign: 'center', maxWidth: '1200px' }}>
+          <div className="breach-pop" style={{ textAlign: 'center', maxWidth: 1200 }}>
             <h2
               style={{
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -288,13 +296,11 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                 letterSpacing: '-0.04em',
                 lineHeight: 0.95,
                 margin: '0 0 32px 0',
-                background:
-                  'linear-gradient(135deg, #a5b4fc 0%, #818cf8 25%, #6366f1 50%, #a855f7 75%, #c084fc 100%)',
+                background: 'linear-gradient(135deg, #a5b4fc 0%, #818cf8 25%, #6366f1 50%, #a855f7 75%, #c084fc 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
-                filter:
-                  'drop-shadow(0 6px 0 rgba(0,0,0,0.95)) drop-shadow(0 10px 24px rgba(99,102,241,0.55))',
+                filter: 'drop-shadow(0 6px 0 rgba(0,0,0,0.95)) drop-shadow(0 10px 24px rgba(99,102,241,0.55))',
               }}
             >
               YOUR ENERGY BROKE
@@ -309,7 +315,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                 fontWeight: 300,
                 fontStyle: 'italic',
                 letterSpacing: '0.02em',
-                maxWidth: '720px',
+                maxWidth: 720,
                 margin: '0 auto',
                 textShadow: '0 2px 10px rgba(0,0,0,0.8)',
               }}
@@ -339,7 +345,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
               style={{
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
                 color: 'rgba(165,180,252,0.8)',
-                fontSize: '14px',
+                fontSize: 14,
                 fontWeight: 900,
                 textTransform: 'uppercase',
                 letterSpacing: '0.6em',
@@ -352,11 +358,11 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
               style={{
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
                 color: 'rgba(255,255,255,0.35)',
-                fontSize: '11px',
+                fontSize: 11,
                 fontWeight: 300,
                 letterSpacing: '0.3em',
                 fontStyle: 'italic',
-                marginTop: '10px',
+                marginTop: 10,
               }}
             >
               the energy is yours now
