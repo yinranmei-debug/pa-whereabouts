@@ -18,6 +18,13 @@ export function useDimensionalBreach() {
   const [activeBreach, setActiveBreach] = useState(null);
   // activeBreach: { key, phase, originRect } | null
 
+  // 🆕 Live state for the "charging" visual
+  const [chargingState, setChargingState] = useState({
+    key: null,       // which pill is being charged
+    progress: 0,     // 0-100
+    userCount: 0,    // how many unique users
+  });
+
   const pillStatesRef = useRef({});
   // pillStatesRef.current: { [key]: { progress, users: Set, phase, lastClick } }
 
@@ -27,9 +34,15 @@ export function useDimensionalBreach() {
   // Decay loop — continuously drains progress when no clicks
   useEffect(() => {
     let last = performance.now();
+    let lastEmitTime = 0;
+
     const tick = (now) => {
       const dtSec = Math.min(now - last, 50) / 1000;
       last = now;
+
+      // Find the most-charged pill (the "active" one we're tracking)
+      let mostActiveKey = null;
+      let maxProgress = 0;
 
       Object.keys(pillStatesRef.current).forEach(key => {
         const state = pillStatesRef.current[key];
@@ -38,7 +51,29 @@ export function useDimensionalBreach() {
         if (state.progress <= 0 && state.users.size > 0) {
           state.users.clear();
         }
+        if (state.progress > maxProgress) {
+          maxProgress = state.progress;
+          mostActiveKey = key;
+        }
       });
+
+      // Throttle UI updates to ~30fps (every 33ms) to prevent flood
+      if (now - lastEmitTime > 33) {
+        lastEmitTime = now;
+        const activeState = mostActiveKey ? pillStatesRef.current[mostActiveKey] : null;
+        setChargingState(prev => {
+          const newProgress = activeState?.progress || 0;
+          const newKey = mostActiveKey;
+          const newUserCount = activeState?.users?.size || 0;
+          // Skip update if nothing changed meaningfully
+          if (
+            prev.key === newKey &&
+            Math.abs(prev.progress - newProgress) < 0.3 &&
+            prev.userCount === newUserCount
+          ) return prev;
+          return { key: newKey, progress: newProgress, userCount: newUserCount };
+        });
+      }
 
       rafRef.current = requestAnimationFrame(tick);
     };
@@ -60,19 +95,16 @@ export function useDimensionalBreach() {
       lastClick: 0,
     };
 
-    // Ignore clicks during an active breach for the same pill
     if (state.phase) return;
 
     state.users.add(userId);
     state.lastClick = performance.now();
 
-    // Coop boost: more unique users = faster accumulation
     const coopBoost = Math.min(MAX_COOP_BOOST, state.users.size);
     state.progress = Math.min(100, state.progress + PROGRESS_PER_CLICK_BASE * coopBoost);
 
     pillStatesRef.current[key] = state;
 
-    // BREACH! Trigger the dimensional wall event
     if (state.progress >= 100) {
       state.phase = PHASES.EXPLODING;
       const rect = pillEl?.getBoundingClientRect?.() || null;
@@ -83,7 +115,6 @@ export function useDimensionalBreach() {
         originRect: rect,
       });
 
-      // Phase sequence: EXPLODING -> IMPLODING -> FLOATING -> cleanup
       const t1 = setTimeout(() => {
         setActiveBreach(b => (b ? { ...b, phase: PHASES.IMPLODING } : null));
       }, T_EXPLODE);
@@ -109,5 +140,11 @@ export function useDimensionalBreach() {
     return pillStatesRef.current[key]?.users?.size || 0;
   }, []);
 
-  return { activeBreach, registerClick, getProgress, getUserCount };
+  return {
+    activeBreach,
+    chargingState,    // 🆕 { key, progress, userCount }
+    registerClick,
+    getProgress,
+    getUserCount,
+  };
 }
