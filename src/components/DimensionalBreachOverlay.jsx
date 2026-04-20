@@ -2,7 +2,6 @@ import React, { useEffect, useRef, memo, useCallback, useState } from 'react';
 
 const T_EXPLODE = 4000;
 
-// 🔬 DEBUG TOGGLE — press "D" key to show/hide
 const DEBUG_ENABLED_BY_DEFAULT = true;
 
 /* ============================================================
@@ -159,7 +158,6 @@ const BreachCanvas = memo(({ phaseRef, progressRef, isChargingRef, debugRef }) =
       if (p.life <= 0) particles.current.splice(i, 1);
     }
 
-    // 🔬 Expose particle count for debug
     if (debugRef) debugRef.current = particles.current.length;
 
     rafRef.current = requestAnimationFrame(animate);
@@ -201,15 +199,9 @@ const BreachCanvas = memo(({ phaseRef, progressRef, isChargingRef, debugRef }) =
 });
 
 /* ============================================================
-   🔬 DEBUG HUD — floating top-left panel
+   Debug HUD
 ============================================================ */
-const DebugHud = ({
-  breach,
-  chargingState,
-  portalSize,
-  particleCount,
-  fps,
-}) => {
+const DebugHud = ({ breach, chargingState, portalSize, particleCount, fps }) => {
   return (
     <div
       style={{
@@ -252,21 +244,15 @@ const DebugHud = ({
       </div>
       <div>
         <span style={{ color: '#94a3b8' }}>PORTAL SIZE:</span>{' '}
-        <span style={{ color: '#f472b6' }}>
-          {portalSize.toFixed(0)}px
-        </span>
+        <span style={{ color: '#f472b6' }}>{portalSize.toFixed(0)}px</span>
       </div>
       <div>
         <span style={{ color: '#94a3b8' }}>PARTICLES:</span>{' '}
-        <span style={{ color: particleCount > 150 ? '#fb7185' : '#4ade80' }}>
-          {particleCount}
-        </span>
+        <span style={{ color: particleCount > 150 ? '#fb7185' : '#4ade80' }}>{particleCount}</span>
       </div>
       <div>
         <span style={{ color: '#94a3b8' }}>FPS:</span>{' '}
-        <span style={{ color: fps < 30 ? '#fb7185' : fps < 50 ? '#fbbf24' : '#4ade80' }}>
-          {fps}
-        </span>
+        <span style={{ color: fps < 30 ? '#fb7185' : fps < 50 ? '#fbbf24' : '#4ade80' }}>{fps}</span>
       </div>
       <div>
         <span style={{ color: '#94a3b8' }}>VIEWPORT:</span>{' '}
@@ -312,25 +298,20 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
   const progressRef = useRef(0);
   const isChargingRef = useRef(false);
 
-  // 🔬 Debug state
   const [showDebug, setShowDebug] = useState(DEBUG_ENABLED_BY_DEFAULT);
   const [debugStats, setDebugStats] = useState({ portalSize: 0, particleCount: 0, fps: 60 });
   const particleCountRef = useRef(0);
   const frameCountRef = useRef(0);
   const lastFpsUpdateRef = useRef(performance.now());
 
-  // 🔬 Toggle debug with 'D' key
   useEffect(() => {
     const handler = (e) => {
-      if (e.key === 'd' || e.key === 'D') {
-        setShowDebug(prev => !prev);
-      }
+      if (e.key === 'd' || e.key === 'D') setShowDebug(prev => !prev);
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  // 🔬 Update debug stats every 500ms (don't overload render)
   useEffect(() => {
     if (!showDebug) return;
     const interval = setInterval(() => {
@@ -339,7 +320,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
       const fps = elapsed > 0 ? Math.round((frameCountRef.current * 1000) / elapsed) : 60;
       frameCountRef.current = 0;
       lastFpsUpdateRef.current = now;
-
       setDebugStats({
         portalSize: currentSizeRef.current,
         particleCount: particleCountRef.current,
@@ -366,17 +346,22 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
     isChargingRef.current = isCharging;
   }, [breach, chargingProgress, isCharging]);
 
+  // 🆕 FORCE reset currentSize when going to IDLE OR when explosion ends
   useEffect(() => {
     if (!breach && !isCharging) {
       currentSizeRef.current = 0;
       window.dispatchEvent(new CustomEvent('breach-clear-particles'));
+    }
+    // Also when imploding finishes
+    if (breach?.phase === 'FLOATING') {
+      currentSizeRef.current = 0;
     }
   }, [breach, isCharging]);
 
   // Portal size animation
   useEffect(() => {
     const loop = () => {
-      frameCountRef.current++;  // 🔬 Count frames for FPS
+      frameCountRef.current++;
 
       const el = portalRef.current;
       if (!el) {
@@ -388,16 +373,22 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
         window.innerWidth * window.innerWidth +
         window.innerHeight * window.innerHeight
       );
-      const maxSizeOnExplode = diagonal * 1.3;
+
+      // 🎯 NEW SIZE LOGIC:
+      //   Charging max = viewport HEIGHT (vertically filled)
+      //   Exploding = diagonal × 1.3 (fully covers every corner)
+      const chargingMaxSize = window.innerHeight;
+      const explodingMaxSize = diagonal * 1.3;
 
       let target = 0;
-      if (breach?.phase === 'EXPLODING') target = maxSizeOnExplode;
-      else if (breach?.phase === 'IMPLODING' || breach?.phase === 'FLOATING') target = 0;
-      else if (isCharging && chargingProgress >= 30) {
+      if (breach?.phase === 'EXPLODING') {
+        target = explodingMaxSize;
+      } else if (breach?.phase === 'IMPLODING' || breach?.phase === 'FLOATING') {
+        target = 0;
+      } else if (isCharging && chargingProgress >= 30) {
         const minSize = 80;
-        const maxChargingSize = diagonal * 0.9;
         const localProgress = (chargingProgress - 30) / 70;
-        target = minSize + (maxChargingSize - minSize) * Math.pow(localProgress, 0.7);
+        target = minSize + (chargingMaxSize - minSize) * Math.pow(localProgress, 0.7);
       }
 
       const cur = currentSizeRef.current;
@@ -426,6 +417,10 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
 
       let opacity = 0;
       if (breach?.phase === 'EXPLODING') opacity = 1;
+      else if (breach?.phase === 'IMPLODING') {
+        // Fade out during implode to prevent final flash
+        opacity = newVal > 5 ? Math.min(1, newVal / 200) : 0;
+      }
       else if (isCharging && chargingProgress >= 30) {
         opacity = Math.min(1, (chargingProgress - 30) / 10);
       }
@@ -543,7 +538,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
 
   return (
     <>
-      {/* 🔬 DEBUG HUD */}
       {showDebug && (
         <DebugHud
           breach={breach}
@@ -563,15 +557,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
 
       {showAnything && (
         <>
-          {breach?.phase === 'EXPLODING' && (
-            <div
-              style={{
-                position: 'fixed', inset: 0, background: 'white',
-                zIndex: 11500, pointerEvents: 'none', opacity: 0,
-                animation: 'breachFlash 450ms ease-out forwards',
-              }}
-            />
-          )}
+          {/* 🚫 NO MORE WHITE FLASH — removed entirely */}
 
           <div
             ref={veilShakeRef}
@@ -794,9 +780,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                 >
                   <span
                     style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
+                      width: 8, height: 8, borderRadius: '50%',
                       background: chargingUserCount >= 2 ? '#a855f7' : '#6366f1',
                       boxShadow: '0 0 12px currentColor',
                       animation: 'energyDot 1.2s ease-in-out infinite',
@@ -805,36 +789,26 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                   />
                   <span
                     style={{
-                      color: 'rgba(255,255,255,0.9)',
-                      fontSize: 12,
-                      fontWeight: 800,
-                      letterSpacing: '0.25em',
-                      textTransform: 'uppercase',
+                      color: 'rgba(255,255,255,0.9)', fontSize: 12, fontWeight: 800,
+                      letterSpacing: '0.25em', textTransform: 'uppercase',
                     }}
                   >
-                    {chargingUserCount >= 2
-                      ? `${chargingUserCount} teammates`
-                      : 'solo'}
+                    {chargingUserCount >= 2 ? `${chargingUserCount} teammates` : 'solo'}
                   </span>
                 </div>
               </div>
 
               <div
                 style={{
-                  maxWidth: 1600,
-                  margin: '0 auto',
-                  height: 10,
-                  background: 'rgba(255,255,255,0.08)',
-                  borderRadius: 999,
-                  overflow: 'hidden',
-                  position: 'relative',
+                  maxWidth: 1600, margin: '0 auto',
+                  height: 10, background: 'rgba(255,255,255,0.08)',
+                  borderRadius: 999, overflow: 'hidden', position: 'relative',
                   boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.6), 0 0 1px rgba(255,255,255,0.2)',
                 }}
               >
                 <div
                   style={{
-                    width: `${pr}%`,
-                    height: '100%',
+                    width: `${pr}%`, height: '100%',
                     background: isNearFull
                       ? 'linear-gradient(90deg, #6366f1 0%, #a855f7 40%, #c084fc 70%, #fde047 100%)'
                       : 'linear-gradient(90deg, #3b82f6 0%, #6366f1 50%, #a855f7 100%)',
@@ -848,11 +822,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                 >
                   <div
                     style={{
-                      position: 'absolute',
-                      top: 0,
-                      right: 0,
-                      bottom: 0,
-                      width: 60,
+                      position: 'absolute', top: 0, right: 0, bottom: 0, width: 60,
                       background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.5) 100%)',
                       opacity: 0.8,
                       animation: 'energyShimmer 1.5s ease-in-out infinite',
@@ -866,22 +836,15 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
           {(breach?.phase === 'EXPLODING' || breach?.phase === 'IMPLODING') && (
             <div
               style={{
-                position: 'fixed',
-                inset: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                pointerEvents: 'none',
-                zIndex: 11700,
-                padding: '40px',
+                position: 'fixed', inset: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                pointerEvents: 'none', zIndex: 11700, padding: '40px',
               }}
             >
               <div
                 ref={textShakeRef}
                 style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
+                  position: 'absolute', top: '50%', left: '50%',
                   transform: 'translate(-50%, -50%)',
                   opacity: breach.phase === 'IMPLODING' ? 0 : 1,
                   transition: 'opacity 500ms ease-out',
@@ -934,11 +897,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
       </svg>
 
       <style>{`
-        @keyframes breachFlash {
-          0%   { opacity: 0; }
-          20%  { opacity: 0.85; }
-          100% { opacity: 0; }
-        }
         @keyframes breachSpin {
           from { transform: rotate(0deg); }
           to   { transform: rotate(360deg); }
@@ -951,11 +909,11 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
           75%, 100% { transform: scale(2); opacity: 0; }
         }
         @keyframes breachPop {
-          0%   { transform: scale(0.4) translateY(100px) rotate(-10deg); opacity: 0; }
-          7%   { transform: scale(1.15) translateY(0) rotate(2deg); opacity: 1; }
-          11%  { transform: scale(1) rotate(0); }
-          90%  { transform: scale(1); opacity: 1; }
-          100% { transform: scale(1.25); opacity: 0; }
+          0%   { transform: scale(0.3); opacity: 0; }
+          15%  { transform: scale(1.1); opacity: 1; }
+          20%  { transform: scale(1); }
+          85%  { transform: scale(1); opacity: 1; }
+          100% { transform: scale(1.2); opacity: 0; }
         }
         .breach-pop {
           animation: breachPop ${T_EXPLODE}ms cubic-bezier(0.2,0,0.2,1) forwards;
