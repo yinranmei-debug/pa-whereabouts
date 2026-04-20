@@ -606,7 +606,7 @@ export default function App() {
 
   const isPreviewCell=(staffId,dateIdx,shift)=>preview.some(([s,d,sh])=>s===staffId&&d===dateIdx&&sh===shift);
 
-  const firePartyLocal=(type,text='')=>{
+ const firePartyLocal=(type,text='')=>{
   const els=type==='weekend'?['🍷','🌟','🎵','🍱']:['🎉',text.split(' ')[0]||'✨','✨'];
   for (let i=0;i<28;i++) {
     const c=document.body.appendChild(document.createElement('div'));
@@ -614,7 +614,7 @@ export default function App() {
     c.innerText=els[Math.floor(Math.random()*els.length)];
     c.style.cssText=`position:fixed;left:${Math.random()*100}vw;top:-30px;font-size:22px;z-index:11000;pointer-events:none;transition:transform ${Math.random()*2+2}s cubic-bezier(0.1,0.5,0.5,1),opacity 2s;`;
     setTimeout(()=>{c.style.transform=`translateY(105vh) rotate(${Math.random()*900}deg)`;c.style.opacity='0';},20);
-    setTimeout(()=>c.remove(),4000);
+    c._removeTimer = setTimeout(()=>c.remove(),4000);  // 🆕 Store timer ID so overlay can cancel it
   }
 };
 
