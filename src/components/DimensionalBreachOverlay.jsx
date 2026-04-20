@@ -1,8 +1,218 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, memo, useCallback } from 'react';
 
 const T_EXPLODE = 4000;
 const DEBUG_ENABLED_BY_DEFAULT = true;
+const MAX_PARTICLES = 20; // 🎯 strict cap
 
+/* ============================================================
+   Canvas — minimal particle engine
+============================================================ */
+const BreachCanvas = memo(({ phaseRef, progressRef, isChargingRef, particleCountRef }) => {
+  const canvasRef = useRef(null);
+  const particles = useRef([]);
+  const rafRef = useRef();
+  const lastSpawnRef = useRef(0);
+  const lastFrameRef = useRef(0);
+
+  useEffect(() => {
+    const clearHandler = () => { particles.current = []; };
+    window.addEventListener('breach-clear-particles', clearHandler);
+    return () => window.removeEventListener('breach-clear-particles', clearHandler);
+  }, []);
+
+  const animate = useCallback((now) => {
+    // 🎯 Throttle canvas to 50fps (save 17% CPU vs 60fps)
+    if (now - lastFrameRef.current < 20) {
+      rafRef.current = requestAnimationFrame(animate);
+      return;
+    }
+    lastFrameRef.current = now;
+
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      rafRef.current = requestAnimationFrame(animate);
+      return;
+    }
+    const ctx = canvas.getContext('2d');
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    const w = canvas.width / dpr;
+    const h = canvas.height / dpr;
+    ctx.clearRect(0, 0, w, h);
+
+    const cx = w / 2;
+    const cy = h / 2;
+    const phase = phaseRef.current;
+    const progress = progressRef.current;
+    const isCharging = isChargingRef.current;
+
+    // 🎯 Spawn slowly — rate scales with progress
+    if (isCharging && progress > 30 && phase !== 'EXPLODING' && phase !== 'IMPLODING') {
+      // 350ms at 30%, 150ms at 100%
+      const spawnInterval = Math.max(150, 400 - progress * 2.5);
+      if (now - lastSpawnRef.current > spawnInterval && particles.current.length < MAX_PARTICLES) {
+        lastSpawnRef.current = now;
+        const edge = Math.floor(Math.random() * 4);
+        let sx, sy;
+        const margin = 20;
+        if (edge === 0) { sx = Math.random() * w; sy = -margin; }
+        else if (edge === 1) { sx = w + margin; sy = Math.random() * h; }
+        else if (edge === 2) { sx = Math.random() * w; sy = h + margin; }
+        else { sx = -margin; sy = Math.random() * h; }
+
+        const dx = cx - sx;
+        const dy = cy - sy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const perpX = -dy / dist;
+        const perpY = dx / dist;
+        const tangentialSpeed = 1.5 + Math.random() * 1.5;
+
+        const cosmicEmojis = ['✨', '⚡', '💫', '⭐', '🌠'];
+        particles.current.push({
+          x: sx, y: sy,
+          vx: perpX * tangentialSpeed,
+          vy: perpY * tangentialSpeed,
+          size: 18 + Math.random() * 12,
+          emoji: cosmicEmojis[Math.floor(Math.random() * cosmicEmojis.length)],
+          rotation: Math.random() * 360,
+          rotVel: (Math.random() - 0.5) * 10,
+          life: 1.0,
+          kind: 'suck',
+        });
+      }
+    }
+
+    // 🎯 EXPLOSION burst — moderate count
+    if (phase === 'EXPLODING' && !window.__breachBurstFired) {
+      window.__breachBurstFired = true;
+      const burstEmojis = ['🎉', '🎊', '✨', '🔥', '🌈', '⚡', '💫', '🌟'];
+      // Burst fills up to MAX (so at most 20 total on screen)
+      const burstCount = Math.min(20, MAX_PARTICLES - particles.current.length);
+      for (let i = 0; i < burstCount; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 7 + Math.random() * 16;
+        particles.current.push({
+          x: cx + (Math.random() - 0.5) * 20,
+          y: cy + (Math.random() - 0.5) * 20,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          size: 22 + Math.random() * 18,
+          emoji: burstEmojis[Math.floor(Math.random() * burstEmojis.length)],
+          rotation: Math.random() * 360,
+          rotVel: (Math.random() - 0.5) * 20,
+          life: 1.0,
+          kind: 'burst',
+        });
+      }
+    }
+
+    if (phase !== 'EXPLODING') {
+      window.__breachBurstFired = false;
+    }
+
+    // Hard cap (shouldn't happen but safety)
+    if (particles.current.length > MAX_PARTICLES) {
+      particles.current = particles.current.slice(-MAX_PARTICLES);
+    }
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    for (let i = particles.current.length - 1; i >= 0; i--) {
+      const p = particles.current[i];
+
+      if (phase === 'EXPLODING' && p.kind === 'burst') {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.06;
+        p.vx *= 0.992;
+        p.vy *= 0.992;
+        p.life -= 0.004;
+      } else if (phase === 'IMPLODING') {
+        const dx = cx - p.x;
+        const dy = cy - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) + 1;
+        const pull = 5.5;
+        p.vx = (p.vx + (dx / dist) * pull) * 0.9;
+        p.vy = (p.vy + (dy / dist) * pull) * 0.9;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.size *= 0.92;
+        p.life -= 0.02;
+        if (dist < 20) p.life = 0;
+      } else {
+        // Suck toward center during charging
+        const dx = cx - p.x;
+        const dy = cy - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) + 1;
+        const intensity = Math.pow(progress / 100, 1.5) * 1.2;
+        const strength = intensity * 1000;
+        const force = strength / (dist + 50);
+        p.vx = (p.vx + (dx / dist) * force * 0.05) * 0.96;
+        p.vy = (p.vy + (dy / dist) * force * 0.05) * 0.96;
+        p.x += p.vx;
+        p.y += p.vy;
+        if (dist < 30) p.life = 0;
+        p.life -= 0.003;
+      }
+
+      p.rotation += p.rotVel;
+
+      if (p.life > 0 && p.size > 1) {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
+        ctx.font = `${Math.floor(p.size)}px system-ui, "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+        ctx.fillText(p.emoji, 0, 0);
+        ctx.restore();
+      }
+
+      if (p.life <= 0) particles.current.splice(i, 1);
+    }
+
+    if (particleCountRef) particleCountRef.current = particles.current.length;
+
+    rafRef.current = requestAnimationFrame(animate);
+  }, [phaseRef, progressRef, isChargingRef, particleCountRef]);
+
+  useEffect(() => {
+    const cvs = canvasRef.current;
+    if (!cvs) return;
+    const resize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      cvs.width = window.innerWidth * dpr;
+      cvs.height = window.innerHeight * dpr;
+      cvs.style.width = window.innerWidth + 'px';
+      cvs.style.height = window.innerHeight + 'px';
+      const ctx = cvs.getContext('2d');
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+    };
+    resize();
+    window.addEventListener('resize', resize);
+    rafRef.current = requestAnimationFrame(animate);
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      window.removeEventListener('resize', resize);
+    };
+  }, [animate]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        pointerEvents: 'none',
+        zIndex: 11400,
+      }}
+    />
+  );
+});
+
+/* ============================================================
+   Main overlay
+============================================================ */
 export default function DimensionalBreachOverlay({ breach, chargingState }) {
   const portalRef = useRef(null);
   const portalShakeRef = useRef(null);
@@ -19,9 +229,10 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
   const phaseRef = useRef(null);
   const progressRef = useRef(0);
   const isChargingRef = useRef(false);
+  const particleCountRef = useRef(0);
 
   const [showDebug, setShowDebug] = useState(DEBUG_ENABLED_BY_DEFAULT);
-  const [debugStats, setDebugStats] = useState({ portalSize: 0, fps: 60 });
+  const [debugStats, setDebugStats] = useState({ portalSize: 0, fps: 60, particles: 0 });
   const frameCountRef = useRef(0);
   const lastFpsUpdateRef = useRef(performance.now());
 
@@ -43,6 +254,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
       lastFpsUpdateRef.current = now;
       setDebugStats({
         portalSize: currentSizeRef.current,
+        particles: particleCountRef.current,
         fps,
       });
     }, 500);
@@ -69,6 +281,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
   useEffect(() => {
     if (!breach && !isCharging) {
       currentSizeRef.current = 0;
+      window.dispatchEvent(new CustomEvent('breach-clear-particles'));
     }
     if (breach?.phase === 'FLOATING') {
       currentSizeRef.current = 0;
@@ -112,9 +325,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
       el.style.width = `${newVal}px`;
       el.style.height = `${newVal}px`;
 
-      // 🎯 SMART: Only apply SVG filter when small enough to afford it
-      // Below 500px: filter on (looks lava-like)
-      // Above 500px: filter off (too expensive, but size hides lack of detail)
+      // 🎯 SMART: SVG filter only when portal < 500px
       const shouldFilter = newVal > 0 && newVal < 500;
       const filterValue = shouldFilter ? 'url(#breach-turbulence)' : 'none';
       if (el.style.filter !== filterValue) {
@@ -137,7 +348,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
     return () => cancelAnimationFrame(rafRef.current);
   }, [breach, isCharging, chargingProgress]);
 
-  // Shake engine — only portal + text, throttled to 30fps
+  // Shake engine — demo-style with damping, throttled to 30fps
   useEffect(() => {
     let lastFrameTime = 0;
     const FRAME_INTERVAL = 1000 / 30;
@@ -165,10 +376,18 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
         portalX = (Math.random() - 0.5) * 4;
         portalY = (Math.random() - 0.5) * 4;
       } else if (charging && pr > 5) {
-        const base = Math.pow(pr / 100, 1.2) * 8;
+        // Demo-style curve
+        const base = Math.pow(pr / 100, 1.2) * 10;
         const t = performance.now() / 70;
-        portalX = Math.sin(t * 0.6) * base * 0.5;
-        portalY = Math.cos(t * 0.52) * base * 0.5;
+        portalX = Math.sin(t * 0.6) * base * 0.5 + (Math.random() - 0.5) * base * 0.2;
+        portalY = Math.cos(t * 0.52) * base * 0.5 + (Math.random() - 0.5) * base * 0.2;
+
+        // Random jolt at high progress
+        if (Math.random() > 0.97 && pr > 50) {
+          const jolt = (Math.random() - 0.5) * base * 1.5;
+          portalX += jolt;
+          portalY += jolt;
+        }
       }
 
       const q = quakeRef.current;
@@ -196,6 +415,14 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
 
   return (
     <>
+      {/* Canvas always mounted */}
+      <BreachCanvas
+        phaseRef={phaseRef}
+        progressRef={progressRef}
+        isChargingRef={isChargingRef}
+        particleCountRef={particleCountRef}
+      />
+
       {showDebug && (
         <div
           style={{
@@ -225,6 +452,9 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
           </div>
           <div>PROGRESS: <span style={{ color: '#c084fc' }}>{(chargingState?.progress || 0).toFixed(1)}%</span></div>
           <div>PORTAL: <span style={{ color: '#f472b6' }}>{debugStats.portalSize.toFixed(0)}px</span></div>
+          <div>PARTICLES: <span style={{ color: debugStats.particles > 15 ? '#fbbf24' : '#4ade80' }}>
+            {debugStats.particles}/{MAX_PARTICLES}
+          </span></div>
           <div>
             FPS: <span style={{ color: debugStats.fps < 30 ? '#fb7185' : debugStats.fps < 50 ? '#fbbf24' : '#4ade80' }}>
               {debugStats.fps}
@@ -273,7 +503,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                     height: 0,
                     borderRadius: '50%',
                     position: 'relative',
-                    // 🎯 RICH radial gradient mimicking the original portal look
                     background: `radial-gradient(
                       circle at 50% 50%,
                       #000 0%,
@@ -284,7 +513,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                       rgba(192,132,252,0.6) 96%,
                       transparent 100%
                     )`,
-                    // 🎯 Layered box-shadow replaces blur filter — GPU accelerated
                     boxShadow: `
                       0 0 60px rgba(168,85,247,0.6),
                       0 0 120px rgba(79,70,229,0.45),
@@ -292,10 +520,8 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                       inset 0 0 100px rgba(0,0,0,0.6)
                     `,
                     willChange: 'width, height, opacity',
-                    // filter is set dynamically based on size
                   }}
                 >
-                  {/* Purple ring — slow rotation */}
                   <div
                     style={{
                       position: 'absolute',
@@ -308,7 +534,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                       opacity: 0.9,
                     }}
                   />
-                  {/* Blue ring — reverse slower rotation */}
                   <div
                     style={{
                       position: 'absolute',
@@ -321,7 +546,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                       opacity: 0.7,
                     }}
                   />
-                  {/* Soft center pulse — CSS-only, very cheap */}
                   <div
                     style={{
                       position: 'absolute',
@@ -547,7 +771,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
         </>
       )}
 
-      {/* 🎯 STATIC SVG filter — computed ONCE, cached by browser */}
+      {/* STATIC SVG filter — computed once, browser caches */}
       <svg style={{ position: 'absolute', width: 0, height: 0 }} aria-hidden>
         <filter id="breach-turbulence" x="-5%" y="-5%" width="110%" height="110%">
           <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="8" />
