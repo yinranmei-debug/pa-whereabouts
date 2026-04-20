@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, memo, useCallback, useState } from 'react';
 
 const T_EXPLODE = 4000;
-
 const DEBUG_ENABLED_BY_DEFAULT = true;
 
 /* ============================================================
@@ -40,8 +39,9 @@ const BreachCanvas = memo(({ phaseRef, progressRef, isChargingRef, debugRef }) =
     const isCharging = isChargingRef.current;
     const now = performance.now();
 
+    // 🎯 OPTIMIZED: Lower spawn rate, cap particles much lower
     if (isCharging && progress > 30 && phase !== 'EXPLODING' && phase !== 'IMPLODING') {
-      const spawnInterval = Math.max(30, 200 - progress * 2);
+      const spawnInterval = Math.max(80, 300 - progress * 2); // slower spawn
       if (now - lastSpawnRef.current > spawnInterval) {
         lastSpawnRef.current = now;
         const edge = Math.floor(Math.random() * 4);
@@ -74,14 +74,16 @@ const BreachCanvas = memo(({ phaseRef, progressRef, isChargingRef, debugRef }) =
       }
     }
 
-    if (particles.current.length > 200) {
-      particles.current = particles.current.slice(-200);
+    // 🎯 OPTIMIZED: Lower cap to 80 (was 200)
+    if (particles.current.length > 80) {
+      particles.current = particles.current.slice(-80);
     }
 
     if (phase === 'EXPLODING' && !window.__breachBurstFired) {
       window.__breachBurstFired = true;
       const burstEmojis = ['🎉', '🎊', '✨', '🔥', '🎇', '🌈', '⚡', '💫', '🌟', '💥'];
-      for (let i = 0; i < 60; i++) {
+      // 🎯 OPTIMIZED: 35 burst particles instead of 60
+      for (let i = 0; i < 35; i++) {
         const angle = Math.random() * Math.PI * 2;
         const speed = 7 + Math.random() * 16;
         particles.current.push({
@@ -167,7 +169,8 @@ const BreachCanvas = memo(({ phaseRef, progressRef, isChargingRef, debugRef }) =
     const cvs = canvasRef.current;
     if (!cvs) return;
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // 🎯 OPTIMIZED: Cap DPR to 1.5 (was 2) to reduce canvas pixel count by ~44%
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       cvs.width = window.innerWidth * dpr;
       cvs.height = window.innerHeight * dpr;
       cvs.style.width = window.innerWidth + 'px';
@@ -201,7 +204,7 @@ const BreachCanvas = memo(({ phaseRef, progressRef, isChargingRef, debugRef }) =
 /* ============================================================
    Debug HUD
 ============================================================ */
-const DebugHud = ({ breach, chargingState, portalSize, particleCount, fps }) => {
+const DebugHud = ({ breach, chargingState, portalSize, particleCount, fps, filterEnabled }) => {
   return (
     <div
       style={{
@@ -243,28 +246,22 @@ const DebugHud = ({ breach, chargingState, portalSize, particleCount, fps }) => 
         </span>
       </div>
       <div>
-        <span style={{ color: '#94a3b8' }}>PORTAL SIZE:</span>{' '}
+        <span style={{ color: '#94a3b8' }}>PORTAL:</span>{' '}
         <span style={{ color: '#f472b6' }}>{portalSize.toFixed(0)}px</span>
       </div>
       <div>
+        <span style={{ color: '#94a3b8' }}>SVG FILTER:</span>{' '}
+        <span style={{ color: filterEnabled ? '#fbbf24' : '#4ade80' }}>
+          {filterEnabled ? 'ON (expensive!)' : 'OFF (fast)'}
+        </span>
+      </div>
+      <div>
         <span style={{ color: '#94a3b8' }}>PARTICLES:</span>{' '}
-        <span style={{ color: particleCount > 150 ? '#fb7185' : '#4ade80' }}>{particleCount}</span>
+        <span style={{ color: particleCount > 60 ? '#fb7185' : '#4ade80' }}>{particleCount}</span>
       </div>
       <div>
         <span style={{ color: '#94a3b8' }}>FPS:</span>{' '}
         <span style={{ color: fps < 30 ? '#fb7185' : fps < 50 ? '#fbbf24' : '#4ade80' }}>{fps}</span>
-      </div>
-      <div>
-        <span style={{ color: '#94a3b8' }}>VIEWPORT:</span>{' '}
-        <span style={{ color: '#e2e8f0' }}>
-          {window.innerWidth}×{window.innerHeight}
-        </span>
-      </div>
-      <div>
-        <span style={{ color: '#94a3b8' }}>DIAGONAL:</span>{' '}
-        <span style={{ color: '#e2e8f0' }}>
-          {Math.sqrt(window.innerWidth ** 2 + window.innerHeight ** 2).toFixed(0)}px
-        </span>
       </div>
     </div>
   );
@@ -286,6 +283,9 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
   const displacementRef = useRef(20);
   const filterRef = useRef(null);
 
+  // 🎯 NEW: Track whether SVG filter is currently applied
+  const filterActiveRef = useRef(true);
+
   const quakeRef = useRef({
     veil: { x: 0, y: 0 },
     hud: { x: 0, y: 0 },
@@ -299,7 +299,12 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
   const isChargingRef = useRef(false);
 
   const [showDebug, setShowDebug] = useState(DEBUG_ENABLED_BY_DEFAULT);
-  const [debugStats, setDebugStats] = useState({ portalSize: 0, particleCount: 0, fps: 60 });
+  const [debugStats, setDebugStats] = useState({
+    portalSize: 0,
+    particleCount: 0,
+    fps: 60,
+    filterEnabled: true
+  });
   const particleCountRef = useRef(0);
   const frameCountRef = useRef(0);
   const lastFpsUpdateRef = useRef(performance.now());
@@ -324,6 +329,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
         portalSize: currentSizeRef.current,
         particleCount: particleCountRef.current,
         fps,
+        filterEnabled: filterActiveRef.current,
       });
     }, 500);
     return () => clearInterval(interval);
@@ -346,19 +352,17 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
     isChargingRef.current = isCharging;
   }, [breach, chargingProgress, isCharging]);
 
-  // 🆕 FORCE reset currentSize when going to IDLE OR when explosion ends
   useEffect(() => {
     if (!breach && !isCharging) {
       currentSizeRef.current = 0;
       window.dispatchEvent(new CustomEvent('breach-clear-particles'));
     }
-    // Also when imploding finishes
     if (breach?.phase === 'FLOATING') {
       currentSizeRef.current = 0;
     }
   }, [breach, isCharging]);
 
-  // Portal size animation
+  // Portal size animation with SMART FILTER toggle
   useEffect(() => {
     const loop = () => {
       frameCountRef.current++;
@@ -374,10 +378,8 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
         window.innerHeight * window.innerHeight
       );
 
-      // 🎯 NEW SIZE LOGIC:
-      //   Charging max = viewport HEIGHT (vertically filled)
-      //   Exploding = diagonal × 1.3 (fully covers every corner)
-      const chargingMaxSize = window.innerHeight;
+      // 🎯 OPTIMIZED: Cap charging max at 80% of screen height (reduces fill rate)
+      const chargingMaxSize = window.innerHeight * 0.85;
       const explodingMaxSize = diagonal * 1.3;
 
       let target = 0;
@@ -397,6 +399,14 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
       currentSizeRef.current = newVal;
       el.style.width = `${newVal}px`;
       el.style.height = `${newVal}px`;
+
+      // 🎯 KEY OPTIMIZATION: Disable SVG filter when portal is huge
+      // SVG filter cost scales with O(n²), so turn it off once portal is > 500px
+      const shouldEnableFilter = newVal > 0 && newVal < 500;
+      if (shouldEnableFilter !== filterActiveRef.current) {
+        filterActiveRef.current = shouldEnableFilter;
+        el.style.filter = shouldEnableFilter ? 'url(#breach-portal-filter)' : 'none';
+      }
 
       const outerGlow = el.querySelector('[data-portal-glow]');
       const ringA = el.querySelector('[data-portal-ring-1]');
@@ -418,7 +428,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
       let opacity = 0;
       if (breach?.phase === 'EXPLODING') opacity = 1;
       else if (breach?.phase === 'IMPLODING') {
-        // Fade out during implode to prevent final flash
         opacity = newVal > 5 ? Math.min(1, newVal / 200) : 0;
       }
       else if (isCharging && chargingProgress >= 30) {
@@ -426,13 +435,16 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
       }
       el.style.opacity = opacity;
 
-      const targetDisp = isCharging
-        ? 20 + chargingProgress * 0.6
-        : breach?.phase === 'EXPLODING'
-        ? 80
-        : 20;
-      displacementRef.current += (targetDisp - displacementRef.current) * 0.1;
-      if (filterRef.current) filterRef.current.setAttribute('scale', displacementRef.current.toFixed(1));
+      // Only update displacement if filter is active (waste otherwise)
+      if (filterActiveRef.current) {
+        const targetDisp = isCharging
+          ? 20 + chargingProgress * 0.6
+          : breach?.phase === 'EXPLODING'
+          ? 80
+          : 20;
+        displacementRef.current += (targetDisp - displacementRef.current) * 0.1;
+        if (filterRef.current) filterRef.current.setAttribute('scale', displacementRef.current.toFixed(1));
+      }
 
       rafRef.current = requestAnimationFrame(loop);
     };
@@ -440,9 +452,18 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
     return () => cancelAnimationFrame(rafRef.current);
   }, [breach, isCharging, chargingProgress]);
 
-  // Shake engine
+  // 🎯 OPTIMIZED: Shake engine throttled to 30fps (plenty for shake effect)
   useEffect(() => {
-    const loop = () => {
+    let lastFrameTime = 0;
+    const FRAME_INTERVAL = 1000 / 30; // 30fps for shake
+
+    const loop = (now) => {
+      if (now - lastFrameTime < FRAME_INTERVAL) {
+        shakeRafRef.current = requestAnimationFrame(loop);
+        return;
+      }
+      lastFrameTime = now;
+
       const ph = phaseRef.current;
       const pr = progressRef.current;
       const charging = isChargingRef.current;
@@ -545,6 +566,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
           portalSize={debugStats.portalSize}
           particleCount={debugStats.particleCount}
           fps={debugStats.fps}
+          filterEnabled={debugStats.filterEnabled}
         />
       )}
 
@@ -557,8 +579,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
 
       {showAnything && (
         <>
-          {/* 🚫 NO MORE WHITE FLASH — removed entirely */}
-
           <div
             ref={veilShakeRef}
             style={{
@@ -570,6 +590,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
               zIndex: 11350,
               pointerEvents: 'none',
               willChange: 'transform',
+              contain: 'layout paint', // 🎯 ISOLATE FROM MAIN LAYOUT
               background: 'radial-gradient(circle at center, rgba(10,0,30,0.85) 0%, rgba(0,0,0,0.95) 70%)',
               opacity: isExploding
                 ? breach.phase === 'EXPLODING' ? 1 : breach.phase === 'IMPLODING' ? 0.5 : 0
@@ -590,14 +611,18 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                 justifyContent: 'center',
                 pointerEvents: 'none',
                 zIndex: 11600,
+                contain: 'layout paint', // 🎯 ISOLATE
               }}
             >
               <div ref={portalShakeRef} style={{ willChange: 'transform' }}>
                 <div
                   ref={portalRef}
                   style={{
-                    width: 0, height: 0, position: 'relative',
-                    filter: 'url(#breach-portal-filter)',
+                    width: 0,
+                    height: 0,
+                    position: 'relative',
+                    filter: 'url(#breach-portal-filter)', // Will be swapped at runtime
+                    contain: 'layout paint style', // 🎯 STRONG ISOLATION
                   }}
                 >
                   <div
@@ -640,13 +665,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                       background: 'radial-gradient(circle at 50% 50%, #1e1b4b 0%, #000 70%)',
                     }}
                   >
-                    <div
-                      style={{
-                        position: 'absolute', inset: 0, opacity: 0.5,
-                        background: 'radial-gradient(circle, white 0%, transparent 65%)',
-                        animation: 'breachPing 1.8s cubic-bezier(0,0,0.2,1) infinite',
-                      }}
-                    />
+                    {/* 🎯 REMOVED animate-ping (expensive); conic-gradient also optimized */}
                     <div
                       style={{
                         position: 'absolute', inset: 0,
@@ -724,6 +743,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                 background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)',
                 animation: 'energyBarFadeIn 500ms ease-out',
                 willChange: 'transform',
+                contain: 'layout paint',
               }}
             >
               <div
@@ -760,10 +780,8 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                     style={{
                       fontFamily: "'Plus Jakarta Sans', sans-serif",
                       color: 'rgba(199,210,254,0.7)',
-                      fontSize: 10,
-                      fontWeight: 800,
-                      letterSpacing: '0.3em',
-                      textTransform: 'uppercase',
+                      fontSize: 10, fontWeight: 800,
+                      letterSpacing: '0.3em', textTransform: 'uppercase',
                     }}
                   >
                     Energy
@@ -772,9 +790,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
 
                 <div
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
+                    display: 'flex', alignItems: 'center', gap: 8,
                     fontFamily: "'Plus Jakarta Sans', sans-serif",
                   }}
                 >
@@ -839,6 +855,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                 position: 'fixed', inset: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 pointerEvents: 'none', zIndex: 11700, padding: '40px',
+                contain: 'layout paint',
               }}
             >
               <div
@@ -888,8 +905,8 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
       )}
 
       <svg style={{ position: 'absolute', width: 0, height: 0 }} aria-hidden>
-        <filter id="breach-portal-filter">
-          <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" seed="8">
+        <filter id="breach-portal-filter" x="-10%" y="-10%" width="120%" height="120%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="8">
             <animate attributeName="baseFrequency" values="0.04;0.06;0.04" dur="2.4s" repeatCount="indefinite" />
           </feTurbulence>
           <feDisplacementMap ref={filterRef} in="SourceGraphic" scale="20" />
@@ -904,9 +921,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
         @keyframes breachPulse {
           0%, 100% { opacity: 0.6; }
           50%      { opacity: 1; }
-        }
-        @keyframes breachPing {
-          75%, 100% { transform: scale(2); opacity: 0; }
         }
         @keyframes breachPop {
           0%   { transform: scale(0.3); opacity: 0; }
