@@ -3,7 +3,7 @@ import React, { useEffect, useRef, memo, useCallback } from 'react';
 const T_EXPLODE = 4000;
 
 /* ============================================================
-   Canvas particle engine — safe, high-performance
+   Canvas particle engine
 ============================================================ */
 const BreachCanvas = memo(({ phaseRef, progressRef, isChargingRef }) => {
   const canvasRef = useRef(null);
@@ -30,10 +30,8 @@ const BreachCanvas = memo(({ phaseRef, progressRef, isChargingRef }) => {
     const isCharging = isChargingRef.current;
     const now = performance.now();
 
-    // 🆕 Spawn new particles from edges during charging (after 30%)
     if (isCharging && progress > 30 && phase !== 'EXPLODING' && phase !== 'IMPLODING') {
-      // Rate scales with progress: more particles as energy builds
-      const spawnInterval = Math.max(30, 200 - progress * 2); // 200ms at 30%, ~40ms at 100%
+      const spawnInterval = Math.max(30, 200 - progress * 2);
       if (now - lastSpawnRef.current > spawnInterval) {
         lastSpawnRef.current = now;
         const edge = Math.floor(Math.random() * 4);
@@ -44,7 +42,6 @@ const BreachCanvas = memo(({ phaseRef, progressRef, isChargingRef }) => {
         else if (edge === 2) { sx = Math.random() * w; sy = h + margin; }
         else { sx = -margin; sy = Math.random() * h; }
 
-        // Velocity perpendicular to radius to create spiral (like galaxy)
         const dx = cx - sx;
         const dy = cy - sy;
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -54,8 +51,7 @@ const BreachCanvas = memo(({ phaseRef, progressRef, isChargingRef }) => {
 
         const cosmicEmojis = ['✨', '⚡', '💫', '⭐', '🌠'];
         particles.current.push({
-          x: sx,
-          y: sy,
+          x: sx, y: sy,
           vx: perpX * tangentialSpeed,
           vy: perpY * tangentialSpeed,
           size: 18 + Math.random() * 12,
@@ -68,7 +64,6 @@ const BreachCanvas = memo(({ phaseRef, progressRef, isChargingRef }) => {
       }
     }
 
-    // 🆕 Burst on explosion
     if (phase === 'EXPLODING' && !window.__breachBurstFired) {
       window.__breachBurstFired = true;
       const burstEmojis = ['🎉', '🎊', '✨', '🔥', '🎇', '🌈', '⚡', '💫', '🌟', '💥'];
@@ -90,12 +85,10 @@ const BreachCanvas = memo(({ phaseRef, progressRef, isChargingRef }) => {
       }
     }
 
-    // Reset burst flag when not exploding
     if (phase !== 'EXPLODING') {
       window.__breachBurstFired = false;
     }
 
-    // Update & draw particles
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -103,7 +96,6 @@ const BreachCanvas = memo(({ phaseRef, progressRef, isChargingRef }) => {
       const p = particles.current[i];
 
       if (phase === 'EXPLODING' && p.kind === 'burst') {
-        // Outward spray
         p.x += p.vx;
         p.y += p.vy;
         p.vy += 0.06;
@@ -111,7 +103,6 @@ const BreachCanvas = memo(({ phaseRef, progressRef, isChargingRef }) => {
         p.vy *= 0.992;
         p.life -= 0.004;
       } else if (phase === 'IMPLODING') {
-        // Strong vacuum — all particles sucked in
         const dx = cx - p.x;
         const dy = cy - p.y;
         const dist = Math.sqrt(dx * dx + dy * dy) + 1;
@@ -124,7 +115,6 @@ const BreachCanvas = memo(({ phaseRef, progressRef, isChargingRef }) => {
         p.life -= 0.02;
         if (dist < 20) p.life = 0;
       } else {
-        // Charging: gravitational pull toward center
         const dx = cx - p.x;
         const dy = cy - p.y;
         const dist = Math.sqrt(dx * dx + dy * dy) + 1;
@@ -199,7 +189,8 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
   const portalRef = useRef(null);
   const portalShakeRef = useRef(null);
   const textShakeRef = useRef(null);
-  const globalShakeRef = useRef(null);   // 🆕 for subtle whole-overlay shake
+  const veilShakeRef = useRef(null);
+  const statusShakeRef = useRef(null);
   const currentSizeRef = useRef(0);
   const rafRef = useRef();
   const shakeRafRef = useRef();
@@ -219,17 +210,14 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
   const chargingProgress = chargingState?.progress || 0;
   const chargingUserCount = chargingState?.userCount || 0;
 
-  // 🆕 Black hole only appears after 30% progress
   const showPortal = isCharging ? chargingProgress >= 30 : isExploding;
 
-  // Sync refs
   useEffect(() => {
     phaseRef.current = breach?.phase || null;
     progressRef.current = chargingProgress;
     isChargingRef.current = isCharging;
   }, [breach, chargingProgress, isCharging]);
 
-  // Reset portal size when fully IDLE
   useEffect(() => {
     if (!breach && !isCharging) {
       currentSizeRef.current = 0;
@@ -250,7 +238,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
       if (breach?.phase === 'EXPLODING') target = viewportMax * (4 / 3);
       else if (breach?.phase === 'IMPLODING' || breach?.phase === 'FLOATING') target = 0;
       else if (isCharging && chargingProgress >= 30) {
-        // Grow from 80px (at 30% progress) to 55% viewport (at 100%)
         const minSize = 80;
         const maxSize = viewportMax * 0.55;
         const localProgress = (chargingProgress - 30) / 70;
@@ -302,51 +289,58 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
     return () => cancelAnimationFrame(rafRef.current);
   }, [breach, isCharging, chargingProgress]);
 
-  // 🆕 Shake engine — includes early tremor from 10%
+  // 🆕 Shake engine — shakes multiple elements independently
+  // Veil is oversized so it never shows white edges when shaken
   useEffect(() => {
     const loop = () => {
       const portalEl = portalShakeRef.current;
       const textEl = textShakeRef.current;
-      const globalEl = globalShakeRef.current;
+      const veilEl = veilShakeRef.current;
+      const statusEl = statusShakeRef.current;
 
       let portalX = 0, portalY = 0;
       let textX = 0, textY = 0;
-      let globalX = 0, globalY = 0;
+      let veilX = 0, veilY = 0;
+      let statusX = 0, statusY = 0;
 
       if (breach?.phase === 'EXPLODING') {
-        portalX = (Math.random() - 0.5) * 14;
-        portalY = (Math.random() - 0.5) * 14;
+        portalX = (Math.random() - 0.5) * 6;
+        portalY = (Math.random() - 0.5) * 6;
         textX = (Math.random() - 0.5) * 20;
         textY = (Math.random() - 0.5) * 20;
-        globalX = (Math.random() - 0.5) * 6;
-        globalY = (Math.random() - 0.5) * 6;
+        veilX = (Math.random() - 0.5) * 12;
+        veilY = (Math.random() - 0.5) * 12;
       } else if (breach?.phase === 'IMPLODING') {
-        portalX = (Math.random() - 0.5) * 4;
-        portalY = (Math.random() - 0.5) * 4;
+        portalX = (Math.random() - 0.5) * 3;
+        portalY = (Math.random() - 0.5) * 3;
+        veilX = (Math.random() - 0.5) * 5;
+        veilY = (Math.random() - 0.5) * 5;
       } else if (isCharging && chargingProgress > 10) {
-        // 🆕 Start subtle tremor from 10% (before hole appears)
-        // Early (10-30%): very gentle, just globalEl
-        // Mid (30-75%): moderate, globalEl + portalEl
-        // Late (75-100%): strong, all three
         const rawProgress = (chargingProgress - 10) / 90;
-        const base = Math.pow(rawProgress, 1.6) * 10;
         const t = performance.now() / 70;
 
-        // Global gentle tremor even at low progress
-        const globalBase = Math.pow(rawProgress, 1.2) * 3;
-        globalX = Math.sin(t * 0.4) * globalBase + (Math.random() - 0.5) * globalBase * 0.3;
-        globalY = Math.cos(t * 0.35) * globalBase + (Math.random() - 0.5) * globalBase * 0.3;
+        // Veil shakes (oversized so no white edges)
+        const veilBase = Math.pow(rawProgress, 1.3) * 5;
+        veilX = Math.sin(t * 0.4) * veilBase + (Math.random() - 0.5) * veilBase * 0.3;
+        veilY = Math.cos(t * 0.35) * veilBase + (Math.random() - 0.5) * veilBase * 0.3;
 
-        // Portal shake starts at 30%+
-        if (chargingProgress > 30) {
-          portalX = Math.sin(t * 0.6) * base + (Math.random() - 0.5) * base * 0.4;
-          portalY = Math.cos(t * 0.52) * base + (Math.random() - 0.5) * base * 0.4;
+        // Status text (safe — it's small)
+        const statusBase = Math.pow(rawProgress, 1.3) * 4;
+        statusX = Math.sin(t * 0.5) * statusBase;
+        statusY = Math.cos(t * 0.43) * statusBase;
+
+        // Portal only shakes at higher progress
+        if (chargingProgress > 50) {
+          const portalBase = Math.pow((chargingProgress - 50) / 50, 1.5) * 5;
+          portalX = Math.sin(t * 0.6) * portalBase;
+          portalY = Math.cos(t * 0.52) * portalBase;
         }
       }
 
       if (portalEl) portalEl.style.transform = `translate3d(${portalX}px, ${portalY}px, 0)`;
       if (textEl) textEl.style.transform = `translate(-50%, -50%) translate3d(${textX}px, ${textY}px, 0)`;
-      if (globalEl) globalEl.style.transform = `translate3d(${globalX}px, ${globalY}px, 0)`;
+      if (veilEl) veilEl.style.transform = `translate3d(${veilX}px, ${veilY}px, 0)`;
+      if (statusEl) statusEl.style.transform = `translate(-50%, -50%) translate3d(${statusX}px, ${statusY}px, 0)`;
 
       shakeRafRef.current = requestAnimationFrame(loop);
     };
@@ -354,12 +348,12 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
     return () => cancelAnimationFrame(shakeRafRef.current);
   }, [breach, isCharging, chargingProgress]);
 
-  // 🆕 Cleanup: reset all transforms when overlay unmounts
   useEffect(() => {
     return () => {
       if (portalShakeRef.current) portalShakeRef.current.style.transform = '';
       if (textShakeRef.current) textShakeRef.current.style.transform = '';
-      if (globalShakeRef.current) globalShakeRef.current.style.transform = '';
+      if (veilShakeRef.current) veilShakeRef.current.style.transform = '';
+      if (statusShakeRef.current) statusShakeRef.current.style.transform = '';
     };
   }, []);
 
@@ -369,7 +363,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
 
   return (
     <>
-      {/* Canvas always mounted for smooth reuse */}
       <BreachCanvas
         phaseRef={phaseRef}
         progressRef={progressRef}
@@ -377,7 +370,8 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
       />
 
       {showAnything && (
-        <div ref={globalShakeRef} style={{ willChange: 'transform' }}>
+        <>
+          {/* White flash — full screen, no shake */}
           {breach?.phase === 'EXPLODING' && (
             <div
               style={{
@@ -388,11 +382,19 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
             />
           )}
 
+          {/* 🎯 VEIL — OVERSIZED so shake never shows white edges */}
           <div
+            ref={veilShakeRef}
             style={{
-              position: 'fixed', inset: 0,
+              position: 'fixed',
+              top: '-50px',
+              left: '-50px',
+              right: '-50px',
+              bottom: '-50px',
+              zIndex: 11350,
+              pointerEvents: 'none',
+              willChange: 'transform',
               background: 'radial-gradient(circle at center, rgba(10,0,30,0.85) 0%, rgba(0,0,0,0.95) 70%)',
-              zIndex: 11350, pointerEvents: 'none',
               opacity: isExploding
                 ? breach.phase === 'EXPLODING' ? 1 : breach.phase === 'IMPLODING' ? 0.5 : 0
                 : isCharging
@@ -402,86 +404,94 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
             }}
           />
 
-          {/* Portal — only renders after 30% or exploding */}
+          {/* 🎯 PORTAL — centered, only its inner wrapper wobbles */}
           {showPortal && (
             <div
-              ref={portalShakeRef}
               style={{
-                position: 'fixed', inset: 0,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                pointerEvents: 'none', zIndex: 11600,
-                willChange: 'transform',
+                position: 'fixed',
+                inset: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                pointerEvents: 'none',
+                zIndex: 11600,
               }}
             >
               <div
-                ref={portalRef}
-                style={{
-                  width: 0, height: 0, position: 'relative',
-                  filter: 'url(#breach-portal-filter)',
-                }}
+                ref={portalShakeRef}
+                style={{ willChange: 'transform' }}
               >
                 <div
-                  data-portal-glow
+                  ref={portalRef}
                   style={{
-                    position: 'absolute', inset: 0, borderRadius: '50%',
-                    borderStyle: 'solid', borderColor: 'rgba(79,70,229,0.3)',
-                    filter: 'blur(24px)',
-                    animation: 'breachPulse 1.5s ease-in-out infinite',
-                  }}
-                />
-                <div
-                  data-portal-ring-1
-                  style={{
-                    position: 'absolute',
-                    top: '2%', left: '2%', right: '2%', bottom: '2%',
-                    borderRadius: '50%', borderStyle: 'solid',
-                    borderWidth: '2px', borderColor: 'transparent',
-                    borderTopColor: '#a855f7', borderLeftColor: '#a855f7',
-                    animation: 'breachSpin 0.8s linear infinite',
-                  }}
-                />
-                <div
-                  data-portal-ring-2
-                  style={{
-                    position: 'absolute',
-                    top: '12%', left: '12%', right: '12%', bottom: '12%',
-                    borderRadius: '50%', borderStyle: 'solid',
-                    borderWidth: '2px', borderColor: 'transparent',
-                    borderBottomColor: '#60a5fa', borderRightColor: '#60a5fa',
-                    animation: 'breachSpin 0.45s linear infinite reverse',
-                  }}
-                />
-                <div
-                  data-portal-core
-                  style={{
-                    position: 'absolute',
-                    top: '8%', left: '8%', right: '8%', bottom: '8%',
-                    borderRadius: '50%', overflow: 'hidden',
-                    background: 'radial-gradient(circle at 50% 50%, #1e1b4b 0%, #000 70%)',
+                    width: 0, height: 0, position: 'relative',
+                    filter: 'url(#breach-portal-filter)',
                   }}
                 >
                   <div
+                    data-portal-glow
                     style={{
-                      position: 'absolute', inset: 0, opacity: 0.5,
-                      background: 'radial-gradient(circle, white 0%, transparent 65%)',
-                      animation: 'breachPing 1.8s cubic-bezier(0,0,0.2,1) infinite',
+                      position: 'absolute', inset: 0, borderRadius: '50%',
+                      borderStyle: 'solid', borderColor: 'rgba(79,70,229,0.3)',
+                      filter: 'blur(24px)',
+                      animation: 'breachPulse 1.5s ease-in-out infinite',
                     }}
                   />
                   <div
+                    data-portal-ring-1
                     style={{
-                      position: 'absolute', inset: 0,
-                      background: 'conic-gradient(from 0deg, transparent 0%, rgba(168,85,247,0.4) 25%, transparent 50%, rgba(59,130,246,0.4) 75%, transparent 100%)',
-                      animation: 'breachSpin 3s linear infinite',
+                      position: 'absolute',
+                      top: '2%', left: '2%', right: '2%', bottom: '2%',
+                      borderRadius: '50%', borderStyle: 'solid',
+                      borderWidth: '2px', borderColor: 'transparent',
+                      borderTopColor: '#a855f7', borderLeftColor: '#a855f7',
+                      animation: 'breachSpin 0.8s linear infinite',
                     }}
                   />
+                  <div
+                    data-portal-ring-2
+                    style={{
+                      position: 'absolute',
+                      top: '12%', left: '12%', right: '12%', bottom: '12%',
+                      borderRadius: '50%', borderStyle: 'solid',
+                      borderWidth: '2px', borderColor: 'transparent',
+                      borderBottomColor: '#60a5fa', borderRightColor: '#60a5fa',
+                      animation: 'breachSpin 0.45s linear infinite reverse',
+                    }}
+                  />
+                  <div
+                    data-portal-core
+                    style={{
+                      position: 'absolute',
+                      top: '8%', left: '8%', right: '8%', bottom: '8%',
+                      borderRadius: '50%', overflow: 'hidden',
+                      background: 'radial-gradient(circle at 50% 50%, #1e1b4b 0%, #000 70%)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        position: 'absolute', inset: 0, opacity: 0.5,
+                        background: 'radial-gradient(circle, white 0%, transparent 65%)',
+                        animation: 'breachPing 1.8s cubic-bezier(0,0,0.2,1) infinite',
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: 'absolute', inset: 0,
+                        background: 'conic-gradient(from 0deg, transparent 0%, rgba(168,85,247,0.4) 25%, transparent 50%, rgba(59,130,246,0.4) 75%, transparent 100%)',
+                        animation: 'breachSpin 3s linear infinite',
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Middle status text */}
+          {/* 🎯 STATUS TEXT — small element, shakes safely */}
           {isCharging && (
             <div
+              ref={statusShakeRef}
               style={{
                 position: 'fixed',
                 top: chargingProgress < 30 ? '50%' : '72%',
@@ -492,6 +502,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                 textAlign: 'center',
                 animation: 'chargingFadeIn 400ms ease-out',
                 transition: 'top 800ms ease-out',
+                willChange: 'transform',
               }}
             >
               <div
@@ -528,7 +539,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
             </div>
           )}
 
-          {/* FULL-WIDTH ENERGY BAR */}
+          {/* 🎯 ENERGY BAR — doesn't shake (too big, would cause artifacts) */}
           {isCharging && (
             <div
               style={{
@@ -668,52 +679,66 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
             </div>
           )}
 
-          {/* Explosion text */}
+          {/* 🎯 EXPLOSION TEXT — absolute top-level, full-screen wrapper */}
           {(breach?.phase === 'EXPLODING' || breach?.phase === 'IMPLODING') && (
             <div
-              ref={textShakeRef}
               style={{
-                position: 'fixed', top: '50%', left: '50%',
-                transform: 'translate(-50%, -50%)',
-                zIndex: 11700, pointerEvents: 'none', padding: 48,
-                opacity: breach.phase === 'IMPLODING' ? 0 : 1,
-                transition: 'opacity 500ms ease-out',
-                willChange: 'transform',
+                position: 'fixed',
+                inset: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                pointerEvents: 'none',
+                zIndex: 11700,
+                padding: '40px',
               }}
             >
-              <div className="breach-pop" style={{ textAlign: 'center', maxWidth: 1200 }}>
-                <h2
-                  style={{
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    fontWeight: 900, fontSize: 'clamp(48px, 8vw, 120px)',
-                    fontStyle: 'italic', textTransform: 'uppercase',
-                    letterSpacing: '-0.04em', lineHeight: 0.95,
-                    margin: '0 0 32px 0',
-                    background: 'linear-gradient(135deg, #a5b4fc 0%, #818cf8 25%, #6366f1 50%, #a855f7 75%, #c084fc 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                    filter: 'drop-shadow(0 6px 0 rgba(0,0,0,0.95)) drop-shadow(0 10px 24px rgba(99,102,241,0.55))',
-                  }}
-                >
-                  YOUR ENERGY BROKE<br />THE DIMENSIONAL WALL!
-                </h2>
-                <p
-                  style={{
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    color: 'rgba(255,255,255,0.85)',
-                    fontSize: 'clamp(16px, 2vw, 28px)',
-                    fontWeight: 300, fontStyle: 'italic',
-                    letterSpacing: '0.02em', maxWidth: 720, margin: '0 auto',
-                    textShadow: '0 2px 10px rgba(0,0,0,0.8)',
-                  }}
-                >
-                  What you asked for is on its way.
-                </p>
+              <div
+                ref={textShakeRef}
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  opacity: breach.phase === 'IMPLODING' ? 0 : 1,
+                  transition: 'opacity 500ms ease-out',
+                  willChange: 'transform',
+                }}
+              >
+                <div className="breach-pop" style={{ textAlign: 'center', maxWidth: 1200 }}>
+                  <h2
+                    style={{
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
+                      fontWeight: 900, fontSize: 'clamp(48px, 8vw, 120px)',
+                      fontStyle: 'italic', textTransform: 'uppercase',
+                      letterSpacing: '-0.04em', lineHeight: 0.95,
+                      margin: '0 0 32px 0',
+                      background: 'linear-gradient(135deg, #a5b4fc 0%, #818cf8 25%, #6366f1 50%, #a855f7 75%, #c084fc 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                      filter: 'drop-shadow(0 6px 0 rgba(0,0,0,0.95)) drop-shadow(0 10px 24px rgba(99,102,241,0.55))',
+                    }}
+                  >
+                    YOUR ENERGY BROKE<br />THE DIMENSIONAL WALL!
+                  </h2>
+                  <p
+                    style={{
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
+                      color: 'rgba(255,255,255,0.85)',
+                      fontSize: 'clamp(16px, 2vw, 28px)',
+                      fontWeight: 300, fontStyle: 'italic',
+                      letterSpacing: '0.02em', maxWidth: 720, margin: '0 auto',
+                      textShadow: '0 2px 10px rgba(0,0,0,0.8)',
+                    }}
+                  >
+                    What you asked for is on its way.
+                  </p>
+                </div>
               </div>
             </div>
           )}
-        </div>
+        </>
       )}
 
       <svg style={{ position: 'absolute', width: 0, height: 0 }} aria-hidden>
