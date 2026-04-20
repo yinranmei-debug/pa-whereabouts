@@ -611,8 +611,8 @@ firePartyLocal(type, text, intensity);
 
 const firePartyLocal=(type,text='',intensity=1)=>{
   const els=type==='weekend'?['🍷','🌟','🎵','🍱']:['🎉',text.split(' ')[0]||'✨','✨'];
-  const count = Math.round(28 * intensity);  // 🆕 scale count by intensity
-  if (count <= 0) return;  // Skip entirely if intensity is 0
+  const count = Math.max(0, Math.round(28 * intensity));  // 🆕 scale by intensity
+  if (count === 0) return;  // 🆕 skip entirely when intensity = 0
   for (let i=0;i<count;i++) {
     const c=document.body.appendChild(document.createElement('div'));
     c.innerText=els[Math.floor(Math.random()*els.length)];
@@ -637,7 +637,14 @@ const firePartyLocal=(type,text='',intensity=1)=>{
       document.body.appendChild(ov);
       setTimeout(()=>ov.remove(),2000);
     }
-    firePartyLocal(type,text);
+    // 🆕 Scale DOM confetti intensity based on charging progress
+// 0-15%:  100% (full celebration)
+// 15-100%: linearly decrease to 0% (hand off to canvas particles)
+const currentProgress = chargingState?.progress || 0;
+const intensity = currentProgress < 15
+  ? 1
+  : Math.max(0, 1 - (currentProgress - 15) / 85);
+firePartyLocal(type, text, intensity);
     popAvatar(meStaff?.id||'guest');
     glowLevelRef.current=Math.min(glowLevelRef.current+0.65,1);
     presenceRef.current?.send({type:'broadcast',event:'party',payload:{type,text,userId:meStaff?.id||'guest'}});
