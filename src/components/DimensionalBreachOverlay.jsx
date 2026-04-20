@@ -9,13 +9,8 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
   const currentSizeRef = useRef(0);
   const rafRef = useRef();
   const shakeRafRef = useRef();
-  const suckRafRef = useRef();
   const displacementRef = useRef(20);
   const filterRef = useRef(null);
-
-  const phaseRef = useRef(null);
-  const progressRef = useRef(0);
-  const isChargingRef = useRef(false);
 
   const isExploding = !!breach && (
     breach.phase === 'EXPLODING' ||
@@ -26,133 +21,12 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
   const chargingProgress = chargingState?.progress || 0;
   const chargingUserCount = chargingState?.userCount || 0;
 
-  useEffect(() => {
-    phaseRef.current = breach?.phase || null;
-    progressRef.current = chargingProgress;
-    isChargingRef.current = isCharging;
-  }, [breach, chargingProgress, isCharging]);
-
-  // 🆕 Reset portal size when we're fully back to IDLE (no breach, no charging)
+  // Reset portal size when fully back to IDLE
   useEffect(() => {
     if (!breach && !isCharging) {
       currentSizeRef.current = 0;
     }
   }, [breach, isCharging]);
-
-  // ============================================================
-  // 🌀 SUCK ENGINE — only hijacks confetti born AFTER hole opened
-  // ============================================================
-  useEffect(() => {
-    const hijackedSet = new WeakSet();
-
-    const loop = () => {
-      const ph = phaseRef.current;
-      const pr = progressRef.current;
-      const charging = isChargingRef.current;
-      const holeOpenedAt = window.__breachOpenedAt;
-
-      const active =
-        ph === 'IMPLODING' ||
-        ph === 'EXPLODING' ||
-        (charging && pr > 10);
-
-      if (active) {
-        const cx = window.innerWidth / 2;
-        const cy = window.innerHeight / 2;
-
-        let gravityStrength;
-        if (ph === 'IMPLODING') {
-          gravityStrength = 4500;
-        } else if (ph === 'EXPLODING') {
-          gravityStrength = 2000;
-        } else {
-          gravityStrength = Math.pow((pr - 10) / 90, 1.4) * 1200;
-        }
-
-        document.querySelectorAll('.breach-suckable').forEach((el) => {
-          // Only hijack confetti born DURING a breach (not ones already flying)
-          if (!hijackedSet.has(el)) {
-            const bornAt = parseInt(el.dataset.bornAt || '0');
-
-            // During charging, only take new confetti (born recently)
-            // During exploding/imploding, take everything still on screen
-            if (ph === 'EXPLODING' || ph === 'IMPLODING') {
-              // Accept all
-            } else {
-              // Only accept if confetti is fresh (last 500ms)
-              if (Date.now() - bornAt > 500) return;
-            }
-
-            hijackedSet.add(el);
-
-            const rect = el.getBoundingClientRect();
-            const curX = rect.left + rect.width / 2;
-            const curY = rect.top + rect.height / 2;
-
-            if (el._removeTimer) {
-              clearTimeout(el._removeTimer);
-              el._removeTimer = null;
-            }
-
-            el.style.transition = 'none';
-            el.style.transform = 'none';
-
-            el.style.left = `${curX - rect.width / 2}px`;
-            el.style.top = `${curY - rect.height / 2}px`;
-
-            el._vx = 0;
-            el._vy = 0;
-            el._x = curX;
-            el._y = curY;
-            el._dead = false;
-          }
-
-          if (el._dead) return;
-
-          const dx = cx - el._x;
-          const dy = cy - el._y;
-          const dist = Math.sqrt(dx * dx + dy * dy) + 1;
-          const force = gravityStrength / (dist + 50);
-
-          el._vx = (el._vx + (dx / dist) * force * 0.08) * 0.94;
-          el._vy = (el._vy + (dy / dist) * force * 0.08) * 0.94;
-
-          if (ph !== 'IMPLODING' && ph !== 'EXPLODING') {
-            el._vy += 0.4;
-          }
-
-          el._x += el._vx;
-          el._y += el._vy;
-
-          const w = el.offsetWidth || 30;
-          const h = el.offsetHeight || 30;
-
-          el.style.left = `${el._x - w / 2}px`;
-          el.style.top = `${el._y - h / 2}px`;
-
-          if (dist < 40) {
-            el._dead = true;
-            el.style.transition = 'opacity 300ms ease-out';
-            el.style.opacity = '0';
-            setTimeout(() => el.remove(), 320);
-          }
-
-          if (
-            el._y > window.innerHeight + 80 ||
-            el._x < -80 ||
-            el._x > window.innerWidth + 80
-          ) {
-            el.remove();
-          }
-        });
-      }
-
-      suckRafRef.current = requestAnimationFrame(loop);
-    };
-
-    suckRafRef.current = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(suckRafRef.current);
-  }, []);
 
   // Portal size animation
   useEffect(() => {
@@ -216,7 +90,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
     return () => cancelAnimationFrame(rafRef.current);
   }, [breach, isCharging, chargingProgress]);
 
-  // Shake engine
+  // Shake engine — only overlay elements
   useEffect(() => {
     const loop = () => {
       const portalEl = portalShakeRef.current;
@@ -356,7 +230,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
             </div>
           </div>
 
-          {/* 🆕 Middle status text (smaller, under the hole) */}
+          {/* Middle status text */}
           {isCharging && (
             <div
               style={{
@@ -402,7 +276,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
             </div>
           )}
 
-          {/* 🆕 FULL-WIDTH ENERGY BAR at bottom */}
+          {/* FULL-WIDTH ENERGY BAR at bottom */}
           {isCharging && (
             <div
               style={{
@@ -417,7 +291,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                 animation: 'energyBarFadeIn 500ms ease-out',
               }}
             >
-              {/* Labels row */}
               <div
                 style={{
                   display: 'flex',
@@ -428,7 +301,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                   margin: '0 auto 10px auto',
                 }}
               >
-                {/* Left: percentage */}
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                   <span
                     style={{
@@ -463,7 +335,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                   </span>
                 </div>
 
-                {/* Right: teammate count */}
                 <div
                   style={{
                     display: 'flex',
@@ -499,7 +370,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                 </div>
               </div>
 
-              {/* The bar itself */}
               <div
                 style={{
                   maxWidth: 1600,
@@ -513,7 +383,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                     'inset 0 1px 2px rgba(0,0,0,0.6), 0 0 1px rgba(255,255,255,0.2)',
                 }}
               >
-                {/* The fill */}
                 <div
                   style={{
                     width: `${pr}%`,
@@ -529,7 +398,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                     position: 'relative',
                   }}
                 >
-                  {/* Shimmer overlay at the leading edge */}
                   <div
                     style={{
                       position: 'absolute',
