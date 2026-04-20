@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, memo, useCallback } from 'react';
 
-const T_EXPLODE = 4000;
+const T_EXPLODE = 5000;
 const DEBUG_ENABLED_BY_DEFAULT = true;
 const MAX_PARTICLES = 20;
 const PORTAL_APPEAR_AT = 8;  // 🆕 Portal appears at 8% progress
@@ -141,20 +141,55 @@ const BreachCanvas = memo(({ phaseRef, progressRef, isChargingRef, particleCount
         p.life -= 0.02;
         if (dist < 20) p.life = 0;
       } else {
-        // 🎯 STRONGER pull during charging — makes suck-in very visible
-        const dx = cx - p.x;
-        const dy = cy - p.y;
-        const dist = Math.sqrt(dx * dx + dy * dy) + 1;
-        const intensity = Math.pow(progress / 100, 1.2) * 2.5;  // was 1.2
-        const strength = intensity * 1800;  // was 1000
-        const force = strength / (dist + 50);
-        p.vx = (p.vx + (dx / dist) * force * 0.06) * 0.95;  // was 0.05, 0.96
-        p.vy = (p.vy + (dy / dist) * force * 0.06) * 0.95;
-        p.x += p.vx;
-        p.y += p.vy;
-        if (dist < 30) p.life = 0;
-        p.life -= 0.002;
-      }
+  // 🎯 SHREDDING SUCK-IN: gravity + rotation + scale based on distance
+  const dx = cx - p.x;
+  const dy = cy - p.y;
+  const dist = Math.sqrt(dx * dx + dy * dy) + 1;
+  
+  // Define "event horizon" — point where shredding starts
+  // Roughly the outer ring of the black hole
+  const holeRadius = Math.max(60, progressRef.current * 3); // grows with progress
+  const shredZone = holeRadius * 1.2; // start shredding slightly outside
+  
+  // Normal gravity when far away
+  const intensity = Math.pow(progress / 100, 1.2) * 2.5;
+  const strength = intensity * 1800;
+  const force = strength / (dist + 50);
+  
+  if (dist > shredZone) {
+    // Phase A: Normal gravitational pull (particles stay full size)
+    p.vx = (p.vx + (dx / dist) * force * 0.06) * 0.95;
+    p.vy = (p.vy + (dy / dist) * force * 0.06) * 0.95;
+    p.x += p.vx;
+    p.y += p.vy;
+  } else {
+    // Phase B-C-D: SHREDDING ZONE — particle is being devoured
+    // Calculate how deep into the hole (0 = at edge, 1 = at center)
+    const depth = 1 - (dist / shredZone);
+    
+    // Stronger inward pull
+    const shredPull = 8 + depth * 12;
+    p.vx = (p.vx + (dx / dist) * shredPull) * 0.88;
+    p.vy = (p.vy + (dy / dist) * shredPull) * 0.88;
+    p.x += p.vx;
+    p.y += p.vy;
+    
+    // Shrink particle (tidal disruption)
+    p.size *= (1 - depth * 0.15);
+    
+    // Accelerate rotation (being torn apart)
+    p.rotVel += depth * 3;
+    
+    // Fade to black hole
+    p.life -= 0.05;
+  }
+  
+  if (dist < 10) p.life = 0;
+  if (p.size < 2) p.life = 0;
+  
+  // Slow natural decay (in case they escape)
+  p.life -= 0.001;
+}
 
       p.rotation += p.rotVel;
 
