@@ -2,10 +2,11 @@ import React, { useEffect, useRef, useState, memo, useCallback } from 'react';
 
 const T_EXPLODE = 4000;
 const DEBUG_ENABLED_BY_DEFAULT = true;
-const MAX_PARTICLES = 20; // 🎯 strict cap
+const MAX_PARTICLES = 20;
+const PORTAL_APPEAR_AT = 8;  // 🆕 Portal appears at 8% progress
 
 /* ============================================================
-   Canvas — minimal particle engine
+   Canvas — particle engine with visible suck-in
 ============================================================ */
 const BreachCanvas = memo(({ phaseRef, progressRef, isChargingRef, particleCountRef }) => {
   const canvasRef = useRef(null);
@@ -21,7 +22,7 @@ const BreachCanvas = memo(({ phaseRef, progressRef, isChargingRef, particleCount
   }, []);
 
   const animate = useCallback((now) => {
-    // 🎯 Throttle canvas to 50fps (save 17% CPU vs 60fps)
+    // 50fps throttle
     if (now - lastFrameRef.current < 20) {
       rafRef.current = requestAnimationFrame(animate);
       return;
@@ -45,33 +46,35 @@ const BreachCanvas = memo(({ phaseRef, progressRef, isChargingRef, particleCount
     const progress = progressRef.current;
     const isCharging = isChargingRef.current;
 
-    // 🎯 Spawn slowly — rate scales with progress
-    if (isCharging && progress > 30 && phase !== 'EXPLODING' && phase !== 'IMPLODING') {
-      // 350ms at 30%, 150ms at 100%
-      const spawnInterval = Math.max(150, 400 - progress * 2.5);
+    // 🎯 Spawn particles once the hole is visible (progress > 8%)
+    if (isCharging && progress > PORTAL_APPEAR_AT && phase !== 'EXPLODING' && phase !== 'IMPLODING') {
+      // 🎯 FASTER spawn rate — visible suck-in flow
+      // 250ms at 8%, 60ms at 100%
+      const spawnInterval = Math.max(60, 280 - progress * 2.2);
       if (now - lastSpawnRef.current > spawnInterval && particles.current.length < MAX_PARTICLES) {
         lastSpawnRef.current = now;
-        const edge = Math.floor(Math.random() * 4);
-        let sx, sy;
-        const margin = 20;
-        if (edge === 0) { sx = Math.random() * w; sy = -margin; }
-        else if (edge === 1) { sx = w + margin; sy = Math.random() * h; }
-        else if (edge === 2) { sx = Math.random() * w; sy = h + margin; }
-        else { sx = -margin; sy = Math.random() * h; }
 
+        // 🎯 Spawn from mid-distance, not far edge — they reach center faster
+        // Random angle, distance ~60-85% from center
+        const angle = Math.random() * Math.PI * 2;
+        const radius = Math.min(w, h) * (0.35 + Math.random() * 0.15);
+        const sx = cx + Math.cos(angle) * radius;
+        const sy = cy + Math.sin(angle) * radius;
+
+        // Initial velocity: tangential spiral + slight outward drift
         const dx = cx - sx;
         const dy = cy - sy;
         const dist = Math.sqrt(dx * dx + dy * dy);
         const perpX = -dy / dist;
         const perpY = dx / dist;
-        const tangentialSpeed = 1.5 + Math.random() * 1.5;
+        const tangentialSpeed = 1.0 + Math.random() * 1.2;
 
         const cosmicEmojis = ['✨', '⚡', '💫', '⭐', '🌠'];
         particles.current.push({
           x: sx, y: sy,
-          vx: perpX * tangentialSpeed,
-          vy: perpY * tangentialSpeed,
-          size: 18 + Math.random() * 12,
+          vx: perpX * tangentialSpeed - (dx / dist) * 0.5,  // slight pull toward center
+          vy: perpY * tangentialSpeed - (dy / dist) * 0.5,
+          size: 20 + Math.random() * 12,
           emoji: cosmicEmojis[Math.floor(Math.random() * cosmicEmojis.length)],
           rotation: Math.random() * 360,
           rotVel: (Math.random() - 0.5) * 10,
@@ -81,11 +84,10 @@ const BreachCanvas = memo(({ phaseRef, progressRef, isChargingRef, particleCount
       }
     }
 
-    // 🎯 EXPLOSION burst — moderate count
+    // EXPLOSION burst
     if (phase === 'EXPLODING' && !window.__breachBurstFired) {
       window.__breachBurstFired = true;
       const burstEmojis = ['🎉', '🎊', '✨', '🔥', '🌈', '⚡', '💫', '🌟'];
-      // Burst fills up to MAX (so at most 20 total on screen)
       const burstCount = Math.min(20, MAX_PARTICLES - particles.current.length);
       for (let i = 0; i < burstCount; i++) {
         const angle = Math.random() * Math.PI * 2;
@@ -109,7 +111,6 @@ const BreachCanvas = memo(({ phaseRef, progressRef, isChargingRef, particleCount
       window.__breachBurstFired = false;
     }
 
-    // Hard cap (shouldn't happen but safety)
     if (particles.current.length > MAX_PARTICLES) {
       particles.current = particles.current.slice(-MAX_PARTICLES);
     }
@@ -140,19 +141,19 @@ const BreachCanvas = memo(({ phaseRef, progressRef, isChargingRef, particleCount
         p.life -= 0.02;
         if (dist < 20) p.life = 0;
       } else {
-        // Suck toward center during charging
+        // 🎯 STRONGER pull during charging — makes suck-in very visible
         const dx = cx - p.x;
         const dy = cy - p.y;
         const dist = Math.sqrt(dx * dx + dy * dy) + 1;
-        const intensity = Math.pow(progress / 100, 1.5) * 1.2;
-        const strength = intensity * 1000;
+        const intensity = Math.pow(progress / 100, 1.2) * 2.5;  // was 1.2
+        const strength = intensity * 1800;  // was 1000
         const force = strength / (dist + 50);
-        p.vx = (p.vx + (dx / dist) * force * 0.05) * 0.96;
-        p.vy = (p.vy + (dy / dist) * force * 0.05) * 0.96;
+        p.vx = (p.vx + (dx / dist) * force * 0.06) * 0.95;  // was 0.05, 0.96
+        p.vy = (p.vy + (dy / dist) * force * 0.06) * 0.95;
         p.x += p.vx;
         p.y += p.vy;
         if (dist < 30) p.life = 0;
-        p.life -= 0.003;
+        p.life -= 0.002;
       }
 
       p.rotation += p.rotVel;
@@ -270,7 +271,8 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
   const chargingProgress = chargingState?.progress || 0;
   const chargingUserCount = chargingState?.userCount || 0;
 
-  const showPortal = isCharging ? chargingProgress >= 30 : isExploding;
+  // 🆕 Portal appears at 8% progress
+  const showPortal = isCharging ? chargingProgress >= PORTAL_APPEAR_AT : isExploding;
 
   useEffect(() => {
     phaseRef.current = breach?.phase || null;
@@ -312,9 +314,10 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
         target = explodingMaxSize;
       } else if (breach?.phase === 'IMPLODING' || breach?.phase === 'FLOATING') {
         target = 0;
-      } else if (isCharging && chargingProgress >= 30) {
+      } else if (isCharging && chargingProgress >= PORTAL_APPEAR_AT) {
+        // 🆕 From 8% (small) to 100% (full screen height)
         const minSize = 80;
-        const localProgress = (chargingProgress - 30) / 70;
+        const localProgress = (chargingProgress - PORTAL_APPEAR_AT) / (100 - PORTAL_APPEAR_AT);
         target = minSize + (chargingMaxSize - minSize) * Math.pow(localProgress, 0.7);
       }
 
@@ -325,7 +328,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
       el.style.width = `${newVal}px`;
       el.style.height = `${newVal}px`;
 
-      // 🎯 SMART: SVG filter only when portal < 500px
+      // SVG filter only when portal < 500px
       const shouldFilter = newVal > 0 && newVal < 500;
       const filterValue = shouldFilter ? 'url(#breach-turbulence)' : 'none';
       if (el.style.filter !== filterValue) {
@@ -337,8 +340,9 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
       else if (breach?.phase === 'IMPLODING') {
         opacity = newVal > 5 ? Math.min(1, newVal / 200) : 0;
       }
-      else if (isCharging && chargingProgress >= 30) {
-        opacity = Math.min(1, (chargingProgress - 30) / 10);
+      else if (isCharging && chargingProgress >= PORTAL_APPEAR_AT) {
+        // Fade in quickly over the first 4% after appearing
+        opacity = Math.min(1, (chargingProgress - PORTAL_APPEAR_AT) / 4);
       }
       el.style.opacity = opacity;
 
@@ -348,18 +352,9 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
     return () => cancelAnimationFrame(rafRef.current);
   }, [breach, isCharging, chargingProgress]);
 
-  // Shake engine — demo-style with damping, throttled to 30fps
+  // 🆕 Shake engine — 60fps + LOWER damping coefficient for smoother feel
   useEffect(() => {
-    let lastFrameTime = 0;
-    const FRAME_INTERVAL = 1000 / 30;
-
-    const loop = (now) => {
-      if (now - lastFrameTime < FRAME_INTERVAL) {
-        shakeRafRef.current = requestAnimationFrame(loop);
-        return;
-      }
-      lastFrameTime = now;
-
+    const loop = () => {
       const ph = phaseRef.current;
       const pr = progressRef.current;
       const charging = isChargingRef.current;
@@ -376,25 +371,26 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
         portalX = (Math.random() - 0.5) * 4;
         portalY = (Math.random() - 0.5) * 4;
       } else if (charging && pr > 5) {
-        // Demo-style curve
-        const base = Math.pow(pr / 100, 1.2) * 10;
+        // 🆕 Demo-style with wave + random + jolt
+        const base = Math.pow(pr / 100, 1.2) * 12;
         const t = performance.now() / 70;
-        portalX = Math.sin(t * 0.6) * base * 0.5 + (Math.random() - 0.5) * base * 0.2;
-        portalY = Math.cos(t * 0.52) * base * 0.5 + (Math.random() - 0.5) * base * 0.2;
+        portalX = Math.sin(t * 0.6) * base * 0.5 + (Math.random() - 0.5) * base * 0.3;
+        portalY = Math.cos(t * 0.52) * base * 0.5 + (Math.random() - 0.5) * base * 0.3;
 
-        // Random jolt at high progress
-        if (Math.random() > 0.97 && pr > 50) {
-          const jolt = (Math.random() - 0.5) * base * 1.5;
+        // Random jolts at high progress — the "demo secret sauce"
+        if (Math.random() > 0.96 && pr > 50) {
+          const jolt = (Math.random() - 0.5) * base * 2;
           portalX += jolt;
-          portalY += jolt;
+          portalY += jolt * 0.7;
         }
       }
 
+      // 🎯 SMOOTHER DAMPING: 0.25 instead of 0.4 for silky feel
       const q = quakeRef.current;
-      q.portal.x += (portalX - q.portal.x) * 0.4;
-      q.portal.y += (portalY - q.portal.y) * 0.4;
-      q.text.x += (textX - q.text.x) * 0.4;
-      q.text.y += (textY - q.text.y) * 0.4;
+      q.portal.x += (portalX - q.portal.x) * 0.25;
+      q.portal.y += (portalY - q.portal.y) * 0.25;
+      q.text.x += (textX - q.text.x) * 0.3;
+      q.text.y += (textY - q.text.y) * 0.3;
 
       if (portalShakeRef.current) {
         portalShakeRef.current.style.transform = `translate3d(${q.portal.x}px, ${q.portal.y}px, 0)`;
@@ -415,7 +411,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
 
   return (
     <>
-      {/* Canvas always mounted */}
       <BreachCanvas
         phaseRef={phaseRef}
         progressRef={progressRef}
@@ -465,7 +460,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
 
       {showAnything && (
         <>
-          {/* DARK VEIL */}
           <div
             style={{
               position: 'fixed',
@@ -482,7 +476,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
             }}
           />
 
-          {/* PORTAL */}
           {showPortal && (
             <div
               style={{
@@ -560,12 +553,11 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
             </div>
           )}
 
-          {/* STATUS TEXT */}
           {isCharging && (
             <div
               style={{
                 position: 'fixed',
-                top: chargingProgress < 30 ? '50%' : '72%',
+                top: chargingProgress < PORTAL_APPEAR_AT ? '50%' : '72%',
                 left: '50%',
                 transform: 'translate(-50%, -50%)',
                 zIndex: 11650,
@@ -609,7 +601,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
             </div>
           )}
 
-          {/* ENERGY BAR */}
           {isCharging && (
             <div
               style={{
@@ -716,7 +707,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
             </div>
           )}
 
-          {/* EXPLOSION TEXT */}
           {(breach?.phase === 'EXPLODING' || breach?.phase === 'IMPLODING') && (
             <div
               style={{
@@ -771,7 +761,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
         </>
       )}
 
-      {/* STATIC SVG filter — computed once, browser caches */}
       <svg style={{ position: 'absolute', width: 0, height: 0 }} aria-hidden>
         <filter id="breach-turbulence" x="-5%" y="-5%" width="110%" height="110%">
           <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="8" />
