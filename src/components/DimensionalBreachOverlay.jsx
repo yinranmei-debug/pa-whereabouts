@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
-const T_EXPLODE = 6000;
+const T_EXPLODE = 4000;
 
 export default function DimensionalBreachOverlay({ breach, chargingState }) {
   const portalRef = useRef(null);
@@ -26,19 +26,21 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
   const chargingProgress = chargingState?.progress || 0;
   const chargingUserCount = chargingState?.userCount || 0;
 
-  // Sync refs
   useEffect(() => {
     phaseRef.current = breach?.phase || null;
     progressRef.current = chargingProgress;
     isChargingRef.current = isCharging;
   }, [breach, chargingProgress, isCharging]);
 
+  // 🆕 Reset portal size when we're fully back to IDLE (no breach, no charging)
+  useEffect(() => {
+    if (!breach && !isCharging) {
+      currentSizeRef.current = 0;
+    }
+  }, [breach, isCharging]);
+
   // ============================================================
-  // 🌀 SUCK ENGINE v2 — properly hijacks DOM confetti
-  // 1. Reads current on-screen position
-  // 2. Cancels CSS transition AND existing transform
-  // 3. Cancels the auto-remove timer
-  // 4. Drives position via left/top every frame
+  // 🌀 SUCK ENGINE — only hijacks confetti born AFTER hole opened
   // ============================================================
   useEffect(() => {
     const hijackedSet = new WeakSet();
@@ -47,9 +49,11 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
       const ph = phaseRef.current;
       const pr = progressRef.current;
       const charging = isChargingRef.current;
+      const holeOpenedAt = window.__breachOpenedAt;
 
       const active =
         ph === 'IMPLODING' ||
+        ph === 'EXPLODING' ||
         (charging && pr > 10);
 
       if (active) {
@@ -58,13 +62,27 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
 
         let gravityStrength;
         if (ph === 'IMPLODING') {
-          gravityStrength = 3500;
+          gravityStrength = 4500;
+        } else if (ph === 'EXPLODING') {
+          gravityStrength = 2000;
         } else {
           gravityStrength = Math.pow((pr - 10) / 90, 1.4) * 1200;
         }
 
         document.querySelectorAll('.breach-suckable').forEach((el) => {
+          // Only hijack confetti born DURING a breach (not ones already flying)
           if (!hijackedSet.has(el)) {
+            const bornAt = parseInt(el.dataset.bornAt || '0');
+
+            // During charging, only take new confetti (born recently)
+            // During exploding/imploding, take everything still on screen
+            if (ph === 'EXPLODING' || ph === 'IMPLODING') {
+              // Accept all
+            } else {
+              // Only accept if confetti is fresh (last 500ms)
+              if (Date.now() - bornAt > 500) return;
+            }
+
             hijackedSet.add(el);
 
             const rect = el.getBoundingClientRect();
@@ -99,7 +117,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
           el._vx = (el._vx + (dx / dist) * force * 0.08) * 0.94;
           el._vy = (el._vy + (dy / dist) * force * 0.08) * 0.94;
 
-          if (ph !== 'IMPLODING') {
+          if (ph !== 'IMPLODING' && ph !== 'EXPLODING') {
             el._vy += 0.4;
           }
 
@@ -198,7 +216,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
     return () => cancelAnimationFrame(rafRef.current);
   }, [breach, isCharging, chargingProgress]);
 
-  // Shake engine — only overlay elements
+  // Shake engine
   useEffect(() => {
     const loop = () => {
       const portalEl = portalShakeRef.current;
@@ -232,6 +250,8 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
   }, [breach, isCharging, chargingProgress]);
 
   const showAnything = !!breach || isCharging;
+  const pr = Math.min(100, Math.max(0, chargingProgress));
+  const isNearFull = pr > 75;
 
   return (
     <>
@@ -336,12 +356,17 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
             </div>
           </div>
 
+          {/* 🆕 Middle status text (smaller, under the hole) */}
           {isCharging && (
             <div
               style={{
-                position: 'fixed', bottom: '15%', left: '50%',
-                transform: 'translateX(-50%)', zIndex: 11650,
-                pointerEvents: 'none', textAlign: 'center',
+                position: 'fixed',
+                top: '72%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 11650,
+                pointerEvents: 'none',
+                textAlign: 'center',
                 animation: 'chargingFadeIn 400ms ease-out',
               }}
             >
@@ -352,13 +377,14 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                   letterSpacing: '0.5em', textTransform: 'uppercase',
                   color: 'rgba(199,210,254,0.9)',
                   textShadow: '0 0 20px rgba(129,140,248,0.6), 0 2px 10px rgba(0,0,0,0.8)',
-                  marginBottom: 8,
-                  animation: 'chargingGlow 2s ease-in-out infinite',
+                  marginBottom: 6,
                 }}
               >
-                {chargingUserCount >= 2
-                  ? `${chargingUserCount} teammates · building energy`
-                  : 'energy signal detected'}
+                {chargingProgress < 40
+                  ? 'energy signal detected'
+                  : chargingProgress < 75
+                  ? 'the rift is widening'
+                  : 'almost there'}
               </div>
               <div
                 style={{
@@ -370,27 +396,159 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                 {chargingProgress < 40
                   ? 'keep going...'
                   : chargingProgress < 75
-                  ? 'the rift is widening'
-                  : 'almost there'}
-              </div>
-              <div
-                style={{
-                  width: 200, height: 2, background: 'rgba(255,255,255,0.1)',
-                  borderRadius: 2, margin: '14px auto 0', overflow: 'hidden',
-                }}
-              >
-                <div
-                  style={{
-                    width: `${chargingProgress}%`, height: '100%',
-                    background: 'linear-gradient(90deg, #6366f1, #a855f7)',
-                    boxShadow: '0 0 10px rgba(168,85,247,0.8)',
-                    transition: 'width 200ms ease-out',
-                  }}
-                />
+                  ? 'pressure building'
+                  : 'breakthrough imminent'}
               </div>
             </div>
           )}
 
+          {/* 🆕 FULL-WIDTH ENERGY BAR at bottom */}
+          {isCharging && (
+            <div
+              style={{
+                position: 'fixed',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                zIndex: 11680,
+                pointerEvents: 'none',
+                padding: '20px 32px 24px 32px',
+                background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)',
+                animation: 'energyBarFadeIn 500ms ease-out',
+              }}
+            >
+              {/* Labels row */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'baseline',
+                  marginBottom: 10,
+                  maxWidth: 1600,
+                  margin: '0 auto 10px auto',
+                }}
+              >
+                {/* Left: percentage */}
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                  <span
+                    style={{
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
+                      fontWeight: 900,
+                      fontStyle: 'italic',
+                      fontSize: 'clamp(32px, 4vw, 54px)',
+                      lineHeight: 1,
+                      background: isNearFull
+                        ? 'linear-gradient(90deg, #fde047 0%, #c084fc 100%)'
+                        : 'linear-gradient(90deg, #a5b4fc 0%, #c084fc 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                      filter: 'drop-shadow(0 0 20px rgba(168,85,247,0.6))',
+                      letterSpacing: '-0.03em',
+                    }}
+                  >
+                    {Math.round(pr)}%
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
+                      color: 'rgba(199,210,254,0.7)',
+                      fontSize: 10,
+                      fontWeight: 800,
+                      letterSpacing: '0.3em',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Energy
+                  </span>
+                </div>
+
+                {/* Right: teammate count */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      background: chargingUserCount >= 2 ? '#a855f7' : '#6366f1',
+                      boxShadow: '0 0 12px currentColor',
+                      animation: 'energyDot 1.2s ease-in-out infinite',
+                      display: 'inline-block',
+                    }}
+                  />
+                  <span
+                    style={{
+                      color: 'rgba(255,255,255,0.9)',
+                      fontSize: 12,
+                      fontWeight: 800,
+                      letterSpacing: '0.25em',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {chargingUserCount >= 2
+                      ? `${chargingUserCount} teammates`
+                      : 'solo'}
+                  </span>
+                </div>
+              </div>
+
+              {/* The bar itself */}
+              <div
+                style={{
+                  maxWidth: 1600,
+                  margin: '0 auto',
+                  height: 10,
+                  background: 'rgba(255,255,255,0.08)',
+                  borderRadius: 999,
+                  overflow: 'hidden',
+                  position: 'relative',
+                  boxShadow:
+                    'inset 0 1px 2px rgba(0,0,0,0.6), 0 0 1px rgba(255,255,255,0.2)',
+                }}
+              >
+                {/* The fill */}
+                <div
+                  style={{
+                    width: `${pr}%`,
+                    height: '100%',
+                    background: isNearFull
+                      ? 'linear-gradient(90deg, #6366f1 0%, #a855f7 40%, #c084fc 70%, #fde047 100%)'
+                      : 'linear-gradient(90deg, #3b82f6 0%, #6366f1 50%, #a855f7 100%)',
+                    borderRadius: 999,
+                    boxShadow: isNearFull
+                      ? '0 0 24px rgba(168,85,247,0.9), 0 0 48px rgba(192,132,252,0.6)'
+                      : '0 0 16px rgba(99,102,241,0.7)',
+                    transition: 'width 180ms ease-out',
+                    position: 'relative',
+                  }}
+                >
+                  {/* Shimmer overlay at the leading edge */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      right: 0,
+                      bottom: 0,
+                      width: 60,
+                      background:
+                        'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.5) 100%)',
+                      opacity: 0.8,
+                      animation: 'energyShimmer 1.5s ease-in-out infinite',
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Explosion text */}
           {(breach?.phase === 'EXPLODING' || breach?.phase === 'IMPLODING') && (
             <div
               ref={textShakeRef}
@@ -442,7 +600,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                 position: 'fixed', inset: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 pointerEvents: 'none', zIndex: 11700,
-                animation: 'receivedFloat 2400ms ease-out',
+                animation: 'receivedFloat 500ms ease-out',
               }}
             >
               <div style={{ textAlign: 'center' }}>
@@ -452,20 +610,9 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
                     color: 'rgba(165,180,252,0.8)',
                     fontSize: 14, fontWeight: 900,
                     textTransform: 'uppercase', letterSpacing: '0.6em',
-                    animation: 'receivedGlow 2s ease-in-out infinite',
                   }}
                 >
                   · received ·
-                </div>
-                <div
-                  style={{
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    color: 'rgba(255,255,255,0.35)', fontSize: 11,
-                    fontWeight: 300, letterSpacing: '0.3em',
-                    fontStyle: 'italic', marginTop: 10,
-                  }}
-                >
-                  the energy is yours now
                 </div>
               </div>
             </div>
@@ -510,22 +657,26 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
           animation: breachPop ${T_EXPLODE}ms cubic-bezier(0.2,0,0.2,1) forwards;
         }
         @keyframes receivedFloat {
-          0%   { opacity: 0; transform: translateY(20px); }
-          20%  { opacity: 1; transform: translateY(0); }
-          80%  { opacity: 1; transform: translateY(-5px); }
-          100% { opacity: 0; transform: translateY(-15px); }
-        }
-        @keyframes receivedGlow {
-          0%, 100% { text-shadow: 0 0 20px rgba(129,140,248,0.6); }
-          50%      { text-shadow: 0 0 40px rgba(168,85,247,0.9), 0 0 60px rgba(99,102,241,0.6); }
+          0%   { opacity: 0; transform: translateY(15px); }
+          50%  { opacity: 1; transform: translateY(0); }
+          100% { opacity: 0; transform: translateY(-10px); }
         }
         @keyframes chargingFadeIn {
           from { opacity: 0; transform: translate(-50%, 10px); }
           to   { opacity: 1; transform: translate(-50%, 0); }
         }
-        @keyframes chargingGlow {
-          0%, 100% { opacity: 0.9; }
-          50%      { opacity: 1; text-shadow: 0 0 30px rgba(168,85,247,0.9), 0 2px 10px rgba(0,0,0,0.8); }
+        @keyframes energyBarFadeIn {
+          from { opacity: 0; transform: translateY(30px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes energyShimmer {
+          0%   { opacity: 0.3; transform: translateX(-30px); }
+          50%  { opacity: 1; transform: translateX(0); }
+          100% { opacity: 0.3; transform: translateX(-30px); }
+        }
+        @keyframes energyDot {
+          0%, 100% { opacity: 0.7; transform: scale(1); }
+          50%      { opacity: 1; transform: scale(1.3); }
         }
       `}</style>
     </>

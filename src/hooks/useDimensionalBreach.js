@@ -7,14 +7,14 @@ const PHASES = {
   FLOATING: 'FLOATING',
 };
 
-const T_EXPLODE = 6000;
-const T_IMPLODE = 900;
-const T_FLOATING = 2400;
+const T_EXPLODE = 4000;
+const T_IMPLODE = 1000;
+const T_FLOATING = 500;
+
 const DECAY_PER_SEC = 100 / 8;
 const PROGRESS_PER_CLICK_BASE = 1.7;
 const MAX_COOP_BOOST = 3;
 
-// 🌍 GLOBAL: all pill clicks contribute to one shared energy pool
 const GLOBAL_KEY = '__global__';
 
 export function useDimensionalBreach() {
@@ -25,7 +25,6 @@ export function useDimensionalBreach() {
     userCount: 0,
   });
 
-  // Single shared state instead of per-pill state
   const globalStateRef = useRef({
     progress: 0,
     users: new Set(),
@@ -46,7 +45,6 @@ export function useDimensionalBreach() {
 
       const state = globalStateRef.current;
 
-      // Only decay when not in a breach sequence
       if (!state.phase) {
         state.progress = Math.max(0, state.progress - DECAY_PER_SEC * dtSec);
         if (state.progress <= 0 && state.users.size > 0) {
@@ -83,7 +81,6 @@ export function useDimensionalBreach() {
   const registerClick = useCallback((_keyIgnored, userId, pillEl) => {
     const state = globalStateRef.current;
 
-    // Ignore clicks during an active breach
     if (state.phase) return;
 
     state.users.add(userId);
@@ -95,6 +92,8 @@ export function useDimensionalBreach() {
     if (state.progress >= 100) {
       state.phase = PHASES.EXPLODING;
       const rect = pillEl?.getBoundingClientRect?.() || null;
+
+      window.__breachOpenedAt = performance.now();
 
       setActiveBreach({
         key: GLOBAL_KEY,
@@ -114,13 +113,13 @@ export function useDimensionalBreach() {
 
       const t3 = setTimeout(() => {
         setActiveBreach(null);
-        // Reset the global state after the full sequence
         globalStateRef.current = {
           progress: 0,
           users: new Set(),
           phase: null,
           lastClick: 0,
         };
+        window.__breachOpenedAt = null;
       }, T_EXPLODE + T_IMPLODE + T_FLOATING);
 
       breachTimersRef.current.push(t1, t2, t3);
