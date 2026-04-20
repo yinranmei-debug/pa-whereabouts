@@ -14,7 +14,7 @@ import AccessDeniedScreen from './components/AccessDeniedScreen';
 import EmojiFlyLayer      from './components/EmojiFlyLayer';
 import TourOverlay        from './components/TourOverlay';
 import MobileView         from './components/MobileView';
-
+import './styles/cosmic-polish.css';
 // 🆕 BREACH: dimensional wall system
 import { useDimensionalBreach }   from './hooks/useDimensionalBreach';
 import DimensionalBreachOverlay   from './components/DimensionalBreachOverlay';
