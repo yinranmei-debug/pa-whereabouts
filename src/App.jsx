@@ -396,7 +396,10 @@ export default function App() {
   useEffect(() => {
     const fn = e => {
       const { type, text, ds } = e.detail;
-      firePartyLocal(type, text);
+      const pr = chargingState?.progress || 0;
+// Intensity curve: 100% below 30%, then linearly decreases to 0% at 100%
+const intensity = pr < 30 ? 1 : Math.max(0, 1 - (pr - 30) / 70);
+firePartyLocal(type, text, intensity);
       if (ds) { setBouncingDs(ds); setTimeout(()=>setBouncingDs(null), 700); }
       glowLevelRef.current = Math.min(glowLevelRef.current + 0.65, 1);
     };
@@ -606,9 +609,11 @@ export default function App() {
 
   const isPreviewCell=(staffId,dateIdx,shift)=>preview.some(([s,d,sh])=>s===staffId&&d===dateIdx&&sh===shift);
 
-const firePartyLocal=(type,text='')=>{
+const firePartyLocal=(type,text='',intensity=1)=>{
   const els=type==='weekend'?['🍷','🌟','🎵','🍱']:['🎉',text.split(' ')[0]||'✨','✨'];
-  for (let i=0;i<28;i++) {
+  const count = Math.round(28 * intensity);  // 🆕 scale count by intensity
+  if (count <= 0) return;  // Skip entirely if intensity is 0
+  for (let i=0;i<count;i++) {
     const c=document.body.appendChild(document.createElement('div'));
     c.innerText=els[Math.floor(Math.random()*els.length)];
     c.style.cssText=`position:fixed;left:${Math.random()*100}vw;top:-30px;font-size:22px;z-index:11000;pointer-events:none;transition:transform ${Math.random()*2+2}s cubic-bezier(0.1,0.5,0.5,1),opacity 2s;`;
