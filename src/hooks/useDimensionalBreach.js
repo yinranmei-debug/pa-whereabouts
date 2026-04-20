@@ -7,12 +7,12 @@ const PHASES = {
   FLOATING: 'FLOATING',
 };
 
-const T_EXPLODE = 4000;
+const T_EXPLODE = 5000;
 const T_IMPLODE = 1000;
 const T_FLOATING = 500;
 
 const DECAY_PER_SEC = 100 / 8;
-const PROGRESS_PER_CLICK_BASE = 1.7;
+const PROGRESS_PER_CLICK_BASE = 2.04;
 const MAX_COOP_BOOST = 3;
 
 const GLOBAL_KEY = '__global__';
