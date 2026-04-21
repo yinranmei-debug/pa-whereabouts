@@ -274,16 +274,34 @@ export default function App() {
     })();
   }, []);
 
-  // Tour shows on first login per user only
+  // Welcome Confetti shows on first login per user only
   useEffect(() => {
     if (!account) return;
     const key = `tour-done-${account.username}`;
     if (localStorage.getItem(key)) return;
     const t = setTimeout(() => {
       setShowTips(false);
-      setShowTour(true);
+      localStorage.setItem(key, '1');
+      setShowWelcome(true);
+      setTimeout(() => setShowWelcome(false), 3500);
     }, 600);
     return () => clearTimeout(t);
+  }, [account]);
+
+  // NEW: Auto-show tips ONCE per day on login
+  useEffect(() => {
+    if (!account) return;
+    const todayStr = new Date().toDateString();
+    const tipKey = `tips-shown-${account.username}-${todayStr}`;
+    
+    // If they haven't seen tips today, show them after a short delay
+    if (!localStorage.getItem(tipKey)) {
+      const t = setTimeout(() => {
+        setShowTips(true);
+        localStorage.setItem(tipKey, '1');
+      }, 1200);
+      return () => clearTimeout(t);
+    }
   }, [account]);
 
   useEffect(() => {
@@ -692,10 +710,13 @@ export default function App() {
 
   return (
     <>
-      <div style={{minHeight:'100vh',background:'#F0F4FF'}} onMouseUp={handleStatusCellMouseUp} onTouchEnd={handleStatusCellTouchEnd}>
+     <div style={{minHeight:'100vh',background:'#F0F4FF'}} onMouseUp={handleStatusCellMouseUp} onTouchEnd={handleStatusCellTouchEnd}>
         <GlobalStyles/>
         <div ref={glowFrameRef} className="glow-frame"/>
-        <BirthdayOverlay currentUserEmail={account?.username} />
+        <BirthdayOverlay 
+          currentUserEmail={account?.username} 
+          isBusy={showTips} 
+        />
         <BananaEasterEgg />
 
         {flight && (

@@ -552,7 +552,7 @@ function BirthdayConfetti() {
 }
 
 // ── Main export ────────────────────────────────────────────────
-export default function BirthdayOverlay({ currentUserEmail }) {
+export default function BirthdayOverlay({ currentUserEmail, isBusy }) {
   const [birthdayPerson, setBirthdayPerson] = useState(null);
   const [theme, setTheme] = useState(null);
   const [visible, setVisible] = useState(false);
@@ -560,7 +560,12 @@ export default function BirthdayOverlay({ currentUserEmail }) {
   const frame = usePixelTick(8, visible);
 
   useEffect(() => {
-    if (!currentUserEmail) return;
+    // If there's no user, OR if the app is busy showing tips, pause and wait!
+    if (!currentUserEmail || isBusy) return;
+
+    const sessionKey = 'bday-shown-session';
+    // Only show once per session
+    if (sessionStorage.getItem(sessionKey)) return;
 
     const sessionKey = 'bday-shown-session';
     // Remove auto-clear for production — only show once per session

@@ -198,22 +198,24 @@ export default function BananaEasterEgg() {
   const SCALE       = 3;    // pixel scale
   const CHAR_W      = 36 * SCALE;
 
-  useEffect(() => {
+useEffect(() => {
     const today  = new Date();
     const dow    = today.getDay();
     if (!BANANA_DAYS.includes(dow)) return;
 
     const sessionKey = `banana-shown-${today.toDateString()}`;
-    if (sessionStorage.getItem(sessionKey)) return;
+    
+    // TEMPORARILY DISABLED FOR TESTING:
+    // if (sessionStorage.getItem(sessionKey)) return;
 
     setDayOfWeek(dow);
     const t = setTimeout(() => {
+      // We can leave this here, it won't block it since we disabled the check above
       sessionStorage.setItem(sessionKey, '1');
       setActive(true);
     }, 1800);
     return () => clearTimeout(t);
   }, []);
-
   // Animate progress
   useEffect(() => {
     if (!active) return;
