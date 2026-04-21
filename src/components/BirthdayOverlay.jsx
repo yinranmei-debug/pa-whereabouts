@@ -652,25 +652,36 @@ export default function BirthdayOverlay({ currentUserEmail }) {
   const frame = usePixelTick(8, visible);
 
   useEffect(() => {
-    if (!currentUserEmail) return;
-    const sessionKey = 'bday-shown-session';
-    if (sessionStorage.getItem(sessionKey)) return;
+  if (!currentUserEmail) {
+    console.log('[BDAY] no email, skip');
+    return;
+  }
 
-    const today = new Date();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    const todayMMDD = `${mm}-${dd}`;
+  const sessionKey = 'bday-shown-session';
+  if (sessionStorage.getItem(sessionKey)) {
+    console.log('[BDAY] already shown this session, skip');
+    return;
+  }
 
-    const match = RAW_STAFF_LIST.find(s => s.birthday === todayMMDD);
-    if (!match) return;
+  const today = new Date();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const todayMMDD = `${mm}-${dd}`;
+  console.log('[BDAY] today is', todayMMDD);
+  console.log('[BDAY] staff list', RAW_STAFF_LIST.map(s => `${s.id}:${s.birthday}`));
 
-    sessionStorage.setItem(sessionKey, '1');
-    const year = today.getFullYear();
-    setTheme(pickTheme(match.id, String(year)));
-    setBirthdayPerson(match);
-    const t = setTimeout(() => setVisible(true), 1200);
-    return () => clearTimeout(t);
-  }, [currentUserEmail]);
+  const match = RAW_STAFF_LIST.find(s => s.birthday === todayMMDD);
+  console.log('[BDAY] match', match);
+
+  if (!match) return;
+
+  sessionStorage.setItem(sessionKey, '1');
+  const year = today.getFullYear();
+  setTheme(pickTheme(match.id, String(year)));
+  setBirthdayPerson(match);
+  const t = setTimeout(() => setVisible(true), 1200);
+  return () => clearTimeout(t);
+}, [currentUserEmail]);
 
   useEffect(() => {
     if (!visible) return;
