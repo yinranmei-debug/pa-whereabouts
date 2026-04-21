@@ -118,29 +118,38 @@ const TourOverlay = ({ onDone }) => {
   };
   const prev = () => { if (step > 0) setStep(s => s - 1); };
 
-  const renderSpotlight = () => {
+ 
+const renderSpotlight = () => {
     if (!box) {
       return (
         <div
-          style={{ position: 'fixed', inset: 0, background: 'rgba(10,15,30,0.82)', zIndex: 11000, cursor: 'pointer' }}
-          onClick={next}
+          style={{ 
+            position: 'fixed', inset: 0, 
+            background: 'rgba(10,15,30,0.82)', 
+            zIndex: 11000, 
+            pointerEvents: 'none'  // ← KEY: never intercept clicks
+          }}
         />
       );
     }
     const { top, left, width, height } = box;
     const right  = left + width;
     const bottom = top  + height;
-    const s = { position: 'fixed', background: 'rgba(10,15,30,0.78)', zIndex: 11000, cursor: 'pointer' };
+    const s = { 
+      position: 'fixed', 
+      background: 'rgba(10,15,30,0.78)', 
+      zIndex: 11000, 
+      pointerEvents: 'none'  // ← KEY: never intercept clicks
+    };
     return (
       <>
-        <div style={{ ...s, top: 0, left: 0, right: 0, height: Math.max(0, top) }} onClick={next} />
-        <div style={{ ...s, top: Math.max(0, bottom), left: 0, right: 0, bottom: 0 }} onClick={next} />
-        <div style={{ ...s, top: Math.max(0, top), left: 0, width: Math.max(0, left), height: Math.max(0, height) }} onClick={next} />
-        <div style={{ ...s, top: Math.max(0, top), left: Math.max(0, right), right: 0, height: Math.max(0, height) }} onClick={next} />
+        <div style={{ ...s, top: 0, left: 0, right: 0, height: Math.max(0, top) }} />
+        <div style={{ ...s, top: Math.max(0, bottom), left: 0, right: 0, bottom: 0 }} />
+        <div style={{ ...s, top: Math.max(0, top), left: 0, width: Math.max(0, left), height: Math.max(0, height) }} />
+        <div style={{ ...s, top: Math.max(0, top), left: Math.max(0, right), right: 0, height: Math.max(0, height) }} />
       </>
     );
   };
-
   const renderDesc = (desc) => {
     return desc.split('\n\n').map((para, i) => (
       <p key={i} style={{
