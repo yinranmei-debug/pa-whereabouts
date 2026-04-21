@@ -194,7 +194,7 @@ export default function BananaEasterEgg() {
   const rafRef      = useRef();
   const startRef    = useRef();
   const frameTickRef = useRef();
-  const DURATION    = 4800; // Slowed down to 2/3 speed! (Was 3200)
+  const DURATION    = 7200; // Slowed down to 2/3 speed! (Was 3200)
   const SCALE       = 3;    // pixel scale
   const CHAR_W      = 36 * SCALE;
 
