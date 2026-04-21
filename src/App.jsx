@@ -699,8 +699,6 @@ useEffect(() => {
       <BirthdayOverlay currentUserEmail={account?.username} />
       <BananaEasterEgg />
 
-      {showWelcome && <WelcomeConfetti/>}
-
       {flight && (
         <EmojiFlyLayer
           key={`${flight.start.x}-${flight.start.y}-${Date.now()}`}
@@ -1092,17 +1090,15 @@ useEffect(() => {
 
     <DimensionalBreachOverlay breach={activeBreach} chargingState={chargingState} />
     </div>
-
-   {showTour && (
+{showTour && (
       <TourOverlay onDone={() => {
         localStorage.setItem(`tour-done-${account.username}`, '1');
         setShowTour(false);
-        setTimeout(() => {
-          setShowWelcome(true);
-          setTimeout(() => setShowWelcome(false), 3500);
-        }, 50);
+        setShowWelcome(true);
+        setTimeout(() => setShowWelcome(false), 3500);
       }} />
     )}
+    {showWelcome && <WelcomeConfetti />}
     </>
   );
 }
