@@ -593,19 +593,32 @@ function SceneOmelet({ frame: t }) {
 }
 
 // ── Theme registry ─────────────────────────────────────────────
-const BIRTHDAY_THEMES = [
-  { id: 'omelet',      scene: SceneOmelet,     slogan: "It's your birthday. I'm an omelet.",              bg: '#0a0a14' },
-  { id: 'wizard',      scene: SceneWizard,     slogan: 'Yer a birthday, Harry.',                          bg: '#0a0514' },
-  { id: 'upsidedown',  scene: SceneUpsideDown, slogan: 'Happy Birthday from the Upside Down.',            bg: '#2a0518' },
-  { id: 'polaroid',    scene: ScenePolaroid,   slogan: "I rewound time. It's still your birthday.",       bg: '#0a0a14' },
-  { id: 'dinosaur',    scene: SceneDinosaur,   slogan: "It's both of our birthdays!",                     bg: '#0a0a14' },
-  { id: 'ufo',         scene: SceneUFO,        slogan: 'Take us to your birthday.',                       bg: '#1a0a48' },
-  { id: 'corporate',   scene: SceneCorporate,  slogan: 'Per my last email — happy birthday.',             bg: '#0a0618' },
+// Ordered by birthday month — ensures first 7 get all different themes
+const BIRTHDAY_ORDER = [
+  'heidi',    // 01-20 → theme 0: Omelet
+  'bill',     // 02-02 → theme 1: Wizard
+  'chen',     // 03-19 → theme 2: Upside Down
+  'vicky',    // 03-25 → theme 3: Polaroid
+  'arthur',   // 04-16 → theme 4: Dinosaur
+  'yinran',   // 04-21 → theme 5: UFO
+  'mony',     // 05-09 → theme 6: Corporate
+  'ricardo',  // 05-05 → theme 0: Omelet (循环)
+  'shannon',  // 06-29 → theme 1: Wizard
+  'nic',      // 06-30 → theme 2: Upside Down
+  'jean',     // 07-23 → theme 3: Polaroid
+  'anita',    // 09-26 → theme 4: Dinosaur
+  'jennifer', // 09-11 → theme 5: UFO
+  'charlotte',// 09-17 → theme 6: Corporate
+  'jason',    // 09-19 → theme 0: Omelet
+  'james_l',  // 10-13 → theme 1: Wizard
+  'brenda',   // 10-20 → theme 2: Upside Down
+  'grace',    // 12-21 → theme 3: Polaroid
 ];
 
-function pickTheme(staffId, year) {
-  const hash = (staffId + year).split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  return BIRTHDAY_THEMES[hash % BIRTHDAY_THEMES.length];
+function pickTheme(staffId) {
+  const idx = BIRTHDAY_ORDER.indexOf(staffId);
+  const pos = idx >= 0 ? idx : BIRTHDAY_ORDER.length % BIRTHDAY_THEMES.length;
+  return BIRTHDAY_THEMES[pos % BIRTHDAY_THEMES.length];
 }
 
 // ── Confetti ───────────────────────────────────────────────────
