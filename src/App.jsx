@@ -188,7 +188,6 @@ export default function App() {
   const myAvatarRef     = useRef(null);
   const flightOnLandRef = useRef(null);
   const touchDragRef    = useRef(null);
-  const finishingTourRef = useRef(false);
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 768px)');
@@ -1092,14 +1091,12 @@ useEffect(() => {
     </div>
 {showTour && (
       <TourOverlay onDone={() => {
-        if (finishingTourRef.current) return;
-        finishingTourRef.current = true;
+        // Removed the finishingTourRef block and check
         localStorage.setItem(`tour-done-${account.username}`, '1');
         setShowTour(false);
         setShowWelcome(true);
         setTimeout(() => {
           setShowWelcome(false);
-          finishingTourRef.current = false;
         }, 3500);
       }} />
     )}
