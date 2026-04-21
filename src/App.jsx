@@ -275,6 +275,7 @@ export default function App() {
 
 
   // Tour only shows on first login per user
+// Tour only shows on first login per user
 useEffect(() => {
   if (!account) return;
   const key = `tour-done-${account.username}`;
@@ -690,10 +691,10 @@ useEffect(() => {
 
   return (
     <div style={{minHeight:'100vh',background:'#F0F4FF'}} onMouseUp={handleStatusCellMouseUp} onTouchEnd={handleStatusCellTouchEnd}>
-    <GlobalStyles/>
-<div ref={glowFrameRef} className="glow-frame"/>
-<BirthdayOverlay currentUserEmail={account?.username} />
-<BananaEasterEgg />
+      <GlobalStyles/>
+      <div ref={glowFrameRef} className="glow-frame"/>
+      <BirthdayOverlay currentUserEmail={account?.username} />
+      <BananaEasterEgg />
 
    {showTour && (
   <TourOverlay onDone={()=>{
