@@ -271,7 +271,7 @@ export default function App() {
     })();
   }, []);
 
-  // Welcome Confetti shows on first login per user only
+  // Welcome Confetti shows on first login per user
   useEffect(() => {
     if (!account) return;
     const key = `tour-done-${account.username}`;
@@ -347,7 +347,6 @@ export default function App() {
     return ()=>{ supabase.removeChannel(channel); };
   }, [account]);
 
-  // Global mousedown — ignores clicks inside nav-tab or active dropdowns
   useEffect(() => {
     const fn = e => {
       if (!e.target.closest('.dsz') && !e.target.closest('.nav-tab')) {
