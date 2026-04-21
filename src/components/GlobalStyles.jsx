@@ -221,6 +221,7 @@ const GlobalStyles = () => (
       .user-name{display:none;}
       .signout-btn{font-size:10px;padding:0 8px;}
       .save-txt,.save-ok{display:none;}
+      
     }
   `}</style>
 );
