@@ -6,7 +6,7 @@ import RAW_STAFF_LIST from './data/staff.json';
 import STATUS_CONFIG from './data/status.json';
 import TIPS_DATA from './data/tips.json';
 import { createClient } from '@supabase/supabase-js';
-
+import BirthdayOverlay from './components/BirthdayOverlay';
 import GlobalStyles       from './components/GlobalStyles';
 import Avatar             from './components/Avatar';
 import LoginScreen        from './components/LoginScreen';
@@ -686,8 +686,9 @@ export default function App() {
 
   return (
     <div style={{minHeight:'100vh',background:'#F0F4FF'}} onMouseUp={handleStatusCellMouseUp} onTouchEnd={handleStatusCellTouchEnd}>
-      <GlobalStyles/>
-      <div ref={glowFrameRef} className="glow-frame"/>
+     <GlobalStyles/>
+<div ref={glowFrameRef} className="glow-frame"/>
+<BirthdayOverlay currentUserEmail={account?.username} />
 
       {showTour && (
         <TourOverlay onDone={()=>{
