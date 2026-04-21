@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const STEPS = [
   {
@@ -52,18 +52,22 @@ const STEPS = [
   },
 ];
 
-// ── These MUST match the actual rendered tooltip dimensions ──
-const PAD    = 6;
-const TIP_W  = 480;  // matches width:480 below
-const TIP_H  = 320;  // matches actual rendered height at 480px wide
+const PAD   = 6;
+const TIP_W = 480;
+const TIP_H = 320;
 
-const TourOverlay = ({ onDone }) => {
+export default function TourOverlay({ onDone }) {
   const [step, setStep] = useState(0);
-  const [box, setBox]   = useState(null);
+  const [box,  setBox]  = useState(null);
   const [tipPos, setTipPos] = useState({ top: 0, left: 0 });
+  
+  // Use ref so buttons always call the latest onDone, no stale closure
+  const onDoneRef = useRef(onDone);
+  useEffect(() => { onDoneRef.current = onDone; }, [onDone]);
 
   const current  = STEPS[step];
   const isCenter = current.position === 'center';
+  const isLast   = step === STEPS.length - 1;
 
   const measure = () => {
     const el = current.highlight?.();
@@ -109,52 +113,48 @@ const TourOverlay = ({ onDone }) => {
     };
   }, [step]);
 
- const next = () => {
-    if (step < STEPS.length - 1) {
-      setStep(s => s + 1);
-    } else {
-      onDone();
-    }
-  };
-  const prev = () => { if (step > 0) setStep(s => s - 1); };
+  // Use native DOM event listeners for buttons — bypasses ALL React event bubbling issues
+  const skipRef  = useRef(null);
+  const nextRef  = useRef(null);
+  const backRef  = useRef(null);
 
- 
-const renderSpotlight = () => {
-    if (!box) {
-      return (
-        <div
-          style={{ 
-            position: 'fixed', inset: 0, 
-            background: 'rgba(10,15,30,0.82)', 
-            zIndex: 11000, 
-            pointerEvents: 'none'  // ← KEY: never intercept clicks
-          }}
-        />
-      );
-    }
-    const { top, left, width, height } = box;
-    const right  = left + width;
-    const bottom = top  + height;
-    const s = { 
-      position: 'fixed', 
-      background: 'rgba(10,15,30,0.78)', 
-      zIndex: 11000, 
-      pointerEvents: 'none'  // ← KEY: never intercept clicks
+  useEffect(() => {
+    const skipEl = skipRef.current;
+    const nextEl = nextRef.current;
+    const backEl = backRef.current;
+
+    const handleSkip = (e) => {
+      e.stopPropagation();
+      onDoneRef.current();
     };
-    return (
-      <>
-        <div style={{ ...s, top: 0, left: 0, right: 0, height: Math.max(0, top) }} />
-        <div style={{ ...s, top: Math.max(0, bottom), left: 0, right: 0, bottom: 0 }} />
-        <div style={{ ...s, top: Math.max(0, top), left: 0, width: Math.max(0, left), height: Math.max(0, height) }} />
-        <div style={{ ...s, top: Math.max(0, top), left: Math.max(0, right), right: 0, height: Math.max(0, height) }} />
-      </>
-    );
-  };
-  const renderDesc = (desc) => {
-    return desc.split('\n\n').map((para, i) => (
+    const handleNext = (e) => {
+      e.stopPropagation();
+      if (step < STEPS.length - 1) {
+        setStep(s => s + 1);
+      } else {
+        onDoneRef.current();
+      }
+    };
+    const handleBack = (e) => {
+      e.stopPropagation();
+      if (step > 0) setStep(s => s - 1);
+    };
+
+    skipEl?.addEventListener('click', handleSkip);
+    nextEl?.addEventListener('click', handleNext);
+    backEl?.addEventListener('click', handleBack);
+
+    return () => {
+      skipEl?.removeEventListener('click', handleSkip);
+      nextEl?.removeEventListener('click', handleNext);
+      backEl?.removeEventListener('click', handleBack);
+    };
+  }, [step]); // re-bind when step changes so handleNext has fresh step value
+
+  const renderDesc = (desc) =>
+    desc.split('\n\n').map((para, i) => (
       <p key={i} style={{
-        fontSize: 15,
-        lineHeight: 1.65,
+        fontSize: 15, lineHeight: 1.65,
         color: i === 1 ? '#5b21b6' : '#6b7280',
         margin: i === 0 ? '0 0 12px' : '0',
         fontStyle: i === 1 ? 'italic' : 'normal',
@@ -162,7 +162,6 @@ const renderSpotlight = () => {
         {para}
       </p>
     ));
-  };
 
   return (
     <>
@@ -182,108 +181,127 @@ const renderSpotlight = () => {
         }
       `}</style>
 
-      {renderSpotlight()}
+      {/* Dark overlay — pointerEvents none so it NEVER steals clicks */}
+      {!box && (
+        <div style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(10,15,30,0.82)',
+          zIndex: 11000,
+          pointerEvents: 'none',
+        }} />
+      )}
+      {box && (() => {
+        const { top, left, width, height } = box;
+        const right  = left + width;
+        const bottom = top  + height;
+        const s = { position: 'fixed', background: 'rgba(10,15,30,0.78)', zIndex: 11000, pointerEvents: 'none' };
+        return (
+          <>
+            <div style={{ ...s, top: 0, left: 0, right: 0, height: Math.max(0, top) }} />
+            <div style={{ ...s, top: Math.max(0, bottom), left: 0, right: 0, bottom: 0 }} />
+            <div style={{ ...s, top: Math.max(0, top), left: 0, width: Math.max(0, left), height: Math.max(0, height) }} />
+            <div style={{ ...s, top: Math.max(0, top), left: Math.max(0, right), right: 0, height: Math.max(0, height) }} />
+          </>
+        );
+      })()}
 
+      {/* Spotlight ring */}
       {box && (
         <div className="tour-ring" style={{
-          position:'fixed', top:box.top, left:box.left,
-          width:box.width, height:box.height,
-          border:'2px solid rgba(0,155,255,0.85)', borderRadius:10,
-          zIndex:11001, pointerEvents:'none', boxSizing:'border-box',
-        }}/>
+          position: 'fixed', top: box.top, left: box.left,
+          width: box.width, height: box.height,
+          border: '2px solid rgba(0,155,255,0.85)', borderRadius: 10,
+          zIndex: 11001, pointerEvents: 'none', boxSizing: 'border-box',
+        }} />
       )}
 
-      <div
-        className="tour-overlay-card"
-        style={{
-          position: 'fixed',
-          top: tipPos.top,
-          left: tipPos.left,
-          width: TIP_W,
-          background: '#fff',
-          borderRadius: 24,
-          padding: '30px 33px 27px',
-          zIndex: 11500,
-          boxShadow: '0 16px 48px rgba(0,0,0,0.22)',
-          animation: isCenter
-            ? 'prefacePop 0.35s cubic-bezier(0.34,1.56,0.64,1) both'
-            : 'tourTipIn 0.25s ease both',
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
-          pointerEvents: 'all',
-        }}
-        onClick={e => e.stopPropagation()}
-      >
+      {/* Tooltip card */}
+      <div style={{
+        position: 'fixed',
+        top:  tipPos.top,
+        left: tipPos.left,
+        width: TIP_W,
+        background: '#fff',
+        borderRadius: 24,
+        padding: '30px 33px 27px',
+        zIndex: 11500,
+        boxShadow: '0 16px 48px rgba(0,0,0,0.22)',
+        animation: isCenter
+          ? 'prefacePop 0.35s cubic-bezier(0.34,1.56,0.64,1) both'
+          : 'tourTipIn 0.25s ease both',
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+      }}>
+        {/* Top bar */}
         <div style={{
-          position:'absolute', top:0, left:0, right:0, height:4,
-          background:'linear-gradient(90deg,#009bff,#770bff)',
-          borderRadius:'24px 24px 0 0',
-        }}/>
+          position: 'absolute', top: 0, left: 0, right: 0, height: 4,
+          background: 'linear-gradient(90deg,#009bff,#770bff)',
+          borderRadius: '24px 24px 0 0',
+        }} />
 
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18 }}>
-          <div style={{ display:'flex', gap:6 }}>
-            {STEPS.map((_,i) => (
+        {/* Progress dots */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {STEPS.map((_, i) => (
               <div key={i} style={{
-                width: i===step ? 22 : 8, height:8, borderRadius:4,
-                transition:'all 0.25s',
-                background: i===step
+                width: i === step ? 22 : 8, height: 8, borderRadius: 4,
+                transition: 'all 0.25s',
+                background: i === step
                   ? 'linear-gradient(90deg,#009bff,#770bff)'
-                  : i<step ? '#c7d2fe' : '#e5e7eb',
-              }}/>
+                  : i < step ? '#c7d2fe' : '#e5e7eb',
+              }} />
             ))}
           </div>
-          <span style={{ fontSize:13, color:'#9ca3af', fontWeight:500 }}>{step+1} / {STEPS.length}</span>
+          <span style={{ fontSize: 13, color: '#9ca3af', fontWeight: 500 }}>{step + 1} / {STEPS.length}</span>
         </div>
 
-        <div style={{ fontSize:22, fontWeight:700, color:'#111827', marginBottom:12 }}>
+        {/* Title */}
+        <div style={{ fontSize: 22, fontWeight: 700, color: '#111827', marginBottom: 12 }}>
           {current.title}
         </div>
 
-        <div style={{ marginBottom:24 }}>
+        {/* Description */}
+        <div style={{ marginBottom: 24 }}>
           {renderDesc(current.desc)}
         </div>
 
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+        {/* Buttons — using refs, native DOM listeners */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <button
-            onClick={() => onDone()}
+            ref={skipRef}
             style={{
-              fontSize:13, color:'#9ca3af', background:'none', border:'none',
-              cursor:'pointer', fontWeight:500, padding:0,
-              position:'relative', zIndex:11600,
+              fontSize: 13, color: '#9ca3af', background: 'none', border: 'none',
+              cursor: 'pointer', fontWeight: 500, padding: 0,
             }}
           >
             Skip tour
           </button>
-          <div style={{ display:'flex', gap:10 }}>
+          <div style={{ display: 'flex', gap: 10 }}>
             {step > 0 && (
               <button
-                onClick={() => prev()}
+                ref={backRef}
                 style={{
-                  height:42, padding:'0 20px', borderRadius:12,
-                  border:'1.5px solid #e5e7eb', background:'#fff',
-                  fontSize:15, fontWeight:600, color:'#374151', cursor:'pointer',
-                  position:'relative', zIndex:11600,
+                  height: 42, padding: '0 20px', borderRadius: 12,
+                  border: '1.5px solid #e5e7eb', background: '#fff',
+                  fontSize: 15, fontWeight: 600, color: '#374151', cursor: 'pointer',
                 }}
               >
                 Back
               </button>
             )}
             <button
-              onClick={() => next()}
+              ref={nextRef}
               style={{
-                height:42, padding:'0 24px', borderRadius:12, border:'none',
-                background:'linear-gradient(90deg,#009bff,#770bff)',
-                fontSize:15, fontWeight:700, color:'#fff', cursor:'pointer',
-                boxShadow:'0 4px 12px rgba(119,11,255,0.25)',
-                position:'relative', zIndex:11600,
+                height: 42, padding: '0 24px', borderRadius: 12, border: 'none',
+                background: 'linear-gradient(90deg,#009bff,#770bff)',
+                fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(119,11,255,0.25)',
               }}
             >
-              {step === STEPS.length-1 ? "Let's go 🚀" : 'Next →'}
+              {isLast ? "Let's go 🚀" : 'Next →'}
             </button>
           </div>
         </div>
       </div>
     </>
   );
-};
-
-export default TourOverlay;
+}

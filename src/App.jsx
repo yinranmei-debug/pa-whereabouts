@@ -1093,15 +1093,15 @@ useEffect(() => {
     <DimensionalBreachOverlay breach={activeBreach} chargingState={chargingState} />
     </div>
 
-    {showTour && (
-      <TourOverlay onDone={()=>{
+   {showTour && (
+      <TourOverlay onDone={() => {
         localStorage.setItem(`tour-done-${account.username}`, '1');
         setShowTour(false);
-        setTimeout(()=>{
+        setTimeout(() => {
           setShowWelcome(true);
-          setTimeout(()=>setShowWelcome(false), 3500);
+          setTimeout(() => setShowWelcome(false), 3500);
         }, 50);
-      }}/>
+      }} />
     )}
     </>
   );
