@@ -255,7 +255,10 @@ useEffect(() => {
 
   const poseMap = { 1: monPose, 3: wedPose, 5: friPose };
   const getPose = poseMap[dayOfWeek] || monPose;
-  const { pose, speed } = getPose(Math.floor(progress * speed * 20));
+  
+  // FIX: Grab the speed first before we do the math!
+  const baseSpeed = getPose(0).speed; 
+  const { pose, speed } = getPose(Math.floor(progress * baseSpeed * 20));
 
   if (dayOfWeek === 3) {
     y = vh * 0.44 + Math.sin(progress * Math.PI * 5) * 35;
