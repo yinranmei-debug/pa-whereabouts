@@ -175,7 +175,7 @@ export default function App() {
   const [showTour,        setShowTour]        = useState(false);
   const [showWelcome,     setShowWelcome]     = useState(false);
   const [isMobile,        setIsMobile]        = useState(() => window.matchMedia('(max-width: 768px)').matches);
-  const [bubblePos,       setBubblePos]       = useState({ x: 0, y: 0, visible: false });
+  const [hoveredPill, setHoveredPill] = useState(null);
   const dailyTips = useRef(getDailyTips());
 
   const { activeBreach, chargingState, registerClick: registerBreachClick } = useDimensionalBreach();
@@ -986,25 +986,28 @@ export default function App() {
                                   className={`pill ${isHol?'hol':'we'}`}
                                   onClick={e=>fireParty(e,isHol?'holiday':'weekend',d.hol||'',d.ds)}
                                   onTouchEnd={e=>{ e.preventDefault(); fireParty({currentTarget:e.currentTarget,stopPropagation:()=>{}},isHol?'holiday':'weekend',d.hol||'',d.ds); }}
-                                  onMouseEnter={e=>{
-                                    const rect=e.currentTarget.getBoundingClientRect();
-                                    setBubblePos({ x: rect.left+rect.width/2, y: rect.top-14, visible: true });
-                                  }}
-                                  onMouseLeave={()=>setBubblePos(p=>({...p, visible: false}))}
-                                >
-                                  <div className="pill-card"/>
-                                  <div
-                                    className={`pill-tap-bubble${bubblePos.visible ? ' is-visible' : ''}`}
-                                    style={{ left: bubblePos.x, top: bubblePos.y }}
-                                  >
-                                    <div className="pill-tap-bubble-ring">
-                                      <div className="pill-tap-bubble-content">
-                                        <span className="pill-tap-dot"/>
-                                        {isHol ? '✦ Try it!' : '✦ Tap me!'}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
+                                 onMouseEnter={e=>{
+  const rect=e.currentTarget.getBoundingClientRect();
+  setHoveredPill({ ds: d.ds, x: rect.left+rect.width/2, y: rect.top-14 });
+}}
+onMouseLeave={()=>setHoveredPill(null)}
+>
+  <div className="pill-card"/>
+  <div
+    className={`pill-tap-bubble${hoveredPill?.ds === d.ds ? ' is-visible' : ''}`}
+    style={{
+      left: hoveredPill?.ds === d.ds ? hoveredPill.x : 0,
+      top:  hoveredPill?.ds === d.ds ? hoveredPill.y : 0,
+    }}
+  >
+    <div className="pill-tap-bubble-ring">
+      <div className="pill-tap-bubble-content">
+        <span className="pill-tap-dot"/>
+        {isHol ? 'Try it!' : 'Tap me!'}
+      </div>
+    </div>
+  </div>
+</div> 
                               </td>
                             );
                           }

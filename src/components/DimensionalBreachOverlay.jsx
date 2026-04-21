@@ -143,30 +143,36 @@ const BreachCanvas = memo(({ phaseRef, progressRef, isChargingRef }) => {
       p.rotation += p.rotVel;
 
       if (p.life > 0 && p.size > 1) {
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate((p.rotation * Math.PI) / 180);
-        ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.rotate((p.rotation * Math.PI) / 180);
+  ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
 
-        // Corporate gradient outline ring around emoji
-        const ringRadius = p.size * 0.62;
-        const grad = ctx.createLinearGradient(-ringRadius, -ringRadius, ringRadius, ringRadius);
-        grad.addColorStop(0, `rgba(0,155,255,${p.life * 0.85})`);
-        grad.addColorStop(0.5, `rgba(119,11,255,${p.life * 0.85})`);
-        grad.addColorStop(1, `rgba(167,139,250,${p.life * 0.85})`);
-        ctx.beginPath();
-        ctx.arc(0, 0, ringRadius, 0, Math.PI * 2);
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 2.5;
-        ctx.shadowColor = 'rgba(119,11,255,0.6)';
-        ctx.shadowBlur = 8;
-        ctx.stroke();
-        ctx.shadowBlur = 0;
+  const sz = Math.floor(p.size);
+  ctx.font = `${sz}px system-ui, "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
 
-        ctx.font = `${Math.floor(p.size)}px system-ui, "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
-        ctx.fillText(p.emoji, 0, 0);
-        ctx.restore();
-      }
+  // Gradient glow outline following emoji shape via shadowBlur
+  ctx.shadowColor = `rgba(0, 155, 255, ${p.life * 0.9})`;
+  ctx.shadowBlur = 10;
+  ctx.fillText(p.emoji, 0, 0);
+
+  ctx.shadowColor = `rgba(119, 11, 255, ${p.life * 0.85})`;
+  ctx.shadowBlur = 6;
+  ctx.fillText(p.emoji, 0, 0);
+
+  ctx.shadowColor = `rgba(167, 139, 250, ${p.life * 0.7})`;
+  ctx.shadowBlur = 3;
+  ctx.fillText(p.emoji, 0, 0);
+
+  // Clean emoji on top
+  ctx.shadowBlur = 0;
+  ctx.shadowColor = 'transparent';
+  ctx.fillText(p.emoji, 0, 0);
+
+  ctx.restore();
+}
 
       if (p.life <= 0) particles.current.splice(i, 1);
     }
