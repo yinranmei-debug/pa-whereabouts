@@ -984,22 +984,27 @@ firePartyLocal(type, text, intensity);
                           </div>
                         </td>
                         {week.map((d,weekIdx)=>{
-                          if (!d.editable) {
-                            if (!isFirst) return null;
-                            const isHol=!!d.hol;
-                            return (
-                              <td key={d.ds} className={`ptd ${tdSlideClass}`} rowSpan={staffList.length}>
-                                <div
-                                  data-pill-ds={d.ds}
-                                  className={`pill ${isHol?'hol':'we'}`}
-                                  onClick={e=>fireParty(e,isHol?'holiday':'weekend',d.hol||'',d.ds)}
-                                  onTouchEnd={e=>{ e.preventDefault(); fireParty({currentTarget:e.currentTarget,stopPropagation:()=>{}},isHol?'holiday':'weekend',d.hol||'',d.ds); }}
-                                >
-                                  <div className="pill-card"/>
-                                </div>
-                              </td>
-                            );
-                          }
+                          <td key={d.ds} className={`ptd ${tdSlideClass}`} rowSpan={staffList.length}>
+  <div
+    data-pill-ds={d.ds}
+    className={`pill ${isHol?'hol':'we'}`}
+    onClick={e=>fireParty(e,isHol?'holiday':'weekend',d.hol||'',d.ds)}
+    onTouchEnd={e=>{ e.preventDefault(); fireParty({currentTarget:e.currentTarget,stopPropagation:()=>{}},isHol?'holiday':'weekend',d.hol||'',d.ds); }}
+  >
+    <div className="pill-card"/>
+
+    {/* ✦ Tap me bubble */}
+    <div className="pill-tap-bubble">
+      <div className="pill-tap-bubble-ring">
+        <div className="pill-tap-bubble-content">
+          <span className="pill-tap-dot" />
+          {isHol ? '✦ Try it!' : '✦ Tap me!'}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</td>
                           return (
                             <td key={d.ds} className={tdSlideClass}>
                               <div className="dw">
