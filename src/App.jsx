@@ -349,8 +349,10 @@ useEffect(() => {
     return ()=>{ supabase.removeChannel(channel); };
   }, [account]);
 
-  useEffect(() => {
+ useEffect(() => {
     const fn = e => {
+      // Don't interfere with tour overlay
+      if (e.target.closest('.tour-overlay-card')) return;
       if (!e.target.closest('.dsz')&&!e.target.closest('.nav-tab')) {
         setActiveMenu(null); setSocialMenu(null);
         setActiveTab(t=>t==='planner'?'calendar':t);
@@ -1102,10 +1104,12 @@ useEffect(() => {
 
     {showTour && (
       <TourOverlay onDone={()=>{
-        setShowTour(false);
-        setShowWelcome(true);
-        setTimeout(()=>setShowWelcome(false), 3500);
         localStorage.setItem(`tour-done-${account.username}`, '1');
+        setShowTour(false);
+        setTimeout(()=>{
+          setShowWelcome(true);
+          setTimeout(()=>setShowWelcome(false), 3500);
+        }, 50);
       }}/>
     )}
     </>

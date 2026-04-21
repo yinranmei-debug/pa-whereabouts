@@ -109,7 +109,13 @@ const TourOverlay = ({ onDone }) => {
     };
   }, [step]);
 
-  const next = () => step < STEPS.length - 1 ? setStep(s => s + 1) : onDone();
+ const next = () => {
+    if (step < STEPS.length - 1) {
+      setStep(s => s + 1);
+    } else {
+      onDone();
+    }
+  };
   const prev = () => { if (step > 0) setStep(s => s - 1); };
 
   const renderSpotlight = () => {
@@ -179,6 +185,7 @@ const TourOverlay = ({ onDone }) => {
       )}
 
       <div
+        className="tour-overlay-card"
         style={{
           position: 'fixed',
           top: tipPos.top,
