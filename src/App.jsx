@@ -1090,19 +1090,14 @@ export default function App() {
       </div>
 
       {/* TourOverlay and WelcomeConfetti are OUTSIDE the main div so onMouseUp never interferes */}
-      {showTour && (
+     {showTour && (
         <TourOverlay
           key={`tour-${account.username}`}
           onDone={() => {
-            if (finishingTourRef.current) return;
-            finishingTourRef.current = true;
             localStorage.setItem(`tour-done-${account.username}`, '1');
             setShowTour(false);
             setShowWelcome(true);
-            setTimeout(() => {
-              setShowWelcome(false);
-              finishingTourRef.current = false;
-            }, 3500);
+            setTimeout(() => setShowWelcome(false), 3500);
           }}
         />
       )}
