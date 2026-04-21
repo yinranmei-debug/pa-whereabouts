@@ -171,89 +171,97 @@ const TourOverlay = ({ onDone }) => {
 
       {box && (
         <div className="tour-ring" style={{
-          position: 'fixed', top: box.top, left: box.left,
-          width: box.width, height: box.height,
-          border: '2px solid rgba(0,155,255,0.85)', borderRadius: 10,
-          zIndex: 11001, pointerEvents: 'none', boxSizing: 'border-box',
-        }} />
+          position:'fixed', top:box.top, left:box.left,
+          width:box.width, height:box.height,
+          border:'2px solid rgba(0,155,255,0.85)', borderRadius:10,
+          zIndex:11001, pointerEvents:'none', boxSizing:'border-box',
+        }}/>
       )}
 
-      {/* Tooltip card — width must match TIP_W above */}
-      <div style={{
-        position: 'fixed',
-        top:  tipPos.top,
-        left: tipPos.left,
-        width: TIP_W,
-        background: '#fff',
-        borderRadius: 24,
-        padding: '30px 33px 27px',
-        zIndex: 11002,
-        boxShadow: '0 16px 48px rgba(0,0,0,0.22)',
-        animation: isCenter
-          ? 'prefacePop 0.35s cubic-bezier(0.34,1.56,0.64,1) both'
-          : 'tourTipIn 0.25s ease both',
-        fontFamily: "'Plus Jakarta Sans', sans-serif",
-      }}>
-        {/* Top gradient bar */}
+      <div
+        style={{
+          position: 'fixed',
+          top: tipPos.top,
+          left: tipPos.left,
+          width: TIP_W,
+          background: '#fff',
+          borderRadius: 24,
+          padding: '30px 33px 27px',
+          zIndex: 11500,
+          boxShadow: '0 16px 48px rgba(0,0,0,0.22)',
+          animation: isCenter
+            ? 'prefacePop 0.35s cubic-bezier(0.34,1.56,0.64,1) both'
+            : 'tourTipIn 0.25s ease both',
+          fontFamily: "'Plus Jakarta Sans', sans-serif",
+          pointerEvents: 'all',
+        }}
+        onClick={e => e.stopPropagation()}
+      >
         <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, height: 4,
-          background: 'linear-gradient(90deg,#009bff,#770bff)',
-          borderRadius: '24px 24px 0 0',
-        }} />
+          position:'absolute', top:0, left:0, right:0, height:4,
+          background:'linear-gradient(90deg,#009bff,#770bff)',
+          borderRadius:'24px 24px 0 0',
+        }}/>
 
-        {/* Progress dots + counter */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-          <div style={{ display: 'flex', gap: 6 }}>
-            {STEPS.map((_, i) => (
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18 }}>
+          <div style={{ display:'flex', gap:6 }}>
+            {STEPS.map((_,i) => (
               <div key={i} style={{
-                width: i === step ? 22 : 8, height: 8, borderRadius: 4,
-                transition: 'all 0.25s',
-                background: i === step
+                width: i===step ? 22 : 8, height:8, borderRadius:4,
+                transition:'all 0.25s',
+                background: i===step
                   ? 'linear-gradient(90deg,#009bff,#770bff)'
-                  : i < step ? '#c7d2fe' : '#e5e7eb',
-              }} />
+                  : i<step ? '#c7d2fe' : '#e5e7eb',
+              }}/>
             ))}
           </div>
-          <span style={{ fontSize: 13, color: '#9ca3af', fontWeight: 500 }}>{step + 1} / {STEPS.length}</span>
+          <span style={{ fontSize:13, color:'#9ca3af', fontWeight:500 }}>{step+1} / {STEPS.length}</span>
         </div>
 
-        {/* Title */}
-        <div style={{ fontSize: 22, fontWeight: 700, color: '#111827', marginBottom: 12 }}>
+        <div style={{ fontSize:22, fontWeight:700, color:'#111827', marginBottom:12 }}>
           {current.title}
         </div>
 
-        {/* Description */}
-        <div style={{ marginBottom: 24 }}>
+        <div style={{ marginBottom:24 }}>
           {renderDesc(current.desc)}
         </div>
 
-        {/* Footer buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
           <button
-            onClick={e => { e.stopPropagation(); onDone(); }}
-            style={{ fontSize: 13, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500, padding: 0 }}
+            onClick={() => onDone()}
+            style={{
+              fontSize:13, color:'#9ca3af', background:'none', border:'none',
+              cursor:'pointer', fontWeight:500, padding:0,
+              position:'relative', zIndex:11600,
+            }}
           >
             Skip tour
           </button>
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ display:'flex', gap:10 }}>
             {step > 0 && (
               <button
-                onClick={e => { e.stopPropagation(); prev(); }}
-                style={{ height: 42, padding: '0 20px', borderRadius: 12, border: '1.5px solid #e5e7eb', background: '#fff', fontSize: 15, fontWeight: 600, color: '#374151', cursor: 'pointer' }}
+                onClick={() => prev()}
+                style={{
+                  height:42, padding:'0 20px', borderRadius:12,
+                  border:'1.5px solid #e5e7eb', background:'#fff',
+                  fontSize:15, fontWeight:600, color:'#374151', cursor:'pointer',
+                  position:'relative', zIndex:11600,
+                }}
               >
                 Back
               </button>
             )}
             <button
-              onClick={e => { e.stopPropagation(); next(); }}
+              onClick={() => next()}
               style={{
-                height: 42, padding: '0 24px', borderRadius: 12, border: 'none',
-                background: 'linear-gradient(90deg,#009bff,#770bff)',
-                fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(119,11,255,0.25)',
+                height:42, padding:'0 24px', borderRadius:12, border:'none',
+                background:'linear-gradient(90deg,#009bff,#770bff)',
+                fontSize:15, fontWeight:700, color:'#fff', cursor:'pointer',
+                boxShadow:'0 4px 12px rgba(119,11,255,0.25)',
+                position:'relative', zIndex:11600,
               }}
             >
-              {step === STEPS.length - 1 ? "Let's go 🚀" : 'Next →'}
+              {step === STEPS.length-1 ? "Let's go 🚀" : 'Next →'}
             </button>
           </div>
         </div>
