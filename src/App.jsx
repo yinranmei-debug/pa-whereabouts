@@ -690,6 +690,7 @@ useEffect(() => {
   const currentTip = dailyTips.current[tipIdx];
 
   return (
+    <>
     <div style={{minHeight:'100vh',background:'#F0F4FF'}} onMouseUp={handleStatusCellMouseUp} onTouchEnd={handleStatusCellTouchEnd}>
       <GlobalStyles/>
       <div ref={glowFrameRef} className="glow-frame"/>
@@ -1096,7 +1097,17 @@ useEffect(() => {
         </div>
       )}
 
-      <DimensionalBreachOverlay breach={activeBreach} chargingState={chargingState} />
+    <DimensionalBreachOverlay breach={activeBreach} chargingState={chargingState} />
     </div>
+
+    {showTour && (
+      <TourOverlay onDone={()=>{
+        setShowTour(false);
+        setShowWelcome(true);
+        setTimeout(()=>setShowWelcome(false), 3500);
+        localStorage.setItem(`tour-done-${account.username}`, '1');
+      }}/>
+    )}
+    </>
   );
 }
