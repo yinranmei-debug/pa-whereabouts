@@ -143,36 +143,36 @@ const BreachCanvas = memo(({ phaseRef, progressRef, isChargingRef }) => {
       p.rotation += p.rotVel;
 
       if (p.life > 0 && p.size > 1) {
-  ctx.save();
-  ctx.translate(p.x, p.y);
-  ctx.rotate((p.rotation * Math.PI) / 180);
-  ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
 
-  const sz = Math.floor(p.size);
-  ctx.font = `${sz}px system-ui, "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
+        const sz = Math.floor(p.size);
+        ctx.font = `${sz}px system-ui, "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
 
-  // Gradient glow outline following emoji shape via shadowBlur
-  ctx.shadowColor = `rgba(0, 155, 255, ${p.life * 0.9})`;
-  ctx.shadowBlur = 10;
-  ctx.fillText(p.emoji, 0, 0);
+        // Gradient glow outline following emoji shape via shadowBlur
+        ctx.shadowColor = `rgba(0, 155, 255, ${p.life * 0.9})`;
+        ctx.shadowBlur = 10;
+        ctx.fillText(p.emoji, 0, 0);
 
-  ctx.shadowColor = `rgba(119, 11, 255, ${p.life * 0.85})`;
-  ctx.shadowBlur = 6;
-  ctx.fillText(p.emoji, 0, 0);
+        ctx.shadowColor = `rgba(119, 11, 255, ${p.life * 0.85})`;
+        ctx.shadowBlur = 6;
+        ctx.fillText(p.emoji, 0, 0);
 
-  ctx.shadowColor = `rgba(167, 139, 250, ${p.life * 0.7})`;
-  ctx.shadowBlur = 3;
-  ctx.fillText(p.emoji, 0, 0);
+        ctx.shadowColor = `rgba(167, 139, 250, ${p.life * 0.7})`;
+        ctx.shadowBlur = 3;
+        ctx.fillText(p.emoji, 0, 0);
 
-  // Clean emoji on top
-  ctx.shadowBlur = 0;
-  ctx.shadowColor = 'transparent';
-  ctx.fillText(p.emoji, 0, 0);
+        // Clean emoji on top
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
+        ctx.fillText(p.emoji, 0, 0);
 
-  ctx.restore();
-}
+        ctx.restore();
+      }
 
       if (p.life <= 0) particles.current.splice(i, 1);
     }
@@ -215,6 +215,7 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
   const phaseRef = useRef(null);
   const progressRef = useRef(0);
   const isChargingRef = useRef(false);
+  const [showWish, setShowWish] = useState(false);
 
   const isExploding = !!breach && (
     breach.phase === 'EXPLODING' ||
@@ -225,6 +226,15 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
   const chargingProgress = chargingState?.progress || 0;
   const chargingUserCount = chargingState?.userCount || 0;
   const showPortal = isCharging ? chargingProgress >= PORTAL_APPEAR_AT : isExploding;
+
+  // Whisper message triggers when breach enters FLOATING phase
+  useEffect(() => {
+    if (breach?.phase === 'FLOATING') {
+      setShowWish(true);
+      const t = setTimeout(() => setShowWish(false), 4000);
+      return () => clearTimeout(t);
+    }
+  }, [breach?.phase]);
 
   useEffect(() => {
     phaseRef.current = breach?.phase || null;
@@ -316,6 +326,41 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
     <>
       <BreachCanvas phaseRef={phaseRef} progressRef={progressRef} isChargingRef={isChargingRef} />
 
+      {/* Whisper message after portal closes */}
+      {showWish && (
+        <div style={{
+          position: 'fixed',
+          top: '50%', left: '50%',
+          zIndex: 11800,
+          pointerEvents: 'none',
+          textAlign: 'center',
+          animation: 'wishFadeInOut 4s ease forwards',
+        }}>
+          <div style={{
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontSize: 'clamp(18px, 2.5vw, 30px)',
+            fontWeight: 300,
+            fontStyle: 'italic',
+            letterSpacing: '0.06em',
+            color: 'rgba(199, 210, 254, 0.95)',
+            textShadow: '0 0 40px rgba(168,85,247,0.8), 0 0 80px rgba(99,102,241,0.5)',
+          }}>
+            your wish has been received
+          </div>
+          <div style={{
+            marginTop: 10,
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontSize: 'clamp(10px, 1.2vw, 14px)',
+            fontWeight: 400,
+            letterSpacing: '0.3em',
+            textTransform: 'uppercase',
+            color: 'rgba(167, 139, 250, 0.55)',
+          }}>
+            the universe is listening ✦
+          </div>
+        </div>
+      )}
+
       {showAnything && (
         <>
           <div style={{
@@ -344,7 +389,6 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
             </div>
           )}
 
-          {/* Charging text — only after 8% */}
           {isCharging && chargingProgress >= PORTAL_APPEAR_AT && (
             <div style={{
               position:'fixed', top:'72%', left:'50%',
@@ -462,6 +506,12 @@ export default function DimensionalBreachOverlay({ breach, chargingState }) {
         .breach-pop { animation: breachPop ${T_EXPLODE}ms cubic-bezier(0.2,0,0.2,1) forwards; }
         @keyframes chargingFadeIn { from{opacity:0} to{opacity:1} }
         @keyframes energyBarFadeIn { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes wishFadeInOut {
+          0%   { opacity:0; transform:translate(-50%,-50%) scale(0.92); }
+          15%  { opacity:1; transform:translate(-50%,-50%) scale(1); }
+          70%  { opacity:1; transform:translate(-50%,-50%) scale(1); }
+          100% { opacity:0; transform:translate(-50%,-50%) scale(1.05); }
+        }
       `}</style>
     </>
   );
