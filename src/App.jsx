@@ -17,6 +17,8 @@ import MobileView         from './components/MobileView';
 import './styles/cosmic-polish.css';
 import { useDimensionalBreach }   from './hooks/useDimensionalBreach';
 import DimensionalBreachOverlay   from './components/DimensionalBreachOverlay';
+import BananaEasterEgg from './components/BananaEasterEgg';
+import BananaEasterEgg from './components/BananaEasterEgg';
 
 const supabase = createClient(
   'https://vzdrpydtxlamoqtukgld.supabase.co',
@@ -272,15 +274,18 @@ export default function App() {
     })();
   }, []);
 
-  // Tour shows every refresh — no localStorage check
-  useEffect(() => {
-    if (!account) return;
-    const t = setTimeout(() => {
-      setShowTips(false);
-      setShowTour(true);
-    }, 600);
-    return () => clearTimeout(t);
-  }, [account]);
+
+  // Tour only shows on first login per user
+useEffect(() => {
+  if (!account) return;
+  const key = `tour-done-${account.username}`;
+  if (localStorage.getItem(key)) return;
+  const t = setTimeout(() => {
+    setShowTips(false);
+    setShowTour(true);
+  }, 600);
+  return () => clearTimeout(t);
+}, [account]);
 
   useEffect(() => {
     if (!account) return;
@@ -686,17 +691,19 @@ export default function App() {
 
   return (
     <div style={{minHeight:'100vh',background:'#F0F4FF'}} onMouseUp={handleStatusCellMouseUp} onTouchEnd={handleStatusCellTouchEnd}>
-     <GlobalStyles/>
+    <GlobalStyles/>
 <div ref={glowFrameRef} className="glow-frame"/>
 <BirthdayOverlay currentUserEmail={account?.username} />
+<BananaEasterEgg />
 
-      {showTour && (
-        <TourOverlay onDone={()=>{
-          setShowTour(false);
-          setShowWelcome(true);
-          setTimeout(()=>setShowWelcome(false), 3500);
-        }}/>
-      )}
+   {showTour && (
+  <TourOverlay onDone={()=>{
+    setShowTour(false);
+    setShowWelcome(true);
+    setTimeout(()=>setShowWelcome(false), 3500);
+    localStorage.setItem(`tour-done-${account.username}`, '1');
+  }}/>
+)}
 
       {showWelcome && <WelcomeConfetti/>}
 

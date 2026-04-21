@@ -53,8 +53,8 @@ const STEPS = [
 ];
 
 const PAD = 6;
-const TIP_W = 320;
-const TIP_H = 240;
+const TIP_W = 480;
+const TIP_H = 320;
 
 const TourOverlay = ({ onDone }) => {
   const [step, setStep] = useState(0);
@@ -137,10 +137,10 @@ const TourOverlay = ({ onDone }) => {
   const renderDesc = (desc) => {
     return desc.split('\n\n').map((para, i) => (
       <p key={i} style={{
-        fontSize: 13,
+        fontSize: 15,
         lineHeight: 1.65,
         color: i === 1 ? '#5b21b6' : '#6b7280',
-        margin: i === 0 ? '0 0 10px' : '0',
+        margin: i === 0 ? '0 0 12px' : '0',
         fontStyle: i === 1 ? 'italic' : 'normal',
       }}>
         {para}
@@ -178,31 +178,31 @@ const TourOverlay = ({ onDone }) => {
       )}
 
       <div style={{
-  position: 'fixed',
-  top: tipPos.top,
-  left: tipPos.left,
-  width: 480,           // 原来320 × 1.5
-  background: '#fff',
-  borderRadius: 24,
-  padding: '30px 33px 27px',  // 原来20px 22px 18px × 1.5
-  zIndex: 11002,
-  boxShadow: '0 16px 48px rgba(0,0,0,0.22)',
-  animation: isCenter
-    ? 'prefacePop 0.35s cubic-bezier(0.34,1.56,0.64,1) both'
-    : 'tourTipIn 0.25s ease both',
-  fontFamily: "'Plus Jakarta Sans', sans-serif",
-}}>
+        position: 'fixed',
+        top: tipPos.top,
+        left: tipPos.left,
+        width: TIP_W,
+        background: '#fff',
+        borderRadius: 24,
+        padding: '30px 33px 27px',
+        zIndex: 11002,
+        boxShadow: '0 16px 48px rgba(0,0,0,0.22)',
+        animation: isCenter
+          ? 'prefacePop 0.35s cubic-bezier(0.34,1.56,0.64,1) both'
+          : 'tourTipIn 0.25s ease both',
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+      }}>
         <div style={{
-          position:'absolute', top:0, left:0, right:0, height:3,
+          position:'absolute', top:0, left:0, right:0, height:4,
           background:'linear-gradient(90deg,#009bff,#770bff)',
-          borderRadius:'18px 18px 0 0',
+          borderRadius:'24px 24px 0 0',
         }}/>
 
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
-          <div style={{ display:'flex', gap:5 }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18 }}>
+          <div style={{ display:'flex', gap:6 }}>
             {STEPS.map((_,i) => (
               <div key={i} style={{
-                width: i===step ? 18 : 6, height:6, borderRadius:3,
+                width: i===step ? 22 : 8, height:8, borderRadius:4,
                 transition:'all 0.25s',
                 background: i===step
                   ? 'linear-gradient(90deg,#009bff,#770bff)'
@@ -210,29 +210,29 @@ const TourOverlay = ({ onDone }) => {
               }}/>
             ))}
           </div>
-          <span style={{ fontSize:11, color:'#9ca3af', fontWeight:500 }}>{step+1} / {STEPS.length}</span>
+          <span style={{ fontSize:13, color:'#9ca3af', fontWeight:500 }}>{step+1} / {STEPS.length}</span>
         </div>
 
-        <div style={{ fontSize:22, fontWeight:700, color:'#111827', marginBottom:8 }}>
+        <div style={{ fontSize:22, fontWeight:700, color:'#111827', marginBottom:12 }}>
           {current.title}
         </div>
 
-        <div style={{ marginBottom:18 }}>
+        <div style={{ marginBottom:24 }}>
           {renderDesc(current.desc)}
         </div>
 
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
           <button
             onClick={e=>{ e.stopPropagation(); onDone(); }}
-            style={{ fontSize:12, color:'#9ca3af', background:'none', border:'none', cursor:'pointer', fontWeight:500, padding:0 }}
+            style={{ fontSize:13, color:'#9ca3af', background:'none', border:'none', cursor:'pointer', fontWeight:500, padding:0 }}
           >
             Skip tour
           </button>
-          <div style={{ display:'flex', gap:8 }}>
+          <div style={{ display:'flex', gap:10 }}>
             {step > 0 && (
               <button
                 onClick={e=>{ e.stopPropagation(); prev(); }}
-                style={{ height:34, padding:'0 14px', borderRadius:9, border:'1.5px solid #e5e7eb', background:'#fff', fontSize:13, fontWeight:600, color:'#374151', cursor:'pointer' }}
+                style={{ height:42, padding:'0 20px', borderRadius:12, border:'1.5px solid #e5e7eb', background:'#fff', fontSize:15, fontWeight:600, color:'#374151', cursor:'pointer' }}
               >
                 Back
               </button>
@@ -240,9 +240,9 @@ const TourOverlay = ({ onDone }) => {
             <button
               onClick={e=>{ e.stopPropagation(); next(); }}
               style={{
-                height:34, padding:'0 18px', borderRadius:9, border:'none',
+                height:42, padding:'0 24px', borderRadius:12, border:'none',
                 background:'linear-gradient(90deg,#009bff,#770bff)',
-                fontSize:13, fontWeight:700, color:'#fff', cursor:'pointer',
+                fontSize:15, fontWeight:700, color:'#fff', cursor:'pointer',
                 boxShadow:'0 4px 12px rgba(119,11,255,0.25)',
               }}
             >
