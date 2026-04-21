@@ -559,14 +559,14 @@ export default function BirthdayOverlay({ currentUserEmail, isBusy }) {
   const [closing, setClosing] = useState(false);
   const frame = usePixelTick(8, visible);
 
-  uuseEffect(() => {
-    if (!currentUserEmail) return;
+  useEffect(() => {
+    // Fixed the typo, and added isBusy so it waits for the tour/tips!
+    if (!currentUserEmail || isBusy) return;
 
     const sessionKey = 'bday-shown-session';
     // Only show once per session
     if (sessionStorage.getItem(sessionKey)) return;
 
-    
     const today = new Date();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const dd = String(today.getDate()).padStart(2, '0');
@@ -580,7 +580,7 @@ export default function BirthdayOverlay({ currentUserEmail, isBusy }) {
     setBirthdayPerson(match);
     const t = setTimeout(() => setVisible(true), 1200);
     return () => clearTimeout(t);
-  }, [currentUserEmail]);
+  }, [currentUserEmail, isBusy]); // <-- Added isBusy here too!
 
   useEffect(() => {
     if (!visible) return;
