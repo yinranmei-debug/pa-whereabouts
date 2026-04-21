@@ -69,13 +69,11 @@
 /* ── Tap me bubble ── */
 .pill-tap-bubble {
   position: absolute;
-  bottom: calc(100% + 12px);
-  left: 50%;
-  transform: translateX(-50%) translateY(6px) scale(0.9);
+  transform: translateX(-50%) translateY(0) scale(0.9);
   z-index: 99999;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 220ms ease, transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: opacity 180ms ease, transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
   white-space: nowrap;
 }
 
@@ -83,7 +81,6 @@
 .pill.hol:hover .pill-tap-bubble {
   opacity: 1;
   transform: translateX(-50%) translateY(0) scale(1);
-  animation: bubbleFloat 2.2s ease-in-out 0.26s infinite;
 }
 
 @keyframes bubbleFloat {

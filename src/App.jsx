@@ -189,7 +189,7 @@ export default function App() {
   const myAvatarRef     = useRef(null);
   const flightOnLandRef = useRef(null);
   const touchDragRef    = useRef(null);
-
+  const [bubblePos, setBubblePos] = useState({ x: 0, y: 0 });
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 768px)');
     const fn = e => setIsMobile(e.matches);
@@ -980,23 +980,30 @@ export default function App() {
                             const isHol=!!d.hol;
                             return (
                               <td key={d.ds} className={`ptd ${tdSlideClass}`} rowSpan={staffList.length}>
-                                <div
-                                  data-pill-ds={d.ds}
-                                  className={`pill ${isHol?'hol':'we'}`}
-                                  onClick={e=>fireParty(e,isHol?'holiday':'weekend',d.hol||'',d.ds)}
-                                  onTouchEnd={e=>{ e.preventDefault(); fireParty({currentTarget:e.currentTarget,stopPropagation:()=>{}},isHol?'holiday':'weekend',d.hol||'',d.ds); }}
-                                >
-                                  <div className="pill-card"/>
-                                  {/* ✦ Tap me bubble */}
-                                  <div className="pill-tap-bubble">
-                                    <div className="pill-tap-bubble-ring">
-                                      <div className="pill-tap-bubble-content">
-                                        <span className="pill-tap-dot"/>
-                                        {isHol ? '✦ Try it!' : '✦ Tap me!'}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
+                               <div
+  data-pill-ds={d.ds}
+  className={`pill ${isHol?'hol':'we'}`}
+  onClick={e=>fireParty(e,isHol?'holiday':'weekend',d.hol||'',d.ds)}
+  onTouchEnd={e=>{ e.preventDefault(); fireParty({currentTarget:e.currentTarget,stopPropagation:()=>{}},isHol?'holiday':'weekend',d.hol||'',d.ds); }}
+  onMouseMove={e=>{
+    const rect=e.currentTarget.getBoundingClientRect();
+    setBubblePos({ x: e.clientX-rect.left, y: e.clientY-rect.top });
+  }}
+>
+  <div className="pill-card"/>
+  {/* ✦ Tap me bubble */}
+  <div
+    className="pill-tap-bubble"
+    style={{ left: bubblePos.x, top: bubblePos.y - 52, bottom: 'auto' }}
+  >
+    <div className="pill-tap-bubble-ring">
+      <div className="pill-tap-bubble-content">
+        <span className="pill-tap-dot"/>
+        {isHol ? '✦ Try it!' : '✦ Tap me!'}
+      </div>
+    </div>
+  </div>
+</div> 
                               </td>
                             );
                           }
