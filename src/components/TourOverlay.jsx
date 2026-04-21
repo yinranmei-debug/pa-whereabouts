@@ -1,6 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const STEPS = [
+  {
+    id: 'preface',
+    title: '🌿 Before We Begin',
+    desc: `Stay in sync. Work well. Live well.\n\nWhereabouts helps make the workday feel clearer and lighter, with an easy way to share your status, stay in step with your team, and make space for focus, balance, and small moments of fun.`,
+    position: 'center',
+    highlight: () => null,
+  },
   {
     id: 'nav',
     title: '📍 Navigation',
@@ -17,59 +24,61 @@ const STEPS = [
   },
   {
     id: 'bulb',
-    title: '💡 Wellbeing Tips',
-    desc: '3 wellbeing tips pushed to you every day. Click the lightbulb anytime.',
+    title: '💡 Daily Mind Huddle',
+    desc: '3 mindfulness tips refreshed every day, just for you. Click the lightbulb anytime you need a moment to breathe.',
     position: 'bottom-left',
     highlight: () => document.querySelector('.bulb-btn'),
   },
   {
     id: 'status',
     title: '🗓 Set Your Status',
-    desc: 'Click any AM or PM cell in your row to set your work status for the day.',
+    desc: 'Click any AM or PM cell in your row to set your work status for the day. Your team sees it live.',
     position: 'top',
     highlight: () => document.querySelector('#my-row .sh.mine') || document.querySelector('.sh.mine'),
   },
   {
     id: 'mood',
     title: '😊 Share Your Mood',
-    desc: "Click your avatar to pick a mood emoji. It shows as a badge so your team knows how you're feeling.",
+    desc: "Click your avatar to pick a mood emoji. It shows as a badge so your team knows how you're feeling today.",
     position: 'right',
     highlight: () => document.querySelector('.n-av-wrap.is-me'),
   },
   {
     id: 'celebrate',
-    title: '🎉 Celebrate Together',
-    desc: 'Click on any weekend or holiday column — it triggers confetti and sends a live party effect to the whole team!',
+    title: '🎉 Tap to Celebrate!',
+    desc: `See a weekend or holiday coming up? Tap the column — confetti flies for the whole team instantly 🎊\n\nSecret: when enough teammates tap together at the same time, something wild happens. A dimensional rift tears open. No spoilers — go find out 👀`,
     position: 'top',
     highlight: () => document.querySelector('.pill.we') || document.querySelector('.pill.hol'),
   },
 ];
 
 const PAD = 6;
+const TIP_W = 320;
+const TIP_H = 240;
 
 const TourOverlay = ({ onDone }) => {
-  const [step,   setStep]   = useState(0);
-  const [box,    setBox]    = useState(null);
+  const [step, setStep] = useState(0);
+  const [box, setBox] = useState(null);
   const [tipPos, setTipPos] = useState({ top: 0, left: 0 });
 
   const current = STEPS[step];
+  const isCenter = current.position === 'center';
 
   const measure = () => {
     const el = current.highlight?.();
-    if (!el) { setBox(null); return; }
+    if (!el) {
+      setBox(null);
+      setTipPos({
+        top:  window.innerHeight / 2 - TIP_H / 2,
+        left: window.innerWidth  / 2 - TIP_W / 2,
+      });
+      return;
+    }
     const r = el.getBoundingClientRect();
-    setBox({
-      top:    r.top    - PAD,
-      left:   r.left   - PAD,
-      width:  r.width  + PAD * 2,
-      height: r.height + PAD * 2,
-    });
+    setBox({ top: r.top-PAD, left: r.left-PAD, width: r.width+PAD*2, height: r.height+PAD*2 });
 
-    const TIP_W = 300;
-    const TIP_H = 200;
-    const pos   = current.position;
+    const pos = current.position;
     let top, left;
-
     if (pos === 'bottom' || pos === 'bottom-left') {
       top  = r.bottom + PAD + 14;
       left = pos === 'bottom-left' ? r.right - TIP_W : r.left;
@@ -83,7 +92,6 @@ const TourOverlay = ({ onDone }) => {
       top  = r.bottom + 14;
       left = r.left;
     }
-
     left = Math.max(12, Math.min(left, window.innerWidth  - TIP_W - 12));
     top  = Math.max(12, Math.min(top,  window.innerHeight - TIP_H - 12));
     setTipPos({ top, left });
@@ -107,17 +115,15 @@ const TourOverlay = ({ onDone }) => {
     if (!box) {
       return (
         <div
-          style={{position:'fixed',inset:0,background:'rgba(10,15,30,0.75)',zIndex:11000,cursor:'pointer'}}
+          style={{ position:'fixed', inset:0, background:'rgba(10,15,30,0.82)', zIndex:11000, cursor:'pointer' }}
           onClick={next}
         />
       );
     }
-
     const { top, left, width, height } = box;
     const right  = left + width;
     const bottom = top  + height;
     const s = { position:'fixed', background:'rgba(10,15,30,0.78)', zIndex:11000, cursor:'pointer' };
-
     return (
       <>
         <div style={{...s, top:0, left:0, right:0, height:Math.max(0,top)}} onClick={next}/>
@@ -128,110 +134,119 @@ const TourOverlay = ({ onDone }) => {
     );
   };
 
+  const renderDesc = (desc) => {
+    return desc.split('\n\n').map((para, i) => (
+      <p key={i} style={{
+        fontSize: 13,
+        lineHeight: 1.65,
+        color: i === 1 ? '#5b21b6' : '#6b7280',
+        margin: i === 0 ? '0 0 10px' : '0',
+        fontStyle: i === 1 ? 'italic' : 'normal',
+      }}>
+        {para}
+      </p>
+    ));
+  };
+
   return (
     <>
       <style>{`
-        @keyframes tourTipIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes spotlightPulse{
-          0%,100%{box-shadow:0 0 0 0 rgba(0,155,255,0.55),0 0 0 0 rgba(119,11,255,0.25);}
-          50%{box-shadow:0 0 0 7px rgba(0,155,255,0.12),0 0 0 14px rgba(119,11,255,0.06);}
+        @keyframes tourTipIn {
+          from { opacity:0; transform:translateY(10px) scale(0.97); }
+          to   { opacity:1; transform:translateY(0) scale(1); }
         }
-        .tour-ring{animation:spotlightPulse 2s ease-in-out infinite;}
+        @keyframes spotlightPulse {
+          0%,100% { box-shadow: 0 0 0 0 rgba(0,155,255,0.55), 0 0 0 0 rgba(119,11,255,0.25); }
+          50%     { box-shadow: 0 0 0 7px rgba(0,155,255,0.12), 0 0 0 14px rgba(119,11,255,0.06); }
+        }
+        .tour-ring { animation: spotlightPulse 2s ease-in-out infinite; }
+        @keyframes prefacePop {
+          from { opacity:0; transform:scale(0.92) translateY(16px); }
+          to   { opacity:1; transform:scale(1) translateY(0); }
+        }
       `}</style>
 
       {renderSpotlight()}
 
       {box && (
-        <div
-          className="tour-ring"
-          style={{
-            position:'fixed',
-            top:    box.top,
-            left:   box.left,
-            width:  box.width,
-            height: box.height,
-            border: '2px solid rgba(0,155,255,0.85)',
-            borderRadius: 10,
-            zIndex: 11001,
-            pointerEvents: 'none',
-            boxSizing: 'border-box',
-          }}
-        />
+        <div className="tour-ring" style={{
+          position:'fixed', top:box.top, left:box.left,
+          width:box.width, height:box.height,
+          border:'2px solid rgba(0,155,255,0.85)', borderRadius:10,
+          zIndex:11001, pointerEvents:'none', boxSizing:'border-box',
+        }}/>
       )}
 
-      <div
-        style={{
-          position:   'fixed',
-          top:        tipPos.top,
-          left:       tipPos.left,
-          width:      300,
-          background: '#fff',
-          borderRadius: 18,
-          padding:    '20px 22px 18px',
-          zIndex:     11002,
-          boxShadow:  '0 16px 48px rgba(0,0,0,0.2)',
-          animation:  'tourTipIn 0.25s ease',
-          fontFamily: "'Plus Jakarta Sans',sans-serif",
-        }}
-      >
+      <div style={{
+        position: 'fixed',
+        top:  tipPos.top,
+        left: tipPos.left,
+        width: TIP_W,
+        background: '#fff',
+        borderRadius: 18,
+        padding: '20px 22px 18px',
+        zIndex: 11002,
+        boxShadow: '0 16px 48px rgba(0,0,0,0.22)',
+        animation: isCenter
+          ? 'prefacePop 0.35s cubic-bezier(0.34,1.56,0.64,1) both'
+          : 'tourTipIn 0.25s ease both',
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+      }}>
         <div style={{
-          position:'absolute',top:0,left:0,right:0,height:3,
+          position:'absolute', top:0, left:0, right:0, height:3,
           background:'linear-gradient(90deg,#009bff,#770bff)',
           borderRadius:'18px 18px 0 0',
         }}/>
 
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
-          <div style={{display:'flex',gap:5}}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+          <div style={{ display:'flex', gap:5 }}>
             {STEPS.map((_,i) => (
               <div key={i} style={{
-                width:  i === step ? 18 : 6,
-                height: 6,
-                borderRadius: 3,
-                transition: 'all 0.25s',
-                background: i === step
+                width: i===step ? 18 : 6, height:6, borderRadius:3,
+                transition:'all 0.25s',
+                background: i===step
                   ? 'linear-gradient(90deg,#009bff,#770bff)'
-                  : i < step ? '#c7d2fe' : '#e5e7eb',
+                  : i<step ? '#c7d2fe' : '#e5e7eb',
               }}/>
             ))}
           </div>
-          <span style={{fontSize:11,color:'#9ca3af',fontWeight:500}}>
-            {step + 1} / {STEPS.length}
-          </span>
+          <span style={{ fontSize:11, color:'#9ca3af', fontWeight:500 }}>{step+1} / {STEPS.length}</span>
         </div>
 
-        <div style={{fontSize:15,fontWeight:700,color:'#111827',marginBottom:8}}>
+        <div style={{ fontSize:15, fontWeight:700, color:'#111827', marginBottom:8 }}>
           {current.title}
         </div>
-        <p style={{fontSize:13,lineHeight:1.6,color:'#6b7280',margin:'0 0 18px'}}>
-          {current.desc}
-        </p>
 
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <div style={{ marginBottom:18 }}>
+          {renderDesc(current.desc)}
+        </div>
+
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
           <button
-            onClick={e => { e.stopPropagation(); onDone(); }}
-            style={{fontSize:12,color:'#9ca3af',background:'none',border:'none',cursor:'pointer',fontWeight:500,padding:0}}
+            onClick={e=>{ e.stopPropagation(); onDone(); }}
+            style={{ fontSize:12, color:'#9ca3af', background:'none', border:'none', cursor:'pointer', fontWeight:500, padding:0 }}
           >
             Skip tour
           </button>
-          <div style={{display:'flex',gap:8}}>
+          <div style={{ display:'flex', gap:8 }}>
             {step > 0 && (
               <button
-                onClick={e => { e.stopPropagation(); prev(); }}
-                style={{height:34,padding:'0 14px',borderRadius:9,border:'1.5px solid #e5e7eb',background:'#fff',fontSize:13,fontWeight:600,color:'#374151',cursor:'pointer'}}
+                onClick={e=>{ e.stopPropagation(); prev(); }}
+                style={{ height:34, padding:'0 14px', borderRadius:9, border:'1.5px solid #e5e7eb', background:'#fff', fontSize:13, fontWeight:600, color:'#374151', cursor:'pointer' }}
               >
                 Back
               </button>
             )}
             <button
-              onClick={e => { e.stopPropagation(); next(); }}
+              onClick={e=>{ e.stopPropagation(); next(); }}
               style={{
-                height:34,padding:'0 18px',borderRadius:9,border:'none',
+                height:34, padding:'0 18px', borderRadius:9, border:'none',
                 background:'linear-gradient(90deg,#009bff,#770bff)',
-                fontSize:13,fontWeight:700,color:'#fff',cursor:'pointer',
+                fontSize:13, fontWeight:700, color:'#fff', cursor:'pointer',
                 boxShadow:'0 4px 12px rgba(119,11,255,0.25)',
               }}
             >
-              {step === STEPS.length - 1 ? "Let's go 🚀" : 'Next'}
+              {step === STEPS.length-1 ? "Let's go 🚀" : 'Next →'}
             </button>
           </div>
         </div>
