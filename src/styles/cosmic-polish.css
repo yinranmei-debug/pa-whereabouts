@@ -5,7 +5,8 @@
    ============================================================ */
 
 /* -----------------------------------------------------------
-   #1. Weekend/Holiday Pills — "Energy Awaits" Hover
+   #1. Weekend/Holiday Pills — Corporate Gradient + Idle State
+   Hover effects removed — to be replaced with new interaction
    ----------------------------------------------------------- */
 .pill.we,
 .pill.hol {
@@ -15,99 +16,28 @@
   transition: transform 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Idle: latent energy hint (very subtle) */
-.pill.we::before,
-.pill.hol::before {
-  content: '';
-  position: absolute;
-  inset: -4px;
-  border-radius: 16px;
-  background: radial-gradient(
-    circle at center,
-    rgba(168, 85, 247, 0.18) 0%,
-    rgba(99, 102, 241, 0.08) 50%,
-    transparent 75%
-  );
-  opacity: 0;
-  transition: opacity 400ms ease-out, transform 400ms ease-out;
-  pointer-events: none;
-  z-index: -1;
-  filter: blur(8px);
-}
-
-/* Inner vortex hint (conic swirl) */
-.pill.we::after,
-.pill.hol::after {
-  content: '';
-  position: absolute;
-  inset: 8%;
-  border-radius: 50%;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0%,
-    rgba(168, 85, 247, 0.12) 25%,
-    transparent 50%,
-    rgba(99, 102, 241, 0.12) 75%,
-    transparent 100%
-  );
-  opacity: 0;
-  transition: opacity 400ms ease-out;
-  pointer-events: none;
-  mix-blend-mode: plus-lighter;
-}
-
-/* Hover state: energy awakens */
-.pill.we:hover,
-.pill.hol:hover {
-  transform: translateY(-2px) scale(1.02);
-}
-
-.pill.we:hover::before,
-.pill.hol:hover::before {
-  opacity: 1;
-  animation: pillEnergyPulse 1200ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.pill.we:hover::after,
-.pill.hol:hover::after {
-  opacity: 1;
-  animation: pillVortexSpin 4s linear infinite;
-}
-
-/* Hover glow on the inner card */
-.pill.we:hover .pill-card,
-.pill.hol:hover .pill-card {
+/* Weekend pill — corporate blue→purple gradient (always visible) */
+.pill.we .pill-card {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 155, 255, 0.13) 0%,
+    rgba(119, 11, 255, 0.13) 100%
+  ) !important;
+  border: 1.5px solid rgba(99, 102, 241, 0.22) !important;
   box-shadow:
-    0 0 0 1px rgba(168, 85, 247, 0.4),
-    0 0 24px rgba(168, 85, 247, 0.3),
-    0 4px 32px rgba(99, 102, 241, 0.2);
-  transition: box-shadow 350ms ease-out;
+    0 2px 12px rgba(0, 155, 255, 0.10),
+    0 1px 4px rgba(119, 11, 255, 0.08);
+  transition: box-shadow 300ms ease-out;
 }
 
-@keyframes pillEnergyPulse {
-  0% {
-    transform: scale(0.85);
-    opacity: 0;
-  }
-  30% {
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1.35);
-    opacity: 0;
-  }
-}
-
-@keyframes pillVortexSpin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+/* Holiday pill — keep existing pink/festive feel */
+.pill.hol .pill-card {
+  transition: box-shadow 300ms ease-out;
 }
 
 /* -----------------------------------------------------------
    #2. Today's Date Circle — The Eternal Now
-   Targets the gradient circle in the day header for today
    ----------------------------------------------------------- */
-/* Apply breathing glow to today's circle (gradient background) */
 .tbl-hdr-daycol > div > div[style*="linear-gradient(135deg, rgb(0, 155, 255)"],
 .tbl-hdr-daycol > div > div[style*="linear-gradient(135deg,#009bff"],
 .tbl-hdr-daycol > div > div[style*="009bff"][style*="770bff"] {
@@ -133,7 +63,7 @@
   }
 }
 
-/* Today button in toolbar — breathe too */
+/* Today button in toolbar */
 .tb-btn.today {
   position: relative;
   transition:
@@ -167,10 +97,7 @@
 
 /* -----------------------------------------------------------
    #3. Avatars — Team Members as Cosmic Beings
-   Affects both navbar online avatars and name column avatars
    ----------------------------------------------------------- */
-
-/* Online avatars in nav */
 .online-av {
   position: relative;
   transition:
@@ -210,7 +137,7 @@
   animation-play-state: running;
 }
 
-/* Name-column avatars (the big 60px ones in the table) */
+/* Name-column avatars */
 .n-av-wrap {
   position: relative;
   transition:
@@ -240,7 +167,7 @@
 }
 
 .n-av-wrap.is-me::before {
-  opacity: 0.25; /* Persistent subtle glow for "me" */
+  opacity: 0.25;
   animation-play-state: running;
 }
 
@@ -273,7 +200,6 @@
   color: #770bff !important;
 }
 
-/* Directional nudge — first button (prev) nudges left, last button (next) nudges right */
 .toolbar .tb-btn.icon:nth-of-type(1):hover {
   animation: arrowNudgeLeft 700ms ease-in-out infinite;
 }
@@ -298,15 +224,51 @@
 }
 
 /* -----------------------------------------------------------
-   #5. Global Focus, Polish & Micro-Interactions
+   #5. Logo — Always-On Gradient (Shimmer on Hover)
    ----------------------------------------------------------- */
+.nav-logo-text {
+  position: relative;
+  /* Default state: gradient always visible */
+  background: linear-gradient(
+    135deg,
+    #009bff 0%,
+    #770bff 55%,
+    #a78bfa 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: all 400ms ease-out;
+  cursor: default;
+  /* Subtle idle animation — slow drift */
+  animation: logoIdleDrift 6s ease-in-out infinite;
+}
 
-/* Kill default browser focus outlines */
+/* Hover: faster shimmer sweep */
+.nav-logo-text:hover {
+  animation: logoShimmer 1.6s linear infinite;
+  filter: drop-shadow(0 0 8px rgba(119, 11, 255, 0.35));
+}
+
+@keyframes logoIdleDrift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 60% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes logoShimmer {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+/* -----------------------------------------------------------
+   #6. Global Focus, Polish & Micro-Interactions
+   ----------------------------------------------------------- */
 *:focus {
   outline: none;
 }
 
-/* Keyboard-only focus — purple cosmic ring */
 *:focus-visible {
   outline: 2px solid rgba(168, 85, 247, 0.7);
   outline-offset: 3px;
@@ -315,13 +277,12 @@
   transition: outline-color 200ms ease-out, box-shadow 200ms ease-out;
 }
 
-/* Text selection */
 ::selection {
   background: rgba(168, 85, 247, 0.3);
   color: inherit;
 }
 
-/* Nav tabs — smoother hover */
+/* Nav tabs */
 .nav-tab {
   position: relative;
   transition: color 250ms ease-out, background 250ms ease-out;
@@ -345,38 +306,7 @@
   width: 70%;
 }
 
-/* Logo — subtle shimmer on hover */
-.nav-logo-text {
-  position: relative;
-  background: linear-gradient(135deg, #111 0%, #111 50%, #111 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: #111;
-  transition: all 500ms ease-out;
-  cursor: default;
-}
-
-.nav-logo-text:hover {
-  background: linear-gradient(
-    135deg,
-    #111 0%,
-    #009bff 30%,
-    #770bff 55%,
-    #111 80%
-  );
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: logoShimmer 2s linear infinite;
-}
-
-@keyframes logoShimmer {
-  0%   { background-position: 0% 50%; }
-  100% { background-position: 200% 50%; }
-}
-
-/* Bulb button — warm glow on hover */
+/* Bulb button */
 .bulb-btn {
   transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 300ms ease-out;
 }
@@ -386,14 +316,14 @@
   box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
 }
 
-/* Status cells (.sh) — subtle hover lift */
+/* Status cells */
 .sh.mine:hover,
 .sh.set:hover {
   transform: translateY(-1px);
   transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Sign out button — gentle hover */
+/* Sign out button */
 .signout-btn {
   transition: all 200ms ease-out;
 }
@@ -403,7 +333,7 @@
   color: #770bff !important;
 }
 
-/* Save status text — subtle glow */
+/* Save status */
 .save-ok {
   animation: saveFade 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
   text-shadow: 0 0 12px rgba(34, 197, 94, 0.3);
@@ -414,7 +344,7 @@
   to   { opacity: 1; transform: scale(1); }
 }
 
-/* Legend items — hover highlights */
+/* Legend items */
 .leg-item {
   transition: transform 200ms ease-out, color 200ms ease-out;
   cursor: default;
@@ -430,7 +360,7 @@
   transition: box-shadow 300ms ease-out;
 }
 
-/* Team summary pill — gentle pulse */
+/* Team summary pill */
 .team-summary {
   transition: box-shadow 300ms ease-out, transform 200ms ease-out;
 }
@@ -440,7 +370,7 @@
   box-shadow: 0 0 16px rgba(168, 85, 247, 0.2);
 }
 
-/* Online pill container — subtle breathe */
+/* Online pill */
 .online-pill {
   transition: box-shadow 400ms ease-out;
 }
@@ -449,7 +379,7 @@
   box-shadow: 0 0 16px rgba(168, 85, 247, 0.18);
 }
 
-/* Live dot — slightly more punchy */
+/* Live dot */
 .online-live-dot {
   animation: livePulse 2s ease-in-out infinite;
 }
@@ -459,7 +389,7 @@
   50%      { opacity: 1; transform: scale(1.15); }
 }
 
-/* Planner rows — cosmic hover */
+/* Planner rows */
 .plan-row {
   transition: background 200ms ease-out, transform 200ms ease-out;
 }
@@ -473,7 +403,7 @@
   transform: translateX(2px);
 }
 
-/* Status dropdown options — hover with purple tinge */
+/* Status dropdown options */
 .s-opt {
   transition: background 200ms ease-out, transform 150ms ease-out;
 }
