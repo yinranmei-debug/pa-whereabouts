@@ -981,24 +981,23 @@ export default function App() {
                             return (
                               <td key={d.ds} className={`ptd ${tdSlideClass}`} rowSpan={staffList.length}>
                                <div
+ <div
   data-pill-ds={d.ds}
   className={`pill ${isHol?'hol':'we'}`}
   onClick={e=>fireParty(e,isHol?'holiday':'weekend',d.hol||'',d.ds)}
   onTouchEnd={e=>{ e.preventDefault(); fireParty({currentTarget:e.currentTarget,stopPropagation:()=>{}},isHol?'holiday':'weekend',d.hol||'',d.ds); }}
-  onMouseMove={e => {
-  const rect = e.currentTarget.getBoundingClientRect();
-  setBubblePos({
-    x: rect.left + rect.width / 2,        /* 水平居中在pill */
-    y: rect.top - 12,                      /* pill顶部上方 */
-  });
-}}
+  onMouseEnter={e=>{
+    const rect=e.currentTarget.getBoundingClientRect();
+    setBubblePos({ x: rect.left+rect.width/2, y: rect.top-14, visible: true });
+  }}
+  onMouseLeave={()=>setBubblePos(p=>({...p, visible: false}))}
 >
   <div className="pill-card"/>
   {/* ✦ Tap me bubble */}
   <div
-  className="pill-tap-bubble"
-  style={{ left: bubblePos.x, top: bubblePos.y, bottom: 'auto' }}
->
+    className={`pill-tap-bubble${bubblePos.visible ? ' is-visible' : ''}`}
+    style={{ left: bubblePos.x, top: bubblePos.y }}
+  >
     <div className="pill-tap-bubble-ring">
       <div className="pill-tap-bubble-content">
         <span className="pill-tap-dot"/>
@@ -1006,7 +1005,7 @@ export default function App() {
       </div>
     </div>
   </div>
-</div> 
+</div>
                               </td>
                             );
                           }

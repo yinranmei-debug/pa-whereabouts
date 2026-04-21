@@ -68,19 +68,25 @@
 
 /* ── Tap me bubble ── */
 .pill-tap-bubble {
-  position: absolute;
+  position: fixed;
   transform: translateX(-50%) translateY(0) scale(0.9);
   z-index: 99999;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 180ms ease, transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: opacity 220ms ease, transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
   white-space: nowrap;
 }
 
-.pill.we:hover .pill-tap-bubble,
-.pill.hol:hover .pill-tap-bubble {
+/* 用 is-hovered class 代替 :hover selector */
+.pill-tap-bubble.is-visible {
   opacity: 1;
   transform: translateX(-50%) translateY(0) scale(1);
+  animation: bubbleFloat 2.2s ease-in-out 0.26s infinite;
+}
+
+@keyframes bubbleFloat {
+  0%, 100% { transform: translateX(-50%) translateY(0px) scale(1); }
+  50%       { transform: translateX(-50%) translateY(-5px) scale(1); }
 }
 
 @keyframes bubbleFloat {
