@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-
+import React, { useState, useEffect } from 'react';
+ 
 const STEPS = [
   {
     id: 'preface',
@@ -51,20 +51,20 @@ const STEPS = [
     highlight: () => document.querySelector('.pill.we') || document.querySelector('.pill.hol'),
   },
 ];
-
+ 
 const PAD   = 6;
 const TIP_W = 480;
 const TIP_H = 320;
-
+ 
 export default function TourOverlay({ onDone }) {
   const [step, setStep] = useState(0);
   const [box,  setBox]  = useState(null);
   const [tipPos, setTipPos] = useState({ top: 0, left: 0 });
-
-  const current = STEPS[step];
+ 
+  const current  = STEPS[step];
   const isCenter = current.position === 'center';
   const isLast   = step === STEPS.length - 1;
-
+ 
   const measure = () => {
     const el = current.highlight?.();
     if (!el) {
@@ -77,7 +77,7 @@ export default function TourOverlay({ onDone }) {
     }
     const r = el.getBoundingClientRect();
     setBox({ top: r.top - PAD, left: r.left - PAD, width: r.width + PAD * 2, height: r.height + PAD * 2 });
-
+ 
     const pos = current.position;
     let top, left;
     if (pos === 'bottom' || pos === 'bottom-left') {
@@ -97,7 +97,7 @@ export default function TourOverlay({ onDone }) {
     top  = Math.max(12, Math.min(top,  window.innerHeight - TIP_H - 12));
     setTipPos({ top, left });
   };
-
+ 
   useEffect(() => {
     const t = setTimeout(measure, 80);
     window.addEventListener('resize', measure);
@@ -108,13 +108,12 @@ export default function TourOverlay({ onDone }) {
       window.removeEventListener('scroll', measure, true);
     };
   }, [step]);
-
-  // Plain React handlers — simple, no ref magic needed
+ 
   const handleSkip = (e) => {
     e.stopPropagation();
     onDone();
   };
-
+ 
   const handleNext = (e) => {
     e.stopPropagation();
     if (step < STEPS.length - 1) {
@@ -123,12 +122,12 @@ export default function TourOverlay({ onDone }) {
       onDone();
     }
   };
-
+ 
   const handleBack = (e) => {
     e.stopPropagation();
     if (step > 0) setStep(s => s - 1);
   };
-
+ 
   const renderDesc = (desc) =>
     desc.split('\n\n').map((para, i) => (
       <p key={i} style={{
@@ -140,7 +139,7 @@ export default function TourOverlay({ onDone }) {
         {para}
       </p>
     ));
-
+ 
   return (
     <>
       <style>{`
@@ -158,8 +157,7 @@ export default function TourOverlay({ onDone }) {
           to   { opacity:1; transform:scale(1) translateY(0); }
         }
       `}</style>
-
-      {/* Dark overlay — pointerEvents none, never steals clicks */}
+ 
       {!box && (
         <div style={{
           position: 'fixed', inset: 0,
@@ -182,8 +180,7 @@ export default function TourOverlay({ onDone }) {
           </>
         );
       })()}
-
-      {/* Spotlight ring */}
+ 
       {box && (
         <div className="tour-ring" style={{
           position: 'fixed', top: box.top, left: box.left,
@@ -192,9 +189,9 @@ export default function TourOverlay({ onDone }) {
           zIndex: 11001, pointerEvents: 'none', boxSizing: 'border-box',
         }} />
       )}
-
-      {/* Tooltip card — has className so global mousedown handler ignores it */}
+ 
       <div
+        key={step}
         className="tour-overlay-card"
         style={{
           position: 'fixed',
@@ -212,14 +209,12 @@ export default function TourOverlay({ onDone }) {
           fontFamily: "'Plus Jakarta Sans', sans-serif",
         }}
       >
-        {/* Top gradient bar */}
         <div style={{
           position: 'absolute', top: 0, left: 0, right: 0, height: 4,
           background: 'linear-gradient(90deg,#009bff,#770bff)',
           borderRadius: '24px 24px 0 0',
         }} />
-
-        {/* Progress dots */}
+ 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
           <div style={{ display: 'flex', gap: 6 }}>
             {STEPS.map((_, i) => (
@@ -234,18 +229,15 @@ export default function TourOverlay({ onDone }) {
           </div>
           <span style={{ fontSize: 13, color: '#9ca3af', fontWeight: 500 }}>{step + 1} / {STEPS.length}</span>
         </div>
-
-        {/* Title */}
+ 
         <div style={{ fontSize: 22, fontWeight: 700, color: '#111827', marginBottom: 12 }}>
           {current.title}
         </div>
-
-        {/* Description */}
+ 
         <div style={{ marginBottom: 24 }}>
           {renderDesc(current.desc)}
         </div>
-
-        {/* Buttons — plain React onClick, stopPropagation */}
+ 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <button
             onClick={handleSkip}
