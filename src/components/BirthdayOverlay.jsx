@@ -594,6 +594,29 @@ function SceneOmelet({ frame: t }) {
 
 // ── Theme registry ─────────────────────────────────────────────
 // Ordered by birthday month — ensures first 7 get all different themes
+// ── Theme registry ─────────────────────────────────────────────
+const BIRTHDAY_THEMES = [
+  { id: 'omelet',     scene: SceneOmelet,      slogan: "It's your birthday. I'm an omelet.",         bg: '#0a0a14' },
+  { id: 'wizard',     scene: SceneWizard,      slogan: 'Yer a birthday, Harry.',                     bg: '#0a0514' },
+  { id: 'upsidedown', scene: SceneUpsideDown,  slogan: 'Happy Birthday from the Upside Down.',       bg: '#2a0518' },
+  { id: 'polaroid',   scene: ScenePolaroid,    slogan: "I rewound time. It's still your birthday.",  bg: '#0a0a14' },
+  { id: 'dinosaur',   scene: SceneDinosaur,    slogan: "It's both of our birthdays!",                bg: '#0a0a14' },
+  { id: 'ufo',        scene: SceneUFO,         slogan: 'Take us to your birthday.',                  bg: '#1a0a48' },
+  { id: 'corporate',  scene: SceneCorporate,   slogan: 'Per my last email — happy birthday.',        bg: '#0a0618' },
+];
+
+// Ordered by birthday month — ensures first 7 get all different themes
+const BIRTHDAY_ORDER = [
+  'heidi', 'bill', 'chen', 'vicky', 'arthur', 'yinran', 'mony',
+  'ricardo', 'shannon', 'nic', 'jean', 'anita', 'jennifer',
+  'charlotte', 'jason', 'james_l', 'brenda', 'grace',
+];
+
+function pickTheme(staffId) {
+  const idx = BIRTHDAY_ORDER.indexOf(staffId);
+  const pos = idx >= 0 ? idx : 0;
+  return BIRTHDAY_THEMES[pos % BIRTHDAY_THEMES.length];
+}
 const BIRTHDAY_ORDER = [
   'heidi',    // 01-20 → theme 0: Omelet
   'bill',     // 02-02 → theme 1: Wizard
