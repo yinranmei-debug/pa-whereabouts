@@ -12,7 +12,8 @@ const T_IMPLODE = 1000;
 const T_FLOATING = 500;
 
 const DECAY_PER_SEC = 100 / 8;
-const PROGRESS_PER_CLICK_BASE = 2.04;
+// Increased so ~4 clicks from one person triggers the breach (1.2x easier)
+const PROGRESS_PER_CLICK_BASE = 24; 
 const MAX_COOP_BOOST = 3;
 
 const GLOBAL_KEY = '__global__';
