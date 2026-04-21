@@ -15,7 +15,6 @@ import EmojiFlyLayer      from './components/EmojiFlyLayer';
 import TourOverlay        from './components/TourOverlay';
 import MobileView         from './components/MobileView';
 import './styles/cosmic-polish.css';
-// 🆕 BREACH: dimensional wall system
 import { useDimensionalBreach }   from './hooks/useDimensionalBreach';
 import DimensionalBreachOverlay   from './components/DimensionalBreachOverlay';
 
@@ -178,7 +177,6 @@ export default function App() {
   const [isMobile,        setIsMobile]        = useState(() => window.matchMedia('(max-width: 768px)').matches);
   const dailyTips = useRef(getDailyTips());
 
-  // 🆕 BREACH: dimensional wall system
   const { activeBreach, chargingState, registerClick: registerBreachClick } = useDimensionalBreach();
   const slideTimerRef   = useRef(null);
   const presenceRef     = useRef(null);
@@ -282,7 +280,6 @@ export default function App() {
     return () => clearTimeout(t);
   }, [account]);
 
-  // tour — first time only
   useEffect(() => {
     if (!account) return;
     const key = `tour-done-${account.username}`;
@@ -345,7 +342,6 @@ export default function App() {
         popAvatar(payload.userId);
         glowLevelRef.current=Math.min(glowLevelRef.current+0.65,1);
       })
-      // 🆕 BREACH: listen for other users' pill clicks
       .on('broadcast',{event:'pill-click'},({payload})=>{
         registerBreachClick(payload.key, payload.userId, null);
       })
@@ -392,14 +388,12 @@ export default function App() {
     return ()=>clearTimeout(t);
   }, [account,region]);
 
-  // mobile party — before early returns
   useEffect(() => {
     const fn = e => {
       const { type, text, ds } = e.detail;
       const pr = chargingState?.progress || 0;
-// Intensity curve: 100% below 30%, then linearly decreases to 0% at 100%
-const intensity = pr < 30 ? 1 : Math.max(0, 1 - (pr - 30) / 70);
-firePartyLocal(type, text, intensity);
+      const intensity = pr < 30 ? 1 : Math.max(0, 1 - (pr - 30) / 70);
+      firePartyLocal(type, text, intensity);
       if (ds) { setBouncingDs(ds); setTimeout(()=>setBouncingDs(null), 700); }
       glowLevelRef.current = Math.min(glowLevelRef.current + 0.65, 1);
     };
@@ -609,18 +603,18 @@ firePartyLocal(type, text, intensity);
 
   const isPreviewCell=(staffId,dateIdx,shift)=>preview.some(([s,d,sh])=>s===staffId&&d===dateIdx&&sh===shift);
 
-const firePartyLocal=(type,text='',intensity=1)=>{
-  const els=type==='weekend'?['🍷','🌟','🎵','🍱']:['🎉',text.split(' ')[0]||'✨','✨'];
-  const count = Math.max(0, Math.round(28 * intensity));  // 🆕 scale by intensity
-  if (count === 0) return;  // 🆕 skip entirely when intensity = 0
-  for (let i=0;i<count;i++) {
-    const c=document.body.appendChild(document.createElement('div'));
-    c.innerText=els[Math.floor(Math.random()*els.length)];
-    c.style.cssText=`position:fixed;left:${Math.random()*100}vw;top:-30px;font-size:22px;z-index:11000;pointer-events:none;transition:transform ${Math.random()*2+2}s cubic-bezier(0.1,0.5,0.5,1),opacity 2s;`;
-    setTimeout(()=>{c.style.transform=`translateY(105vh) rotate(${Math.random()*900}deg)`;c.style.opacity='0';},20);
-    setTimeout(()=>c.remove(),4000);
-  }
-};
+  const firePartyLocal=(type,text='',intensity=1)=>{
+    const els=type==='weekend'?['🍷','🌟','🎵','🍱']:['🎉',text.split(' ')[0]||'✨','✨'];
+    const count = Math.max(0, Math.round(28 * intensity));
+    if (count === 0) return;
+    for (let i=0;i<count;i++) {
+      const c=document.body.appendChild(document.createElement('div'));
+      c.innerText=els[Math.floor(Math.random()*els.length)];
+      c.style.cssText=`position:fixed;left:${Math.random()*100}vw;top:-30px;font-size:22px;z-index:11000;pointer-events:none;transition:transform ${Math.random()*2+2}s cubic-bezier(0.1,0.5,0.5,1),opacity 2s;`;
+      setTimeout(()=>{c.style.transform=`translateY(105vh) rotate(${Math.random()*900}deg)`;c.style.opacity='0';},20);
+      setTimeout(()=>c.remove(),4000);
+    }
+  };
 
   const fireParty=(e,type,text='',ds='')=>{
     const pill=e.currentTarget.closest('.pill');
@@ -637,19 +631,14 @@ const firePartyLocal=(type,text='',intensity=1)=>{
       document.body.appendChild(ov);
       setTimeout(()=>ov.remove(),2000);
     }
-    // 🆕 Scale DOM confetti intensity based on charging progress
-// 0-15%:  100% (full celebration)
-// 15-100%: linearly decrease to 0% (hand off to canvas particles)
-const currentProgress = chargingState?.progress || 0;
-const intensity = currentProgress < 15
-  ? 1
-  : Math.max(0, 1 - (currentProgress - 15) / 85);
-firePartyLocal(type, text, intensity);
+    const currentProgress = chargingState?.progress || 0;
+    const intensity = currentProgress < 15
+      ? 1
+      : Math.max(0, 1 - (currentProgress - 15) / 85);
+    firePartyLocal(type, text, intensity);
     popAvatar(meStaff?.id||'guest');
     glowLevelRef.current=Math.min(glowLevelRef.current+0.65,1);
     presenceRef.current?.send({type:'broadcast',event:'party',payload:{type,text,userId:meStaff?.id||'guest'}});
-
-    // 🆕 BREACH: register click toward dimensional wall
     const breachKey = `${ds}-${type}`;
     const userId = meStaff?.id || 'guest';
     registerBreachClick(breachKey, userId, pill);
@@ -983,28 +972,34 @@ firePartyLocal(type, text, intensity);
                             </div>
                           </div>
                         </td>
+
+                        {/* ── week columns ── */}
                         {week.map((d,weekIdx)=>{
-                          <td key={d.ds} className={`ptd ${tdSlideClass}`} rowSpan={staffList.length}>
-  <div
-    data-pill-ds={d.ds}
-    className={`pill ${isHol?'hol':'we'}`}
-    onClick={e=>fireParty(e,isHol?'holiday':'weekend',d.hol||'',d.ds)}
-    onTouchEnd={e=>{ e.preventDefault(); fireParty({currentTarget:e.currentTarget,stopPropagation:()=>{}},isHol?'holiday':'weekend',d.hol||'',d.ds); }}
-  >
-    <div className="pill-card"/>
-
-    {/* ✦ Tap me bubble */}
-    <div className="pill-tap-bubble">
-      <div className="pill-tap-bubble-ring">
-        <div className="pill-tap-bubble-content">
-          <span className="pill-tap-dot" />
-          {isHol ? '✦ Try it!' : '✦ Tap me!'}
-        </div>
-      </div>
-    </div>
-
-  </div>
-</td>
+                          if (!d.editable) {
+                            if (!isFirst) return null;
+                            const isHol=!!d.hol;
+                            return (
+                              <td key={d.ds} className={`ptd ${tdSlideClass}`} rowSpan={staffList.length}>
+                                <div
+                                  data-pill-ds={d.ds}
+                                  className={`pill ${isHol?'hol':'we'}`}
+                                  onClick={e=>fireParty(e,isHol?'holiday':'weekend',d.hol||'',d.ds)}
+                                  onTouchEnd={e=>{ e.preventDefault(); fireParty({currentTarget:e.currentTarget,stopPropagation:()=>{}},isHol?'holiday':'weekend',d.hol||'',d.ds); }}
+                                >
+                                  <div className="pill-card"/>
+                                  {/* ✦ Tap me bubble */}
+                                  <div className="pill-tap-bubble">
+                                    <div className="pill-tap-bubble-ring">
+                                      <div className="pill-tap-bubble-content">
+                                        <span className="pill-tap-dot"/>
+                                        {isHol ? '✦ Try it!' : '✦ Tap me!'}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                            );
+                          }
                           return (
                             <td key={d.ds} className={tdSlideClass}>
                               <div className="dw">
@@ -1080,7 +1075,7 @@ firePartyLocal(type, text, intensity);
         </div>
       )}
 
-      {/* 🆕 BREACH: dimensional wa~l overlay (always last) */}
-<DimensionalBreachOverlay breach={activeBreach} chargingState={chargingState} />    </div>
+      <DimensionalBreachOverlay breach={activeBreach} chargingState={chargingState} />
+    </div>
   );
 }
