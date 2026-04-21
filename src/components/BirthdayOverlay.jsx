@@ -690,7 +690,7 @@ export default function BirthdayOverlay({ currentUserEmail }) {
 
   sessionStorage.setItem(sessionKey, '1');
   const year = today.getFullYear();
-  setTheme(pickTheme(match.id, String(year)));
+ setTheme(pickTheme(match.id));
   setBirthdayPerson(match);
   const t = setTimeout(() => setVisible(true), 1200);
   return () => clearTimeout(t);
