@@ -60,12 +60,8 @@ export default function TourOverlay({ onDone }) {
   const [step, setStep] = useState(0);
   const [box,  setBox]  = useState(null);
   const [tipPos, setTipPos] = useState({ top: 0, left: 0 });
-  
-  // Use ref so buttons always call the latest onDone, no stale closure
-  const onDoneRef = useRef(onDone);
-  useEffect(() => { onDoneRef.current = onDone; }, [onDone]);
 
-  const current  = STEPS[step];
+  const current = STEPS[step];
   const isCenter = current.position === 'center';
   const isLast   = step === STEPS.length - 1;
 
@@ -113,43 +109,25 @@ export default function TourOverlay({ onDone }) {
     };
   }, [step]);
 
-  // Use native DOM event listeners for buttons — bypasses ALL React event bubbling issues
-  const skipRef  = useRef(null);
-  const nextRef  = useRef(null);
-  const backRef  = useRef(null);
+  // Plain React handlers — simple, no ref magic needed
+  const handleSkip = (e) => {
+    e.stopPropagation();
+    onDone();
+  };
 
-  useEffect(() => {
-    const skipEl = skipRef.current;
-    const nextEl = nextRef.current;
-    const backEl = backRef.current;
+  const handleNext = (e) => {
+    e.stopPropagation();
+    if (step < STEPS.length - 1) {
+      setStep(s => s + 1);
+    } else {
+      onDone();
+    }
+  };
 
-    const handleSkip = (e) => {
-      e.stopPropagation();
-      onDoneRef.current();
-    };
-    const handleNext = (e) => {
-      e.stopPropagation();
-      if (step < STEPS.length - 1) {
-        setStep(s => s + 1);
-      } else {
-        onDoneRef.current();
-      }
-    };
-    const handleBack = (e) => {
-      e.stopPropagation();
-      if (step > 0) setStep(s => s - 1);
-    };
-
-    skipEl?.addEventListener('click', handleSkip);
-    nextEl?.addEventListener('click', handleNext);
-    backEl?.addEventListener('click', handleBack);
-
-    return () => {
-      skipEl?.removeEventListener('click', handleSkip);
-      nextEl?.removeEventListener('click', handleNext);
-      backEl?.removeEventListener('click', handleBack);
-    };
-  }, [step]); // re-bind when step changes so handleNext has fresh step value
+  const handleBack = (e) => {
+    e.stopPropagation();
+    if (step > 0) setStep(s => s - 1);
+  };
 
   const renderDesc = (desc) =>
     desc.split('\n\n').map((para, i) => (
@@ -181,7 +159,7 @@ export default function TourOverlay({ onDone }) {
         }
       `}</style>
 
-      {/* Dark overlay — pointerEvents none so it NEVER steals clicks */}
+      {/* Dark overlay — pointerEvents none, never steals clicks */}
       {!box && (
         <div style={{
           position: 'fixed', inset: 0,
@@ -215,23 +193,26 @@ export default function TourOverlay({ onDone }) {
         }} />
       )}
 
-      {/* Tooltip card */}
-      <div style={{
-        position: 'fixed',
-        top:  tipPos.top,
-        left: tipPos.left,
-        width: TIP_W,
-        background: '#fff',
-        borderRadius: 24,
-        padding: '30px 33px 27px',
-        zIndex: 11500,
-        boxShadow: '0 16px 48px rgba(0,0,0,0.22)',
-        animation: isCenter
-          ? 'prefacePop 0.35s cubic-bezier(0.34,1.56,0.64,1) both'
-          : 'tourTipIn 0.25s ease both',
-        fontFamily: "'Plus Jakarta Sans', sans-serif",
-      }}>
-        {/* Top bar */}
+      {/* Tooltip card — has className so global mousedown handler ignores it */}
+      <div
+        className="tour-overlay-card"
+        style={{
+          position: 'fixed',
+          top:  tipPos.top,
+          left: tipPos.left,
+          width: TIP_W,
+          background: '#fff',
+          borderRadius: 24,
+          padding: '30px 33px 27px',
+          zIndex: 11500,
+          boxShadow: '0 16px 48px rgba(0,0,0,0.22)',
+          animation: isCenter
+            ? 'prefacePop 0.35s cubic-bezier(0.34,1.56,0.64,1) both'
+            : 'tourTipIn 0.25s ease both',
+          fontFamily: "'Plus Jakarta Sans', sans-serif",
+        }}
+      >
+        {/* Top gradient bar */}
         <div style={{
           position: 'absolute', top: 0, left: 0, right: 0, height: 4,
           background: 'linear-gradient(90deg,#009bff,#770bff)',
@@ -264,10 +245,10 @@ export default function TourOverlay({ onDone }) {
           {renderDesc(current.desc)}
         </div>
 
-        {/* Buttons — using refs, native DOM listeners */}
+        {/* Buttons — plain React onClick, stopPropagation */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <button
-            ref={skipRef}
+            onClick={handleSkip}
             style={{
               fontSize: 13, color: '#9ca3af', background: 'none', border: 'none',
               cursor: 'pointer', fontWeight: 500, padding: 0,
@@ -278,7 +259,7 @@ export default function TourOverlay({ onDone }) {
           <div style={{ display: 'flex', gap: 10 }}>
             {step > 0 && (
               <button
-                ref={backRef}
+                onClick={handleBack}
                 style={{
                   height: 42, padding: '0 20px', borderRadius: 12,
                   border: '1.5px solid #e5e7eb', background: '#fff',
@@ -289,7 +270,7 @@ export default function TourOverlay({ onDone }) {
               </button>
             )}
             <button
-              ref={nextRef}
+              onClick={handleNext}
               style={{
                 height: 42, padding: '0 24px', borderRadius: 12, border: 'none',
                 background: 'linear-gradient(90deg,#009bff,#770bff)',

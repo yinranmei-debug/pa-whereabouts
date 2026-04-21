@@ -188,6 +188,7 @@ export default function App() {
   const myAvatarRef     = useRef(null);
   const flightOnLandRef = useRef(null);
   const touchDragRef    = useRef(null);
+  const finishingTourRef = useRef(false);
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 768px)');
@@ -351,15 +352,14 @@ useEffect(() => {
 
  useEffect(() => {
     const fn = e => {
-      // Don't interfere with tour overlay
-      if (e.target.closest('.tour-overlay-card')) return;
-      if (!e.target.closest('.dsz')&&!e.target.closest('.nav-tab')) {
+      if (e.target.closest('.tour-overlay-card')) return; // ← must be here
+      if (!e.target.closest('.dsz') && !e.target.closest('.nav-tab')) {
         setActiveMenu(null); setSocialMenu(null);
-        setActiveTab(t=>t==='planner'?'calendar':t);
+        setActiveTab(t => t === 'planner' ? 'calendar' : t);
       }
     };
-    document.addEventListener('mousedown',fn);
-    return ()=>document.removeEventListener('mousedown',fn);
+    document.addEventListener('mousedown', fn);
+    return () => document.removeEventListener('mousedown', fn);
   }, []);
 
   useEffect(() => {
@@ -1092,10 +1092,15 @@ useEffect(() => {
     </div>
 {showTour && (
       <TourOverlay onDone={() => {
+        if (finishingTourRef.current) return;
+        finishingTourRef.current = true;
         localStorage.setItem(`tour-done-${account.username}`, '1');
         setShowTour(false);
         setShowWelcome(true);
-        setTimeout(() => setShowWelcome(false), 3500);
+        setTimeout(() => {
+          setShowWelcome(false);
+          finishingTourRef.current = false;
+        }, 3500);
       }} />
     )}
     {showWelcome && <WelcomeConfetti />}
