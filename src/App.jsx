@@ -18,7 +18,6 @@ import './styles/cosmic-polish.css';
 import { useDimensionalBreach }   from './hooks/useDimensionalBreach';
 import DimensionalBreachOverlay   from './components/DimensionalBreachOverlay';
 import BananaEasterEgg from './components/BananaEasterEgg';
-import BananaEasterEgg from './components/BananaEasterEgg';
 
 const supabase = createClient(
   'https://vzdrpydtxlamoqtukgld.supabase.co',
