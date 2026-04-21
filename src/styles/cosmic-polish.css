@@ -40,7 +40,6 @@
   inset: 0;
   pointer-events: none;
   z-index: 9999;
-  border-radius: 0;
   opacity: 0;
   box-shadow: none;
   transition: opacity 0.1s;
@@ -51,7 +50,7 @@
   background: linear-gradient(135deg, #c7d2fe 0%, #ddd6fe 50%, #c4b5fd 100%);
 }
 
-/* ── Weekend / Holiday pill ── */
+/* ── Weekend / Holiday pill container ── */
 .pill {
   position: relative;
   height: 100%;
@@ -60,145 +59,100 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  /* overflow hidden to contain shake — but NOT clip the background */
   overflow: hidden;
-  border-radius: 0;
 }
 
+/* The actual visible pill card with background */
 .pill-card {
   position: absolute;
   inset: 4px;
   border-radius: 16px;
-  transition: box-shadow 0.2s, transform 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: box-shadow 0.25s, transform 0.2s;
+  /* Prevent card from ever leaving pill bounds during shake */
+  will-change: transform;
 }
 
+/* Weekend pill card — soft blue-purple tint */
 .pill.we .pill-card {
   background: linear-gradient(
-    135deg,
-    rgba(0,155,255,0.07) 0%,
-    rgba(119,11,255,0.07) 100%
+    160deg,
+    rgba(199, 210, 254, 0.55) 0%,
+    rgba(196, 181, 253, 0.45) 50%,
+    rgba(167, 139, 250, 0.35) 100%
   );
-  border: 1.5px solid rgba(99,102,241,0.18);
+  border: 1.5px solid rgba(139, 92, 246, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.6),
+    0 2px 12px rgba(139,92,246,0.12);
 }
 
+/* Holiday pill card — soft pink-purple tint */
 .pill.hol .pill-card {
   background: linear-gradient(
-    135deg,
-    rgba(236,72,153,0.07) 0%,
-    rgba(168,85,247,0.07) 100%
+    160deg,
+    rgba(251, 207, 232, 0.55) 0%,
+    rgba(221, 214, 254, 0.45) 50%,
+    rgba(196, 181, 253, 0.35) 100%
   );
-  border: 1.5px solid rgba(236,72,153,0.18);
+  border: 1.5px solid rgba(217, 70, 239, 0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.6),
+    0 2px 12px rgba(217,70,239,0.1);
 }
 
-/* Spinning conic-gradient border ring on hover */
-.pill::before {
-  content: '';
-  position: absolute;
-  inset: 4px;
-  border-radius: 16px;
-  padding: 1.5px;
-  background: conic-gradient(
-    from var(--angle, 0deg),
-    #009bff,
-    #770bff,
-    #00e5ff,
-    #a78bfa,
-    #009bff
-  );
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: 0;
-  transition: opacity 0.25s;
-  animation: pillBorderSpin 2s linear infinite;
-  pointer-events: none;
-  z-index: 1;
+/* Hover glow behind pill card */
+.pill.we:hover .pill-card {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.7),
+    0 0 20px rgba(99,102,241,0.25),
+    0 0 40px rgba(0,155,255,0.15);
 }
 
-@property --angle {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
+.pill.hol:hover .pill-card {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.7),
+    0 0 20px rgba(217,70,239,0.2),
+    0 0 40px rgba(168,85,247,0.15);
 }
 
-@keyframes pillBorderSpin {
-  from { --angle: 0deg; }
-  to   { --angle: 360deg; }
-}
-
-.pill:hover::before {
-  opacity: 1;
-}
-
-/* Blurry glow blob behind pill on hover */
-.pill::after {
-  content: '';
-  position: absolute;
-  inset: 4px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, rgba(0,155,255,0.18), rgba(119,11,255,0.18));
-  filter: blur(12px);
-  opacity: 0;
-  transition: opacity 0.3s;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.pill:hover::after {
-  opacity: 1;
-}
-
-/* ── Pill hover bounce — 2× bounce on mouseenter ── */
+/* ── Pill hover bounce — 2× gentle bounce on mouseenter ── */
 @keyframes pillHoverBounce {
-  0%   { transform: translateY(0) scaleY(1); }
-  18%  { transform: translateY(-10px) scaleY(1.04); }
-  36%  { transform: translateY(0) scaleY(0.97); }
-  50%  { transform: translateY(-5px) scaleY(1.02); }
-  65%  { transform: translateY(0) scaleY(1); }
-  100% { transform: translateY(0) scaleY(1); }
+  0%   { transform: translateY(0); }
+  20%  { transform: translateY(-8px); }
+  40%  { transform: translateY(0); }
+  60%  { transform: translateY(-4px); }
+  80%  { transform: translateY(0); }
+  100% { transform: translateY(0); }
 }
 
 .pill-hover-bounce .pill-card {
-  animation: pillHoverBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: pillHoverBounce 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
-
-/* ── Pill click shake — pure translateX, NO rotate/scaleX so columns never shift ── */
-@keyframes pillClickShake {
-  0%   { transform: translateX(0); }
-  12%  { transform: translateX(-5px); }
-  25%  { transform: translateX(5px); }
-  37%  { transform: translateX(-4px); }
-  50%  { transform: translateX(4px); }
-  62%  { transform: translateX(-2px); }
-  75%  { transform: translateX(2px); }
-  87%  { transform: translateX(-1px); }
-  100% { transform: translateX(0); }
+/* ── Pill click shake — Y axis only, contained inside pill ── */
+@keyframes pillClickShakeY {
+  0%   { transform: translateY(0); }
+  15%  { transform: translateY(-6px); }
+  30%  { transform: translateY(4px); }
+  45%  { transform: translateY(-4px); }
+  60%  { transform: translateY(3px); }
+  75%  { transform: translateY(-2px); }
+  88%  { transform: translateY(1px); }
+  100% { transform: translateY(0); }
 }
 
-/* Shake applies to pill-card ONLY, contained inside pill which clips overflow */
 .pill.holi-tap .pill-card {
-  animation: pillClickShake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
-  transform-origin: center center;
+  animation: pillClickShakeY 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+  transform-origin: center bottom;
 }
 
-/* pill itself clips so card shake never bleeds out */
-.pill {
-  overflow: hidden;
-  contain: layout style;
-}
-
+/* pill td clips overflow so shake never bleeds into adjacent columns */
 .ptd {
   overflow: hidden;
-}
-
-.pill.holi-tap .pill-card {
-  animation: pillClickShake 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
-  transform-origin: center center;
 }
 
 /* ── Tap me bubble ── */
@@ -217,6 +171,7 @@
 }
 
 .pill-tap-bubble-ring {
+  position: relative;
   background: linear-gradient(135deg, #0a0a1a, #1a0a2e);
   border: 1.5px solid rgba(119,11,255,0.6);
   border-radius: 100px;
@@ -247,7 +202,7 @@
   flex-shrink: 0;
 }
 
-/* Arrow pointing down */
+/* Arrow pointing down from bubble */
 .pill-tap-bubble-ring::after {
   content: '';
   position: absolute;
@@ -263,16 +218,16 @@
 
 /* ── Holiday tap flash ── */
 @keyframes holiTapFlash {
-  0%   { background: rgba(168,85,247,0.15); }
-  50%  { background: rgba(168,85,247,0.3); }
-  100% { background: transparent; }
+  0%   { opacity: 0.85; }
+  50%  { opacity: 1; }
+  100% { opacity: 1; }
 }
 
-.pill.holi-tap {
-  animation: holiTapFlash 0.4s ease forwards;
+.pill.holi-tap .pill-card {
+  animation: pillClickShakeY 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
 }
 
-/* ── Col glow overlay (on click) ── */
+/* ── Col glow overlay ── */
 @keyframes colGlowFade {
   0%   { opacity: 0.7; }
   100% { opacity: 0; }
@@ -302,7 +257,6 @@
   transition: box-shadow 0.4s ease;
 }
 
-/* Spinning gradient border ring on hover */
 .n-av-wrap.is-me::before {
   content: '';
   position: absolute;
@@ -338,7 +292,7 @@
     0 0 40px 12px rgba(0, 155, 255, 0.2);
 }
 
-/* Others avatar — soft glow ring on hover only */
+/* Others avatar — soft glow on hover */
 .n-av-wrap.is-other {
   border-radius: 50%;
   transition: box-shadow 0.3s ease, transform 0.2s ease;
@@ -352,7 +306,7 @@
   transform: scale(1.08) !important;
 }
 
-/* ── Emoji label bounce on pill click ── */
+/* ── Emoji label pop on pill click ── */
 @keyframes emojiLabelPop {
   0%   { transform: scale(1); }
   40%  { transform: scale(1.35) rotate(-8deg); }
