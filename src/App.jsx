@@ -699,15 +699,6 @@ useEffect(() => {
       <BirthdayOverlay currentUserEmail={account?.username} />
       <BananaEasterEgg />
 
-   {showTour && (
-  <TourOverlay onDone={()=>{
-    setShowTour(false);
-    setShowWelcome(true);
-    setTimeout(()=>setShowWelcome(false), 3500);
-    localStorage.setItem(`tour-done-${account.username}`, '1');
-  }}/>
-)}
-
       {showWelcome && <WelcomeConfetti/>}
 
       {flight && (
