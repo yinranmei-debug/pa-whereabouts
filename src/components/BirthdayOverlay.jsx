@@ -559,18 +559,14 @@ export default function BirthdayOverlay({ currentUserEmail, isBusy }) {
   const [closing, setClosing] = useState(false);
   const frame = usePixelTick(8, visible);
 
-  useEffect(() => {
-    // If there's no user, OR if the app is busy showing tips, pause and wait!
-    if (!currentUserEmail || isBusy) return;
+  uuseEffect(() => {
+    if (!currentUserEmail) return;
 
     const sessionKey = 'bday-shown-session';
     // Only show once per session
     if (sessionStorage.getItem(sessionKey)) return;
 
-    const sessionKey = 'bday-shown-session';
-    // Remove auto-clear for production — only show once per session
-    if (sessionStorage.getItem(sessionKey)) return;
-
+    
     const today = new Date();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const dd = String(today.getDate()).padStart(2, '0');
