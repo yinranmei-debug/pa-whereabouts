@@ -746,10 +746,12 @@ export default function BirthdayOverlay({ currentUserEmail }) {
       {/* Card */}
       <div style={{
         position: 'fixed',
-        top: '50%', left: '50%',
+        top: '50%',
+        left: '50%',
         transform: 'translate(-50%, -50%)',
         zIndex: 13001,
-        width: 'min(520px, 92vw)',
+        width: '75vw',
+        maxWidth: '75vw',
         animation: closing ? 'bdayCardOut 0.4s ease forwards' : 'bdayCardIn 0.55s cubic-bezier(0.34,1.56,0.64,1) 0.1s both',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
       }}>
