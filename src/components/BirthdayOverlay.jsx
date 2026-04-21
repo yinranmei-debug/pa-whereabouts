@@ -665,32 +665,38 @@ export default function BirthdayOverlay({ currentUserEmail }) {
   const frame = usePixelTick(8, visible);
 
   useEffect(() => {
+  console.log('[BDAY] component mounted, email:', currentUserEmail);
+  
   if (!currentUserEmail) {
     console.log('[BDAY] no email, skip');
     return;
   }
 
   const sessionKey = 'bday-shown-session';
-  if (sessionStorage.getItem(sessionKey)) {
-    console.log('[BDAY] already shown this session, skip');
-    return;
+  const existing = sessionStorage.getItem(sessionKey);
+  console.log('[BDAY] sessionStorage key exists:', existing);
+  
+  if (existing) {
+    console.log('[BDAY] already shown, clearing for debug...');
+    sessionStorage.removeItem(sessionKey); // 临时：自动清掉方便测试
   }
 
   const today = new Date();
   const mm = String(today.getMonth() + 1).padStart(2, '0');
   const dd = String(today.getDate()).padStart(2, '0');
   const todayMMDD = `${mm}-${dd}`;
-  console.log('[BDAY] today is', todayMMDD);
-  console.log('[BDAY] staff list', RAW_STAFF_LIST.map(s => `${s.id}:${s.birthday}`));
+  console.log('[BDAY] todayMMDD:', todayMMDD);
 
   const match = RAW_STAFF_LIST.find(s => s.birthday === todayMMDD);
-  console.log('[BDAY] match', match);
+  console.log('[BDAY] match found:', match);
+  console.log('[BDAY] all birthdays:', RAW_STAFF_LIST.map(s => s.id + ':' + s.birthday).filter(x => !x.includes('undefined')));
 
-  if (!match) return;
+  if (!match) {
+    console.log('[BDAY] no match, not showing');
+    return;
+  }
 
-  sessionStorage.setItem(sessionKey, '1');
-  const year = today.getFullYear();
- setTheme(pickTheme(match.id));
+  setTheme(pickTheme(match.id));
   setBirthdayPerson(match);
   const t = setTimeout(() => setVisible(true), 1200);
   return () => clearTimeout(t);
