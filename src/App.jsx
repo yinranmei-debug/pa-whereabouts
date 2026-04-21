@@ -112,18 +112,15 @@ function WelcomeConfetti() {
       `}</style>
       <div style={{position:'fixed',inset:0,pointerEvents:'none',zIndex:12000,overflow:'hidden'}}>
         {items.current.map(p => (
-          <div
-            key={p.id}
-            style={{
-              position:'absolute', left:`${p.left}%`, top:'-16px',
-              width: p.size, height: p.shape==='rect' ? p.size*0.6 : p.size,
-              borderRadius: p.shape==='circle' ? '50%' : '2px',
-              background: p.color,
-              '--drift': `${p.drift}px`, '--spin': `${p.spin}deg`,
-              animation: `confettiFall ${p.duration}s ${p.delay}s cubic-bezier(0.25,0.46,0.45,0.94) both`,
-              willChange: 'transform, opacity',
-            }}
-          />
+          <div key={p.id} style={{
+            position:'absolute', left:`${p.left}%`, top:'-16px',
+            width: p.size, height: p.shape==='rect' ? p.size*0.6 : p.size,
+            borderRadius: p.shape==='circle' ? '50%' : '2px',
+            background: p.color,
+            '--drift': `${p.drift}px`, '--spin': `${p.spin}deg`,
+            animation: `confettiFall ${p.duration}s ${p.delay}s cubic-bezier(0.25,0.46,0.45,0.94) both`,
+            willChange: 'transform, opacity',
+          }}/>
         ))}
       </div>
       <div style={{position:'fixed',inset:0,display:'flex',alignItems:'center',justifyContent:'center',zIndex:12001,pointerEvents:'none'}}>
@@ -175,7 +172,7 @@ export default function App() {
   const [showTour,        setShowTour]        = useState(false);
   const [showWelcome,     setShowWelcome]     = useState(false);
   const [isMobile,        setIsMobile]        = useState(() => window.matchMedia('(max-width: 768px)').matches);
-  const [hoveredPill, setHoveredPill] = useState(null);
+  const [hoveredPill,     setHoveredPill]     = useState(null);
   const dailyTips = useRef(getDailyTips());
 
   const { activeBreach, chargingState, registerClick: registerBreachClick } = useDimensionalBreach();
@@ -275,20 +272,13 @@ export default function App() {
     })();
   }, []);
 
+  // Tour shows every refresh — no localStorage check
   useEffect(() => {
     if (!account) return;
-    const t = setTimeout(() => { setShowTips(true); setTipIdx(0); }, 1200);
-    return () => clearTimeout(t);
-  }, [account]);
-
-  useEffect(() => {
-    if (!account) return;
-    const key = `tour-done-${account.username}`;
-    if (localStorage.getItem(key)) return;
     const t = setTimeout(() => {
       setShowTips(false);
       setShowTour(true);
-    }, 2800);
+    }, 600);
     return () => clearTimeout(t);
   }, [account]);
 
@@ -704,7 +694,6 @@ export default function App() {
           setShowTour(false);
           setShowWelcome(true);
           setTimeout(()=>setShowWelcome(false), 3500);
-          localStorage.setItem(`tour-done-${account.username}`,'1');
         }}/>
       )}
 
@@ -727,7 +716,9 @@ export default function App() {
         return (
           <div key={d.ds} style={{position:'fixed',left:x,top:VH/2,transform:'translate(-50%,-50%)',pointerEvents:'none',zIndex:200}}>
             <div key={isBouncing?`${d.ds}-b`:d.ds} className={isBouncing?'emoji-label-pop':''} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'8px'}}>
-              <span style={{fontSize:'48px',userSelect:'none',display:'inline-block',lineHeight:1}}>{isHol?d.hol.split(' ')[0]:'🏝️'}</span>
+              <span style={{fontSize:'48px',userSelect:'none',display:'inline-block',lineHeight:1,filter:'drop-shadow(0 0 4px rgba(0,155,255,0.8)) drop-shadow(0 0 8px rgba(119,11,255,0.6))'}}>
+                {isHol?d.hol.split(' ')[0]:'🏝️'}
+              </span>
               <span style={{fontSize:'10px',fontWeight:'700',color:isHol?'#be185d':'#1d4ed8',letterSpacing:'0.06em',textAlign:'center',userSelect:'none',fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
                 {isHol?holName:'WEEKEND'}
               </span>
@@ -746,8 +737,8 @@ export default function App() {
                 <BulbIcon size={20} color='#770bff'/>
               </div>
               <div>
-                <div style={{fontSize:18,fontWeight:700,color:'#111827',letterSpacing:'-0.01em'}}>Wellbeing Daily Tips</div>
-                <div style={{fontSize:12,fontWeight:500,color:'#9ca3af',marginTop:'3px'}}>{tipIdx+1} of {dailyTips.current.length} today</div>
+                <div style={{fontSize:18,fontWeight:700,color:'#111827',letterSpacing:'-0.01em'}}>Daily Mind Huddle</div>
+                <div style={{fontSize:12,fontWeight:500,color:'#9ca3af',marginTop:'3px'}}>just for you · {tipIdx+1} of {dailyTips.current.length} today</div>
               </div>
             </div>
             <div key={tipIdx} className={tipVisible?tipSlideClass:''} style={{minHeight:120,marginBottom:24}}>
@@ -796,7 +787,7 @@ export default function App() {
         <div className="nav-right">
           {saveStatus==='saving'&&<span className="save-txt">↻ Saving</span>}
           {saveStatus==='saved' &&<span className="save-ok">✓ Saved</span>}
-          <button className="bulb-btn" onClick={()=>{setTipIdx(0);setShowTips(true);}} title="Wellbeing Daily Tips">
+          <button className="bulb-btn" onClick={()=>{setTipIdx(0);setShowTips(true);}} title="Daily Mind Huddle">
             <BulbIcon size={18} color='#fbbf24'/>
           </button>
           <div className="online-pill">
@@ -984,30 +975,41 @@ export default function App() {
                                 <div
                                   data-pill-ds={d.ds}
                                   className={`pill ${isHol?'hol':'we'}`}
-                                  onClick={e=>fireParty(e,isHol?'holiday':'weekend',d.hol||'',d.ds)}
+                                  onClick={e => {
+                                    const pillEl = e.currentTarget;
+                                    pillEl.classList.remove('holi-tap');
+                                    void pillEl.offsetWidth;
+                                    pillEl.classList.add('holi-tap');
+                                    fireParty(e, isHol?'holiday':'weekend', d.hol||'', d.ds);
+                                  }}
                                   onTouchEnd={e=>{ e.preventDefault(); fireParty({currentTarget:e.currentTarget,stopPropagation:()=>{}},isHol?'holiday':'weekend',d.hol||'',d.ds); }}
-                                 onMouseEnter={e=>{
-  const rect=e.currentTarget.getBoundingClientRect();
-  setHoveredPill({ ds: d.ds, x: rect.left+rect.width/2, y: rect.top-14 });
-}}
-onMouseLeave={()=>setHoveredPill(null)}
->
-  <div className="pill-card"/>
-  <div
-    className={`pill-tap-bubble${hoveredPill?.ds === d.ds ? ' is-visible' : ''}`}
-    style={{
-      left: hoveredPill?.ds === d.ds ? hoveredPill.x : 0,
-      top:  hoveredPill?.ds === d.ds ? hoveredPill.y : 0,
-    }}
-  >
-    <div className="pill-tap-bubble-ring">
-      <div className="pill-tap-bubble-content">
-        <span className="pill-tap-dot"/>
-        {isHol ? 'Try it!' : 'Tap me!'}
-      </div>
-    </div>
-  </div>
-</div> 
+                                  onMouseEnter={e=>{
+                                    const rect=e.currentTarget.getBoundingClientRect();
+                                    setHoveredPill({ ds: d.ds, x: rect.left+rect.width/2, y: rect.top-14 });
+                                    const pillEl = e.currentTarget;
+                                    pillEl.classList.remove('pill-hover-bounce');
+                                    void pillEl.offsetWidth;
+                                    pillEl.classList.add('pill-hover-bounce');
+                                    setTimeout(() => pillEl.classList.remove('pill-hover-bounce'), 650);
+                                  }}
+                                  onMouseLeave={()=>setHoveredPill(null)}
+                                >
+                                  <div className="pill-card"/>
+                                  <div
+                                    className={`pill-tap-bubble${hoveredPill?.ds === d.ds ? ' is-visible' : ''}`}
+                                    style={{
+                                      left: hoveredPill?.ds === d.ds ? hoveredPill.x : 0,
+                                      top:  hoveredPill?.ds === d.ds ? hoveredPill.y : 0,
+                                    }}
+                                  >
+                                    <div className="pill-tap-bubble-ring">
+                                      <div className="pill-tap-bubble-content">
+                                        <span className="pill-tap-dot"/>
+                                        {isHol ? 'Try it!' : 'Tap me!'}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
                               </td>
                             );
                           }
