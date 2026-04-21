@@ -985,17 +985,20 @@ export default function App() {
   className={`pill ${isHol?'hol':'we'}`}
   onClick={e=>fireParty(e,isHol?'holiday':'weekend',d.hol||'',d.ds)}
   onTouchEnd={e=>{ e.preventDefault(); fireParty({currentTarget:e.currentTarget,stopPropagation:()=>{}},isHol?'holiday':'weekend',d.hol||'',d.ds); }}
-  onMouseMove={e=>{
-    const rect=e.currentTarget.getBoundingClientRect();
-    setBubblePos({ x: e.clientX-rect.left, y: e.clientY-rect.top });
-  }}
+  onMouseMove={e => {
+  const rect = e.currentTarget.getBoundingClientRect();
+  setBubblePos({
+    x: rect.left + rect.width / 2,        /* 水平居中在pill */
+    y: rect.top - 12,                      /* pill顶部上方 */
+  });
+}}
 >
   <div className="pill-card"/>
   {/* ✦ Tap me bubble */}
   <div
-    className="pill-tap-bubble"
-    style={{ left: bubblePos.x, top: bubblePos.y - 52, bottom: 'auto' }}
-  >
+  className="pill-tap-bubble"
+  style={{ left: bubblePos.x, top: bubblePos.y, bottom: 'auto' }}
+>
     <div className="pill-tap-bubble-ring">
       <div className="pill-tap-bubble-content">
         <span className="pill-tap-dot"/>
