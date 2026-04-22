@@ -14,7 +14,6 @@ import AccessDeniedScreen from './components/AccessDeniedScreen';
 import EmojiFlyLayer      from './components/EmojiFlyLayer';
 import TourOverlay        from './components/TourOverlay';
 import MobileView         from './components/MobileView';
-import './styles/cosmic-polish.css';
 import { useDimensionalBreach }   from './hooks/useDimensionalBreach';
 import DimensionalBreachOverlay   from './components/DimensionalBreachOverlay';
 import BananaEasterEgg from './components/BananaEasterEgg';
@@ -64,28 +63,7 @@ const getDailyTips = () => {
   return picked;
 };
 
-const BulbIcon = ({ size=20 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <defs>
-      <radialGradient id="planetGrad" cx="40%" cy="35%">
-        <stop offset="0%" stopColor="#a78bfa"/>
-        <stop offset="50%" stopColor="#7c3aed"/>
-        <stop offset="100%" stopColor="#4c1d95"/>
-      </radialGradient>
-      <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stopColor="#009bff" stopOpacity="0.9"/>
-        <stop offset="50%" stopColor="#a78bfa" stopOpacity="1"/>
-        <stop offset="100%" stopColor="#770bff" stopOpacity="0.9"/>
-      </linearGradient>
-    </defs>
-    {/* Ring behind */}
-    <ellipse cx="12" cy="13" rx="10" ry="3.5"
-      fill="none" stroke="url(#ringGrad)" strokeWidth="1.5" opacity="0.5"
-      style={{transformOrigin:'12px 13px'}}
-    />
-    {/* Planet */}
-    <circle cx="12" cy="12" r="6" fill="url(#planetGrad)"/>
-    {/* Planet shine */}
+
     <ellipse cx="10" cy="10" rx="2" ry="1.5" fill="rgba(255,255,255,0.25)" transform="rotate(-20 10 10)"/>
     {/* Ring in front */}
     <ellipse cx="12" cy="13" rx="10" ry="3.5"
@@ -831,8 +809,7 @@ export default function App() {
           <div className="nav-right">
             {saveStatus==='saving'&&<span className="save-txt">↻ Saving</span>}
             {saveStatus==='saved' &&<span className="save-ok">✓ Saved</span>}
-            <button className="bulb-btn" onClick={()=>{setTipIdx(0);setShowTips(true);}} title="Daily Mind Huddle">
-<BulbIcon size={18}/>            </button>
+            <button className="bulb-btn" onClick={()=>{setTipIdx(0);setShowTips(true);}} title="Daily Mind Huddle"/>
             <div className="online-pill">
               <div className="online-stack">
                 {onlineUsers.length === 0 ? (
