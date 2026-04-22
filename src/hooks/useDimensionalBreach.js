@@ -12,11 +12,11 @@ const T_IMPLODE = 1000;
 const T_FLOATING = 500;
 
 // Decays faster — bar drains quickly when you stop clicking
-const DECAY_PER_SEC = 100 / 6;
+const DECAY_PER_SEC = 100 / 4;
 // Each click adds less — need ~14 solo clicks to trigger
 const PROGRESS_PER_CLICK_BASE = 7;
 // Coop boost still works but capped lower
-const MAX_COOP_BOOST = 2.5;
+const MAX_COOP_BOOST = 2;
 
 const GLOBAL_KEY = '__global__';
 
