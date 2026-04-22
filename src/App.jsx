@@ -782,7 +782,7 @@ export default function App() {
 <BulbIcon size={20}/>                </div>
                 <div>
                   <div style={{fontSize:18,fontWeight:700,color:'#111827',letterSpacing:'-0.01em'}}>Daily Mind Huddle</div>
-                  <div style={{fontSize:12,fontWeight:500,color:'#9ca3af',marginTop:'3px'}}>just for you · {tipIdx+1} of {dailyTips.current.length} today</div>
+                  <div style={{fontSize:12,fontWeight:500,color:'#9ca3af',marginTop:'3px'}}> {tipIdx+1} of {dailyTips.current.length} today</div>
                 </div>
               </div>
               <div key={tipIdx} className={tipVisible?tipSlideClass:''} style={{minHeight:120,marginBottom:24}}>
