@@ -63,17 +63,6 @@ const getDailyTips = () => {
   return picked;
 };
 
-
-    <ellipse cx="10" cy="10" rx="2" ry="1.5" fill="rgba(255,255,255,0.25)" transform="rotate(-20 10 10)"/>
-    {/* Ring in front */}
-    <ellipse cx="12" cy="13" rx="10" ry="3.5"
-      fill="none" stroke="url(#ringGrad)" strokeWidth="1.5"
-      strokeDasharray="16 16" strokeDashoffset="0"
-      className="planet-ring-front"
-    />
-  </svg>
-);
-
 const CONFETTI_COLORS = [
   '#009bff','#770bff','#00e5ff','#a78bfa','#60a5fa',
   '#f472b6','#34d399','#fbbf24','#f87171','#818cf8',
@@ -191,7 +180,7 @@ export default function App() {
   const myAvatarRef      = useRef(null);
   const flightOnLandRef  = useRef(null);
   const touchDragRef     = useRef(null);
-  const finishingTourRef = useRef(false);  // prevents double-fire of onDone
+  const finishingTourRef = useRef(false);
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 768px)');
@@ -277,7 +266,6 @@ export default function App() {
     })();
   }, []);
 
-  // Welcome Confetti shows on first login per user only
   useEffect(() => {
     if (!account) return;
     const key = `tour-done-${account.username}`;
@@ -291,13 +279,10 @@ export default function App() {
     return () => clearTimeout(t);
   }, [account]);
 
-  // NEW: Auto-show tips ONCE per day on login
   useEffect(() => {
     if (!account) return;
     const todayStr = new Date().toDateString();
     const tipKey = `tips-shown-${account.username}-${todayStr}`;
-    
-    // If they haven't seen tips today, show them after a short delay
     if (!localStorage.getItem(tipKey)) {
       const t = setTimeout(() => {
         setShowTips(true);
@@ -369,7 +354,6 @@ export default function App() {
     return ()=>{ supabase.removeChannel(channel); };
   }, [account]);
 
-  // Global mousedown — ignores clicks inside tour card
   useEffect(() => {
     const fn = e => {
       if (e.target.closest('.tour-overlay-card')) return;
@@ -713,12 +697,12 @@ export default function App() {
 
   return (
     <>
-     <div style={{minHeight:'100vh',background:'#F0F4FF'}} onMouseUp={handleStatusCellMouseUp} onTouchEnd={handleStatusCellTouchEnd}>
+      <div style={{minHeight:'100vh',background:'#F0F4FF'}} onMouseUp={handleStatusCellMouseUp} onTouchEnd={handleStatusCellTouchEnd}>
         <GlobalStyles/>
         <div ref={glowFrameRef} className="glow-frame"/>
-        <BirthdayOverlay 
-          currentUserEmail={account?.username} 
-          isBusy={showTips} 
+        <BirthdayOverlay
+          currentUserEmail={account?.username}
+          isBusy={showTips}
         />
         <BananaEasterEgg />
 
@@ -750,17 +734,17 @@ export default function App() {
           );
         })}
 
+        {/* Tips modal */}
         {showTips && currentTip && (
           <div style={{position:'fixed',inset:0,zIndex:10500,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(15,23,42,0.45)',backdropFilter:'blur(4px)',animation:'dropIn 0.2s ease'}}>
             <div style={{background:'#fff',borderRadius:24,width:480,maxWidth:'92vw',padding:'36px 32px 30px',boxShadow:'0 24px 64px rgba(0,0,0,0.18)',position:'relative',overflow:'hidden'}}>
               <div style={{position:'absolute',top:0,left:0,right:0,height:4,background:'linear-gradient(90deg,#009bff,#770bff)'}}/>
               <button onClick={()=>setShowTips(false)} style={{position:'absolute',top:16,right:16,width:28,height:28,borderRadius:'50%',border:'none',background:'#f1f5f9',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:'#64748b'}} onMouseOver={e=>{e.currentTarget.style.background='#e2e8f0';}} onMouseOut={e=>{e.currentTarget.style.background='#f1f5f9';}}>✕</button>
               <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:22}}>
-                <div style={{width:40,height:40,borderRadius:12,background:'linear-gradient(135deg,rgba(0,155,255,0.1),rgba(119,11,255,0.1))',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-<BulbIcon size={20}/>                </div>
+                <div style={{width:40,height:40,borderRadius:12,background:'linear-gradient(135deg,rgba(119,11,255,0.15),rgba(0,155,255,0.1))',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:20}}>🪐</div>
                 <div>
                   <div style={{fontSize:18,fontWeight:700,color:'#111827',letterSpacing:'-0.01em'}}>Daily Mind Huddle</div>
-                  <div style={{fontSize:12,fontWeight:500,color:'#9ca3af',marginTop:'3px'}}> {tipIdx+1} of {dailyTips.current.length} today</div>
+                  <div style={{fontSize:12,fontWeight:500,color:'#9ca3af',marginTop:'3px'}}>{tipIdx+1} of {dailyTips.current.length} today</div>
                 </div>
               </div>
               <div key={tipIdx} className={tipVisible?tipSlideClass:''} style={{minHeight:120,marginBottom:24}}>
@@ -877,7 +861,7 @@ export default function App() {
           <div className="leg-item"><div className="leg-dot" style={{background:'#fafafa',border:'1.5px solid #f3f4f6'}}/>Team days</div>
         </div>
 
-        {/* MOBILE OR DESKTOP */}
+        {/* MAIN TABLE / MOBILE */}
         {isMobile ? (
           <MobileView
             staffList={staffList}
@@ -1014,7 +998,6 @@ export default function App() {
                                     onMouseLeave={()=>setHoveredPill(null)}
                                   >
                                     <div className="pill-card"/>
-          
                                   </div>
                                 </td>
                               );
@@ -1097,7 +1080,6 @@ export default function App() {
         <DimensionalBreachOverlay breach={activeBreach} chargingState={chargingState} />
       </div>
 
-      {/* TourOverlay and WelcomeConfetti are OUTSIDE the main div so onMouseUp never interferes */}
       {showTour && (
         <TourOverlay
           key={`tour-${account.username}`}
