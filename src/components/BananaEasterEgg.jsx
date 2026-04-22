@@ -373,7 +373,7 @@ function Particles({ mood, x, frame, svgH }) {
 }
 
 // ── Main BananaEasterEgg ──────────────────────────────────────
-export default function BananaEasterEgg() {
+export default function BananaEasterEgg({ readySignal = false }) {
   const [active,    setActive]    = useState(false);
   const [dayOfWeek, setDayOfWeek] = useState(null);
   const [progress,  setProgress]  = useState(0);
@@ -383,7 +383,9 @@ export default function BananaEasterEgg() {
   const frameTickRef = useRef();
   const DURATION = 4800;
 
-  useEffect(() => {
+ useEffect(() => {
+    if (!readySignal) return;
+
     const today = new Date();
     const dow   = today.getDay();
     if (!BANANA_DAYS.includes(dow)) return;
@@ -392,12 +394,13 @@ export default function BananaEasterEgg() {
     if (sessionStorage.getItem(sessionKey)) return;
 
     setDayOfWeek(dow);
+    // Wait 16s after tips close — enough for birthday overlay (12s) to have also finished
     const t = setTimeout(() => {
       sessionStorage.setItem(sessionKey, '1');
       setActive(true);
-    }, 1800);
+    }, 16000);
     return () => clearTimeout(t);
-  }, []);
+  }, [readySignal]);
 
   useEffect(() => {
     if (!active) return;
