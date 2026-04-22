@@ -85,12 +85,62 @@ const GlobalStyles = () => (
     .tip-slide-in-right{animation:tipSlideInRight 0.32s cubic-bezier(0.25,0.46,0.45,0.94) both;}
     .tip-slide-in-left{animation:tipSlideInLeft 0.32s cubic-bezier(0.25,0.46,0.45,0.94) both;}
 
-    @keyframes bulbPulse{
-      0%,100%{filter:drop-shadow(0 0 3px rgba(251,191,36,0.4));}
-      50%{filter:drop-shadow(0 0 8px rgba(251,191,36,0.8)) drop-shadow(0 0 16px rgba(251,191,36,0.3));}
+    /* ── Planet button ── */
+    @keyframes planetPulse{
+      0%,100%{filter:drop-shadow(0 0 6px rgba(167,139,250,0.6)) drop-shadow(0 0 12px rgba(119,11,255,0.3));}
+      50%{filter:drop-shadow(0 0 14px rgba(119,11,255,0.9)) drop-shadow(0 0 28px rgba(0,155,255,0.5));}
     }
-    .bulb-btn{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;animation:bulbPulse 2.5s ease-in-out infinite;}
-    .bulb-btn:hover{background:rgba(251,191,36,0.15);border-color:rgba(251,191,36,0.4);transform:scale(1.1);}
+    @keyframes ringOrbit{
+      from{transform:rotateX(72deg) rotateZ(0deg);}
+      to{transform:rotateX(72deg) rotateZ(360deg);}
+    }
+
+    .bulb-btn{
+      position:relative;
+      width:54px; height:30px;
+      border-radius:100px;
+      background:linear-gradient(135deg,#2d1b69 0%,#1e1b4b 50%,#0f172a 100%);
+      border:1.5px solid rgba(167,139,250,0.45);
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; transition:all 0.3s;
+      animation:planetPulse 3s ease-in-out infinite;
+      overflow:visible;
+    }
+    /* The planet sphere */
+    .bulb-btn::after{
+      content:'';
+      position:absolute;
+      width:18px; height:18px;
+      border-radius:50%;
+      background:radial-gradient(circle at 35% 32%, #c4b5fd 0%, #8b5cf6 35%, #5b21b6 65%, #2e1065 100%);
+      box-shadow:0 0 10px rgba(139,92,246,0.7), inset 0 -2px 4px rgba(0,0,0,0.4);
+      pointer-events:none;
+    }
+    /* The ring */
+    .bulb-btn::before{
+      content:'';
+      position:absolute;
+      width:34px; height:10px;
+      border-radius:50%;
+      border:2.5px solid rgba(167,139,250,0.7);
+      background:transparent;
+      transform:rotateX(72deg);
+      pointer-events:none;
+      transition:border-color 0.3s, box-shadow 0.3s;
+      box-shadow:0 0 8px rgba(167,139,250,0.4);
+    }
+    .bulb-btn:hover{
+      transform:scale(1.1);
+      border-color:rgba(196,181,253,0.7);
+    }
+    .bulb-btn:hover::before{
+      border-color:rgba(99,179,255,0.95);
+      box-shadow:0 0 14px rgba(0,155,255,0.7);
+      animation:ringOrbit 1.4s linear infinite;
+    }
+    .bulb-btn:hover::after{
+      box-shadow:0 0 18px rgba(139,92,246,0.95), inset 0 -2px 4px rgba(0,0,0,0.4);
+    }
 
     .glow-frame{position:fixed;inset:0;pointer-events:none;z-index:9998;opacity:0;box-shadow:inset 0 0 0px 0px rgba(0,155,255,0);will-change:opacity,box-shadow;transform:translateZ(0);}
 
@@ -180,13 +230,35 @@ const GlobalStyles = () => (
     .s-opt-icon{font-size:22px;line-height:1;flex-shrink:0;}
     .s-opt-label{font-size:12px;color:#374151;font-weight:500;}
 
-td.ptd{height:1px;padding:0 6px;vertical-align:top;position:relative;overflow:hidden;}
-.pill{position:relative;height:100%;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:pointer;user-select:none;overflow:hidden;border-radius:14px;isolation:isolate;}
-.pill-card{position:absolute;inset:4px;border-radius:16px;transition:box-shadow 0.25s,transform 0.2s;transform-origin:center center;will-change:transform;}
-.hol .pill-card{background:linear-gradient(160deg,rgba(251,207,232,0.55) 0%,rgba(221,214,254,0.45) 50%,rgba(196,181,253,0.35) 100%);border:1.5px solid rgba(217,70,239,0.2);box-shadow:inset 0 1px 0 rgba(255,255,255,0.6),0 2px 12px rgba(217,70,239,0.1);}
-.we  .pill-card{background:linear-gradient(160deg,rgba(199,210,254,0.55) 0%,rgba(196,181,253,0.45) 50%,rgba(167,139,250,0.35) 100%);border:1.5px solid rgba(139,92,246,0.22);box-shadow:inset 0 1px 0 rgba(255,255,255,0.6),0 2px 12px rgba(139,92,246,0.12);}
-.pill:hover.hol .pill-card{box-shadow:inset 0 1px 0 rgba(255,255,255,0.7),0 0 20px rgba(217,70,239,0.2),0 0 40px rgba(168,85,247,0.15);}
-.pill:hover.we  .pill-card{box-shadow:inset 0 1px 0 rgba(255,255,255,0.7),0 0 20px rgba(99,102,241,0.25),0 0 40px rgba(0,155,255,0.15);}
+    /* ── Pills — gradient background, properly positioned ── */
+    td.ptd{height:1px;padding:0 6px;vertical-align:top;position:relative;overflow:hidden;}
+    .pill{position:relative;height:100%;width:100%;cursor:pointer;user-select:none;overflow:hidden;border-radius:14px;isolation:isolate;}
+    .pill-card{position:absolute;inset:0;border-radius:14px;transition:box-shadow 0.25s,transform 0.2s;will-change:transform;}
+    .hol .pill-card{background:linear-gradient(160deg,rgba(251,207,232,0.75) 0%,rgba(221,214,254,0.65) 50%,rgba(196,181,253,0.55) 100%);border:1.5px solid rgba(217,70,239,0.25);box-shadow:inset 0 1px 0 rgba(255,255,255,0.7),0 2px 12px rgba(217,70,239,0.12);}
+    .we  .pill-card{background:linear-gradient(160deg,rgba(199,210,254,0.75) 0%,rgba(196,181,253,0.65) 50%,rgba(167,139,250,0.55) 100%);border:1.5px solid rgba(139,92,246,0.25);box-shadow:inset 0 1px 0 rgba(255,255,255,0.7),0 2px 12px rgba(139,92,246,0.14);}
+    .pill:hover.hol .pill-card{box-shadow:inset 0 1px 0 rgba(255,255,255,0.8),0 0 24px rgba(217,70,239,0.28),0 0 48px rgba(168,85,247,0.18);}
+    .pill:hover.we  .pill-card{box-shadow:inset 0 1px 0 rgba(255,255,255,0.8),0 0 24px rgba(99,102,241,0.32),0 0 48px rgba(0,155,255,0.2);}
+
+    /* ── Pill hover bounce ── */
+    @keyframes pillHoverBounce{
+      0%{transform:translateY(0) scale(1);}
+      30%{transform:translateY(-8px) scale(1.02);}
+      55%{transform:translateY(-3px) scale(1.01);}
+      75%{transform:translateY(-6px) scale(1.015);}
+      100%{transform:translateY(0) scale(1);}
+    }
+    .pill-hover-bounce .pill-card{animation:pillHoverBounce 0.65s cubic-bezier(0.34,1.46,0.64,1) both;}
+
+    /* ── Pill click bounce Y only ── */
+    @keyframes pillClickBounceY{
+      0%{transform:scaleY(1) translateY(0);}
+      20%{transform:scaleY(0.92) translateY(4px);}
+      45%{transform:scaleY(1.06) translateY(-6px);}
+      65%{transform:scaleY(0.97) translateY(2px);}
+      82%{transform:scaleY(1.02) translateY(-2px);}
+      100%{transform:scaleY(1) translateY(0);}
+    }
+    .pill.holi-tap .pill-card{animation:pillClickBounceY 0.48s cubic-bezier(0.34,1.56,0.64,1) forwards;transform-origin:center bottom;}
 
     .plan-row{padding:9px 12px;margin-bottom:3px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:all 0.15s;}
     .plan-row:hover{background:linear-gradient(135deg,rgba(0,155,255,0.08),rgba(119,11,255,0.08));}
@@ -220,7 +292,6 @@ td.ptd{height:1px;padding:0 6px;vertical-align:top;position:relative;overflow:hi
       .user-name{display:none;}
       .signout-btn{font-size:10px;padding:0 8px;}
       .save-txt,.save-ok{display:none;}
-      
     }
   `}</style>
 );

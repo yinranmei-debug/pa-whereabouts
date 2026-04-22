@@ -11,10 +11,12 @@ const T_EXPLODE = 5000;
 const T_IMPLODE = 1000;
 const T_FLOATING = 500;
 
-const DECAY_PER_SEC = 100 / 15;
-// ~8 clicks from one person to trigger breach
-const PROGRESS_PER_CLICK_BASE = 12;
-const MAX_COOP_BOOST = 3;
+// Decays faster — bar drains quickly when you stop clicking
+const DECAY_PER_SEC = 100 / 6;
+// Each click adds less — need ~14 solo clicks to trigger
+const PROGRESS_PER_CLICK_BASE = 7;
+// Coop boost still works but capped lower
+const MAX_COOP_BOOST = 2.5;
 
 const GLOBAL_KEY = '__global__';
 
