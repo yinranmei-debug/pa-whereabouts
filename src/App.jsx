@@ -1014,20 +1014,7 @@ export default function App() {
                                     onMouseLeave={()=>setHoveredPill(null)}
                                   >
                                     <div className="pill-card"/>
-                                    <div
-                                      className={`pill-tap-bubble${hoveredPill?.ds === d.ds ? ' is-visible' : ''}`}
-                                      style={{
-                                        left: hoveredPill?.ds === d.ds ? hoveredPill.x : 0,
-                                        top:  hoveredPill?.ds === d.ds ? hoveredPill.y : 0,
-                                      }}
-                                    >
-                                      <div className="pill-tap-bubble-ring">
-                                        <div className="pill-tap-bubble-content">
-                                          <span className="pill-tap-dot"/>
-                                          {isHol ? 'Try it!' : 'Tap me!'}
-                                        </div>
-                                      </div>
-                                    </div>
+          
                                   </div>
                                 </td>
                               );
