@@ -2,11 +2,24 @@ import React, { useState, useEffect, useRef } from 'react';
 
 const BANANA_DAYS = [1, 3, 5]; // Mon, Wed, Fri
 
-// ── Pattern logo pixel data ──────────────────────────────────
-const OUT_LINE = '#000';
-const BLUE = '#009bff';
-const BLUE_LIGHT = '#6ac7ff';
+const BLUE_LIGHT = '#3bb8ff';
+const BLUE       = '#1e9eff';
+const BLUE_DARK  = '#0a72c4';
+const BLUE_DEEP  = '#08538a';
+const OUTLINE    = '#08324d';
 
+// ── Pixel rect renderer (SVG) ─────────────────────────────────
+function Rects({ data }) {
+  return (
+    <>
+      {data.map((r, i) => (
+        <rect key={i} x={r.x} y={r.y} width={r.w || 1} height={r.h || 1} fill={r.c} />
+      ))}
+    </>
+  );
+}
+
+// ── Pattern logo parallelogram ────────────────────────────────
 function drawParallelogram(ox, oy, color, highlight) {
   const rows = [
     {y:0, xs:9, xe:27},
@@ -20,203 +33,372 @@ function drawParallelogram(ox, oy, color, highlight) {
   ];
   const out = [];
   rows.forEach(r => {
-    out.push({x: ox + r.xs, y: oy + r.y, w: r.xe - r.xs + 1, h:1, c: color});
-    out.push({x: ox + r.xs, y: oy + r.y, w:1, h:1, c: OUT_LINE});
-    out.push({x: ox + r.xe, y: oy + r.y, w:1, h:1, c: OUT_LINE});
+    out.push({x: ox + r.xs, y: oy + r.y, w: r.xe - r.xs + 1, h: 1, c: color});
+    out.push({x: ox + r.xs, y: oy + r.y, w: 1, h: 1, c: OUTLINE});
+    out.push({x: ox + r.xe, y: oy + r.y, w: 1, h: 1, c: OUTLINE});
   });
-  out.push({x: ox+9,  y: oy,   w:19, h:1, c: OUT_LINE});
-  out.push({x: ox,    y: oy+7, w:19, h:1, c: OUT_LINE});
-  out.push({x: ox+10, y: oy+1, w:16, h:1, c: highlight});
-  out.push({x: ox+8,  y: oy+2, w:3,  h:1, c: highlight});
+  out.push({x: ox + 9,  y: oy,     w: 19, h: 1, c: OUTLINE});
+  out.push({x: ox,      y: oy + 7, w: 19, h: 1, c: OUTLINE});
+  out.push({x: ox + 10, y: oy + 1, w: 16, h: 1, c: highlight});
+  out.push({x: ox + 8,  y: oy + 2, w: 3,  h: 1, c: highlight});
   return out;
 }
 
-function drawPatternLogo(cx, cy, bob) {
+// ── Full LogoChar component (ported from reference) ───────────
+function LogoChar({ cx, cy, pose = {} }) {
+  const {
+    armL = 0, armR = 0,
+    legPhase = 0,
+    bob = 0,
+    bodyLean = 0,
+    eyeShape = 'open',
+    mouth = 'grin',
+    armUp = false,
+    fistPump = false,
+  } = pose;
+
   const topY = cy - 8 + bob;
   const botY = cy + bob;
-  const top = drawParallelogram(cx - 14, topY, BLUE_LIGHT, '#8ddcff');
-  const bot = drawParallelogram(cx - 8,  botY, BLUE,       '#5fc4ff');
+  const top  = drawParallelogram(cx - 14, topY, BLUE_LIGHT, '#8ddcff');
+  const bot  = drawParallelogram(cx - 8,  botY, BLUE, '#5fc4ff');
 
-  const eyeY   = topY + 3;
-  const mouthY = topY + 5;
+  // Face
+  const eyeY  = topY + 3;
+  const eyeLX = cx - 5;
+  const eyeRX = cx + 1;
+  const face  = [];
 
-  const face = [
-    // eyes
-    {x: cx - 4, y: eyeY,   w:2, h:2, c: OUT_LINE},
-    {x: cx + 2, y: eyeY,   w:2, h:2, c: OUT_LINE},
-    {x: cx - 3, y: eyeY,   w:1, h:1, c: '#fff'},
-    {x: cx + 3, y: eyeY,   w:1, h:1, c: '#fff'},
-    // blush
-    {x: cx - 6, y: topY+4, w:2, h:1, c: '#ffb6cf'},
-    {x: cx + 4, y: topY+4, w:2, h:1, c: '#ffb6cf'},
-    // mouth smile
-    {x: cx - 3, y: mouthY, w:6, h:1, c: OUT_LINE},
-    {x: cx - 2, y: mouthY+1, w:4, h:1, c: OUT_LINE},
+  const drawEye = (ex, ey) => {
+    if (eyeShape === 'closed') {
+      face.push({x: ex - 1, y: ey + 1, w: 3, h: 1, c: OUTLINE});
+    } else if (eyeShape === 'happy') {
+      face.push({x: ex - 1, y: ey + 1, w: 1, h: 1, c: OUTLINE});
+      face.push({x: ex,     y: ey,     w: 1, h: 1, c: OUTLINE});
+      face.push({x: ex + 1, y: ey + 1, w: 1, h: 1, c: OUTLINE});
+    } else {
+      face.push({x: ex - 1, y: ey, w: 3, h: 2, c: OUTLINE});
+      face.push({x: ex,     y: ey, w: 1, h: 1, c: '#fff'});
+    }
+  };
+  drawEye(eyeLX, eyeY);
+  drawEye(eyeRX, eyeY);
+
+  const mouthY  = topY + 5;
+  const mouthCx = cx - 2;
+  if (mouth === 'grin') {
+    face.push({x: mouthCx - 1, y: mouthY,     w: 4, h: 1, c: OUTLINE});
+    face.push({x: mouthCx - 2, y: mouthY - 1, w: 1, h: 1, c: OUTLINE});
+    face.push({x: mouthCx + 3, y: mouthY - 1, w: 1, h: 1, c: OUTLINE});
+  } else if (mouth === 'bigGrin') {
+    face.push({x: mouthCx - 2, y: mouthY,     w: 6, h: 2, c: OUTLINE});
+    face.push({x: mouthCx - 1, y: mouthY + 1, w: 4, h: 1, c: '#ff7a9a'});
+    face.push({x: mouthCx,     y: mouthY + 1, w: 2, h: 1, c: '#fff'});
+    face.push({x: mouthCx - 3, y: mouthY - 1, w: 1, h: 1, c: OUTLINE});
+    face.push({x: mouthCx + 4, y: mouthY - 1, w: 1, h: 1, c: OUTLINE});
+  } else if (mouth === 'smirk') {
+    face.push({x: mouthCx,     y: mouthY,     w: 4, h: 1, c: OUTLINE});
+    face.push({x: mouthCx + 3, y: mouthY - 1, w: 1, h: 1, c: OUTLINE});
+  } else if (mouth === 'ohh') {
+    face.push({x: mouthCx,     y: mouthY - 1, w: 3, h: 3, c: OUTLINE});
+    face.push({x: mouthCx + 1, y: mouthY,     w: 1, h: 1, c: '#ff7a9a'});
+  }
+
+  // Blush
+  face.push({x: cx - 8, y: topY + 4, w: 2, h: 1, c: 'rgba(255,100,140,0.5)'});
+  face.push({x: cx + 4, y: topY + 4, w: 2, h: 1, c: 'rgba(255,100,140,0.5)'});
+
+  // Arms
+  const armPivotLX = cx - 6, armPivotLY = botY + 3;
+  const armPivotRX = cx + 7, armPivotRY = botY + 3;
+
+  let leftArm, rightArm;
+  if (armUp) {
+    leftArm = (
+      <g key="arml">
+        <rect x={armPivotLX - 2} y={armPivotLY - 8}  width="3" height="8" fill={BLUE_DARK}/>
+        <rect x={armPivotLX - 2} y={armPivotLY - 8}  width="1" height="8" fill={OUTLINE}/>
+        <rect x={armPivotLX}     y={armPivotLY - 8}  width="1" height="8" fill={OUTLINE}/>
+        <rect x={armPivotLX - 3} y={armPivotLY - 11} width="4" height="3" fill={BLUE_LIGHT}/>
+        <rect x={armPivotLX - 3} y={armPivotLY - 11} width="4" height="1" fill={OUTLINE}/>
+        <rect x={armPivotLX - 3} y={armPivotLY - 11} width="1" height="3" fill={OUTLINE}/>
+        <rect x={armPivotLX}     y={armPivotLY - 11} width="1" height="3" fill={OUTLINE}/>
+      </g>
+    );
+    rightArm = (
+      <g key="armr">
+        <rect x={armPivotRX}     y={armPivotRY - 8}  width="3" height="8" fill={BLUE_DARK}/>
+        <rect x={armPivotRX}     y={armPivotRY - 8}  width="1" height="8" fill={OUTLINE}/>
+        <rect x={armPivotRX + 2} y={armPivotRY - 8}  width="1" height="8" fill={OUTLINE}/>
+        <rect x={armPivotRX - 1} y={armPivotRY - 11} width="4" height="3" fill={BLUE_LIGHT}/>
+        <rect x={armPivotRX - 1} y={armPivotRY - 11} width="4" height="1" fill={OUTLINE}/>
+        <rect x={armPivotRX - 1} y={armPivotRY - 11} width="1" height="3" fill={OUTLINE}/>
+        <rect x={armPivotRX + 2} y={armPivotRY - 11} width="1" height="3" fill={OUTLINE}/>
+      </g>
+    );
+  } else {
+    leftArm = (
+      <g key="arml" transform={`rotate(${armL} ${armPivotLX} ${armPivotLY})`}>
+        <rect x={armPivotLX - 7}  y={armPivotLY}     width="7" height="3" fill={BLUE_DARK}/>
+        <rect x={armPivotLX - 7}  y={armPivotLY}     width="7" height="1" fill={OUTLINE}/>
+        <rect x={armPivotLX - 7}  y={armPivotLY + 3} width="7" height="1" fill={OUTLINE}/>
+        <rect x={armPivotLX - 7}  y={armPivotLY}     width="1" height="3" fill={OUTLINE}/>
+        <rect x={armPivotLX - 10} y={armPivotLY - 1} width="3" height="4" fill={BLUE_LIGHT}/>
+        <rect x={armPivotLX - 10} y={armPivotLY - 1} width="3" height="1" fill={OUTLINE}/>
+        <rect x={armPivotLX - 10} y={armPivotLY + 3} width="3" height="1" fill={OUTLINE}/>
+        <rect x={armPivotLX - 11} y={armPivotLY}     width="1" height="2" fill={OUTLINE}/>
+      </g>
+    );
+    if (fistPump) {
+      rightArm = (
+        <g key="armr">
+          <rect x={armPivotRX}     y={armPivotRY - 8}  width="3" height="8"  fill={BLUE_DARK}/>
+          <rect x={armPivotRX}     y={armPivotRY - 8}  width="1" height="8"  fill={OUTLINE}/>
+          <rect x={armPivotRX + 2} y={armPivotRY - 8}  width="1" height="8"  fill={OUTLINE}/>
+          <rect x={armPivotRX - 1} y={armPivotRY - 12} width="5" height="4"  fill={BLUE_LIGHT}/>
+          <rect x={armPivotRX - 1} y={armPivotRY - 12} width="5" height="1"  fill={OUTLINE}/>
+          <rect x={armPivotRX - 1} y={armPivotRY - 8}  width="5" height="1"  fill={OUTLINE}/>
+          <rect x={armPivotRX - 1} y={armPivotRY - 12} width="1" height="4"  fill={OUTLINE}/>
+          <rect x={armPivotRX + 3} y={armPivotRY - 12} width="1" height="4"  fill={OUTLINE}/>
+          <rect x={armPivotRX}     y={armPivotRY - 10} width="3" height="1"  fill={OUTLINE}/>
+        </g>
+      );
+    } else {
+      rightArm = (
+        <g key="armr" transform={`rotate(${armR} ${armPivotRX} ${armPivotRY})`}>
+          <rect x={armPivotRX}     y={armPivotRY}     width="7" height="3" fill={BLUE_DARK}/>
+          <rect x={armPivotRX}     y={armPivotRY}     width="7" height="1" fill={OUTLINE}/>
+          <rect x={armPivotRX}     y={armPivotRY + 3} width="7" height="1" fill={OUTLINE}/>
+          <rect x={armPivotRX + 6} y={armPivotRY}     width="1" height="3" fill={OUTLINE}/>
+          <rect x={armPivotRX + 7} y={armPivotRY - 1} width="3" height="4" fill={BLUE_LIGHT}/>
+          <rect x={armPivotRX + 7} y={armPivotRY - 1} width="3" height="1" fill={OUTLINE}/>
+          <rect x={armPivotRX + 7} y={armPivotRY + 3} width="3" height="1" fill={OUTLINE}/>
+          <rect x={armPivotRX + 10} y={armPivotRY}    width="1" height="2" fill={OUTLINE}/>
+        </g>
+      );
+    }
+  }
+
+  // Legs
+  const legBaseY = botY + 7;
+  const legCx = cx;
+  const phases = [
+    {lx: -3, ly: 0,  rx: 2,  ry: -1},
+    {lx: -2, ly: 0,  rx: 2,  ry: 0},
+    {lx: -3, ly: -1, rx: 3,  ry: 0},
+    {lx: -2, ly: 0,  rx: 2,  ry: 0},
   ];
+  const p = phases[legPhase % 4];
+  const legs = (
+    <g>
+      <rect x={legCx + p.lx - 1} y={legBaseY + p.ly} width="3" height={5 + p.ly} fill={BLUE_DEEP}/>
+      <rect x={legCx + p.lx - 1} y={legBaseY + p.ly} width="1" height={5 + p.ly} fill={OUTLINE}/>
+      <rect x={legCx + p.lx + 1} y={legBaseY + p.ly} width="1" height={5 + p.ly} fill={OUTLINE}/>
+      <rect x={legCx + p.lx - 2} y={legBaseY + p.ly + 5} width="5" height="2" fill={BLUE_DEEP}/>
+      <rect x={legCx + p.lx - 2} y={legBaseY + p.ly + 5} width="5" height="1" fill={OUTLINE}/>
+      <rect x={legCx + p.lx - 2} y={legBaseY + p.ly + 6} width="5" height="1" fill={OUTLINE}/>
+      <rect x={legCx + p.lx - 3} y={legBaseY + p.ly + 5} width="1" height="2" fill={OUTLINE}/>
+      <rect x={legCx + p.lx + 2} y={legBaseY + p.ly + 5} width="1" height="2" fill={OUTLINE}/>
+      <rect x={legCx + p.rx - 1} y={legBaseY + p.ry} width="3" height={5 + p.ry} fill={BLUE_DEEP}/>
+      <rect x={legCx + p.rx - 1} y={legBaseY + p.ry} width="1" height={5 + p.ry} fill={OUTLINE}/>
+      <rect x={legCx + p.rx + 1} y={legBaseY + p.ry} width="1" height={5 + p.ry} fill={OUTLINE}/>
+      <rect x={legCx + p.rx - 2} y={legBaseY + p.ry + 5} width="5" height="2" fill={BLUE_DEEP}/>
+      <rect x={legCx + p.rx - 2} y={legBaseY + p.ry + 5} width="5" height="1" fill={OUTLINE}/>
+      <rect x={legCx + p.rx - 2} y={legBaseY + p.ry + 6} width="5" height="1" fill={OUTLINE}/>
+      <rect x={legCx + p.rx - 3} y={legBaseY + p.ry + 5} width="1" height="2" fill={OUTLINE}/>
+      <rect x={legCx + p.rx + 2} y={legBaseY + p.ry + 5} width="1" height="2" fill={OUTLINE}/>
+    </g>
+  );
 
-  return [...top, ...bot, ...face];
+  return (
+    <g style={{
+      transform: `rotate(${bodyLean}deg) scale(1, 1)`,
+      transformOrigin: `${cx}px ${cy + 6}px`,
+    }}>
+      {legs}
+      <Rects data={bot}/>
+      {leftArm}
+      <Rects data={top}/>
+      {rightArm}
+      <Rects data={face}/>
+    </g>
+  );
 }
 
-// ── Pose functions ────────────────────────────────────────────
+// ── Pose drivers ──────────────────────────────────────────────
 function monPose(f) {
   const legPhase = f % 4;
-  const bob = [0, -2, 0, -1][legPhase];
-  const armL = [30, -10, -30, 10][legPhase];
-  const armR = [-30, 10, 30, -10][legPhase];
   return {
-    pose: { legPhase, bob, armL, armR,
-      eyeShape: f % 10 < 1 ? 'closed' : 'sparkle',
-      mouth: 'bigGrin', bodyLean: Math.sin(f * 0.5) * 2 },
+    pose: {
+      legPhase,
+      bob:      [0, -2, 0, -1][legPhase],
+      armL:     [30, -10, -30, 10][legPhase],
+      armR:     [-30, 10, 30, -10][legPhase],
+      eyeShape: f % 10 < 1 ? 'closed' : 'open',
+      mouth:    'bigGrin',
+      bodyLean: Math.sin(f * 0.5) * 2,
+    },
     speed: 14.0,
   };
 }
 
 function wedPose(f) {
   const legPhase = f % 4;
-  const bob = [0, -1, 0, 0][legPhase];
-  const armL = [20, -5, -20, 5][legPhase];
-  const armR = [-20, 5, 20, -5][legPhase];
-  const fistPump = (f % 16) < 6;
   return {
-    pose: { legPhase, bob, armL, armR,
+    pose: {
+      legPhase,
+      bob:      [0, -1, 0, 0][legPhase],
+      armL:     [20, -5, -20, 5][legPhase],
+      armR:     [-20, 5, 20, -5][legPhase],
       eyeShape: f % 12 < 1 ? 'closed' : 'open',
-      mouth: 'smirk', fistPump },
+      mouth:    'smirk',
+      fistPump: (f % 16) < 6,
+    },
     speed: 11.0,
   };
 }
 
 function friPose(f) {
   const skipPhase = f % 4;
-  const bob = [0, -5, 0, -4][skipPhase];
-  const legPhase = skipPhase % 2 === 0 ? 1 : (Math.floor(f / 4) % 2 === 0 ? 0 : 2);
+  const legPhase  = skipPhase % 2 === 0 ? 1 : (Math.floor(f / 4) % 2 === 0 ? 0 : 2);
   return {
-    pose: { legPhase, bob, armUp: true,
-      eyeShape: 'happy', mouth: 'bigGrin',
-      bodyLean: Math.sin(f * 0.5) * 3 },
+    pose: {
+      legPhase,
+      bob:      [0, -5, 0, -4][skipPhase],
+      armUp:    true,
+      eyeShape: 'happy',
+      mouth:    'bigGrin',
+      bodyLean: Math.sin(f * 0.5) * 3,
+    },
     speed: 13.0,
   };
 }
 
-// ── Pixel rect renderer ───────────────────────────────────────
-function PixelRects({ data, scale = 3 }) {
+// ── Pixel speech bubble ───────────────────────────────────────
+function PixelBubble({ cx, cy, text, frame }) {
+  const charW = 6;
+  const padX  = 8;
+  const textW = text.length * charW;
+  const w     = textW + padX * 2;
+  const h     = 16;
+  const scale = Math.min(frame, 8) / 8;
+  const bob   = Math.sin(frame * 0.35) * 1;
+  const bx    = cx - w / 2;
+  const by    = cy - h - 12 + bob;
   return (
-    <>
-      {data.map((r, i) => (
-        <div key={i} style={{
-          position: 'absolute',
-          left: r.x * scale,
-          top:  r.y * scale,
-          width:  (r.w || 1) * scale,
-          height: (r.h || 1) * scale,
-          background: r.c,
-          imageRendering: 'pixelated',
-        }}/>
-      ))}
-    </>
+    <g transform={`translate(${cx} ${cy + bob}) scale(${scale}) translate(${-cx} ${-cy - bob})`}>
+      <rect x={bx + 2} y={by + 2} width={w} height={h} fill="rgba(0,0,0,0.2)" rx="3"/>
+      <rect x={bx} y={by} width={w} height={h} fill="#fff" stroke={OUTLINE} strokeWidth="1.5" rx="4"/>
+      <polygon
+        points={`${cx - 3},${by + h} ${cx + 3},${by + h} ${cx},${by + h + 5}`}
+        fill="#fff" stroke={OUTLINE} strokeWidth="1.5" strokeLinejoin="miter"
+      />
+      <rect x={cx - 2} y={by + h - 1} width="4" height="2" fill="#fff"/>
+      <text
+        x={cx} y={by + h / 2 + 4}
+        textAnchor="middle"
+        fontFamily="'Plus Jakarta Sans', 'Geist Mono', monospace"
+        fontSize="9" fontWeight="800" fill={OUTLINE} letterSpacing="0.5"
+      >
+        {text}
+      </text>
+    </g>
   );
 }
 
-// ── Draw character ────────────────────────────────────────────
-function drawCharacter(cx, cy, pose) {
-  const { legPhase, bob = 0, armL = 0, armR = 0,
-          eyeShape = 'open', mouth = 'smile',
-          bodyLean = 0, fistPump = false, armUp = false } = pose;
-
-  const pixels = [];
-  const bx = cx + Math.round(bodyLean);
-  const by = cy + bob;
-
-  // Logo body (Pattern parallelogram)
-  const logoPixels = drawPatternLogo(bx, by - 8, bob);
-  pixels.push(...logoPixels);
-
-  // Legs
-  const legColors = ['#009bff', '#0077cc'];
-  const legOffsets = [[0,0],[0,0],[0,0],[0,0]];
-  const lLeg = legPhase === 0 ? 3 : legPhase === 1 ? 6 : legPhase === 2 ? 3 : 0;
-  const rLeg = legPhase === 0 ? 0 : legPhase === 1 ? 3 : legPhase === 2 ? 6 : 3;
-
-  // left leg
-  pixels.push({x: bx - 4, y: by + 8, w: 3, h: 4 + lLeg/3, c: legColors[0]});
-  pixels.push({x: bx - 5, y: by + 8, w: 1, h: 4 + lLeg/3, c: OUT_LINE});
-  pixels.push({x: bx - 1, y: by + 8, w: 1, h: 4 + lLeg/3, c: OUT_LINE});
-  // left foot
-  pixels.push({x: bx - 6, y: by + 12 + lLeg/3, w: 5, h: 2, c: legColors[1]});
-  pixels.push({x: bx - 7, y: by + 12 + lLeg/3, w: 1, h: 2, c: OUT_LINE});
-  pixels.push({x: bx - 1, y: by + 12 + lLeg/3, w: 1, h: 2, c: OUT_LINE});
-
-  // right leg
-  pixels.push({x: bx + 1, y: by + 8, w: 3, h: 4 + rLeg/3, c: legColors[0]});
-  pixels.push({x: bx,     y: by + 8, w: 1, h: 4 + rLeg/3, c: OUT_LINE});
-  pixels.push({x: bx + 4, y: by + 8, w: 1, h: 4 + rLeg/3, c: OUT_LINE});
-  // right foot
-  pixels.push({x: bx + 1, y: by + 12 + rLeg/3, w: 5, h: 2, c: legColors[1]});
-  pixels.push({x: bx,     y: by + 12 + rLeg/3, w: 1, h: 2, c: OUT_LINE});
-  pixels.push({x: bx + 6, y: by + 12 + rLeg/3, w: 1, h: 2, c: OUT_LINE});
-
-  // Arms
-  if (armUp) {
-    // Both arms up (Friday)
-    pixels.push({x: bx - 14, y: by - 6, w: 10, h: 3, c: BLUE_LIGHT});
-    pixels.push({x: bx + 4,  y: by - 6, w: 10, h: 3, c: BLUE_LIGHT});
-  } else if (fistPump) {
-    pixels.push({x: bx - 14, y: by - 8, w: 10, h: 3, c: BLUE_LIGHT});
-    pixels.push({x: bx - 14, y: by - 11, w: 4, h: 3, c: BLUE});
-    pixels.push({x: bx + 4,  y: by,      w: 10, h: 3, c: BLUE_LIGHT});
-  } else {
-    // Normal arms with rotation
-    const alRad = (armL * Math.PI) / 180;
-    const arRad = (armR * Math.PI) / 180;
-    const alx = Math.round(Math.cos(alRad) * 8);
-    const aly = Math.round(Math.sin(alRad) * 4);
-    const arx = Math.round(Math.cos(arRad) * 8);
-    const ary = Math.round(Math.sin(arRad) * 4);
-    pixels.push({x: bx - 8 + alx, y: by + 2 + aly, w: 8, h: 2, c: BLUE_LIGHT});
-    pixels.push({x: bx,            y: by + 2 + ary, w: 8, h: 2, c: BLUE_LIGHT});
-  }
-
-  return pixels;
-}
-
-// ── Messages ──────────────────────────────────────────────────
+// ── Day messages ──────────────────────────────────────────────
 const DAY_MESSAGES = {
-  1: "New week, let's go! 💪",
-  3: 'Midweek energy! ⚡',
-  5: 'TGIF — Weekend incoming! 🎉',
+  1: "LET'S GO!!",
+  3: 'HALFWAY!!',
+  5: 'WEEKEND!!',
 };
 
-// ── Main component ────────────────────────────────────────────
+// ── Particle effects ──────────────────────────────────────────
+function Particles({ mood, x, frame, svgH }) {
+  const cy = svgH / 2;
+  const particles = [];
+
+  if (mood === 1) {
+    for (let i = 0; i < 4; i++) {
+      particles.push(
+        <rect key={'m' + i} x={x - 20 - i * 6} y={cy + (i % 2 ? -4 : 4)}
+              width={6 - i} height="1" fill="#5fc4ff" opacity={0.5 - i * 0.08}/>
+      );
+    }
+    if (frame % 3 === 0) {
+      particles.push(
+        <g key="star" transform={`translate(${x + 10} ${cy - 22})`}>
+          <rect x="-1" y="-3" width="2" height="6" fill="#ffd000"/>
+          <rect x="-3" y="-1" width="6" height="2" fill="#ffd000"/>
+        </g>
+      );
+    }
+  } else if (mood === 3) {
+    if ((frame % 16) < 4) {
+      [0, 1, 2].forEach(i => {
+        const ang = (Math.PI / 2) + (i - 1) * 0.4;
+        const r   = 6 + (frame % 4);
+        particles.push(
+          <rect key={'w' + i}
+                x={x + 12 + Math.cos(ang) * r}
+                y={cy - 18 + Math.sin(ang) * r}
+                width="2" height="2" fill="#ffd000"/>
+        );
+      });
+    }
+    for (let i = 0; i < 3; i++) {
+      const px = x - 20 - i * 8, py = cy;
+      particles.push(
+        <g key={'a' + i} opacity={0.4 - i * 0.1}>
+          <rect x={px}     y={py - 2} width="1" height="1" fill="#5fc4ff"/>
+          <rect x={px + 1} y={py - 1} width="1" height="1" fill="#5fc4ff"/>
+          <rect x={px + 2} y={py}     width="1" height="1" fill="#5fc4ff"/>
+          <rect x={px + 1} y={py + 1} width="1" height="1" fill="#5fc4ff"/>
+          <rect x={px}     y={py + 2} width="1" height="1" fill="#5fc4ff"/>
+        </g>
+      );
+    }
+  } else if (mood === 5) {
+    const colors = ['#ff6b9a','#ffd000','#00e5a8','#ff8a3a','#a66bff','#5fc4ff'];
+    for (let i = 0; i < 8; i++) {
+      const seed = (i * 37 + frame) % 60;
+      particles.push(
+        <rect key={'c' + i + frame}
+              x={x + (i * 8 - 20) + Math.sin(frame * 0.3 + i) * 3}
+              y={cy - 25 - seed * 0.5}
+              width="2" height="2" fill={colors[i % colors.length]}/>
+      );
+    }
+  }
+  return <>{particles}</>;
+}
+
+// ── Main BananaEasterEgg ──────────────────────────────────────
 export default function BananaEasterEgg() {
   const [active,    setActive]    = useState(false);
   const [dayOfWeek, setDayOfWeek] = useState(null);
-  const [progress,  setProgress]  = useState(0); // 0→1
+  const [progress,  setProgress]  = useState(0);
   const [frame,     setFrame]     = useState(0);
-  const rafRef      = useRef();
-  const startRef    = useRef();
+  const rafRef       = useRef();
+  const startRef     = useRef();
   const frameTickRef = useRef();
-  const DURATION    = 7200; // Slowed down to 2/3 speed! (Was 3200)
-  const SCALE       = 3;    // pixel scale
-  const CHAR_W      = 36 * SCALE;
+  const DURATION = 4800;
 
-useEffect(() => {
-    const today  = new Date();
-    const dow    = today.getDay();
+  useEffect(() => {
+    const today = new Date();
+    const dow   = today.getDay();
     if (!BANANA_DAYS.includes(dow)) return;
 
     const sessionKey = `banana-shown-${today.toDateString()}`;
-    
-    // TEMPORARILY DISABLED FOR TESTING:
-    // if (sessionStorage.getItem(sessionKey)) return;
+    if (sessionStorage.getItem(sessionKey)) return;
 
     setDayOfWeek(dow);
     const t = setTimeout(() => {
-      // We can leave this here, it won't block it since we disabled the check above
       sessionStorage.setItem(sessionKey, '1');
       setActive(true);
     }, 1800);
     return () => clearTimeout(t);
   }, []);
-  // Animate progress
+
   useEffect(() => {
     if (!active) return;
     startRef.current = performance.now();
@@ -234,7 +416,6 @@ useEffect(() => {
     return () => cancelAnimationFrame(rafRef.current);
   }, [active]);
 
-  // Frame ticker for animation (8fps)
   useEffect(() => {
     if (!active) return;
     frameTickRef.current = setInterval(() => setFrame(f => f + 1), 1000 / 8);
@@ -246,70 +427,53 @@ useEffect(() => {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
 
-  // X: start off-left, end off-right
-  const x = -CHAR_W + progress * (vw + CHAR_W * 2);
+  // SVG viewport — character lives at cx=40, cy=svgH/2
+  const SVG_W = 900;
+  const SVG_H = 80;
+  const CX    = 40;
+  const CY    = SVG_H / 2;
 
-  // Y: Monday straight, Wednesday wave, Friday hop
-  let y = vh * 0.44;
-  let currentFrame = frame;
+  // Map progress → screen X position (start off-left, end off-right)
+  const screenX = -60 + progress * (vw + 120);
+
+  // Y offset by day
+  let screenY = vh * 0.44;
+  if (dayOfWeek === 3) {
+    screenY = vh * 0.44 + Math.sin(progress * Math.PI * 5) * 35;
+  } else if (dayOfWeek === 5) {
+    screenY = vh * 0.44 - Math.abs(Math.sin(progress * Math.PI * 8)) * 30;
+  }
 
   const poseMap = { 1: monPose, 3: wedPose, 5: friPose };
   const getPose = poseMap[dayOfWeek] || monPose;
-  
-  // FIX: Grab the speed first before we do the math!
-  const baseSpeed = getPose(0).speed; 
-  const { pose, speed } = getPose(Math.floor(progress * baseSpeed * 20));
+  const { pose } = getPose(frame);
 
-  if (dayOfWeek === 3) {
-    y = vh * 0.44 + Math.sin(progress * Math.PI * 5) * 35;
-  } else if (dayOfWeek === 5) {
-    y = vh * 0.44 + Math.abs(Math.sin(progress * Math.PI * 8)) * -30;
-  }
-
-  const pixels = drawCharacter(16, 14, pose);
-
-  // Speed lines for Monday & Friday
+  const bubbleText = DAY_MESSAGES[dayOfWeek] || "LET'S GO!!";
+  const showBubble = progress > 0.06 && progress < 0.90;
   const showSpeedLines = (dayOfWeek === 1 || dayOfWeek === 5) && progress > 0.05;
+
+  // Scale factor: SVG renders at SVG_W×SVG_H but we want character to look ~3× pixel size
+  // We achieve this by rendering the SVG small (natural pixel coords) then sizing the element
+  const PIXEL_SCALE = 3;
+  const displayW = SVG_W * PIXEL_SCALE;
+  const displayH = SVG_H * PIXEL_SCALE;
 
   return (
     <>
       <style>{`
         @keyframes bananaTagIn {
-          from { opacity:0; transform:translateX(-50%) translateY(-4px); }
+          from { opacity:0; transform:translateX(-50%) translateY(-6px); }
           to   { opacity:1; transform:translateX(-50%) translateY(0); }
         }
       `}</style>
-
-      {/* Message tag */}
-      {progress > 0.08 && progress < 0.88 && (
-        <div style={{
-          position: 'fixed',
-          left: x + CHAR_W / 2,
-          top: y - 44,
-          transform: 'translateX(-50%)',
-          zIndex: 13500,
-          pointerEvents: 'none',
-          background: 'rgba(0,0,0,0.8)',
-          backdropFilter: 'blur(8px)',
-          border: '1px solid rgba(255,255,255,0.15)',
-          borderRadius: 100,
-          padding: '5px 14px',
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
-          fontSize: 12, fontWeight: 700, color: '#fff',
-          whiteSpace: 'nowrap',
-          animation: 'bananaTagIn 0.3s ease',
-        }}>
-          {DAY_MESSAGES[dayOfWeek]}
-        </div>
-      )}
 
       {/* Speed lines */}
       {showSpeedLines && [1, 2, 3].map(i => (
         <div key={i} style={{
           position: 'fixed',
-          left: x - 20 - i * 18,
-          top: y + 10 + (i - 1.5) * 6,
-          width: 14 + i * 8,
+          left: screenX - 20 - i * 18,
+          top:  screenY + 14 + (i - 1.5) * 7,
+          width:  14 + i * 8,
           height: 2,
           background: `rgba(0,155,255,${0.55 - i * 0.12})`,
           borderRadius: 2,
@@ -318,19 +482,30 @@ useEffect(() => {
         }}/>
       ))}
 
-      {/* Character */}
+      {/* SVG character — crisp pixel art */}
       <div style={{
         position: 'fixed',
-        left: x,
-        top: y,
+        left: screenX - CX * PIXEL_SCALE,
+        top:  screenY - CY * PIXEL_SCALE,
+        width:  displayW,
+        height: displayH,
         zIndex: 13500,
         pointerEvents: 'none',
-        width: 36 * SCALE,
-        height: 32 * SCALE,
-        imageRendering: 'pixelated',
         willChange: 'transform',
+        overflow: 'visible',
       }}>
-        <PixelRects data={pixels} scale={SCALE} />
+        <svg
+          viewBox={`0 0 ${SVG_W} ${SVG_H}`}
+          width={displayW}
+          height={displayH}
+          style={{ imageRendering: 'pixelated', shapeRendering: 'crispEdges', overflow: 'visible' }}
+        >
+          <Particles mood={dayOfWeek} x={CX} frame={frame} svgH={SVG_H}/>
+          <LogoChar cx={CX} cy={CY} pose={pose}/>
+          {showBubble && (
+            <PixelBubble cx={CX} cy={CY - 20} text={bubbleText} frame={frame}/>
+          )}
+        </svg>
       </div>
     </>
   );
