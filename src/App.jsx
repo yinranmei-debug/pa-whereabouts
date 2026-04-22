@@ -64,10 +64,35 @@ const getDailyTips = () => {
   return picked;
 };
 
-const BulbIcon = ({ size=20, color='#fbbf24' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M9 21h6M12 3a6 6 0 0 1 6 6c0 2.22-1.21 4.16-3 5.2V17H9v-2.8C7.21 13.16 6 11.22 6 9a6 6 0 0 1 6-6z"/>
-    <path d="M9 17h6"/>
+const BulbIcon = ({ size=20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <defs>
+      <radialGradient id="planetGrad" cx="40%" cy="35%">
+        <stop offset="0%" stopColor="#a78bfa"/>
+        <stop offset="50%" stopColor="#7c3aed"/>
+        <stop offset="100%" stopColor="#4c1d95"/>
+      </radialGradient>
+      <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#009bff" stopOpacity="0.9"/>
+        <stop offset="50%" stopColor="#a78bfa" stopOpacity="1"/>
+        <stop offset="100%" stopColor="#770bff" stopOpacity="0.9"/>
+      </linearGradient>
+    </defs>
+    {/* Ring behind */}
+    <ellipse cx="12" cy="13" rx="10" ry="3.5"
+      fill="none" stroke="url(#ringGrad)" strokeWidth="1.5" opacity="0.5"
+      style={{transformOrigin:'12px 13px'}}
+    />
+    {/* Planet */}
+    <circle cx="12" cy="12" r="6" fill="url(#planetGrad)"/>
+    {/* Planet shine */}
+    <ellipse cx="10" cy="10" rx="2" ry="1.5" fill="rgba(255,255,255,0.25)" transform="rotate(-20 10 10)"/>
+    {/* Ring in front */}
+    <ellipse cx="12" cy="13" rx="10" ry="3.5"
+      fill="none" stroke="url(#ringGrad)" strokeWidth="1.5"
+      strokeDasharray="16 16" strokeDashoffset="0"
+      className="planet-ring-front"
+    />
   </svg>
 );
 
@@ -754,8 +779,7 @@ export default function App() {
               <button onClick={()=>setShowTips(false)} style={{position:'absolute',top:16,right:16,width:28,height:28,borderRadius:'50%',border:'none',background:'#f1f5f9',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:'#64748b'}} onMouseOver={e=>{e.currentTarget.style.background='#e2e8f0';}} onMouseOut={e=>{e.currentTarget.style.background='#f1f5f9';}}>✕</button>
               <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:22}}>
                 <div style={{width:40,height:40,borderRadius:12,background:'linear-gradient(135deg,rgba(0,155,255,0.1),rgba(119,11,255,0.1))',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                  <BulbIcon size={20} color='#770bff'/>
-                </div>
+<BulbIcon size={20}/>                </div>
                 <div>
                   <div style={{fontSize:18,fontWeight:700,color:'#111827',letterSpacing:'-0.01em'}}>Daily Mind Huddle</div>
                   <div style={{fontSize:12,fontWeight:500,color:'#9ca3af',marginTop:'3px'}}>just for you · {tipIdx+1} of {dailyTips.current.length} today</div>
@@ -808,8 +832,7 @@ export default function App() {
             {saveStatus==='saving'&&<span className="save-txt">↻ Saving</span>}
             {saveStatus==='saved' &&<span className="save-ok">✓ Saved</span>}
             <button className="bulb-btn" onClick={()=>{setTipIdx(0);setShowTips(true);}} title="Daily Mind Huddle">
-              <BulbIcon size={18} color='#fbbf24'/>
-            </button>
+<BulbIcon size={18}/>            </button>
             <div className="online-pill">
               <div className="online-stack">
                 {onlineUsers.length === 0 ? (

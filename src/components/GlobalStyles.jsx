@@ -180,14 +180,13 @@ const GlobalStyles = () => (
     .s-opt-icon{font-size:22px;line-height:1;flex-shrink:0;}
     .s-opt-label{font-size:12px;color:#374151;font-weight:500;}
 
-    td.ptd{height:1px;padding:0 6px;vertical-align:top;position:relative;}
-    .pill{height:100%;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:pointer;user-select:none;overflow:hidden;border-radius:14px;}
-    .pill-card{width:100%;flex:1;border-radius:14px;transition:box-shadow 0.2s,filter 0.2s;transform-origin:center center;will-change:transform;}
-    .pill:hover .pill-card{filter:brightness(0.97);}
-    .hol .pill-card{background:linear-gradient(180deg,#fdf2f8,#fce7f3);box-shadow:0 2px 8px rgba(236,72,153,0.1);}
-    .we  .pill-card{background:linear-gradient(180deg,#eff6ff,#dbeafe);box-shadow:0 2px 8px rgba(59,130,246,0.08);}
-    .pill:hover.hol .pill-card{box-shadow:0 8px 24px rgba(236,72,153,0.18);}
-    .pill:hover.we  .pill-card{box-shadow:0 8px 24px rgba(59,130,246,0.14);}
+td.ptd{height:1px;padding:0 6px;vertical-align:top;position:relative;overflow:hidden;}
+.pill{position:relative;height:100%;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:pointer;user-select:none;overflow:hidden;border-radius:14px;isolation:isolate;}
+.pill-card{position:absolute;inset:4px;border-radius:16px;transition:box-shadow 0.25s,transform 0.2s;transform-origin:center center;will-change:transform;}
+.hol .pill-card{background:linear-gradient(160deg,rgba(251,207,232,0.55) 0%,rgba(221,214,254,0.45) 50%,rgba(196,181,253,0.35) 100%);border:1.5px solid rgba(217,70,239,0.2);box-shadow:inset 0 1px 0 rgba(255,255,255,0.6),0 2px 12px rgba(217,70,239,0.1);}
+.we  .pill-card{background:linear-gradient(160deg,rgba(199,210,254,0.55) 0%,rgba(196,181,253,0.45) 50%,rgba(167,139,250,0.35) 100%);border:1.5px solid rgba(139,92,246,0.22);box-shadow:inset 0 1px 0 rgba(255,255,255,0.6),0 2px 12px rgba(139,92,246,0.12);}
+.pill:hover.hol .pill-card{box-shadow:inset 0 1px 0 rgba(255,255,255,0.7),0 0 20px rgba(217,70,239,0.2),0 0 40px rgba(168,85,247,0.15);}
+.pill:hover.we  .pill-card{box-shadow:inset 0 1px 0 rgba(255,255,255,0.7),0 0 20px rgba(99,102,241,0.25),0 0 40px rgba(0,155,255,0.15);}
 
     .plan-row{padding:9px 12px;margin-bottom:3px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:all 0.15s;}
     .plan-row:hover{background:linear-gradient(135deg,rgba(0,155,255,0.08),rgba(119,11,255,0.08));}
