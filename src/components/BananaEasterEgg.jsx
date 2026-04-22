@@ -372,7 +372,6 @@ function Particles({ mood, x, frame, svgH }) {
   return <>{particles}</>;
 }
 
-// ── Main BananaEasterEgg ──────────────────────────────────────
 export default function BananaEasterEgg({ readySignal = false }) {
   const [active,    setActive]    = useState(false);
   const [dayOfWeek, setDayOfWeek] = useState(null);
@@ -381,21 +380,35 @@ export default function BananaEasterEgg({ readySignal = false }) {
   const rafRef       = useRef();
   const startRef     = useRef();
   const frameTickRef = useRef();
+  const eligibleDowRef = useRef(null); // 存 dow，避免异步 state 读不到
+  const firedRef       = useRef(false); // 防止重复触发
   const DURATION = 4800;
 
- useEffect(() => {
-    if (!readySignal) return;
-
+  // 第一步：mount 时只检查资格，不启动计时器
+  useEffect(() => {
     const today = new Date();
     const dow   = today.getDay();
     if (!BANANA_DAYS.includes(dow)) return;
+    const sessionKey = `banana-shown-${today.toDateString()}`;
+    if (sessionStorage.getItem(sessionKey)) return;
+    // 有资格，把 dow 存进 ref 和 state
+    eligibleDowRef.current = dow;
+    setDayOfWeek(dow);
+  }, []); // 只跑一次
 
+  // 第二步：等 readySignal 变 true 再启动 16 秒倒计时
+  useEffect(() => {
+    if (!readySignal) return;
+    if (eligibleDowRef.current === null) return; // 今天不是指定日或已看过
+    if (firedRef.current) return; // 已经触发过了
+
+    const today = new Date();
     const sessionKey = `banana-shown-${today.toDateString()}`;
     if (sessionStorage.getItem(sessionKey)) return;
 
-    setDayOfWeek(dow);
-    // Wait 16s after tips close — enough for birthday overlay (12s) to have also finished
     const t = setTimeout(() => {
+      if (firedRef.current) return;
+      firedRef.current = true;
       sessionStorage.setItem(sessionKey, '1');
       setActive(true);
     }, 16000);
