@@ -180,6 +180,14 @@ export default function App() {
   const [isMobile,        setIsMobile]        = useState(() => window.matchMedia('(max-width: 768px)').matches);
   const [hoveredPill,     setHoveredPill]     = useState(null);
   const [birthdayDone,    setBirthdayDone]    = useState(false);
+  const [celebrateTarget, setCelebrateTarget] = useState(null);
+  const [celebratePrompt, setCelebratePrompt] = useState(false);
+  const [crownedId,       setCrownedId]       = useState(null);
+  const [splatId,         setSplatId]         = useState(null);
+  const [bdayToast,       setBdayToast]       = useState(null);
+  const [bdayToastOut,    setBdayToastOut]    = useState(false);
+  const [staffTitles,     setStaffTitles]     = useState({});
+  const celebratePromptTimer = useRef(null);
   const dailyTips = useRef(getDailyTips());
 
   const { activeBreach, chargingState, registerClick: registerBreachClick } = useDimensionalBreach();
@@ -312,14 +320,19 @@ export default function App() {
       let token;
       try { const r = await msalInstance.acquireTokenSilent({scopes:['User.ReadBasic.All'],account}); token=r.accessToken; }
       catch { try { const r = await msalInstance.acquireTokenPopup({scopes:['User.ReadBasic.All'],account}); token=r.accessToken; } catch(e){return;} }
-      const photos={};
+      const photos={}, titles={};
       await Promise.all(RAW_STAFF_LIST.map(async s => {
         try {
-          const r = await fetch(`https://graph.microsoft.com/v1.0/users/${s.email}/photo/$value`,{headers:{Authorization:`Bearer ${token}`}});
-          if (r.ok) photos[s.id]=URL.createObjectURL(await r.blob());
+          const [photoRes, profileRes] = await Promise.all([
+            fetch(`https://graph.microsoft.com/v1.0/users/${s.email}/photo/$value`,{headers:{Authorization:`Bearer ${token}`}}),
+            fetch(`https://graph.microsoft.com/v1.0/users/${s.email}?$select=jobTitle`,{headers:{Authorization:`Bearer ${token}`}}),
+          ]);
+          if (photoRes.ok) photos[s.id]=URL.createObjectURL(await photoRes.blob());
+          if (profileRes.ok){ const d=await profileRes.json(); if(d.jobTitle) titles[s.id]=d.jobTitle; }
         } catch {}
       }));
       setStaffPhotos(photos);
+      setStaffTitles(titles);
     })();
   }, [account]);
 
@@ -359,6 +372,19 @@ export default function App() {
       })
       .on('broadcast',{event:'pill-click'},({payload})=>{
         registerBreachClick(payload.key, payload.userId, null);
+      })
+      .on('broadcast',{event:'birthday-cake'},({payload})=>{
+        if (payload.throwerId !== meStaffLocal?.id) {
+          setCrownedId(payload.birthdayId);
+          setTimeout(()=>setCrownedId(null),4000);
+          setSplatId(payload.birthdayId);
+          setTimeout(()=>setSplatId(null),800);
+        }
+        const thrower=payload.throwerName||'Someone';
+        const bdayFirst=payload.birthdayName?.split(' ')[0]||'them';
+        setBdayToast({text:`🎂 ${thrower} threw a cake at ${bdayFirst}!`});
+        setBdayToastOut(false);
+        setTimeout(()=>{setBdayToastOut(true);setTimeout(()=>setBdayToast(null),400);},4000);
       })
       .subscribe(async status=>{
         if (status==='SUBSCRIBED')
@@ -670,6 +696,38 @@ export default function App() {
       headerRef.current.scrollLeft=scrollRef.current.scrollLeft;
   };
 
+  const handleCelebrate = (person) => {
+    if (!person) return;
+    setBirthdayDone(true);
+    setCelebrateTarget(person);
+    setTimeout(()=>{
+      const rowEl=document.getElementById(`bday-row-${person.id}`);
+      if (rowEl) rowEl.scrollIntoView({behavior:'smooth',block:'center'});
+      setTimeout(()=>{
+        setCelebratePrompt(true);
+        clearTimeout(celebratePromptTimer.current);
+        celebratePromptTimer.current=setTimeout(()=>setCelebratePrompt(false),8000);
+      },500);
+    },150);
+  };
+
+  const handleBirthdayAvatarClick = (person) => {
+    setCelebratePrompt(false);
+    clearTimeout(celebratePromptTimer.current);
+    setSplatId(person.id); setTimeout(()=>setSplatId(null),800);
+    setCrownedId(person.id); setTimeout(()=>setCrownedId(null),4000);
+    firePartyLocal('birthday','🎂',1);
+    glowLevelRef.current=Math.min(glowLevelRef.current+0.8,1);
+    const bdayFirst=person.name.split(' ')[0];
+    setBdayToast({text:`🎂 You threw a cake at ${bdayFirst}!`});
+    setBdayToastOut(false);
+    setTimeout(()=>{setBdayToastOut(true);setTimeout(()=>setBdayToast(null),400);},4000);
+    presenceRef.current?.send({
+      type:'broadcast',event:'birthday-cake',
+      payload:{birthdayId:person.id,birthdayName:person.name,throwerId:meStaff?.id,throwerName:meStaff?.name||account.name},
+    });
+  };
+
   const today    = fmt(new Date());
   const staffList = STAFF_LIST.filter(s=>s.region===region);
 
@@ -715,14 +773,54 @@ export default function App() {
   const hasBirthdayToday = RAW_STAFF_LIST.some(s => s.birthday === todayMMDD);
   return (
     <>
-      <div style={{minHeight:'100vh',background:'#F0F4FF'}} onMouseUp={handleStatusCellMouseUp} onTouchEnd={handleStatusCellTouchEnd}>
+      <div style={{minHeight:'100vh',background:'transparent',position:'relative',zIndex:3}} onMouseUp={handleStatusCellMouseUp} onTouchEnd={handleStatusCellTouchEnd}>
         <GlobalStyles/>
+        {/* Aurora */}
+        <div className="aurora-wrap">
+          <div className="aurora-1"/><div className="aurora-2"/><div className="aurora-3"/>
+        </div>
+        {/* Starfield */}
+        <div className="starfield" aria-hidden="true">
+          {Array.from({length:90}).map((_,i)=>{
+            const sx=(i*73+17)%100, sy=(i*47+11)%100;
+            const sz=i%5===0?2:1;
+            const col=i%7===0?'rgba(255,240,180,0.7)':'rgba(255,255,255,0.6)';
+            const dur=2+((i*31)%30)/10;
+            return <div key={i} style={{position:'absolute',left:`${sx}%`,top:`${sy}%`,width:sz,height:sz,borderRadius:'50%',background:col,animation:`starTwinkle ${dur}s ${((i*17)%20)/10}s ease-in-out infinite`}}/>;
+          })}
+          <style>{`@keyframes starTwinkle{0%,100%{opacity:0.25}50%{opacity:1}}`}</style>
+        </div>
         <div ref={glowFrameRef} className="glow-frame"/>
         <BirthdayOverlay
           currentUserEmail={account?.username}
           isBusy={showTips}
           onClose={() => setBirthdayDone(true)}
+          onCelebrate={handleCelebrate}
         />
+
+        {/* Floating cake prompt */}
+        {celebratePrompt && celebrateTarget && (() => {
+          const avEl=document.getElementById(`av-${celebrateTarget.id}`);
+          if (!avEl) return null;
+          const r=avEl.getBoundingClientRect();
+          return (
+            <div style={{position:'fixed',left:r.left+r.width/2,top:r.top-16,zIndex:13200,transform:'translateX(-50%) translateY(-100%)',animation:'cakePromptIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both',pointerEvents:'none'}}>
+              <div style={{background:'linear-gradient(135deg,#1e1b4b,#0f172a)',border:'1.5px solid rgba(167,139,250,0.5)',borderRadius:12,padding:'8px 14px',display:'flex',alignItems:'center',gap:8,boxShadow:'0 8px 32px rgba(119,11,255,0.4)',fontFamily:"'Plus Jakarta Sans',sans-serif",whiteSpace:'nowrap',animation:'cakePromptPulse 1.6s ease-in-out infinite'}}>
+                <span style={{fontSize:18}}>🎂</span>
+                <span style={{fontSize:13,fontWeight:700,color:'#fff'}}>Click to throw a cake!</span>
+              </div>
+              <div style={{textAlign:'center',marginTop:4,fontSize:20,lineHeight:1,animation:'cakePromptArrow 0.8s ease-in-out infinite',display:'block'}}>👇</div>
+            </div>
+          );
+        })()}
+
+        {/* Bday toast */}
+        {bdayToast && (
+          <div className={`bday-toast${bdayToastOut?' out':' in'}`}>
+            <span style={{fontSize:22}}>🎂</span>
+            <span style={{fontSize:13,fontWeight:600,color:'#fff',lineHeight:1.4}}>{bdayToast.text}</span>
+          </div>
+        )}
         <BananaEasterEgg
           readySignal={!showTour && !showWelcome && !showTips && (!hasBirthdayToday || birthdayDone)}
         />
@@ -744,9 +842,10 @@ export default function App() {
           return (
             <div key={d.ds} style={{position:'fixed',left:x,top:VH/2,transform:'translate(-50%,-50%)',pointerEvents:'none',zIndex:200}}>
               <div key={isBouncing?`${d.ds}-b`:d.ds} className={isBouncing?'emoji-label-pop':''} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'8px'}}>
-                <span style={{fontSize:'48px',userSelect:'none',display:'inline-block',lineHeight:1,filter:'drop-shadow(0 0 4px rgba(0,155,255,0.8)) drop-shadow(0 0 8px rgba(119,11,255,0.6))'}}>
-                  {isHol?d.hol.split(' ')[0]:'🏝️'}
-                </span>
+                
+               <span className="pill-emoji-vibe" style={{fontSize:'48px',userSelect:'none',display:'inline-block',lineHeight:1,filter:'drop-shadow(0 0 4px rgba(0,155,255,0.8)) drop-shadow(0 0 8px rgba(119,11,255,0.6))'}}>
+  {isHol?d.hol.split(' ')[0]:'🏝️'}
+</span>
                 <span style={{fontSize:'10px',fontWeight:'700',color:isHol?'#be185d':'#1d4ed8',letterSpacing:'0.06em',textAlign:'center',userSelect:'none',fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
                   {isHol?holName:'WEEKEND'}
                 </span>
@@ -758,33 +857,33 @@ export default function App() {
         {/* Tips modal */}
         {showTips && currentTip && (
           <div style={{position:'fixed',inset:0,zIndex:10500,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(15,23,42,0.45)',backdropFilter:'blur(4px)',animation:'dropIn 0.2s ease'}}>
-            <div style={{background:'#fff',borderRadius:24,width:480,maxWidth:'92vw',padding:'36px 32px 30px',boxShadow:'0 24px 64px rgba(0,0,0,0.18)',position:'relative',overflow:'hidden'}}>
-              <div style={{position:'absolute',top:0,left:0,right:0,height:4,background:'linear-gradient(90deg,#009bff,#770bff)'}}/>
-              <button onClick={()=>setShowTips(false)} style={{position:'absolute',top:16,right:16,width:28,height:28,borderRadius:'50%',border:'none',background:'#f1f5f9',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:'#64748b'}} onMouseOver={e=>{e.currentTarget.style.background='#e2e8f0';}} onMouseOut={e=>{e.currentTarget.style.background='#f1f5f9';}}>✕</button>
+            <div style={{background:'rgba(13,10,35,0.95)',backdropFilter:'blur(20px)',borderRadius:24,width:480,maxWidth:'92vw',padding:'36px 32px 30px',boxShadow:'0 24px 64px rgba(0,0,0,0.5)',position:'relative',overflow:'hidden',border:'1px solid rgba(167,139,250,0.2)'}}>
+              <div style={{position:'absolute',top:0,left:0,right:0,height:3,background:'linear-gradient(90deg,#009bff,#770bff)'}}/>
+              <button onClick={()=>setShowTips(false)} style={{position:'absolute',top:16,right:16,width:28,height:28,borderRadius:'50%',border:'none',background:'rgba(255,255,255,0.08)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:'rgba(232,229,255,0.6)'}} onMouseOver={e=>{e.currentTarget.style.background='rgba(255,255,255,0.14)';}} onMouseOut={e=>{e.currentTarget.style.background='rgba(255,255,255,0.08)';}}>✕</button>
               <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:22}}>
-                <div style={{width:40,height:40,borderRadius:12,background:'linear-gradient(135deg,rgba(119,11,255,0.15),rgba(0,155,255,0.1))',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:20}}>🪐</div>
+                <div style={{width:40,height:40,borderRadius:12,background:'linear-gradient(135deg,rgba(119,11,255,0.25),rgba(0,155,255,0.18))',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:20}}>🪐</div>
                 <div>
-                  <div style={{fontSize:18,fontWeight:700,color:'#111827',letterSpacing:'-0.01em'}}>Daily Mind Huddle</div>
-                  <div style={{fontSize:12,fontWeight:500,color:'#9ca3af',marginTop:'3px'}}>{tipIdx+1} of {dailyTips.current.length} today</div>
+                  <div style={{fontSize:18,fontWeight:700,color:'#fff',letterSpacing:'-0.01em'}}>Daily Mind Huddle</div>
+                  <div style={{fontSize:12,fontWeight:500,color:'rgba(232,229,255,0.45)',marginTop:'3px'}}>{tipIdx+1} of {dailyTips.current.length} today</div>
                 </div>
               </div>
               <div key={tipIdx} className={tipVisible?tipSlideClass:''} style={{minHeight:120,marginBottom:24}}>
-                <div style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 10px',borderRadius:'100px',background:'linear-gradient(135deg,rgba(0,155,255,0.08),rgba(119,11,255,0.08))',border:'1px solid rgba(119,11,255,0.12)',marginBottom:12}}>
+                <div style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 10px',borderRadius:'100px',background:'linear-gradient(135deg,rgba(0,155,255,0.12),rgba(119,11,255,0.12))',border:'1px solid rgba(119,11,255,0.25)',marginBottom:12}}>
                   <span style={{fontSize:15}}>{currentTip.icon}</span>
-                  <span style={{fontSize:12,fontWeight:700,color:'#5b21b6',letterSpacing:'0.04em'}}>{currentTip.category}</span>
+                  <span style={{fontSize:12,fontWeight:700,color:'#c4b5fd',letterSpacing:'0.04em'}}>{currentTip.category}</span>
                 </div>
-                <p style={{fontSize:17,lineHeight:1.7,color:'#334155',fontWeight:400,margin:0}}>{currentTip.text}</p>
+                <p style={{fontSize:17,lineHeight:1.7,color:'rgba(232,229,255,0.82)',fontWeight:400,margin:0}}>{currentTip.text}</p>
               </div>
               <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                <button onClick={()=>navigateTip('prev')} style={{width:36,height:36,borderRadius:10,border:'1.5px solid #e5e7eb',background:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,color:'#6b7280'}} onMouseOver={e=>{e.currentTarget.style.borderColor='#009bff';e.currentTarget.style.color='#009bff';}} onMouseOut={e=>{e.currentTarget.style.borderColor='#e5e7eb';e.currentTarget.style.color='#6b7280';}}>‹</button>
+                <button onClick={()=>navigateTip('prev')} style={{width:36,height:36,borderRadius:10,border:'1.5px solid rgba(167,139,250,0.2)',background:'rgba(255,255,255,0.05)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,color:'rgba(232,229,255,0.5)'}} onMouseOver={e=>{e.currentTarget.style.borderColor='#009bff';e.currentTarget.style.color='#009bff';}} onMouseOut={e=>{e.currentTarget.style.borderColor='rgba(167,139,250,0.2)';e.currentTarget.style.color='rgba(232,229,255,0.5)';}}>‹</button>
                 <div style={{display:'flex',gap:6,alignItems:'center'}}>
                   {dailyTips.current.map((_,i)=>(
                     <div key={i} onClick={()=>{setTipSlideClass(i>tipIdx?'tip-slide-in-right':'tip-slide-in-left');setTipVisible(false);setTimeout(()=>{setTipIdx(i);setTipVisible(true);},50);}}
-                      style={{width:i===tipIdx?20:8,height:8,borderRadius:4,cursor:'pointer',transition:'all 0.3s',background:i===tipIdx?'linear-gradient(90deg,#009bff,#770bff)':'#e5e7eb'}}
+                      style={{width:i===tipIdx?20:8,height:8,borderRadius:4,cursor:'pointer',transition:'all 0.3s',background:i===tipIdx?'linear-gradient(90deg,#009bff,#770bff)':'rgba(167,139,250,0.2)'}}
                     />
                   ))}
                 </div>
-                <button onClick={()=>navigateTip('next')} style={{width:36,height:36,borderRadius:10,border:'1.5px solid #e5e7eb',background:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,color:'#6b7280'}} onMouseOver={e=>{e.currentTarget.style.borderColor='#770bff';e.currentTarget.style.color='#770bff';}} onMouseOut={e=>{e.currentTarget.style.borderColor='#e5e7eb';e.currentTarget.style.color='#6b7280';}}>›</button>
+                <button onClick={()=>navigateTip('next')} style={{width:36,height:36,borderRadius:10,border:'1.5px solid rgba(167,139,250,0.2)',background:'rgba(255,255,255,0.05)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,color:'rgba(232,229,255,0.5)'}} onMouseOver={e=>{e.currentTarget.style.borderColor='#770bff';e.currentTarget.style.color='#770bff';}} onMouseOut={e=>{e.currentTarget.style.borderColor='rgba(167,139,250,0.2)';e.currentTarget.style.color='rgba(232,229,255,0.5)';}}>›</button>
               </div>
             </div>
           </div>
@@ -797,8 +896,8 @@ export default function App() {
           <div style={{position:'relative'}}>
             <div className={`nav-tab${activeTab==='planner'?' active':''}`} onClick={()=>setActiveTab(activeTab==='planner'?'calendar':'planner')}>Holiday Planner</div>
             {activeTab==='planner'&&(
-              <div className="dsz" style={{position:'absolute',top:'calc(100% + 4px)',left:0,zIndex:10020,background:'#fff',borderRadius:16,width:320,padding:16,boxShadow:'0 16px 48px rgba(0,0,0,0.12)',border:'1px solid rgba(226,232,240,0.8)',animation:'dropIn 0.18s ease'}} onClick={e=>e.stopPropagation()}>
-                <div style={{fontSize:'10px',fontWeight:'700',color:'#9ca3af',letterSpacing:'0.1em',marginBottom:'10px',padding:'0 4px'}}>{region.toUpperCase()} PUBLIC HOLIDAYS 2026</div>
+              <div className="dsz" style={{position:'absolute',top:'calc(100% + 4px)',left:0,zIndex:10020,background:'rgba(13,10,35,0.96)',backdropFilter:'blur(20px)',borderRadius:16,width:320,padding:16,boxShadow:'0 16px 48px rgba(0,0,0,0.5)',border:'1px solid rgba(167,139,250,0.2)',animation:'dropIn 0.18s ease'}} onClick={e=>e.stopPropagation()}>
+                <div style={{fontSize:'10px',fontWeight:'700',color:'rgba(232,229,255,0.45)',letterSpacing:'0.1em',marginBottom:'10px',padding:'0 4px'}}>{region.toUpperCase()} PUBLIC HOLIDAYS 2026</div>
                 <div style={{maxHeight:'360px',overflowY:'auto',display:'flex',flexDirection:'column',gap:'2px'}}>
                   {plannerList().map(h=>(
                     <div key={h.date} className="plan-row" onClick={()=>jumpToDate(h.date)}>
@@ -810,11 +909,57 @@ export default function App() {
               </div>
             )}
           </div>
+          {hasBirthdayToday && !birthdayDone && (
+            <div className="bday-nav-chip">🎂 <span>Celebrate — throw a cake!</span></div>
+          )}
           <div className="nav-sep"/>
           <div className="nav-right">
             {saveStatus==='saving'&&<span className="save-txt">↻ Saving</span>}
             {saveStatus==='saved' &&<span className="save-ok">✓ Saved</span>}
-            <button className="bulb-btn" onClick={()=>{setTipIdx(0);setShowTips(true);}} title="Daily Mind Huddle"/>
+            {/* ── Mind Hub 三按钮 ── */}
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+
+              {/* ✨ Team updates */}
+              <button
+                onClick={()=>{setTipIdx(0);setShowTips(true);}}
+                title="Team week at a glance"
+                style={{position:'relative',width:48,height:48,borderRadius:16,border:'1.5px solid rgba(167,139,250,0.3)',background:'rgba(255,255,255,0.06)',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s'}}
+                onMouseOver={e=>e.currentTarget.style.background='rgba(167,139,250,0.15)'}
+                onMouseOut={e=>e.currentTarget.style.background='rgba(255,255,255,0.06)'}
+                className="mh-btn-sparkle"
+              >
+                <span style={{fontSize:20,lineHeight:1}}>✨</span>
+                <div style={{position:'absolute',top:-6,right:-6,minWidth:18,height:18,borderRadius:9,background:'linear-gradient(135deg,#009bff,#770bff)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:800,color:'#fff',padding:'0 4px'}}>2</div>
+              </button>
+
+              {/* 🎂 Birthday */}
+              <button
+                onClick={()=>{}}
+                title="Birthday"
+                style={{position:'relative',width:48,height:48,borderRadius:16,border:'1.5px solid rgba(255,183,0,0.35)',background:'rgba(255,183,0,0.08)',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s'}}
+                onMouseOver={e=>e.currentTarget.style.background='rgba(255,183,0,0.18)'}
+                onMouseOut={e=>e.currentTarget.style.background='rgba(255,183,0,0.08)'}
+                className="mh-btn-cake"
+              >
+                <span style={{fontSize:22,lineHeight:1,display:'inline-block',animation:'cakeWobble 2s ease-in-out infinite'}}>🎂</span>
+                {hasBirthdayToday && <div style={{position:'absolute',top:-6,right:-6,minWidth:18,height:18,borderRadius:9,background:'linear-gradient(135deg,#ff8fb0,#e63946)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:800,color:'#fff',padding:'0 4px'}}>1</div>}
+              </button>
+
+              {/* 🪐 Tips / Mind Huddle */}
+              <button
+                onClick={()=>{setTipIdx(0);setShowTips(true);}}
+                title="Daily Mind Huddle"
+                style={{position:'relative',width:48,height:48,borderRadius:16,border:'1.5px solid rgba(167,139,250,0.45)',background:'linear-gradient(135deg,#2d1b69,#1e1b4b)',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s',overflow:'visible'}}
+                onMouseOver={e=>e.currentTarget.style.border='1.5px solid rgba(196,181,253,0.7)'}
+                onMouseOut={e=>e.currentTarget.style.border='1.5px solid rgba(167,139,250,0.45)'}
+                className="mh-btn-planet"
+              >
+                <div style={{position:'relative',width:24,height:24,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  <div style={{width:16,height:16,borderRadius:'50%',background:'radial-gradient(circle at 35% 32%,#c4b5fd 0%,#8b5cf6 35%,#5b21b6 65%,#2e1065 100%)',boxShadow:'0 0 10px rgba(139,92,246,0.7)',position:'relative',zIndex:2}}/>
+                  <div style={{position:'absolute',width:28,height:8,borderRadius:'50%',border:'2px solid rgba(167,139,250,0.8)',background:'transparent',transform:'rotateX(72deg)',animation:'ringOrbit 2s linear infinite',boxShadow:'0 0 8px rgba(167,139,250,0.4)'}}/>
+                </div>
+              </button>
+            </div>
             <div className="online-pill">
               <div className="online-stack">
                 {onlineUsers.length === 0 ? (
@@ -876,10 +1021,10 @@ export default function App() {
 
         {/* LEGEND */}
         <div className="legend">
-          <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#fdf2f8,#fce7f3)',border:'1.5px solid #f9a8d4'}}/>Holiday</div>
-          <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#eff6ff,#dbeafe)',border:'1.5px solid #93c5fd'}}/>Weekend</div>
-          <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#e8f0fe,#ede8fe)'}}/>My days</div>
-          <div className="leg-item"><div className="leg-dot" style={{background:'#fafafa',border:'1.5px solid #f3f4f6'}}/>Team days</div>
+          <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#5a0a32,#3c0a3c)',border:'1.5px solid rgba(217,70,239,0.5)'}}/>Holiday</div>
+          <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#0a1e50,#140f46)',border:'1.5px solid rgba(106,199,255,0.45)'}}/>Weekend</div>
+          <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#1a1060,#2a1570)',border:'1.5px solid rgba(167,139,250,0.4)'}}/>My days</div>
+          <div className="leg-item"><div className="leg-dot" style={{background:'rgba(255,255,255,0.08)',border:'1.5px solid rgba(167,139,250,0.2)'}}/>Team days</div>
         </div>
 
         {/* MAIN TABLE / MOBILE */}
@@ -913,6 +1058,17 @@ export default function App() {
             onlineUsers={onlineUsers}
           />
         ) : (
+          <>
+          <div className="section-title">
+            <span>THIS WEEK · {(() => {
+              const mon = week.find(d=>d.editable);
+              const sun = [...week].reverse().find(d=>d.editable);
+              if (!mon||!sun) return '';
+              const fmt2 = d => new Date(d.ds).toLocaleDateString('en-US',{month:'short',day:'numeric'}).toUpperCase();
+              return `${fmt2(mon)} – ${fmt2(sun)}`;
+            })()}</span>
+            <span className="section-title-hint">Drag a cell or tap to set your status</span>
+          </div>
           <div className="tbl-outer dsz">
             <div className="tbl-card">
               <div className="tbl-hdr-sticky">
@@ -928,7 +1084,7 @@ export default function App() {
                             <div className="sonar-ring sonar-animate" style={{animationDelay:'0.4s',width:'34px',height:'34px'}}/>
                           </>
                         )}
-                        <div style={{width:'34px',height:'34px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',background:d.isToday?'linear-gradient(135deg,#009bff,#770bff)':'transparent',color:d.isToday?'#fff':'#111827',fontSize:'15px',fontWeight:'700',position:'relative',zIndex:1}}>
+                        <div style={{width:'34px',height:'34px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',background:d.isToday?'linear-gradient(135deg,#009bff,#770bff)':'transparent',color:d.isToday?'#fff':'rgba(232,229,255,0.85)',fontSize:'15px',fontWeight:'700',position:'relative',zIndex:1}}>
                           {d.num}
                         </div>
                       </div>
@@ -948,8 +1104,8 @@ export default function App() {
                       const isMe=m.email.toLowerCase()===me;
                       const isFirst=rowIdx===0;
                       return (
-                        <tr key={m.id} id={isMe?'my-row':undefined}>
-                          <td className="sticky-c" style={{background:'#fff',padding:'0 8px 0 0'}}>
+                       <tr key={m.id} id={isMe?'my-row':`bday-row-${m.id}`}>
+                          <td className="sticky-c" style={{padding:'0 8px 0 0'}}>
                             <div className="nw">
                               <div style={{display:'flex',alignItems:'center',gap:'10px',position:'relative',cursor:isMe?'pointer':'default'}} onClick={()=>{ if (!isMe) return; setSocialMenu(socialMenu===m.id?null:m.id); }}>
                                 <div
@@ -959,13 +1115,17 @@ export default function App() {
                                   style={{position:'relative'}}
                                   onMouseEnter={e=>{ if (!isMe) e.currentTarget.style.transform='scale(1.1)'; }}
                                   onMouseLeave={e=>{ if (!isMe) e.currentTarget.style.transform='scale(1)'; }}
+                                  onClick={e=>{ if (isMe) return; if (celebrateTarget?.id===m.id && celebratePrompt){e.stopPropagation();handleBirthdayAvatarClick(m);} }}
                                 >
                                   <Avatar name={m.name} photoUrl={staffPhotos[m.id]} size={60} isMe={isMe}/>
                                   {emotions[m.id]&&<div className="emo-tag">{emotions[m.id]}</div>}
+                                  {crownedId===m.id&&<div className="bday-crown">👑</div>}
+                                  {splatId===m.id&&<div className="bday-splat">🎂</div>}
                                 </div>
                                 <div>
                                   <div className={`n-name${isMe?' me':''}`}>{m.name}</div>
                                   {isMe&&<div className="n-you">YOU</div>}
+                                  {staffTitles[m.id]&&<div className="n-title">{staffTitles[m.id]}</div>}
                                 </div>
                                 {isMe&&socialMenu===m.id&&(
                                   <div className="emo-picker dsz">
@@ -1096,6 +1256,7 @@ export default function App() {
               </div>
             </div>
           </div>
+          </>
         )}
 
         <DimensionalBreachOverlay breach={activeBreach} chargingState={chargingState} />
