@@ -32,7 +32,7 @@ const isSuperUser  = em => SUPER_USERS.includes(em.toLowerCase());
 const isChinaExtra = em => CHINA_EXTRA.includes(em.toLowerCase());
 const getStaffEntry = em => RAW_STAFF_LIST.find(s => s.email.toLowerCase() === em.toLowerCase());
 
-const ROW_H  = 110;
+const ROW_H  = 140;
 const NAV_H  = 72;
 const TB_H   = 56;
 const LG_H   = 40;
