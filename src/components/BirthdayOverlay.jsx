@@ -556,14 +556,24 @@ export function BirthdaySceneInline({ staffId }) {
 }
 
 // ── Main export ────────────────────────────────────────────────
-export default function BirthdayOverlay({ currentUserEmail, isBusy, onClose, onCelebrate }) {
+export default function BirthdayOverlay({ currentUserEmail, isBusy, onClose, onCelebrate, _forceStaffId }) {
   const [birthdayPerson, setBirthdayPerson] = useState(null);
   const [theme,          setTheme]          = useState(null);
   const [visible,        setVisible]        = useState(false);
   const [closing,        setClosing]        = useState(false);
-  const frame = usePixelTick(8, visible);
+  const isInline = !!_forceStaffId;
+  const frame = usePixelTick(8, visible || isInline);
 
   useEffect(() => {
+    if (isInline) {
+      const match = RAW_STAFF_LIST.find(s => s.id === _forceStaffId);
+      if (match) {
+        setTheme(pickTheme(match.id));
+        setBirthdayPerson(match);
+        setVisible(true);
+      }
+      return;
+    }
     if (!currentUserEmail) return;
     if (isBusy) return;
     const sessionKey = 'bday-shown-session';
@@ -591,8 +601,17 @@ export default function BirthdayOverlay({ currentUserEmail, isBusy, onClose, onC
     setTimeout(() => { setVisible(false); setClosing(false); setBirthdayPerson(null); onClose?.(); }, 400);
   };
 
-  if (!visible || !birthdayPerson || !theme) return null;
+ if (!visible || !birthdayPerson || !theme) return null;
   const Scene = theme.scene;
+
+  if (isInline) {
+    return (
+      <div style={{width:'100%',height:'100%',background:theme.bg,overflow:'hidden'}}>
+        <Scene frame={frame}/>
+      </div>
+    );
+  }
+
   const isMe = birthdayPerson.email.toLowerCase() === currentUserEmail?.toLowerCase();
   const firstName = birthdayPerson.name.split(' ')[0];
 

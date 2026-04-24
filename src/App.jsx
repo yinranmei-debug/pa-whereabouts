@@ -6,7 +6,7 @@ import RAW_STAFF_LIST from './data/staff.json';
 import STATUS_CONFIG from './data/status.json';
 import TIPS_DATA from './data/tips.json';
 import { createClient } from '@supabase/supabase-js';
-import BirthdayOverlay, { BirthdaySceneInline } from './components/BirthdayOverlay';
+import BirthdayOverlay from './components/BirthdayOverlay';
 import GlobalStyles       from './components/GlobalStyles';
 import Avatar             from './components/Avatar';
 import LoginScreen        from './components/LoginScreen';
@@ -970,8 +970,14 @@ export default function App() {
                 <span style={{fontSize:15,fontWeight:700,color:'#fff'}}>🎂 Happy Birthday, {bdayPerson.name.split(' ')[0]}</span>
                 <button onClick={()=>setShowBdayPanel(false)} style={{width:28,height:28,borderRadius:'50%',border:'none',background:'rgba(255,255,255,0.08)',cursor:'pointer',color:'rgba(232,229,255,0.6)',fontSize:13,display:'flex',alignItems:'center',justifyContent:'center'}} onMouseOver={e=>e.currentTarget.style.background='rgba(255,255,255,0.14)'} onMouseOut={e=>e.currentTarget.style.background='rgba(255,255,255,0.08)'}>✕</button>
               </div>
-             <div style={{aspectRatio:'3/2',position:'relative',overflow:'hidden'}}>
-                <BirthdaySceneInline staffId={RAW_STAFF_LIST.find(s=>s.birthday===todayMMDD)?.id||'yinran'}/>
+             <div style={{aspectRatio:'3/2',position:'relative',overflow:'hidden',background:'#0a0514'}}>
+                <BirthdayOverlay
+                  _forceStaffId={RAW_STAFF_LIST.find(s=>s.birthday===todayMMDD)?.id||'yinran'}
+                  currentUserEmail={null}
+                  isBusy={false}
+                  onClose={()=>{}}
+                  onCelebrate={()=>{}}
+                />
               </div>
               <div style={{padding:'12px 20px 16px',textAlign:'center'}}>
                 <button onClick={()=>{setShowBdayPanel(false);handleCelebrate(RAW_STAFF_LIST.find(s=>s.birthday===todayMMDD));}} style={{background:'linear-gradient(90deg,#009bff,#770bff)',border:'none',borderRadius:100,padding:'8px 24px',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:"'Plus Jakarta Sans',sans-serif",boxShadow:'0 4px 16px rgba(119,11,255,0.35)'}}>
