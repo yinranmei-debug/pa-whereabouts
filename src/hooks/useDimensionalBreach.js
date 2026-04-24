@@ -11,9 +11,9 @@ const T_EXPLODE = 5000;
 const T_IMPLODE = 1000;
 const T_FLOATING = 500;
 
-const DECAY_PER_SEC = 100 / 2;   // 2秒就清空，之前4秒
-const PROGRESS_PER_CLICK_BASE = 3.5; // 需要~29下，之前~14下
-const MAX_COOP_BOOST = 1.8;
+const DECAY_PER_SEC = 100 / 3;
+const PROGRESS_PER_CLICK_BASE = 5;
+const MAX_COOP_BOOST = 2;
 
 const GLOBAL_KEY = '__global__';
 
