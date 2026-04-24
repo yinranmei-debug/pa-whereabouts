@@ -3,7 +3,7 @@ import React from 'react';
 const NAV_H  = 72;
 const TB_H   = 56;
 const LG_H   = 40;
-const ROW_H  = 110;
+const ROW_H  = 140;
 const HEADER_STICKY_TOP = NAV_H + TB_H + LG_H;
 
 const GlobalStyles = () => (
@@ -134,8 +134,8 @@ const GlobalStyles = () => (
       50%{filter:drop-shadow(0 0 14px rgba(119,11,255,0.9)) drop-shadow(0 0 28px rgba(0,155,255,0.5));}
     }
     @keyframes ringOrbit{
-      from{transform:rotateX(72deg) rotateZ(0deg);}
-      to{transform:rotateX(72deg) rotateZ(360deg);}
+      from{transform:rotate(0deg) scaleY(0.3);}
+      to{transform:rotate(360deg) scaleY(0.3);}
     }
     .bulb-btn{
       position:relative;width:54px;height:30px;border-radius:100px;
@@ -293,13 +293,13 @@ const GlobalStyles = () => (
     }
     .sticky-c::after{content:'';position:absolute;top:0;right:-16px;bottom:0;width:16px;background:linear-gradient(to right,rgba(10,15,40,0.12),transparent);pointer-events:none;}
 
-    .nw{height:${ROW_H}px;display:flex;align-items:center;gap:12px;padding:0 10px;border-bottom:1px solid rgba(167,139,250,0.08);overflow:visible;background:rgba(255,255,255,0.97);}
+    .nw{height:${ROW_H}px;display:flex;align-items:center;gap:12px;padding:0 10px;border-bottom:1px solid rgba(167,139,250,0.08);overflow:visible;background:rgba(8,12,35,0.96);}
     tr:last-child .nw{border-bottom:none;}
-    .dw{height:${ROW_H}px;display:flex;flex-direction:column;justify-content:center;gap:7px;padding:0 6px;border-bottom:1px solid rgba(167,139,250,0.08);}
+    .dw{height:${ROW_H}px;display:flex;flex-direction:column;justify-content:center;gap:10px;padding:0 8px;border-bottom:1px solid rgba(167,139,250,0.08);}
     tr:last-child .dw{border-bottom:none;}
 
     /* ── Row hover tint (spec: rgba(167,139,250,0.08)) ── */
-    tr:hover .nw{background:rgba(240,236,255,0.98);}
+    tr:hover .nw{background:rgba(20,15,55,0.98);}
     tr:hover .dw{background:rgba(167,139,250,0.04);}
 
     /* ── Avatar ── */
@@ -322,11 +322,11 @@ const GlobalStyles = () => (
     .n-av-wrap.is-other:active{transform:scale(0.95);}
     @keyframes avatarRingSpin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
 
-    .n-name{font-size:14px;font-weight:600;color:#1e293b;transition:color 0.15s;}
-    .n-name.me{font-weight:700;color:#111827;}
+    .n-name{font-size:14px;font-weight:600;color:rgba(232,229,255,0.9);transition:color 0.15s;}
+    .n-name.me{font-weight:700;color:#fff;}
     tr:hover .n-name{background:linear-gradient(90deg,#009bff,#770bff);-webkit-background-clip:text;background-clip:text;color:transparent;}
-    .n-you{font-size:9px;font-weight:700;background:linear-gradient(90deg,#009bff,#770bff);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:0.06em;margin-top:2px;}
-    .n-title{font-size:10px;color:#9ca3af;font-weight:500;margin-top:1px;letter-spacing:0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;}
+   .n-you{font-size:9px;font-weight:700;background:linear-gradient(90deg,#009bff,#770bff);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:0.06em;margin-top:2px;display:inline-block;}
+    .n-title{font-size:10px;color:rgba(167,139,250,0.6);font-weight:500;margin-top:2px;letter-spacing:0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;}
     .emo-tag{position:absolute;bottom:-6px;right:-6px;background:#fff;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 2px 8px rgba(0,0,0,0.15);border:2px solid #fff;}
     .emo-picker{
       position:absolute;left:54px;top:4px;z-index:10050;
@@ -559,7 +559,7 @@ const GlobalStyles = () => (
     }
 /* ── Status cell glass texture ── */
     .sh{
-      height:40px;border-radius:12px;
+      height:56px;border-radius:16px;
       display:flex;flex-direction:column;align-items:center;justify-content:center;
       font-size:11px;font-weight:700;letter-spacing:0.04em;
       transition:all 0.15s;user-select:none;cursor:pointer;gap:3px;
@@ -612,12 +612,21 @@ const GlobalStyles = () => (
       0%,100%{transform:translateY(0);}
       50%{transform:translateY(-2px);}
     }
-    .mh-star-1{animation:twinkleStar 1.4s ease-in-out infinite;}
-    .mh-star-2{animation:twinkleStar 1.4s ease-in-out 0.3s infinite;}
-    .mh-star-3{animation:twinkleStar 1.4s ease-in-out 0.6s infinite;}
-    .mh-flame{animation:candleFlame 0.6s ease-in-out infinite;transform-origin:bottom center;}
-    .mh-planet-body{animation:planetFloat 2.5s ease-in-out infinite;}
-    .mh-ring{animation:ringOrbit 2s linear infinite;}
+   .mh-star-1,.mh-star-2,.mh-star-3{animation:none;}
+    .mh-flame{animation:none;transform-origin:bottom center;}
+    .mh-planet-body{animation:none;}
+    .mh-ring{animation:none;}
+
+    button:hover .mh-star-1{animation:twinkleStar 1.4s ease-in-out infinite;}
+    button:hover .mh-star-2{animation:twinkleStar 1.4s ease-in-out 0.3s infinite;}
+    button:hover .mh-star-3{animation:twinkleStar 1.4s ease-in-out 0.6s infinite;}
+    button:hover .mh-flame{animation:candleFlame 0.6s ease-in-out infinite;}
+    button:hover .mh-planet-body{animation:planetFloat 2.5s ease-in-out infinite;}
+    button:hover .mh-ring{animation:ringOrbit 2s linear infinite;}
+    .mh-ring{transform-box:fill-box;transform-origin:center;}
+    .mh-planet-body{transform-box:fill-box;transform-origin:center;}
+    .mh-star-1,.mh-star-2,.mh-star-3{transform-box:fill-box;transform-origin:center;}
+    .mh-flame{transform-box:fill-box;transform-origin:bottom center;}
     @media(max-width:768px){
       .nav,.toolbar,.legend{padding-left:12px;padding-right:12px;}
       .tbl-outer{padding:8px 8px 48px;}
