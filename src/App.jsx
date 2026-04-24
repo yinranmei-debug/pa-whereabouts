@@ -1270,7 +1270,7 @@ export default function App() {
                 <table className="main-tbl">
                   <colgroup>
                     <col style={{width:'220px'}}/>
-                    {week.map(d=><col key={d.ds}/>)}
+                    {week.map(d=><col key={d.ds} style={{width:'calc((100% - 220px) / 7)'}}/>)}
                   </colgroup>
                   <tbody>
                     {staffList.map((m,rowIdx)=>{
