@@ -2,113 +2,317 @@ import React, { useState, useEffect } from 'react';
 
 const LoginScreen = ({ onLogin, isInitializing, error }) => {
   const [show, setShow] = useState(false);
-  useEffect(() => { const t = setTimeout(() => setShow(true), 50); return () => clearTimeout(t); }, []);
+  const [stars, setStars] = useState([]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setShow(true), 50);
+    setStars(Array.from({ length: 120 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      size: Math.random() > 0.85 ? 2 : 1,
+      delay: Math.random() * 4,
+      dur: 2 + Math.random() * 3,
+      color: i % 9 === 0 ? 'rgba(255,240,180,0.9)' : 'rgba(255,255,255,0.7)',
+    })));
+    return () => clearTimeout(t);
+  }, []);
 
   return (
-    <div style={{minHeight:'100vh',width:'100%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'24px',textAlign:'center',position:'relative',overflow:'hidden',background:'#f8fafc',fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
+    <div style={{
+      minHeight: '100vh', width: '100%',
+      display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      padding: '24px', textAlign: 'center',
+      position: 'relative', overflow: 'hidden',
+      background: '#040d1a',
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
+    }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        @keyframes revealText{0%{filter:blur(15px);opacity:0;transform:translateY(20px);}100%{filter:blur(0);opacity:1;transform:translateY(0);}}
-        @keyframes shimmer{0%{background-position:-200% center;}100%{background-position:200% center;}}
-        @keyframes cloudFloat{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(30px,-20px) scale(1.1);}}
-        @keyframes glintLogin{0%{left:-100%;}100%{left:100%;}}
-        @keyframes spinSoft{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
-        .ls-orb{position:absolute;border-radius:50%;filter:blur(80px);z-index:1;animation:cloudFloat 12s ease-in-out infinite;opacity:0.35;}
-        .ls-part1{opacity:0;animation:revealText 1.2s cubic-bezier(0.23,1,0.32,1) forwards;animation-delay:0.3s;}
-        .ls-part2{opacity:0;animation:revealText 1.2s cubic-bezier(0.23,1,0.32,1) forwards,shimmer 6s linear infinite;animation-delay:0.6s,2s;background:linear-gradient(90deg,#6366f1,#a855f7,#6366f1);background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;}
-        .ls-sub{opacity:0;animation:revealText 1s cubic-bezier(0.23,1,0.32,1) forwards;animation-delay:1.2s;}
-        .ls-card{background:rgba(255,255,255,0.75);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid rgba(255,255,255,0.6);box-shadow:0 40px 100px -20px rgba(148,163,184,0.2),inset 0 0 0 1px rgba(255,255,255,0.5);}
-        .ls-btn{position:relative;overflow:hidden;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);cursor:pointer;border:none;}
-        .ls-btn::after{content:'';position:absolute;top:0;height:100%;width:60px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);transform:skewX(-20deg);left:-100%;}
-        .ls-btn:hover::after{animation:glintLogin 0.8s ease-in-out;}
-        .ls-btn:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 20px 40px rgba(99,102,241,0.25);}
-        .ls-btn:active{transform:scale(0.96);}
-        .ls-spinner{width:24px;height:24px;border:3px solid rgba(99,102,241,0.1);border-top-color:#6366f1;border-radius:50%;animation:spinSoft 0.8s linear infinite;}
+
+        @keyframes starTwinkle { 0%,100%{opacity:0.2} 50%{opacity:1} }
+        @keyframes auroraRot1 { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+        @keyframes auroraRot2 { from{transform:rotate(0deg)} to{transform:rotate(-360deg)} }
+        @keyframes auroraRot3 { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+        @keyframes fadeSlideUp {
+          0%{opacity:0;transform:translateY(32px) scale(0.97)}
+          100%{opacity:1;transform:translateY(0) scale(1)}
+        }
+        @keyframes logoShimmer {
+          0%{background-position:0% center}
+          100%{background-position:200% center}
+        }
+        @keyframes spinSoft { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+        @keyframes glintCosmo {
+          0%{left:-100%;opacity:0}
+          30%{opacity:1}
+          100%{left:120%;opacity:0}
+        }
+        @keyframes pulseGlow {
+          0%,100%{box-shadow:0 0 0 0 rgba(119,11,255,0)}
+          50%{box-shadow:0 0 24px 4px rgba(119,11,255,0.25)}
+        }
+        @keyframes orbitDot {
+          from{transform:rotate(0deg) translateX(28px) rotate(0deg)}
+          to{transform:rotate(360deg) translateX(28px) rotate(-360deg)}
+        }
+
+        .ls-aurora { position:absolute; border-radius:50%; filter:blur(80px); pointer-events:none; }
+        .ls-card-inner {
+          opacity:0;
+          animation: fadeSlideUp 0.9s cubic-bezier(0.23,1,0.32,1) forwards;
+        }
+        .ls-logo-text {
+          background: linear-gradient(90deg, #009bff 0%, #a78bfa 30%, #770bff 50%, #00e5ff 70%, #009bff 100%);
+          background-size: 200% auto;
+          -webkit-background-clip: text; background-clip: text;
+          -webkit-text-fill-color: transparent; color: transparent;
+          animation: logoShimmer 5s linear infinite;
+        }
+        .ls-btn {
+          position: relative; overflow: hidden;
+          transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+          cursor: pointer; border: none;
+        }
+        .ls-btn::before {
+          content:''; position:absolute; inset:0;
+          background: linear-gradient(135deg, rgba(0,155,255,0.15), rgba(119,11,255,0.15));
+          opacity:0; transition: opacity 0.3s;
+        }
+        .ls-btn::after {
+          content:''; position:absolute; top:0; height:100%; width:70px;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+          transform: skewX(-20deg); left:-100%; pointer-events:none;
+        }
+        .ls-btn:hover::before { opacity:1; }
+        .ls-btn:hover::after { animation: glintCosmo 0.7s ease-in-out; }
+        .ls-btn:hover { transform: translateY(-2px) scale(1.015); }
+        .ls-btn:active { transform: scale(0.96); }
+        .ls-spinner {
+          width:22px; height:22px;
+          border:2px solid rgba(167,139,250,0.2);
+          border-top-color:#a78bfa;
+          border-radius:50%;
+          animation: spinSoft 0.75s linear infinite;
+        }
+        .ls-card-wrap {
+          animation: pulseGlow 4s ease-in-out infinite;
+        }
       `}</style>
 
-      {/* video background */}
-      <video
-        autoPlay loop muted playsInline
-        style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',zIndex:0,opacity:0.35}}
-      >
+      {/* ── Video background ── */}
+      <video autoPlay loop muted playsInline style={{
+        position: 'absolute', inset: 0,
+        width: '100%', height: '100%',
+        objectFit: 'cover', zIndex: 0, opacity: 0.12,
+      }}>
         <source src="https://hr-support.pattern.com/assets/Pattern_logo_video.mp4" type="video/mp4"/>
       </video>
 
-      {/* gradient overlay */}
-      <div style={{position:'absolute',inset:0,background:'linear-gradient(to bottom,rgba(248,250,252,0.92),rgba(248,250,252,0.6),rgba(248,250,252,0.92))',zIndex:1}}/>
+      {/* ── Cosmic gradient base ── */}
+      <div style={{
+        position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none',
+        background: `
+          radial-gradient(ellipse 80% 55% at 15% 8%, rgba(0,155,255,0.32) 0%, transparent 60%),
+          radial-gradient(ellipse 70% 50% at 88% 6%, rgba(119,0,191,0.28) 0%, transparent 60%),
+          radial-gradient(ellipse 55% 45% at 85% 60%, rgba(76,195,174,0.22) 0%, transparent 55%),
+          radial-gradient(ellipse 60% 40% at 10% 80%, rgba(0,155,255,0.18) 0%, transparent 55%),
+          linear-gradient(180deg, #040d1a 0%, #071836 40%, #0a1f42 75%, #08182f 100%)
+        `,
+      }}/>
 
-      {/* soft orbs */}
-      <div className="ls-orb" style={{width:400,height:400,background:'#c7d2fe',top:-80,left:-60,animationDelay:'0s'}}/>
-      <div className="ls-orb" style={{width:320,height:320,background:'#ddd6fe',bottom:-60,right:-40,animationDelay:'-4s'}}/>
-      <div className="ls-orb" style={{width:200,height:200,background:'#e0e7ff',top:'40%',right:'10%',animationDelay:'-8s'}}/>
+      {/* ── Dot grid ── */}
+      <div style={{
+        position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none',
+        backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)',
+        backgroundSize: '24px 24px',
+        maskImage: 'linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.15) 100%)',
+      }}/>
 
-      <div style={{position:'relative',zIndex:2,width:'100%',maxWidth:900,transition:'all 1s',opacity:show?1:0,transform:show?'translateY(0)':'translateY(40px)'}}>
+      {/* ── Aurora ── */}
+      <div style={{ position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none', overflow: 'hidden', mixBlendMode: 'screen' }}>
+        <div className="ls-aurora" style={{
+          width: 700, height: 280, top: -100, left: -120, opacity: 0.55,
+          background: 'conic-gradient(from 0deg, #009bff, #7700bf, #4cc3ae, #009bff)',
+          animation: 'auroraRot1 28s linear infinite',
+        }}/>
+        <div className="ls-aurora" style={{
+          width: 560, height: 230, top: '20%', right: -130, opacity: 0.45,
+          background: 'conic-gradient(from 120deg, #7700bf, #4cc3ae, #009bff, #7700bf)',
+          animation: 'auroraRot2 34s linear infinite',
+        }}/>
+        <div className="ls-aurora" style={{
+          width: 420, height: 180, bottom: '8%', left: '20%', opacity: 0.4,
+          background: 'conic-gradient(from 240deg, #4cc3ae, #009bff, #7700bf, #4cc3ae)',
+          animation: 'auroraRot3 40s linear infinite',
+        }}/>
+      </div>
 
-        {/* slogan */}
-        <div style={{marginBottom:48}}>
-          <h1 style={{lineHeight:1.4,paddingBottom:8,overflow:'visible',fontSize:'clamp(32px,5vw,56px)',fontWeight:800,color:'#1e293b',letterSpacing:'-0.03em',margin:'0 0 8px',fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
-            <span className="ls-part1" style={{display:'inline-block',marginRight:12}}>Play the</span>
-            <span className="ls-part2" style={{display:'inline-block'}}>Long Game.</span>
+      {/* ── Starfield ── */}
+      <div style={{ position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none' }}>
+        {stars.map(s => (
+          <div key={s.id} style={{
+            position: 'absolute',
+            left: `${s.left}%`, top: `${s.top}%`,
+            width: s.size, height: s.size,
+            borderRadius: '50%', background: s.color,
+            animation: `starTwinkle ${s.dur}s ${s.delay}s ease-in-out infinite`,
+          }}/>
+        ))}
+      </div>
+
+      {/* ── Main content ── */}
+      <div style={{
+        position: 'relative', zIndex: 10,
+        width: '100%', maxWidth: 460,
+        transition: 'opacity 0.8s, transform 0.8s',
+        opacity: show ? 1 : 0,
+        transform: show ? 'translateY(0)' : 'translateY(24px)',
+      }}>
+
+        {/* Slogan above card */}
+        <div style={{ marginBottom: 36 }} className="ls-card-inner" style={{ animationDelay: '0.1s', opacity: 0 }}>
+          <div style={{
+            fontSize: 'clamp(11px,1.4vw,13px)', fontWeight: 700,
+            letterSpacing: '0.18em', color: 'rgba(167,139,250,0.7)',
+            textTransform: 'uppercase', marginBottom: 14,
+          }}>
+            Pattern Asia · Internal
+          </div>
+          <h1 style={{
+            fontSize: 'clamp(32px,5vw,52px)', fontWeight: 800,
+            letterSpacing: '-0.03em', lineHeight: 1.1,
+            margin: '0 0 12px', color: '#fff',
+          }}>
+            Know where<br/>
+            <span className="ls-logo-text">everyone is.</span>
           </h1>
-          <p className="ls-sub" style={{color:'#94a3b8',fontSize:'clamp(14px,2vw,18px)',fontWeight:500,margin:0,fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
-            Sustainable growth through mindful presence.
+          <p style={{
+            color: 'rgba(196,181,253,0.55)', fontSize: 'clamp(13px,1.8vw,15px)',
+            fontWeight: 500, margin: 0, letterSpacing: '0.01em',
+          }}>
+            Your team's weekly calendar, at a glance.
           </p>
         </div>
 
-        {/* card */}
-        <div className="ls-card" style={{width:'100%',maxWidth:480,margin:'0 auto',borderRadius:52,padding:'48px 56px',display:'flex',flexDirection:'column',alignItems:'center'}}>
+        {/* Card */}
+        <div className="ls-card-wrap" style={{
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.02) 100%)',
+          border: '1px solid rgba(167,139,250,0.18)',
+          borderRadius: 28,
+          backdropFilter: 'blur(24px) saturate(140%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(140%)',
+          padding: '40px 44px 36px',
+          boxShadow: '0 32px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)',
+        }}>
+          <div className="ls-card-inner" style={{ animationDelay: '0.35s', opacity: 0 }}>
 
-          <img
-            src="https://i.ibb.co/YTQHg15F/Pattern-Logo.png"
-            alt="Pattern"
-            style={{height:44,objectFit:'contain',opacity:0.85,marginBottom:32}}
-            onError={e=>{e.currentTarget.style.display='none';}}
-          />
-
-          <h2 style={{fontSize:20,fontWeight:700,color:'#1e293b',letterSpacing:'-0.02em',marginBottom:32,fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
-            Welcome Back
-          </h2>
-
-          {isInitializing ? (
-            <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:16,padding:'24px 0'}}>
-              <div className="ls-spinner"/>
-              <div style={{fontSize:13,fontWeight:600,color:'#94a3b8',letterSpacing:'0.04em',fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
-                Initializing session...
-              </div>
+          {/* Logo mark — pixel planet matching nav cake style */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
+              <svg width="64" height="64" viewBox="0 0 26 26" fill="none" overflow="visible">
+                <circle className="mh-planet-body" cx="13" cy="13" r="7" fill="url(#loginPlanetGrad)"/>
+                <defs>
+                  <radialGradient id="loginPlanetGrad" cx="35%" cy="32%" r="65%">
+                    <stop offset="0%" stopColor="#c4b5fd"/>
+                    <stop offset="40%" stopColor="#8b5cf6"/>
+                    <stop offset="100%" stopColor="#2e1065"/>
+                  </radialGradient>
+                </defs>
+                <ellipse className="mh-ring" cx="13" cy="13" rx="13" ry="4" fill="none" stroke="rgba(167,139,250,0.75)" strokeWidth="1.5" style={{transformOrigin:'13px 13px'}}/>
+              </svg>
             </div>
-          ) : (
-            <>
-              <button
-                onClick={onLogin}
-                className="ls-btn"
-                style={{width:'100%',height:64,background:'#0f172a',color:'#fff',borderRadius:16,fontSize:15,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:16,boxShadow:'0 8px 24px rgba(15,23,42,0.2)',fontFamily:"'Plus Jakarta Sans',sans-serif"}}
-              >
-                <svg width="20" height="20" viewBox="0 0 21 21" fill="none">
-                  <rect x="1" y="1" width="9" height="9" fill="white"/>
-                  <rect x="11" y="1" width="9" height="9" fill="white" fillOpacity="0.7"/>
-                  <rect x="1" y="11" width="9" height="9" fill="white" fillOpacity="0.7"/>
-                  <rect x="11" y="11" width="9" height="9" fill="white" fillOpacity="0.4"/>
-                </svg>
-                Sign in with Microsoft
-              </button>
-              {error && (
-                <div style={{marginTop:20,padding:'10px 16px',background:'#fef2f2',borderLeft:'4px solid #f87171',color:'#b91c1c',fontSize:13,borderRadius:'0 8px 8px 0',textAlign:'left',width:'100%',fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
-                  {error}
+
+            <div style={{
+              fontSize: 22, fontWeight: 800, color: '#fff',
+              letterSpacing: '-0.02em', marginBottom: 6,
+            }}>
+              Whereabouts
+            </div>
+            <div style={{
+              fontSize: 13, color: 'rgba(196,181,253,0.5)',
+              fontWeight: 500, marginBottom: 32,
+            }}>
+              Sign in with your Pattern account
+            </div>
+
+            {isInitializing ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, padding: '20px 0' }}>
+                <div className="ls-spinner"/>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(167,139,250,0.55)', letterSpacing: '0.06em' }}>
+                  Initializing session...
                 </div>
-              )}
-            </>
-          )}
+              </div>
+            ) : (
+              <>
+                <button
+                  onClick={onLogin}
+                  className="ls-btn"
+                  style={{
+                    width: '100%', height: 56,
+                    background: 'linear-gradient(135deg, rgba(7,24,54,0.9) 0%, rgba(13,10,35,0.95) 100%)',
+                    color: '#fff', borderRadius: 16,
+                    fontSize: 14, fontWeight: 700,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14,
+                    border: '1.5px solid rgba(167,139,250,0.3)',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    letterSpacing: '0.01em',
+                  }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 21 21" fill="none">
+                    <rect x="1" y="1" width="9" height="9" fill="white"/>
+                    <rect x="11" y="1" width="9" height="9" fill="white" fillOpacity="0.65"/>
+                    <rect x="1" y="11" width="9" height="9" fill="white" fillOpacity="0.65"/>
+                    <rect x="11" y="11" width="9" height="9" fill="white" fillOpacity="0.35"/>
+                  </svg>
+                  Sign in with Microsoft
+                </button>
 
-         <div style={{width:'100%',paddingTop:28,marginTop:32,borderTop:'1px solid #f1f5f9',display:'flex',flexDirection:'column',alignItems:'center',gap:8}}>
-            <div style={{display:'flex',alignItems:'center',gap:8}}>
-              <div style={{width:8,height:8,borderRadius:'50%',background:'#818cf8'}}/>
-              <span style={{fontSize:11,fontWeight:700,letterSpacing:'0.12em',color:'#94a3b8',textTransform:'uppercase',fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
-                Whereabouts
-              </span>
+                {error && (
+                  <div style={{
+                    marginTop: 16, padding: '10px 14px',
+                    background: 'rgba(239,68,68,0.12)',
+                    borderLeft: '3px solid rgba(239,68,68,0.6)',
+                    color: '#fca5a5', fontSize: 12,
+                    borderRadius: '0 8px 8px 0',
+                    textAlign: 'left',
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  }}>
+                    {error}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Footer */}
+            <div style={{
+              marginTop: 28, paddingTop: 24,
+              borderTop: '1px solid rgba(167,139,250,0.1)',
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', gap: 6,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                <div style={{
+                  width: 6, height: 6, borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #009bff, #770bff)',
+                  boxShadow: '0 0 6px rgba(119,11,255,0.5)',
+                }}/>
+                <span style={{
+                  fontSize: 11, fontWeight: 700, letterSpacing: '0.1em',
+                  color: 'rgba(167,139,250,0.45)', textTransform: 'uppercase',
+                }}>
+                  Pattern Asia
+                </span>
+              </div>
+              <p style={{
+                fontSize: 11, color: 'rgba(167,139,250,0.3)',
+                margin: 0, lineHeight: 1.6,
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+              }}>
+                Built by May Mei · For internal use only
+              </p>
             </div>
-            <p style={{fontSize:11,color:'#cbd5e1',margin:0,textAlign:'center',fontFamily:"'Plus Jakarta Sans',sans-serif",lineHeight:1.6}}>
-              Built by May Mei · For questions or feedback, feel free to reach out.
-            </p>
           </div>
         </div>
       </div>
