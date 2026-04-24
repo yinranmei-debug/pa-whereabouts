@@ -1,7 +1,7 @@
 [
   {
     "category": "Mind Oasis",
-    "text": "You might find it helpful to begin with whatever feels easiest right now.",
+    "text": "Starting with a small, easy task builds dopamine momentum that makes harder tasks easier.",
     "icon": "🌱"
   },
   {
@@ -15,8 +15,8 @@
     "icon": "🪑"
   },
   {
-    "category": "Zen Moment",
-    "text": "You could pause and notice how your body feels in this exact moment.",
+    "category": "Ground & Breathe",
+    "text": "A body check-in—scanning from head to toe—can catch tension before it builds.",
     "icon": "🧘"
   },
   {
@@ -36,7 +36,7 @@
   },
   {
     "category": "Inner Peace",
-    "text": "You might let yourself feel without needing to fix anything.",
+    "text": "Allowing emotions to pass without suppressing them reduces their mental load over time.",
     "icon": "💙"
   },
   {
@@ -45,9 +45,9 @@
     "icon": "📏"
   },
   {
-    "category": "Zen Moment",
-    "text": "You could watch your breath rise and fall for a few seconds.",
-    "icon": "🌊"
+    "category": "Ground & Breathe",
+    "text": "Watching your breath for 10 seconds activates the parasympathetic nervous system.",
+    "icon": "🫁"
   },
   {
     "category": "Vitality",
@@ -71,7 +71,7 @@
   },
   {
     "category": "Mind Oasis",
-    "text": "You might gently return your attention when it drifts.",
+    "text": "Each time you redirect a wandering mind, you strengthen the neural circuits for focus.",
     "icon": "🎯"
   },
   {
@@ -80,8 +80,8 @@
     "icon": "🌱"
   },
   {
-    "category": "Zen Moment",
-    "text": "You could take a moment to notice light and shadow around you.",
+    "category": "Ground & Breathe",
+    "text": "Shifting visual focus to the background can reduce eye strain and calm overstimulation.",
     "icon": "🌗"
   },
   {
@@ -106,7 +106,7 @@
   },
   {
     "category": "Inner Peace",
-    "text": "You might notice your thoughts without needing to believe them.",
+    "text": "Cognitive defusion—observing thoughts as events, not facts—is a core anxiety-reduction skill.",
     "icon": "☁️"
   },
   {
@@ -115,8 +115,8 @@
     "icon": "👀"
   },
   {
-    "category": "Zen Moment",
-    "text": "You could pause and listen to the quiet in between sounds.",
+    "category": "Ground & Breathe",
+    "text": "Tuning into background silence for 30 seconds can lower your cortisol response.",
     "icon": "🔇"
   },
   {
@@ -145,8 +145,8 @@
     "icon": "😌"
   },
   {
-    "category": "Zen Moment",
-    "text": "You could notice the rhythm of your breathing.",
+    "category": "Ground & Breathe",
+    "text": "Slow, rhythmic breathing at 5–6 breaths per minute activates your body's calm state.",
     "icon": "🌬️"
   },
   {
@@ -190,8 +190,8 @@
     "icon": "☕"
   },
   {
-    "category": "Zen Moment",
-    "text": "You could notice the feeling of your feet on the ground.",
+    "category": "Ground & Breathe",
+    "text": "Pressing your feet firmly into the floor is a grounding technique that reduces anxiety.",
     "icon": "🦶"
   },
   {
@@ -201,12 +201,12 @@
   },
   {
     "category": "Mind Oasis",
-    "text": "You might find clarity by clearing just one small space on your desk.",
+    "text": "Physical clutter competes for cognitive resources—clearing one surface frees mental bandwidth.",
     "icon": "🧹"
   },
   {
     "category": "Inner Peace",
-    "text": "It is okay to close your eyes for a moment to reset.",
+    "text": "A 60-second eyes-closed rest reduces visual cortex load and lowers mental fatigue.",
     "icon": "😌"
   },
   {
@@ -215,8 +215,8 @@
     "icon": "📉"
   },
   {
-    "category": "Zen Moment",
-    "text": "You could tune into the ambient sounds of the room for a few seconds.",
+    "category": "Ground & Breathe",
+    "text": "Passive sound awareness grounds your nervous system by anchoring you to the present.",
     "icon": "🎧"
   },
   {
@@ -245,8 +245,8 @@
     "icon": "👣"
   },
   {
-    "category": "Zen Moment",
-    "text": "You could notice the temperature of the air on your skin.",
+    "category": "Ground & Breathe",
+    "text": "Noticing physical sensations like temperature interrupts stress loops in the brain.",
     "icon": "🌡️"
   },
   {
@@ -261,7 +261,7 @@
   },
   {
     "category": "Inner Peace",
-    "text": "Allowing yourself to do nothing for a minute is a valid choice.",
+    "text": "Brief mental rest—even 60 seconds—allows your prefrontal cortex to recover and refocus.",
     "icon": "🛋️"
   },
   {
@@ -295,8 +295,8 @@
     "icon": "↔️"
   },
   {
-    "category": "Zen Moment",
-    "text": "You could notice the subtle textures of the objects right in front of you.",
+    "category": "Ground & Breathe",
+    "text": "Tactile focus—touching a surface and noticing its texture—is a proven anxiety anchor.",
     "icon": "🧶"
   },
   {
@@ -336,12 +336,12 @@
   },
   {
     "category": "Mind Oasis",
-    "text": "Noting your distractions down on paper can get them out of your head.",
+    "text": "Externalizing distractions onto paper frees working memory and reduces cognitive interference.",
     "icon": "📥"
   },
   {
-    "category": "Zen Moment",
-    "text": "You could observe how the natural light changes as the day passes.",
+    "category": "Ground & Breathe",
+    "text": "Natural light exposure during the day helps regulate your melatonin and sleep cycle.",
     "icon": "🌇"
   },
   {
@@ -370,8 +370,8 @@
     "icon": "🩸"
   },
   {
-    "category": "Zen Moment",
-    "text": "You could notice the weight of your clothes resting against your shoulders.",
+    "category": "Ground & Breathe",
+    "text": "Body weight awareness is a somatic technique that helps discharge accumulated stress.",
     "icon": "🧥"
   },
   {
@@ -390,8 +390,8 @@
     "icon": "🔄"
   },
   {
-    "category": "Zen Moment",
-    "text": "You could notice the quiet, still space at the end of a long exhale.",
+    "category": "Ground & Breathe",
+    "text": "The pause after a full exhale—called the 'rest point'—is when the body resets most deeply.",
     "icon": "🌬️"
   },
   {

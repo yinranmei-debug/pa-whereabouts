@@ -465,6 +465,10 @@ const GlobalStyles = () => (
       from{opacity:0;transform:translateX(-50%) translateY(-12px) scale(0.88);}
       to{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}
     }
+    @keyframes cakePromptFadeIn{
+      from{opacity:0;transform:translateY(-50%) translateX(-8px);}
+      to{opacity:1;transform:translateY(-50%) translateX(0);}
+    }
     @keyframes crownDrop{
       0%{opacity:0;transform:translate(-50%,-100%) scale(0.6) rotate(-15deg);}
       55%{transform:translate(-50%,-40%) scale(1.15) rotate(4deg);}
