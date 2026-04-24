@@ -332,15 +332,7 @@ const GlobalStyles = () => (
       backdrop-filter:blur(16px);
     }
 
-    /* ── Status cells ── */
-    .sh{height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;transition:all 0.15s;user-select:none;border:none;cursor:pointer;gap:4px;}
-    .sh-icon{font-size:18px;line-height:1;flex-shrink:0;}
-    .sh.mine{background:linear-gradient(135deg,rgba(238,242,255,0.9),rgba(245,243,255,0.9));color:#6b7280;border:1px solid rgba(199,210,254,0.6);}
-    .sh.mine:hover{background:linear-gradient(135deg,#dde5fe,#ede9fe);box-shadow:0 4px 12px rgba(119,11,255,0.1);transform:scale(1.02);}
-    .sh.set{cursor:grab;}
-    .sh.set:active{cursor:grabbing;}
-    .sh.set:hover{filter:brightness(1.08);transform:scale(1.01);}
-    .sh.other{background:rgba(255,255,255,0.06);color:rgba(167,139,250,0.3);border:1px solid rgba(167,139,250,0.1);cursor:default;}
+  
     .s-drop{
       position:absolute;top:46px;left:0;z-index:10001;
       background:rgba(13,10,35,0.96);
