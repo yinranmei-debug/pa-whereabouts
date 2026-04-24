@@ -836,12 +836,12 @@ export default function App() {
           if (!avEl) return null;
           const r=avEl.getBoundingClientRect();
           return (
-            <div style={{position:'fixed',left:r.left+r.width/2,top:r.top-16,zIndex:13200,transform:'translateX(-50%) translateY(-100%)',animation:'cakePromptIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both',pointerEvents:'none'}}>
+           <div style={{position:'fixed',left:r.right+12,top:r.top+r.height/2,zIndex:13200,transform:'translateY(-50%)',animation:'cakePromptIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both',pointerEvents:'none'}}>
               <div style={{background:'linear-gradient(135deg,#1e1b4b,#0f172a)',border:'1.5px solid rgba(167,139,250,0.5)',borderRadius:12,padding:'8px 14px',display:'flex',alignItems:'center',gap:8,boxShadow:'0 8px 32px rgba(119,11,255,0.4)',fontFamily:"'Plus Jakarta Sans',sans-serif",whiteSpace:'nowrap',animation:'cakePromptPulse 1.6s ease-in-out infinite'}}>
                 <span style={{fontSize:18}}>🎂</span>
                 <span style={{fontSize:13,fontWeight:700,color:'#fff'}}>Click to throw a cake!</span>
               </div>
-              <div style={{textAlign:'center',marginTop:4,fontSize:20,lineHeight:1,animation:'cakePromptArrow 0.8s ease-in-out infinite',display:'block'}}>👇</div>
+             <div style={{position:'absolute',left:-20,top:'50%',transform:'translateY(-50%)',fontSize:20,lineHeight:1,animation:'cakePromptArrow 0.8s ease-in-out infinite'}}>👈</div>
             </div>
           );
         })()}
