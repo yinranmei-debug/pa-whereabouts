@@ -903,6 +903,8 @@ export default function App() {
                   const emoji = newUpdate.toLowerCase().includes('birthday')?'🎂':newUpdate.toLowerCase().includes('holiday')||newUpdate.toLowerCase().includes('leave')?'🌴':newUpdate.toLowerCase().includes('office')?'🏢':'📌';
                   await supabase.from('week_updates').insert({week_start:weekStart,emoji,title:newUpdate.trim(),body:'',author_id:meStaff?.id||'guest'});
                   setNewUpdate('');
+                  const {data:fresh} = await supabase.from('week_updates').select('*').eq('week_start',weekStart).order('created_at',{ascending:true});
+                  if(fresh){setWeeklyUpdates(fresh);setWeeklyUpdatesCount(fresh.length);}
                 }}}
                 placeholder="Add an update — e.g. Brett visits office"
                 style={{flex:1,height:38,borderRadius:10,border:'1px solid rgba(167,139,250,0.2)',background:'rgba(255,255,255,0.05)',color:'#fff',fontSize:13,padding:'0 12px',outline:'none',fontFamily:"'Plus Jakarta Sans',sans-serif"}}
@@ -913,6 +915,8 @@ export default function App() {
                   const emoji = newUpdate.toLowerCase().includes('birthday')?'🎂':newUpdate.toLowerCase().includes('holiday')||newUpdate.toLowerCase().includes('leave')?'🌴':newUpdate.toLowerCase().includes('office')?'🏢':'📌';
                   await supabase.from('week_updates').insert({week_start:weekStart,emoji,title:newUpdate.trim(),body:'',author_id:meStaff?.id||'guest'});
                   setNewUpdate('');
+                  const {data:fresh} = await supabase.from('week_updates').select('*').eq('week_start',weekStart).order('created_at',{ascending:true});
+                  if(fresh){setWeeklyUpdates(fresh);setWeeklyUpdatesCount(fresh.length);}
                 }}
                 style={{height:38,padding:'0 16px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#009bff,#770bff)',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer'}}
               >ADD</button>
@@ -928,7 +932,7 @@ export default function App() {
                     <div style={{width:36,height:36,borderRadius:10,background:'linear-gradient(135deg,rgba(255,143,176,0.3),rgba(255,183,0,0.3))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>🎂</div>
                     <div>
                       <div style={{fontSize:13,fontWeight:700,color:'#fff',marginBottom:2}}>{bday.name.split(' ')[0]}'s birthday {d.isToday?'is today':'this week'}</div>
-                      <div style={{fontSize:12,color:'rgba(232,229,255,0.5)'}}>Say hi or tap Celebrate to send a cake.</div>
+                      <div style={{fontSize:12,color:'rgba(232,229,255,0.5)'}}>Feel free to drop a big happy birthday! 🎂</div>
                     </div>
                   </div>
                 );
@@ -952,7 +956,10 @@ export default function App() {
                     {u.body&&<div style={{fontSize:12,color:'rgba(232,229,255,0.5)'}}>{u.body}</div>}
                   </div>
                   {u.author_id===meStaff?.id&&(
-                    <button onClick={async()=>{ await supabase.from('week_updates').delete().eq('id',u.id); }} style={{background:'none',border:'none',color:'rgba(232,229,255,0.3)',cursor:'pointer',fontSize:12,padding:'2px 4px',flexShrink:0}} onMouseOver={e=>e.currentTarget.style.color='rgba(255,100,100,0.7)'} onMouseOut={e=>e.currentTarget.style.color='rgba(232,229,255,0.3)'}>✕</button>
+                   <button onClick={async()=>{
+                      await supabase.from('week_updates').delete().eq('id',u.id);
+                      setWeeklyUpdates(prev=>{const n=prev.filter(x=>x.id!==u.id);setWeeklyUpdatesCount(n.length);return n;});
+                    }} style={{background:'none',border:'none',color:'rgba(232,229,255,0.3)',cursor:'pointer',fontSize:12,padding:'2px 4px',flexShrink:0}} onMouseOver={e=>e.currentTarget.style.color='rgba(255,100,100,0.7)'} onMouseOut={e=>e.currentTarget.style.color='rgba(232,229,255,0.3)'}>✕</button>
                   )}
                 </div>
               ))}
@@ -1306,7 +1313,7 @@ export default function App() {
                                     {['🧘','⚡','☕','🎯','🚀','💪','🌱'].map(emo=>(
                                       <div key={emo} onClick={e=>{ e.stopPropagation(); triggerMoodFly(emo, e.currentTarget); }}
                                         style={{fontSize:'18px',cursor:'pointer',padding:'4px 6px',borderRadius:'6px',transition:'all 0.15s'}}
-                                        onMouseOver={e=>{e.currentTarget.style.background='#f3f4f6';e.currentTarget.style.transform='scale(1.25)';}}
+                                       onMouseOver={e=>{e.currentTarget.style.background='#f3f4f6';e.currentTarget.style.transform='scale(1.25)';}}
                                         onMouseOut={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.transform='scale(1)';}}
                                       >{emo}</div>
                                     ))}
@@ -1402,7 +1409,7 @@ export default function App() {
                                         </div>
                                         {open&&isMe&&(
                                           <div className="s-drop dsz">
-                                            <div style={{padding:'3px 10px 7px',fontSize:'10px',color:'#9ca3af',fontWeight:'600',borderBottom:'1px solid #f0f0f0',marginBottom:'3px',letterSpacing:'0.06em'}}>
+                                            <div style={{padding:'3px 10px 7px',fontSize:'10px',color:'rgba(167,139,250,0.5)',fontWeight:'600',borderBottom:'1px solid rgba(167,139,250,0.1)',marginBottom:'3px',letterSpacing:'0.06em'}}>
                                               {bulkSelectCells.length>0?`${bulkSelectCells.length} CELLS`:'STATUS'}
                                             </div>
                                             {Object.entries(STATUS_CONFIG).map(([sId,sCfg])=>(
