@@ -166,6 +166,7 @@ export default function App() {
   const [showWelcome,     setShowWelcome]     = useState(false);
   const [isMobile,        setIsMobile]        = useState(() => window.matchMedia('(max-width: 768px)').matches);
   const [hoveredPill,     setHoveredPill]     = useState(null);
+  const [birthdayDone,    setBirthdayDone]    = useState(false);
   const dailyTips = useRef(getDailyTips());
 
   const { activeBreach, chargingState, registerClick: registerBreachClick } = useDimensionalBreach();
@@ -694,7 +695,11 @@ export default function App() {
   const tdSlideClass=slideDir==='right'?'td-slide-right':slideDir==='left'?'td-slide-left':'';
   const nonEditableCols=week.reduce((acc,d,i)=>{ if (!d.editable) acc.push({...d,colIndex:i}); return acc; },[]);
   const currentTip = dailyTips.current[tipIdx];
-
+  const todayMMDD = (() => {
+    const t = new Date();
+    return `${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+  })();
+  const hasBirthdayToday = RAW_STAFF_LIST.some(s => s.birthday === todayMMDD);
   return (
     <>
       <div style={{minHeight:'100vh',background:'#F0F4FF'}} onMouseUp={handleStatusCellMouseUp} onTouchEnd={handleStatusCellTouchEnd}>
@@ -703,8 +708,11 @@ export default function App() {
         <BirthdayOverlay
           currentUserEmail={account?.username}
           isBusy={showTips}
+          onClose={() => setBirthdayDone(true)}
         />
-        <BananaEasterEgg />
+        <BananaEasterEgg
+          readySignal={!showTour && !showWelcome && !showTips && (!hasBirthdayToday || birthdayDone)}
+        />
 
         {flight && (
           <EmojiFlyLayer

@@ -552,7 +552,7 @@ function BirthdayConfetti() {
 }
 
 // ── Main export ────────────────────────────────────────────────
-export default function BirthdayOverlay({ currentUserEmail, isBusy }) {
+export default function BirthdayOverlay({ currentUserEmail, isBusy, onClose }) {
   const [birthdayPerson, setBirthdayPerson] = useState(null);
   const [theme, setTheme] = useState(null);
   const [visible, setVisible] = useState(false);
@@ -594,6 +594,7 @@ export default function BirthdayOverlay({ currentUserEmail, isBusy }) {
       setVisible(false);
       setClosing(false);
       setBirthdayPerson(null);
+      onClose?.();
     }, 400);
   };
 
