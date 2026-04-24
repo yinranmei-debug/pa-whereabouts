@@ -286,11 +286,7 @@ const GlobalStyles = () => (
 
     /* ── Sticky name col — light rows on dark card ── */
     .sticky-c{position:sticky;left:0;z-index:100;overflow:visible;}
-    .sticky-c-bg{
-      position:absolute;inset:0;
-      background:rgba(255,255,255,0.96);
-      z-index:-1;
-    }
+   .sticky-c-bg{display:none;}
     .sticky-c::after{content:'';position:absolute;top:0;right:-16px;bottom:0;width:16px;background:linear-gradient(to right,rgba(10,15,40,0.12),transparent);pointer-events:none;}
 
     .nw{height:${ROW_H}px;display:flex;align-items:center;gap:12px;padding:0 10px;border-bottom:1px solid rgba(167,139,250,0.08);overflow:visible;background:rgba(8,12,35,0.96);}
@@ -604,10 +600,7 @@ const GlobalStyles = () => (
       50%{transform:scaleY(0.85) translateX(-1px);opacity:0.8;}
       75%{transform:scaleY(1.1) translateX(1px);opacity:1;}
     }
-    @keyframes ringOrbit{
-      from{transform:rotateX(72deg) rotateZ(0deg);}
-      to{transform:rotateX(72deg) rotateZ(360deg);}
-    }
+   
     @keyframes planetFloat{
       0%,100%{transform:translateY(0);}
       50%{transform:translateY(-2px);}
