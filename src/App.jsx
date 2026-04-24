@@ -834,14 +834,21 @@ export default function App() {
         {celebratePrompt && celebrateTarget && (() => {
           const avEl=document.getElementById(`av-${celebrateTarget.id}`);
           if (!avEl) return null;
-          const r=avEl.getBoundingClientRect();
+         const r=avEl.getBoundingClientRect();
           return (
-           <div style={{position:'fixed',left:r.right+12,top:r.top+r.height/2,zIndex:13200,transform:'translateY(-50%)',animation:'cakePromptIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both',pointerEvents:'none'}}>
+            <div style={{position:'fixed',left:r.right+16,top:r.top+r.height/2,zIndex:13200,transform:'translateY(-50%)',animation:'cakePromptIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both',pointerEvents:'none',display:'flex',alignItems:'center',gap:6}}>
+              <div style={{fontSize:20,lineHeight:1,animation:'cakePromptArrow 0.8s ease-in-out infinite'}}>👈</div>
               <div style={{background:'linear-gradient(135deg,#1e1b4b,#0f172a)',border:'1.5px solid rgba(167,139,250,0.5)',borderRadius:12,padding:'8px 14px',display:'flex',alignItems:'center',gap:8,boxShadow:'0 8px 32px rgba(119,11,255,0.4)',fontFamily:"'Plus Jakarta Sans',sans-serif",whiteSpace:'nowrap',animation:'cakePromptPulse 1.6s ease-in-out infinite'}}>
-                <span style={{fontSize:18}}>🎂</span>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                  <rect x="4" y="13" width="16" height="8" rx="2" fill="rgba(255,143,176,0.7)" stroke="rgba(255,183,0,0.6)" strokeWidth="1"/>
+                  <rect x="6" y="10" width="12" height="5" rx="1.5" fill="rgba(255,183,0,0.5)" stroke="rgba(255,225,74,0.5)" strokeWidth="1"/>
+                  <rect x="8" y="5" width="2" height="5" rx="1" fill="rgba(167,139,250,0.8)"/>
+                  <rect x="14" y="5" width="2" height="5" rx="1" fill="rgba(106,199,255,0.8)"/>
+                  <ellipse className="mh-flame" cx="9" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,220,50,0.95)"/>
+                  <ellipse className="mh-flame" cx="15" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,160,50,0.95)" style={{animationDelay:'0.2s'}}/>
+                </svg>
                 <span style={{fontSize:13,fontWeight:700,color:'#fff'}}>Click to throw a cake!</span>
               </div>
-             <div style={{position:'absolute',left:-20,top:'50%',transform:'translateY(-50%)',fontSize:20,lineHeight:1,animation:'cakePromptArrow 0.8s ease-in-out infinite'}}>👈</div>
             </div>
           );
         })()}
