@@ -553,46 +553,15 @@ const GlobalStyles = () => (
     }
 /* ── Status cell glass texture ── */
     .sh{
-      height:60px;border-radius:12px;
+      height:56px;border-radius:16px;
       display:flex;flex-direction:column;align-items:center;justify-content:center;
-      font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
-      transition:all 0.18s cubic-bezier(0.34,1.56,0.64,1);
-      user-select:none;cursor:pointer;gap:5px;
-      backdrop-filter:blur(12px) saturate(140%);
+      font-size:11px;font-weight:700;letter-spacing:0.04em;
+      transition:all 0.15s;user-select:none;cursor:pointer;gap:3px;
+      backdrop-filter:blur(8px) saturate(120%);
       position:relative;overflow:hidden;
     }
     .sh::before{
-      content:'';position:absolute;inset:0;border-radius:18px;
-      background:linear-gradient(160deg,rgba(255,255,255,0.10) 0%,rgba(255,255,255,0.01) 100%);
-      pointer-events:none;
-    }
-    .sh-icon{font-size:26px;line-height:1;flex-shrink:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));}
-    .sh.mine{
-      background:rgba(167,139,250,0.07);
-      border:1.5px solid rgba(167,139,250,0.18);
-      color:rgba(232,229,255,0.35);
-    }
-    .sh.mine:hover{
-      background:rgba(167,139,250,0.13);
-      border-color:rgba(167,139,250,0.45);
-      transform:translateY(-3px) scale(1.03);
-      box-shadow:0 6px 20px rgba(167,139,250,0.2);
-    }
-    .sh.set:hover{
-      transform:translateY(-3px) scale(1.03);
-      filter:brightness(1.15);
-      box-shadow:0 6px 20px rgba(0,0,0,0.3);
-    }
-    .sh.other{
-      background:rgba(255,255,255,0.02);
-      border:1.5px solid rgba(167,139,250,0.07);
-      color:rgba(167,139,250,0.18);
-      cursor:default;
-    }8px) saturate(120%);
-      position:relative;overflow:hidden;
-    }
-    .sh::before{
-      content:'';position:absolute;inset:0;border-radius:12px;
+      content:'';position:absolute;inset:0;border-radius:16px;
       background:linear-gradient(135deg,rgba(255,255,255,0.08) 0%,rgba(255,255,255,0.02) 100%);
       pointer-events:none;
     }
