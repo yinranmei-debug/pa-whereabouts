@@ -48,17 +48,30 @@ const fmt = date => {
 
 const getDailyTips = () => {
   const today = new Date();
-  const seed  = today.getFullYear()*10000 + (today.getMonth()+1)*100 + today.getDate();
-  const categories = [...new Set(TIPS_DATA.map(t=>t.category))];
-  const seededPick = (arr, s) => arr[Math.abs((s*2654435761)>>>0) % arr.length];
-  const picked = []; const usedCats = []; let s = seed;
-  while (picked.length < 3 && usedCats.length < categories.length) {
-    const cat = seededPick(categories.filter(c=>!usedCats.includes(c)), s);
-    if (!cat) break;
-    usedCats.push(cat);
-    const tip = seededPick(TIPS_DATA.filter(t=>t.category===cat), s+picked.length);
-    if (tip) picked.push(tip);
-    s = (s * 1664525 + 1013904223) & 0xffffffff;
+  // 用今天是今年第几天做 seed，确保每天不同
+  const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 86400000);
+  const seed = today.getFullYear() * 1000 + dayOfYear;
+
+  // Fisher-Yates shuffle with seeded random
+  const seededRand = (s) => {
+    let x = Math.sin(s + 1) * 10000;
+    return x - Math.floor(x);
+  };
+
+  // 打乱所有 tips，然后按 category 去重取前3
+  const shuffled = [...TIPS_DATA]
+    .map((tip, i) => ({ tip, sort: seededRand(seed * 97 + i) }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(x => x.tip);
+
+  const picked = [];
+  const usedCats = new Set();
+  for (const tip of shuffled) {
+    if (picked.length >= 3) break;
+    if (!usedCats.has(tip.category)) {
+      usedCats.add(tip.category);
+      picked.push(tip);
+    }
   }
   return picked;
 };

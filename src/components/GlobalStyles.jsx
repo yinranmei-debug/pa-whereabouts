@@ -194,12 +194,16 @@ const GlobalStyles = () => (
     .pill:hover.hol .pill-card{box-shadow:inset 0 1px 0 rgba(255,255,255,0.8),0 0 24px rgba(217,70,239,0.28),0 0 48px rgba(168,85,247,0.18);}
     .pill:hover.we  .pill-card{box-shadow:inset 0 1px 0 rgba(255,255,255,0.8),0 0 24px rgba(99,102,241,0.32),0 0 48px rgba(0,155,255,0.2);}
 
-    @keyframes pillHoverBounce{
-      0%{transform:translateY(0) scale(1);}30%{transform:translateY(-8px) scale(1.02);}
-      55%{transform:translateY(-3px) scale(1.01);}75%{transform:translateY(-6px) scale(1.015);}
+@keyframes pillHoverBounce{
+      0%  {transform:translateY(0) scale(1);}
+      18% {transform:translateY(-10px) scale(1.03);}
+      34% {transform:translateY(0px) scale(0.98);}
+      50% {transform:translateY(-6px) scale(1.02);}
+      65% {transform:translateY(0px) scale(0.99);}
+      78% {transform:translateY(-3px) scale(1.01);}
       100%{transform:translateY(0) scale(1);}
     }
-    .pill-hover-bounce .pill-card{animation:pillHoverBounce 0.65s cubic-bezier(0.34,1.46,0.64,1) both;}
+    .pill-hover-bounce .pill-card{animation:pillHoverBounce 0.75s cubic-bezier(0.34,1.46,0.64,1) both;}
 
     @keyframes pillClickBounceY{
       0%{transform:scaleY(1) translateY(0);}20%{transform:scaleY(0.92) translateY(4px);}
