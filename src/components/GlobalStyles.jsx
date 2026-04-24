@@ -281,6 +281,7 @@ const GlobalStyles = () => (
     .tbl-hdr-namecol{background:transparent;}
     .tbl-hdr-daycol{padding:16px 4px 12px;text-align:center;background:transparent;}
     .tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 24px 24px;}
+    .main-tbl{width:100%;border-collapse:collapse;table-layout:fixed;min-width:900px;}
     .main-tbl td{padding:0;height:${ROW_H}px;vertical-align:top;}
     /* ── Sticky name col — light rows on dark card ── */
     .sticky-c{position:sticky;left:0;z-index:100;overflow:visible;}
