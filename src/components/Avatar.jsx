@@ -3,14 +3,13 @@ import React from 'react';
 const AVATAR_GRADIENTS = [
   'linear-gradient(135deg,#6AC7FF,#009BFF)',
   'linear-gradient(135deg,#A78BFA,#770BFF)',
-  'linear-gradient(135deg,#FF8FB0,#E63946)',
-  'linear-gradient(135deg,#7AFFD4,#10B981)',
-  'linear-gradient(135deg,#FFE14A,#FF9A3C)',
+  'linear-gradient(135deg,#60A5FA,#3B82F6)',
+  'linear-gradient(135deg,#7AFFD4,#0EA5E9)',
+  'linear-gradient(135deg,#818CF8,#4F46E5)',
   'linear-gradient(135deg,#6AC7FF,#A78BFA)',
   'linear-gradient(135deg,#00E5A8,#009BFF)',
-  'linear-gradient(135deg,#FF8FB0,#770BFF)',
+  'linear-gradient(135deg,#C4B5FD,#770BFF)',
 ];
-
 const avatarGradient = name => {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
