@@ -543,17 +543,7 @@ function BirthdayConfetti() {
   );
 }
 
-// ── Inline Scene Viewer (for 🎂 button panel) ─────────────────
-export function BirthdaySceneInline({ staffId }) {
-  const theme = pickTheme(staffId);
-  const frame = usePixelTick(8, true);
-  const Scene = theme.scene;
-  return (
-    <div style={{ width: '100%', height: '100%', background: theme.bg, overflow: 'hidden' }}>
-      <Scene frame={frame} />
-    </div>
-  );
-}
+
 
 // ── Main export ────────────────────────────────────────────────
 export default function BirthdayOverlay({ currentUserEmail, isBusy, onClose, onCelebrate, _forceStaffId }) {
