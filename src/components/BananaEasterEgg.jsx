@@ -309,7 +309,7 @@ function PixelBubble({ cx, cy, text, frame }) {
 const DAY_MESSAGES = {
   1: "LET'S GO!!",
   3: 'HALFWAY!!',
-  5: 'WEEKEND!!',
+  5: 'WEEKEND TMR!!',
 };
 
 // ── Particle effects ──────────────────────────────────────────
