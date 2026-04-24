@@ -281,8 +281,7 @@ const GlobalStyles = () => (
     .tbl-hdr-namecol{background:transparent;}
     .tbl-hdr-daycol{padding:16px 4px 12px;text-align:center;background:transparent;}
     .tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 24px 24px;}
-    .main-tbl{width:100%;border-collapse:collapse;table-layout:.main-tbl td{padding:0;height:${ROW_H}px;vertical-align:middle;}
-
+    .main-tbl{width:100%;border-collapse:collapse;table-layout:.main-tbl td{padding:0;height:${ROW_H}px;vertical-align:top;}
     /* ── Sticky name col — light rows on dark card ── */
     .sticky-c{position:sticky;left:0;z-index:100;overflow:visible;}
    .sticky-c-bg{display:none;}
@@ -290,7 +289,7 @@ const GlobalStyles = () => (
 
     .nw{height:${ROW_H}px;display:flex;align-items:center;gap:12px;padding:0 10px;border-bottom:1px solid rgba(167,139,250,0.08);overflow:visible;background:rgba(8,12,35,0.96);}
     tr:last-child .nw{border-bottom:none;}
-   .dw{height:${ROW_H}px;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:0 6px;border-bottom:1px solid rgba(167,139,250,0.08);}
+   .dw{height:${ROW_H}px;display:flex;flex-direction:column;justify-content:center;gap:5px;padding:0 5px;border-bottom:1px solid rgba(167,139,250,0.08);}
     tr:last-child .dw{border-bottom:none;}
 
     /* ── Row hover tint (spec: rgba(167,139,250,0.08)) ── */
@@ -554,7 +553,7 @@ const GlobalStyles = () => (
     }
 /* ── Status cell glass texture ── */
     .sh{
-      height:58px;border-radius:18px;
+      height:58px;border-radius:16px;
       display:flex;flex-direction:column;align-items:center;justify-content:center;
       font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
       transition:all 0.18s cubic-bezier(0.34,1.56,0.64,1);
