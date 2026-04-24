@@ -516,6 +516,108 @@ const GlobalStyles = () => (
     .ms-app-icon{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#009bff,#770bff);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;}
     .ms-err{margin-top:14px;color:#fca5a5;background:rgba(239,68,68,0.15);padding:10px 14px;border-radius:8px;font-size:13px;border-left:3px solid #ef4444;}
 
+    /* ── Mind Hub button animations ── */
+    @keyframes sparkleFloat{
+      0%,100%{transform:translateY(0) rotate(0deg) scale(1);opacity:0.7;}
+      25%{transform:translateY(-3px) rotate(15deg) scale(1.2);opacity:1;}
+      50%{transform:translateY(-1px) rotate(-10deg) scale(0.9);opacity:0.8;}
+      75%{transform:translateY(-4px) rotate(20deg) scale(1.15);opacity:1;}
+    }
+    @keyframes cakeWobble{
+      0%,100%{transform:rotate(0deg) scale(1);}
+      20%{transform:rotate(-8deg) scale(1.1);}
+      40%{transform:rotate(8deg) scale(1.08);}
+      60%{transform:rotate(-5deg) scale(1.05);}
+      80%{transform:rotate(3deg) scale(1.02);}
+    }
+    @keyframes candleFlicker{
+      0%,100%{filter:drop-shadow(0 0 4px rgba(255,200,0,0.8)) drop-shadow(0 0 8px rgba(255,150,0,0.5));}
+      33%{filter:drop-shadow(0 0 8px rgba(255,220,0,1)) drop-shadow(0 0 16px rgba(255,180,0,0.7));}
+      66%{filter:drop-shadow(0 0 2px rgba(255,180,0,0.6)) drop-shadow(0 0 6px rgba(255,120,0,0.4));}
+    }
+    .mh-btn-sparkle span{animation:sparkleFloat 1.8s ease-in-out infinite;}
+    .mh-btn-cake span{animation:cakeWobble 2s ease-in-out infinite,candleFlicker 0.8s ease-in-out infinite;}
+    .mh-btn-planet:hover div div:last-child{border-color:rgba(99,179,255,0.95);box-shadow:0 0 14px rgba(0,155,255,0.7);}
+
+    /* ── Status cell hover lift ── */
+    .sh.set:hover{transform:translateY(-2px) scale(1.02);filter:brightness(1.12);box-shadow:0 4px 16px rgba(0,0,0,0.2);}
+    .sh.mine:hover{transform:translateY(-2px) scale(1.02);}
+
+    /* ── Section title bar ── */
+    .section-title{
+      padding:14px 32px 10px;
+      font-size:11px;font-weight:700;
+      color:rgba(232,229,255,0.45);
+      letter-spacing:0.12em;
+      display:flex;align-items:center;justify-content:space-between;
+      position:relative;z-index:10;
+    }
+    .section-title-hint{
+      font-size:11px;font-weight:500;
+      color:rgba(232,229,255,0.3);
+      letter-spacing:0.02em;
+    }
+/* ── Status cell glass texture ── */
+    .sh{
+      height:40px;border-radius:12px;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      font-size:11px;font-weight:700;letter-spacing:0.04em;
+      transition:all 0.15s;user-select:none;cursor:pointer;gap:3px;
+      backdrop-filter:blur(8px) saturate(120%);
+      position:relative;overflow:hidden;
+    }
+    .sh::before{
+      content:'';position:absolute;inset:0;border-radius:12px;
+      background:linear-gradient(135deg,rgba(255,255,255,0.08) 0%,rgba(255,255,255,0.02) 100%);
+      pointer-events:none;
+    }
+    .sh-icon{font-size:20px;line-height:1;flex-shrink:0;}
+    .sh.mine{
+      background:rgba(167,139,250,0.08);
+      border:1px solid rgba(167,139,250,0.2);
+      color:rgba(232,229,255,0.4);
+    }
+    .sh.mine:hover{
+      background:rgba(167,139,250,0.14);
+      border-color:rgba(167,139,250,0.4);
+      transform:translateY(-2px);
+      box-shadow:0 4px 16px rgba(167,139,250,0.15);
+    }
+    .sh.set:hover{transform:translateY(-2px);filter:brightness(1.12);box-shadow:0 4px 16px rgba(0,0,0,0.25);}
+    .sh.other{
+      background:rgba(255,255,255,0.03);
+      border:1px solid rgba(167,139,250,0.08);
+      color:rgba(167,139,250,0.2);
+      cursor:default;
+    }
+
+    /* ── Mind Hub SVG button animations ── */
+    @keyframes twinkleStar{
+      0%,100%{opacity:0.6;transform:scale(0.85) rotate(0deg);}
+      25%{opacity:1;transform:scale(1.15) rotate(15deg);}
+      50%{opacity:0.7;transform:scale(0.9) rotate(-10deg);}
+      75%{opacity:1;transform:scale(1.2) rotate(20deg);}
+    }
+    @keyframes candleFlame{
+      0%,100%{transform:scaleY(1) translateX(0);opacity:0.9;}
+      25%{transform:scaleY(1.2) translateX(1px);opacity:1;}
+      50%{transform:scaleY(0.85) translateX(-1px);opacity:0.8;}
+      75%{transform:scaleY(1.1) translateX(1px);opacity:1;}
+    }
+    @keyframes ringOrbit{
+      from{transform:rotateX(72deg) rotateZ(0deg);}
+      to{transform:rotateX(72deg) rotateZ(360deg);}
+    }
+    @keyframes planetFloat{
+      0%,100%{transform:translateY(0);}
+      50%{transform:translateY(-2px);}
+    }
+    .mh-star-1{animation:twinkleStar 1.4s ease-in-out infinite;}
+    .mh-star-2{animation:twinkleStar 1.4s ease-in-out 0.3s infinite;}
+    .mh-star-3{animation:twinkleStar 1.4s ease-in-out 0.6s infinite;}
+    .mh-flame{animation:candleFlame 0.6s ease-in-out infinite;transform-origin:bottom center;}
+    .mh-planet-body{animation:planetFloat 2.5s ease-in-out infinite;}
+    .mh-ring{animation:ringOrbit 2s linear infinite;}
     @media(max-width:768px){
       .nav,.toolbar,.legend{padding-left:12px;padding-right:12px;}
       .tbl-outer{padding:8px 8px 48px;}

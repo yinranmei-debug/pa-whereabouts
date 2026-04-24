@@ -142,7 +142,7 @@ const MobileView = ({
     : '';
 
   return (
-    <div style={{fontFamily:"'Plus Jakarta Sans',sans-serif",paddingBottom:100,background:'#F0F4FF',minHeight:'100vh'}}>
+    <div style={{fontFamily:"'Plus Jakarta Sans',sans-serif",paddingBottom:100,background:'transparent',minHeight:'100vh'}}>
       <style>{`
         @keyframes mobDropIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
         @keyframes mobSheetIn { from{transform:translateY(100%)} to{transform:translateY(0)} }
@@ -230,7 +230,7 @@ const MobileView = ({
       </div>
 
       {/* card */}
-      <div style={{margin:'0 8px 8px',background:'#fff',borderRadius:16,border:'1px solid rgba(226,232,240,0.8)',boxShadow:'0 2px 12px rgba(0,0,0,0.05)'}}>
+      <div style={{margin:'0 8px 8px',background:'rgba(255,255,255,0.97)',borderRadius:16,border:'1px solid rgba(167,139,250,0.15)',boxShadow:'0 2px 20px rgba(0,0,0,0.2)'}}>
 
         {/* sticky header */}
         <div

@@ -391,7 +391,7 @@ export default function BananaEasterEgg({ readySignal = false }) {
     if (!BANANA_DAYS.includes(dow)) return;
     const sessionKey = `banana-shown-${today.toDateString()}`;
     if (sessionStorage.getItem(sessionKey)) return;
-    if (firedRef.current) return;
+    if (firedRef.current) return;``
 
     // 每次跑都设好 dow（幂等）
     setDayOfWeek(dow);

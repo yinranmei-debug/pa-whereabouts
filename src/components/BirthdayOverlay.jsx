@@ -75,7 +75,7 @@ function SceneWizard({ frame: t }) {
     <svg width="100%" height="100%" viewBox="0 0 200 120" shapeRendering="crispEdges" style={{ imageRendering: 'pixelated', display: 'block' }}>
       <rect x="0" y="0" width="200" height="120" fill="#0a0514" />
       <defs>
-        <radialGradient id="cakeGlow" cx="50%" cy="50%">
+        <radialGradient id="cakeGlowW" cx="50%" cy="50%">
           <stop offset="0%" stopColor="rgba(255,183,0,0.4)" />
           <stop offset="100%" stopColor="rgba(255,183,0,0)" />
         </radialGradient>
@@ -85,7 +85,7 @@ function SceneWizard({ frame: t }) {
         const tw = (t + i) % 5 < 3;
         return tw ? <rect key={i} x={sx} y={sy} width="1" height="1" fill="#fff" /> : null;
       })}
-      <circle cx="100" cy="70" r={glowRadius} fill="url(#cakeGlow)" />
+      <circle cx="100" cy="70" r={glowRadius} fill="url(#cakeGlowW)" />
       <Rects data={cake} />
       <Rects data={wizard} />
       <Rects data={sparks} />
@@ -153,9 +153,9 @@ function SceneUpsideDown({ frame: t }) {
   }
   return (
     <svg width="100%" height="100%" viewBox="0 0 200 120" shapeRendering="crispEdges" style={{ imageRendering: 'pixelated', display: 'block' }}>
-      <rect x="0" y="0" width="200" height="120" fill="url(#udBg)" />
+      <rect x="0" y="0" width="200" height="120" fill="url(#udBg2)" />
       <defs>
-        <radialGradient id="udBg" cx="50%" cy="70%">
+        <radialGradient id="udBg2" cx="50%" cy="70%">
           <stop offset="0%" stopColor="#5a0a20" />
           <stop offset="60%" stopColor="#2a0518" />
           <stop offset="100%" stopColor="#0a0008" />
@@ -300,12 +300,12 @@ function SceneDinosaur({ frame: t }) {
       <rect x="0" y="0" width="200" height="120" fill="#0a0a14" />
       <Rects data={stars} />
       <defs>
-        <radialGradient id="dinoGlow" cx="50%" cy="55%">
+        <radialGradient id="dinoGlow2" cx="50%" cy="55%">
           <stop offset="0%" stopColor="rgba(255,225,74,0.15)" />
           <stop offset="100%" stopColor="rgba(255,225,74,0)" />
         </radialGradient>
       </defs>
-      <ellipse cx={cx} cy={cy} rx="50" ry="40" fill="url(#dinoGlow)" />
+      <ellipse cx={cx} cy={cy} rx="50" ry="40" fill="url(#dinoGlow2)" />
       <Rects data={eggParts} />
       <Rects data={dinoParts} />
       <Rects data={confetti} />
@@ -349,13 +349,13 @@ function SceneUFO({ frame: t }) {
   return (
     <svg width="100%" height="100%" viewBox="0 0 200 120" shapeRendering="crispEdges" style={{ imageRendering: 'pixelated', display: 'block' }}>
       <defs>
-        <linearGradient id="ufoBg" x1="0" x2="0" y1="0" y2="1">
+        <linearGradient id="ufoBg2" x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stopColor="#0a0028" />
           <stop offset="50%" stopColor="#1a0a48" />
           <stop offset="100%" stopColor="#2a1a58" />
         </linearGradient>
       </defs>
-      <rect x="0" y="0" width="200" height="120" fill="url(#ufoBg)" />
+      <rect x="0" y="0" width="200" height="120" fill="url(#ufoBg2)" />
       <Rects data={stars} />
       <circle cx="160" cy="25" r="8" fill="#f0e8c8" />
       <rect x="20" y="95" width="8" height="15" fill="#1a0a28" />
@@ -415,12 +415,12 @@ function SceneCorporate({ frame: t }) {
   return (
     <svg width="100%" height="100%" viewBox="0 0 200 120" shapeRendering="crispEdges" style={{ imageRendering: 'pixelated', display: 'block' }}>
       <defs>
-        <radialGradient id="corpSpace" cx="50%" cy="45%">
+        <radialGradient id="corpSpace2" cx="50%" cy="45%">
           <stop offset="0%" stopColor="#0a0618" />
           <stop offset="100%" stopColor="#000000" />
         </radialGradient>
       </defs>
-      <rect x="0" y="0" width="200" height="120" fill="url(#corpSpace)" />
+      <rect x="0" y="0" width="200" height="120" fill="url(#corpSpace2)" />
       <Rects data={corpStars} />
       <Rects data={laptop} />
       <Rects data={email} />
@@ -449,17 +449,15 @@ function SceneOmelet({ frame: t }) {
       <rect x="0" y="0" width="200" height="120" fill="#0a0a14" />
       <Rects data={stars} />
       <defs>
-        <radialGradient id="omGlow" cx="50%" cy="55%">
+        <radialGradient id="omGlow2" cx="50%" cy="55%">
           <stop offset="0%" stopColor="rgba(255,183,0,0.22)" />
           <stop offset="100%" stopColor="rgba(255,183,0,0)" />
         </radialGradient>
       </defs>
-      <ellipse cx={cx} cy={cy} rx="55" ry="40" fill="url(#omGlow)" />
+      <ellipse cx={cx} cy={cy} rx="55" ry="40" fill="url(#omGlow2)" />
       <ellipse cx={cx} cy={105} rx={22 * shadowScale} ry={3 * shadowScale} fill="rgba(0,0,0,0.55)" />
       {f === 3 && [0, 1, 2, 3].map(i => (
-        <g key={i}>
-          <rect x={cx - 30 + i * 20} y={50 + (i % 2) * 8} width="2" height="2" fill="#ffe14a" />
-        </g>
+        <g key={i}><rect x={cx - 30 + i * 20} y={50 + (i % 2) * 8} width="2" height="2" fill="#ffe14a" /></g>
       ))}
       <g transform={`translate(0 ${jumpY})`}>
         <rect x={cx - 8} y={cy + 14} width="3" height={8 + legBend} fill="#f5b800" />
@@ -516,7 +514,6 @@ function pickTheme(staffId) {
   return BIRTHDAY_THEMES[pos % BIRTHDAY_THEMES.length];
 }
 
-// ── Confetti ───────────────────────────────────────────────────
 const CONFETTI_COLORS = ['#ff6b6b','#feca57','#48dbfb','#ff9ff3','#54a0ff','#5f27cd','#00d2d3','#ff9f43','#a29bfe','#fd79a8'];
 const rand = (min, max) => Math.random() * (max - min) + min;
 
@@ -525,13 +522,9 @@ function BirthdayConfetti() {
     Array.from({ length: 80 }).map((_, i) => ({
       id: i,
       color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
-      left: rand(0, 100),
-      delay: rand(0, 1.2),
-      duration: rand(2.5, 4.5),
-      size: rand(8, 18),
-      shape: Math.random() > 0.5 ? 'rect' : 'circle',
-      drift: rand(-150, 150),
-      spin: rand(360, 1080) * (Math.random() > 0.5 ? 1 : -1),
+      left: rand(0, 100), delay: rand(0, 1.2), duration: rand(2.5, 4.5),
+      size: rand(8, 18), shape: Math.random() > 0.5 ? 'rect' : 'circle',
+      drift: rand(-150, 150), spin: rand(360, 1080) * (Math.random() > 0.5 ? 1 : -1),
     }))
   );
   return (
@@ -540,8 +533,7 @@ function BirthdayConfetti() {
         <div key={p.id} style={{
           position: 'absolute', left: `${p.left}%`, top: '-20px',
           width: p.size, height: p.shape === 'rect' ? p.size * 0.5 : p.size,
-          borderRadius: p.shape === 'circle' ? '50%' : '2px',
-          background: p.color,
+          borderRadius: p.shape === 'circle' ? '50%' : '2px', background: p.color,
           '--drift': `${p.drift}px`, '--spin': `${p.spin}deg`,
           animation: `bdayConfettiFall ${p.duration}s ${p.delay}s cubic-bezier(0.25,0.46,0.45,0.94) both`,
           willChange: 'transform, opacity',
@@ -551,33 +543,36 @@ function BirthdayConfetti() {
   );
 }
 
+// ── Inline Scene Viewer (for 🎂 button panel) ─────────────────
+export function BirthdaySceneInline({ staffId }) {
+  const theme = pickTheme(staffId);
+  const frame = usePixelTick(8, true);
+  const Scene = theme.scene;
+  return (
+    <div style={{ width: '100%', height: '100%', background: theme.bg, overflow: 'hidden' }}>
+      <Scene frame={frame} />
+    </div>
+  );
+}
+
 // ── Main export ────────────────────────────────────────────────
 export default function BirthdayOverlay({ currentUserEmail, isBusy, onClose, onCelebrate }) {
   const [birthdayPerson, setBirthdayPerson] = useState(null);
-  const [theme, setTheme] = useState(null);
-  const [visible, setVisible] = useState(false);
-  const [closing, setClosing] = useState(false);
+  const [theme,          setTheme]          = useState(null);
+  const [visible,        setVisible]        = useState(false);
+  const [closing,        setClosing]        = useState(false);
   const frame = usePixelTick(8, visible);
 
   useEffect(() => {
     if (!currentUserEmail) return;
-    if (isBusy) return; // tips 还开着，等它关了再触发（依赖 isBusy 变化重跑）
-
+    if (isBusy) return;
     const sessionKey = 'bday-shown-session';
     if (sessionStorage.getItem(sessionKey)) return;
-
     const today = new Date();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const dd = String(today.getDate()).padStart(2, '0');
-    const todayMMDD = `${mm}-${dd}`;
-
-    const match = RAW_STAFF_LIST.find(s => s.birthday === todayMMDD);
-    if (!match) {
-      // 今天没生日，直接通知 App 不需要等生日
-      onClose?.();
-      return;
-    }
-
+    const match = RAW_STAFF_LIST.find(s => s.birthday === `${mm}-${dd}`);
+    if (!match) { onClose?.(); return; }
     sessionStorage.setItem(sessionKey, '1');
     setTheme(pickTheme(match.id));
     setBirthdayPerson(match);
@@ -593,16 +588,10 @@ export default function BirthdayOverlay({ currentUserEmail, isBusy, onClose, onC
 
   const handleClose = () => {
     setClosing(true);
-    setTimeout(() => {
-      setVisible(false);
-      setClosing(false);
-      setBirthdayPerson(null);
-      onClose?.();
-    }, 400);
+    setTimeout(() => { setVisible(false); setClosing(false); setBirthdayPerson(null); onClose?.(); }, 400);
   };
 
   if (!visible || !birthdayPerson || !theme) return null;
-
   const Scene = theme.scene;
   const isMe = birthdayPerson.email.toLowerCase() === currentUserEmail?.toLowerCase();
   const firstName = birthdayPerson.name.split(' ')[0];
@@ -611,139 +600,40 @@ export default function BirthdayOverlay({ currentUserEmail, isBusy, onClose, onC
     <>
       <style>{`
         @keyframes bdayConfettiFall {
-          0%   { transform: translateY(0) translateX(0) rotate(0deg); opacity:1; }
-          80%  { opacity:1; }
-          100% { transform: translateY(110vh) translateX(var(--drift)) rotate(var(--spin)); opacity:0; }
+          0%{transform:translateY(0) translateX(0) rotate(0deg);opacity:1;}
+          80%{opacity:1;}
+          100%{transform:translateY(110vh) translateX(var(--drift)) rotate(var(--spin));opacity:0;}
         }
-        @keyframes bdayOverlayIn {
-          from { opacity:0; }
-          to   { opacity:1; }
+        @keyframes bdayOverlayIn{from{opacity:0;}to{opacity:1;}}
+        @keyframes bdayCardIn{
+          0%{opacity:0;transform:translate(-50%,-50%) scale(0.75) translateY(24px);}
+          60%{transform:translate(-50%,-50%) scale(1.03) translateY(-4px);}
+          100%{opacity:1;transform:translate(-50%,-50%) scale(1) translateY(0);}
         }
-        @keyframes bdayCardIn {
-          0%   { opacity:0; transform:translate(-50%,-50%) scale(0.75) translateY(24px); }
-          60%  { transform:translate(-50%,-50%) scale(1.03) translateY(-4px); }
-          100% { opacity:1; transform:translate(-50%,-50%) scale(1) translateY(0); }
+        @keyframes bdayCardOut{
+          from{opacity:1;transform:translate(-50%,-50%) scale(1);}
+          to{opacity:0;transform:translate(-50%,-50%) scale(0.9) translateY(16px);}
         }
-        @keyframes bdayCardOut {
-          from { opacity:1; transform:translate(-50%,-50%) scale(1); }
-          to   { opacity:0; transform:translate(-50%,-50%) scale(0.9) translateY(16px); }
-        }
-        @keyframes bdaySloganIn {
-          from { opacity:0; transform:translateY(12px); }
-          to   { opacity:1; transform:translateY(0); }
-        }
+        @keyframes bdaySloganIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
       `}</style>
-
       <BirthdayConfetti />
-
-      <div
-        onClick={handleClose}
-        style={{
-          position: 'fixed', inset: 0, zIndex: 12999,
-          background: 'rgba(0,0,0,0.7)',
-          backdropFilter: 'blur(8px)',
-          animation: closing ? 'none' : 'bdayOverlayIn 0.4s ease',
-          opacity: closing ? 0 : 1,
-          transition: closing ? 'opacity 0.4s ease' : 'none',
-          cursor: 'pointer',
-        }}
-      />
-
-      <div style={{
-        position: 'fixed',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        zIndex: 13001,
-        width: '75vw',
-        maxWidth: '75vw',
-        animation: closing
-          ? 'bdayCardOut 0.4s ease forwards'
-          : 'bdayCardIn 0.55s cubic-bezier(0.34,1.56,0.64,1) 0.1s both',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-      }}>
-        <div style={{
-          width: '100%',
-          background: theme.bg,
-          borderRadius: '24px 24px 0 0',
-          overflow: 'hidden',
-          border: '2px solid rgba(255,255,255,0.1)',
-          borderBottom: 'none',
-          aspectRatio: '200 / 120',
-        }}>
+      <div onClick={handleClose} style={{position:'fixed',inset:0,zIndex:12999,background:'rgba(0,0,0,0.7)',backdropFilter:'blur(8px)',animation:closing?'none':'bdayOverlayIn 0.4s ease',opacity:closing?0:1,transition:closing?'opacity 0.4s ease':'none',cursor:'pointer'}}/>
+      <div style={{position:'fixed',top:'50%',left:'50%',transform:'translate(-50%,-50%)',zIndex:13001,width:'75vw',maxWidth:'75vw',animation:closing?'bdayCardOut 0.4s ease forwards':'bdayCardIn 0.55s cubic-bezier(0.34,1.56,0.64,1) 0.1s both',display:'flex',flexDirection:'column',alignItems:'center'}}>
+        <div style={{width:'100%',background:theme.bg,borderRadius:'24px 24px 0 0',overflow:'hidden',border:'2px solid rgba(255,255,255,0.1)',borderBottom:'none',aspectRatio:'200 / 120'}}>
           <Scene frame={frame} />
         </div>
-
-        <div style={{
-          width: '100%',
-          background: 'linear-gradient(135deg,#0f0820,#1a0a2e)',
-          borderRadius: '0 0 24px 24px',
-          border: '2px solid rgba(255,255,255,0.1)',
-          borderTop: 'none',
-          padding: '24px 28px 20px',
-          textAlign: 'center',
-          boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
-        }}>
-          <div style={{
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
-            fontSize: 'clamp(12px,1.8vw,16px)',
-            fontStyle: 'italic',
-            color: 'rgba(167,139,250,0.9)',
-            marginBottom: 10,
-            animation: 'bdaySloganIn 0.4s ease 0.5s both',
-          }}>
-            "{theme.slogan}"
-          </div>
-
-          <div style={{
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
-            fontSize: 'clamp(22px,4vw,36px)',
-            fontWeight: 900,
-            letterSpacing: '-0.03em',
-            lineHeight: 1.1,
-            color: '#fff',
-            marginBottom: 10,
-            animation: 'bdaySloganIn 0.4s ease 0.6s both',
-          }}>
+        <div style={{width:'100%',background:'linear-gradient(135deg,#0f0820,#1a0a2e)',borderRadius:'0 0 24px 24px',border:'2px solid rgba(255,255,255,0.1)',borderTop:'none',padding:'24px 28px 20px',textAlign:'center',boxShadow:'0 32px 80px rgba(0,0,0,0.6)'}}>
+          <div style={{fontFamily:"'Plus Jakarta Sans',sans-serif",fontSize:'clamp(12px,1.8vw,16px)',fontStyle:'italic',color:'rgba(167,139,250,0.9)',marginBottom:10,animation:'bdaySloganIn 0.4s ease 0.5s both'}}>"{theme.slogan}"</div>
+          <div style={{fontFamily:"'Plus Jakarta Sans',sans-serif",fontSize:'clamp(22px,4vw,36px)',fontWeight:900,letterSpacing:'-0.03em',lineHeight:1.1,color:'#fff',marginBottom:10,animation:'bdaySloganIn 0.4s ease 0.6s both'}}>
             {isMe ? `Happy Birthday, ${firstName}! 🎂` : `🎂 It's ${firstName}'s Birthday!`}
           </div>
-
-          <div style={{
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
-            fontSize: 13,
-            color: 'rgba(255,255,255,0.6)',
-            lineHeight: 1.6,
-            marginBottom: 20,
-            animation: 'bdaySloganIn 0.4s ease 0.7s both',
-          }}>
-            {isMe
-              ? "Wishing you a wonderful day full of joy. The whole team is glad you're here ✨"
-              : `Give ${firstName} some love today — it's their special day 🥳`
-            }
+          <div style={{fontFamily:"'Plus Jakarta Sans',sans-serif",fontSize:13,color:'rgba(255,255,255,0.6)',lineHeight:1.6,marginBottom:20,animation:'bdaySloganIn 0.4s ease 0.7s both'}}>
+            {isMe ? "Wishing you a wonderful day full of joy.✨" : `Give ${firstName} some love today — it's their special day 🥳`}
           </div>
-
-          <button
-            onClick={e=>{ e.stopPropagation(); handleClose(); onCelebrate?.(birthdayPerson); }}
-            style={{
-              background: 'linear-gradient(90deg,#009bff,#770bff)',
-              border: 'none', borderRadius: 100,
-              padding: '10px 32px',
-              color: '#fff', fontSize: 13, fontWeight: 700,
-              cursor: 'pointer', fontFamily: "'Plus Jakarta Sans', sans-serif",
-              boxShadow: '0 4px 20px rgba(119,11,255,0.4)',
-              animation: 'bdaySloganIn 0.4s ease 0.8s both',
-            }}
-            onMouseOver={e => e.currentTarget.style.opacity = '0.85'}
-            onMouseOut={e => e.currentTarget.style.opacity = '1'}
-          >
+          <button onClick={e=>{e.stopPropagation();handleClose();onCelebrate?.(birthdayPerson);}} style={{background:'linear-gradient(90deg,#009bff,#770bff)',border:'none',borderRadius:100,padding:'10px 32px',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:"'Plus Jakarta Sans',sans-serif",boxShadow:'0 4px 20px rgba(119,11,255,0.4)',animation:'bdaySloganIn 0.4s ease 0.8s both'}} onMouseOver={e=>e.currentTarget.style.opacity='0.85'} onMouseOut={e=>e.currentTarget.style.opacity='1'}>
             Celebrate! 🎉
           </button>
-
-          <div style={{ marginTop: 12, fontSize: 10, color: 'rgba(255,255,255,0.25)', fontFamily: 'monospace', letterSpacing: '0.1em' }}>
-            CLICK ANYWHERE TO DISMISS
-          </div>
+          <div style={{marginTop:12,fontSize:10,color:'rgba(255,255,255,0.25)',fontFamily:'monospace',letterSpacing:'0.1em'}}>CLICK ANYWHERE TO DISMISS</div>
         </div>
       </div>
     </>
