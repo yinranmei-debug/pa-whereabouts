@@ -382,7 +382,7 @@ export default function BananaEasterEgg({ readySignal = false }) {
   const frameTickRef = useRef();
   const eligibleDowRef = useRef(null); // 存 dow，避免异步 state 读不到
   const firedRef       = useRef(false); // 防止重复触发
-  const DURATION = 4800;
+  const DURATION = 8000;
 
   // 合并成一个 effect，readySignal 变化时重跑
   useEffect(() => {
