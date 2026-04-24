@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const BANANA_DAYS = [1, 3, 5]; // Mon, Wed, Fri
+const BANANA_DAYS = [0, 1, 3, 5, 6]; // Sun, Mon, Wed, Fri, Sat
 
 const BLUE_LIGHT = '#3bb8ff';
 const BLUE       = '#1e9eff';
@@ -273,6 +273,58 @@ function friPose(f) {
   };
 }
 
+function satPose(f) {
+  const beat = f % 4;
+  const bob = [-1, -6, -1, -5][beat];
+  const bodyLean = Math.sin(f * 0.9) * 8;
+  const pointLeft = Math.floor(f / 4) % 2 === 0;
+  const armL = pointLeft ? -95 : 60;
+  const armR = pointLeft ? 60 : -95;
+  return {
+    pose: {
+      legPhase: beat, bob, armL, armR, bodyLean,
+      eyeShape: (f % 8) < 2 ? 'closed' : (f % 6 < 1 ? 'happy' : 'open'),
+      mouth: (f % 8) < 2 ? 'ohh' : 'bigGrin',
+    },
+    speed: 5.5,
+  };
+}
+
+function DiscoBall({ cx, cy, frame }) {
+  const swingX = Math.sin(frame * 0.15) * 2;
+  const bx = cx + swingX;
+  const by = cy;
+  const spin = frame % 4;
+  const cells = [];
+  const R = 7;
+  for (let gy = -R; gy <= R; gy++) {
+    for (let gx = -R; gx <= R; gx++) {
+      const dist = Math.sqrt(gx * gx + gy * gy);
+      if (dist > R) continue;
+      const tileId = ((gx + spin) % 3 + 3) % 3;
+      const rim = dist > R - 1.5;
+      let color = rim ? '#4a5f88' : tileId === 0 ? '#fff' : tileId === 1 ? '#b5dcff' : '#6b96d4';
+      if (gx <= -3 && gy <= -2 && dist <= R - 1) color = '#ffffff';
+      cells.push(<rect key={`${gx},${gy}`} x={bx + gx} y={by + gy} width="1" height="1" fill={color} />);
+    }
+  }
+  const spokes = [];
+  for (let i = 0; i < 6; i++) {
+    const ang = frame * 0.12 + i * Math.PI / 3;
+    const len = 18 + Math.sin(frame * 0.3 + i) * 3;
+    spokes.push(<line key={'sk' + i} x1={bx} y1={by} x2={bx + Math.cos(ang) * len} y2={by + Math.sin(ang) * len} stroke="#fff2a8" strokeWidth="0.6" opacity="0.35" />);
+  }
+  return (
+    <g>
+      {spokes}
+      <rect x={bx} y={4} width="1" height={by - R - 4} fill={OUTLINE} />
+      <circle cx={bx} cy={by} r={R + 0.5} fill="none" stroke={OUTLINE} strokeWidth="1" />
+      {cells}
+      <rect x={bx - 4} y={by - 4} width="2" height="1" fill="#ffffff" opacity="0.9" />
+    </g>
+  );
+}
+
 // ── Pixel speech bubble ───────────────────────────────────────
 function PixelBubble({ cx, cy, text, frame }) {
   const charW = 6;
@@ -369,6 +421,31 @@ function Particles({ mood, x, frame, svgH }) {
       );
     }
   }
+  if (mood === 0 || mood === 6) {
+    // Weekend party particles
+    for (let i = 0; i < 10; i++) {
+      const py = ((frame * 3 + i * 23) % 90) - 20;
+      const px = (i * 87 + frame) % 200;
+      const confColors = ['#ff3bb8','#ffd000','#3bb8ff','#00e5a8','#a66bff','#ff6b9a','#ff8a3a'];
+      const rot = (frame + i * 30) % 360;
+      particles.push(<rect key={'cf'+i} x={px} y={py} width="3" height="2" fill={confColors[i%7]} transform={`rotate(${rot} ${px+1.5} ${py+1})`}/>);
+    }
+    for (let i = 0; i < 3; i++) {
+      const age = (frame + i * 12) % 36;
+      const op = Math.max(0, 1 - age / 36);
+      const nx = x + (i - 1) * 18 + Math.sin(age * 0.3) * 4;
+      const ny = svgH / 2 - 20 - age * 1.2;
+      const noteColors = ['#ff3bb8','#3bb8ff','#ffd000'];
+      particles.push(<g key={'note'+i} opacity={op} transform={`translate(${nx} ${ny})`}>
+        <rect x="2" y="-6" width="1" height="7" fill={noteColors[i%3]}/>
+        <rect x="0" y="0" width="3" height="3" fill={noteColors[i%3]}/>
+      </g>);
+    }
+    const beatF = frame % 4;
+    if (beatF < 2) {
+      particles.push(<circle key={'ring'+beatF} cx={x} cy={svgH/2+4} r={18 + beatF*12} fill="none" stroke="#ff3bb8" strokeWidth="1.5" opacity={0.6 - beatF*0.25}/>);
+    }
+  }
   return <>{particles}</>;
 }
 
@@ -453,11 +530,17 @@ export default function BananaEasterEgg({ readySignal = false }) {
     screenY = vh * 0.44 - Math.abs(Math.sin(progress * Math.PI * 8)) * 30;
   }
 
-  const poseMap = { 1: monPose, 3: wedPose, 5: friPose };
+  const poseMap = { 0: satPose, 1: monPose, 3: wedPose, 5: friPose, 6: satPose };
   const getPose = poseMap[dayOfWeek] || monPose;
-  const { pose } = getPose(frame);
+  const { pose, speed } = getPose(frame);
 
-  const bubbleText = DAY_MESSAGES[dayOfWeek] || "LET'S GO!!";
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+  const SAT_PHRASES = ["WEEKEND!!", "LET'S GO!!", "WOO!!", "PARTY TIME!!"];
+  const SUN_PHRASES = ["SUNDAY!!", "RELAX!!", "REST DAY!!", "RECHARGE!!"];
+  const weekendPhrases = dayOfWeek === 6 ? SAT_PHRASES : SUN_PHRASES;
+
+  const DAY_MESSAGES_EXT = { ...DAY_MESSAGES, 0: SUN_PHRASES[Math.floor(frame/18) % SUN_PHRASES.length], 6: SAT_PHRASES[Math.floor(frame/18) % SAT_PHRASES.length] };
+  const bubbleText = isWeekend ? weekendPhrases[Math.floor(frame / 18) % weekendPhrases.length] : (DAY_MESSAGES[dayOfWeek] || "LET'S GO!!");
   const showBubble = progress > 0.06 && progress < 0.90;
   const showSpeedLines = (dayOfWeek === 1 || dayOfWeek === 5) && progress > 0.05;
 
@@ -510,6 +593,7 @@ export default function BananaEasterEgg({ readySignal = false }) {
           style={{ imageRendering: 'pixelated', shapeRendering: 'crispEdges', overflow: 'visible' }}
         >
           <Particles mood={dayOfWeek} x={CX} frame={frame} svgH={SVG_H}/>
+          {isWeekend && <DiscoBall cx={CX + 40} cy={18} frame={frame}/>}
           <LogoChar cx={CX} cy={CY} pose={pose}/>
           {showBubble && (
             <PixelBubble cx={CX} cy={CY - 20} text={bubbleText} frame={frame}/>

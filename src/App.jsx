@@ -854,7 +854,7 @@ export default function App() {
           </div>
         )}
         <BananaEasterEgg
-          readySignal={!showTour && !showWelcome && !showTips && (!hasBirthdayToday || birthdayDone)}
+          readySignal={!showTour && !showWelcome && !showTips && (!hasBirthdayToday_hook || birthdayDone)}
         />
 
         {flight && (
@@ -1313,7 +1313,7 @@ export default function App() {
                                     {['🧘','⚡','☕','🎯','🚀','💪','🌱'].map(emo=>(
                                       <div key={emo} onClick={e=>{ e.stopPropagation(); triggerMoodFly(emo, e.currentTarget); }}
                                         style={{fontSize:'18px',cursor:'pointer',padding:'4px 6px',borderRadius:'6px',transition:'all 0.15s'}}
-                                       onMouseOver={e=>{e.currentTarget.style.background='#f3f4f6';e.currentTarget.style.transform='scale(1.25)';}}
+                                      onMouseOver={e=>{e.currentTarget.style.background='rgba(167,139,250,0.15)';e.currentTarget.style.transform='scale(1.25)';}}
                                         onMouseOut={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.transform='scale(1)';}}
                                       >{emo}</div>
                                     ))}
@@ -1409,7 +1409,7 @@ export default function App() {
                                         </div>
                                         {open&&isMe&&(
                                           <div className="s-drop dsz">
-                                            <div style={{padding:'3px 10px 7px',fontSize:'10px',color:'rgba(167,139,250,0.5)',fontWeight:'600',borderBottom:'1px solid rgba(167,139,250,0.1)',marginBottom:'3px',letterSpacing:'0.06em'}}>
+                                           <div style={{padding:'3px 10px 7px',fontSize:'10px',color:'rgba(167,139,250,0.5)',fontWeight:'600',borderBottom:'1px solid rgba(167,139,250,0.1)',marginBottom:'3px',letterSpacing:'0.06em'}}>
                                               {bulkSelectCells.length>0?`${bulkSelectCells.length} CELLS`:'STATUS'}
                                             </div>
                                             {Object.entries(STATUS_CONFIG).map(([sId,sCfg])=>(
