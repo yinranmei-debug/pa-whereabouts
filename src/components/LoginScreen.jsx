@@ -54,8 +54,12 @@ const LoginScreen = ({ onLogin, isInitializing, error }) => {
           50%{box-shadow:0 0 24px 4px rgba(119,11,255,0.25)}
         }
         @keyframes orbitDot {
-          from{transform:rotate(0deg) translateX(28px) rotate(0deg)}
-          to{transform:rotate(360deg) translateX(28px) rotate(-360deg)}
+          from{transform:rotate(0deg) translateX(34px) rotate(0deg)}
+          to{transform:rotate(360deg) translateX(34px) rotate(-360deg)}
+        }
+        @keyframes ringOrbitLogin {
+          from{transform:rotate(0deg) scaleY(0.3);}
+          to{transform:rotate(360deg) scaleY(0.3);}
         }
 
         .ls-aurora { position:absolute; border-radius:50%; filter:blur(80px); pointer-events:none; }
@@ -172,7 +176,7 @@ const LoginScreen = ({ onLogin, isInitializing, error }) => {
       }}>
 
         {/* Slogan above card */}
-        <div style={{ marginBottom: 36 }} className="ls-card-inner" style={{ animationDelay: '0.1s', opacity: 0 }}>
+        <div className="ls-card-inner" style={{ animationDelay: '0.1s', opacity: 0, marginBottom: 36 }}>
           <div style={{
             fontSize: 'clamp(11px,1.4vw,13px)', fontWeight: 700,
             letterSpacing: '0.18em', color: 'rgba(167,139,250,0.7)',
@@ -185,14 +189,14 @@ const LoginScreen = ({ onLogin, isInitializing, error }) => {
             letterSpacing: '-0.03em', lineHeight: 1.1,
             margin: '0 0 12px', color: '#fff',
           }}>
-            Know where<br/>
-            <span className="ls-logo-text">everyone is.</span>
+            Play the<br/>
+            <span className="ls-logo-text">long game.</span>
           </h1>
           <p style={{
             color: 'rgba(196,181,253,0.55)', fontSize: 'clamp(13px,1.8vw,15px)',
             fontWeight: 500, margin: 0, letterSpacing: '0.01em',
           }}>
-            Your team's weekly calendar, at a glance.
+            Stay present. Manage time. Keep balance.
           </p>
         </div>
 
@@ -208,19 +212,44 @@ const LoginScreen = ({ onLogin, isInitializing, error }) => {
         }}>
           <div className="ls-card-inner" style={{ animationDelay: '0.35s', opacity: 0 }}>
 
-          {/* Logo mark — pixel planet matching nav cake style */}
+            {/* Logo mark — graphic planet + orbiting dot */}
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
-              <svg width="64" height="64" viewBox="0 0 26 26" fill="none" overflow="visible">
-                <circle className="mh-planet-body" cx="13" cy="13" r="7" fill="url(#loginPlanetGrad)"/>
-                <defs>
-                  <radialGradient id="loginPlanetGrad" cx="35%" cy="32%" r="65%">
-                    <stop offset="0%" stopColor="#c4b5fd"/>
-                    <stop offset="40%" stopColor="#8b5cf6"/>
-                    <stop offset="100%" stopColor="#2e1065"/>
-                  </radialGradient>
-                </defs>
-                <ellipse className="mh-ring" cx="13" cy="13" rx="13" ry="4" fill="none" stroke="rgba(167,139,250,0.75)" strokeWidth="1.5" style={{transformOrigin:'13px 13px'}}/>
-              </svg>
+              <div style={{ position: 'relative', width: 72, height: 72, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="56" height="56" viewBox="0 0 26 26" fill="none" overflow="visible" style={{ position: 'relative', zIndex: 2 }}>
+                  <defs>
+                    <radialGradient id="lpGrad" cx="35%" cy="32%" r="68%">
+                      <stop offset="0%" stopColor="#e0d4ff"/>
+                      <stop offset="28%" stopColor="#a78bfa"/>
+                      <stop offset="62%" stopColor="#6d28d9"/>
+                      <stop offset="100%" stopColor="#1e1065"/>
+                    </radialGradient>
+                    <radialGradient id="lpShine" cx="30%" cy="28%" r="45%">
+                      <stop offset="0%" stopColor="rgba(255,255,255,0.35)"/>
+                      <stop offset="100%" stopColor="rgba(255,255,255,0)"/>
+                    </radialGradient>
+                  </defs>
+                  <circle cx="13" cy="13" r="9" fill="url(#lpGrad)"/>
+                  <ellipse cx="13" cy="11" rx="6" ry="1.5" fill="rgba(196,181,253,0.18)"/>
+                  <ellipse cx="13" cy="14.5" rx="7" ry="1.2" fill="rgba(109,40,217,0.3)"/>
+                  <circle cx="13" cy="13" r="9" fill="url(#lpShine)"/>
+                  <circle cx="13" cy="13" r="9" stroke="rgba(167,139,250,0.35)" strokeWidth="0.5" fill="none"/>
+                  <ellipse cx="13" cy="13" rx="13" ry="4" fill="none" stroke="rgba(167,139,250,0.7)" strokeWidth="1.2"
+                    style={{transformBox:'fill-box', transformOrigin:'center', animation:'ringOrbitLogin 8s linear infinite'}}/>
+                </svg>
+                {/* Orbiting dot */}
+                <div style={{
+                  position: 'absolute', top: '50%', left: '50%',
+                  width: 10, height: 10, marginTop: -5, marginLeft: -5,
+                  animation: 'orbitDot 3.5s linear infinite',
+                  zIndex: 3,
+                }}>
+                  <div style={{
+                    width: 8, height: 8, borderRadius: '50%',
+                    background: 'radial-gradient(circle at 35% 30%, #7afff4, #00b8d4)',
+                    boxShadow: '0 0 8px rgba(0,229,255,0.9), 0 0 16px rgba(0,229,255,0.4)',
+                  }}/>
+                </div>
+              </div>
             </div>
 
             <div style={{
