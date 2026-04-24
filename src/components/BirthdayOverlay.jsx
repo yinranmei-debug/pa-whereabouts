@@ -552,7 +552,7 @@ function BirthdayConfetti() {
 }
 
 // ── Main export ────────────────────────────────────────────────
-export default function BirthdayOverlay({ currentUserEmail, isBusy, onClose }) {
+export default function BirthdayOverlay({ currentUserEmail, isBusy, onClose, onCelebrate }) {
   const [birthdayPerson, setBirthdayPerson] = useState(null);
   const [theme, setTheme] = useState(null);
   const [visible, setVisible] = useState(false);
@@ -725,7 +725,7 @@ export default function BirthdayOverlay({ currentUserEmail, isBusy, onClose }) {
           </div>
 
           <button
-            onClick={handleClose}
+            onClick={e=>{ e.stopPropagation(); handleClose(); onCelebrate?.(birthdayPerson); }}
             style={{
               background: 'linear-gradient(90deg,#009bff,#770bff)',
               border: 'none', borderRadius: 100,
