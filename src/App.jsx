@@ -836,7 +836,7 @@ export default function App() {
           if (!avEl) return null;
          const r=avEl.getBoundingClientRect();
           return (
-            <div style={{position:'fixed',left:r.right+16,top:r.top+r.height/2,zIndex:13200,transform:'translateY(-50%)',animation:'cakePromptIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both',pointerEvents:'none',display:'flex',alignItems:'center',gap:6}}>
+          <div style={{position:'fixed',left:240,top:r.top+r.height/2,zIndex:13200,transform:'translateY(-50%)',pointerEvents:'none',display:'flex',alignItems:'center',gap:6,animation:'cakePromptFadeIn 0.3s ease both'}}>
               <div style={{fontSize:20,lineHeight:1,animation:'cakePromptArrow 0.8s ease-in-out infinite'}}>👈</div>
               <div style={{background:'linear-gradient(135deg,#1e1b4b,#0f172a)',border:'1.5px solid rgba(167,139,250,0.5)',borderRadius:12,padding:'8px 14px',display:'flex',alignItems:'center',gap:8,boxShadow:'0 8px 32px rgba(119,11,255,0.4)',fontFamily:"'Plus Jakarta Sans',sans-serif",whiteSpace:'nowrap',animation:'cakePromptPulse 1.6s ease-in-out infinite'}}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
