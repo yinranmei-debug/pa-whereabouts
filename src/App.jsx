@@ -188,6 +188,14 @@ export default function App() {
   const [bdayToastOut,    setBdayToastOut]    = useState(false);
   const [staffTitles,     setStaffTitles]     = useState({});
   const celebratePromptTimer = useRef(null);
+
+  // 必须在 sequence effect 之前定义
+  const todayMMDD_hook = (() => {
+    const t = new Date();
+    return `${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+  })();
+  const hasBirthdayToday_hook = RAW_STAFF_LIST.some(s => s.birthday === todayMMDD_hook);
+
   const [showWeeklyPanel,   setShowWeeklyPanel]   = useState(false);
   const [showBdayPanel,     setShowBdayPanel]      = useState(false);
   const [weeklyUpdates,     setWeeklyUpdates]      = useState([]);
@@ -307,7 +315,7 @@ export default function App() {
 
     // Returning user: Bday handled by BirthdayOverlay (isBusy gate)
     // Tips fire after bday is done (or if no bday today)
-    if (birthdayDone || !hasBirthdayToday) {
+   if (birthdayDone || !hasBirthdayToday_hook) {
       const todayStr = new Date().toDateString();
       const tipKey = `tips-shown-${account.username}-${todayStr}`;
       if (!localStorage.getItem(tipKey)) {
@@ -318,7 +326,7 @@ export default function App() {
         return () => clearTimeout(t);
       }
     }
-  }, [account, birthdayDone, hasBirthdayToday]);
+  }, [account, birthdayDone, hasBirthdayToday_hook]);
 
   useEffect(() => {
     if (!account) return;
