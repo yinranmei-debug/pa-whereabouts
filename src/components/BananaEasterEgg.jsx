@@ -384,27 +384,20 @@ export default function BananaEasterEgg({ readySignal = false }) {
   const firedRef       = useRef(false); // 防止重复触发
   const DURATION = 4800;
 
-  // 第一步：mount 时只检查资格，不启动计时器
+  // 合并成一个 effect，readySignal 变化时重跑
   useEffect(() => {
     const today = new Date();
     const dow   = today.getDay();
     if (!BANANA_DAYS.includes(dow)) return;
     const sessionKey = `banana-shown-${today.toDateString()}`;
     if (sessionStorage.getItem(sessionKey)) return;
-    // 有资格，把 dow 存进 ref 和 state
-    eligibleDowRef.current = dow;
+    if (firedRef.current) return;
+
+    // 每次跑都设好 dow（幂等）
     setDayOfWeek(dow);
-  }, []); // 只跑一次
+    eligibleDowRef.current = dow;
 
-  // 第二步：等 readySignal 变 true 再启动 16 秒倒计时
-  useEffect(() => {
-    if (!readySignal) return;
-    if (eligibleDowRef.current === null) return; // 今天不是指定日或已看过
-    if (firedRef.current) return; // 已经触发过了
-
-    const today = new Date();
-    const sessionKey = `banana-shown-${today.toDateString()}`;
-    if (sessionStorage.getItem(sessionKey)) return;
+    if (!readySignal) return; // 还没 ready，等下次 readySignal 变 true 重跑
 
     const t = setTimeout(() => {
       if (firedRef.current) return;
@@ -413,7 +406,7 @@ export default function BananaEasterEgg({ readySignal = false }) {
       setActive(true);
     }, 16000);
     return () => clearTimeout(t);
-  }, [readySignal]);
+  }, [readySignal]); // readySignal 变化驱动重跑
 
   useEffect(() => {
     if (!active) return;

@@ -560,11 +560,10 @@ export default function BirthdayOverlay({ currentUserEmail, isBusy, onClose }) {
   const frame = usePixelTick(8, visible);
 
   useEffect(() => {
-    // Fixed the typo, and added isBusy so it waits for the tour/tips!
-    if (!currentUserEmail || isBusy) return;
+    if (!currentUserEmail) return;
+    if (isBusy) return; // tips 还开着，等它关了再触发（依赖 isBusy 变化重跑）
 
     const sessionKey = 'bday-shown-session';
-    // Only show once per session
     if (sessionStorage.getItem(sessionKey)) return;
 
     const today = new Date();
@@ -573,14 +572,18 @@ export default function BirthdayOverlay({ currentUserEmail, isBusy, onClose }) {
     const todayMMDD = `${mm}-${dd}`;
 
     const match = RAW_STAFF_LIST.find(s => s.birthday === todayMMDD);
-    if (!match) return;
+    if (!match) {
+      // 今天没生日，直接通知 App 不需要等生日
+      onClose?.();
+      return;
+    }
 
     sessionStorage.setItem(sessionKey, '1');
     setTheme(pickTheme(match.id));
     setBirthdayPerson(match);
     const t = setTimeout(() => setVisible(true), 1200);
     return () => clearTimeout(t);
-  }, [currentUserEmail, isBusy]); // <-- Added isBusy here too!
+  }, [currentUserEmail, isBusy]);
 
   useEffect(() => {
     if (!visible) return;
