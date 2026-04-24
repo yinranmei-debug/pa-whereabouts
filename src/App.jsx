@@ -6,7 +6,7 @@ import RAW_STAFF_LIST from './data/staff.json';
 import STATUS_CONFIG from './data/status.json';
 import TIPS_DATA from './data/tips.json';
 import { createClient } from '@supabase/supabase-js';
-import BirthdayOverlay from './components/BirthdayOverlay';
+import BirthdayOverlay, { BirthdaySceneInline } from './components/BirthdayOverlay';
 import GlobalStyles       from './components/GlobalStyles';
 import Avatar             from './components/Avatar';
 import LoginScreen        from './components/LoginScreen';
@@ -188,6 +188,11 @@ export default function App() {
   const [bdayToastOut,    setBdayToastOut]    = useState(false);
   const [staffTitles,     setStaffTitles]     = useState({});
   const celebratePromptTimer = useRef(null);
+  const [showWeeklyPanel,   setShowWeeklyPanel]   = useState(false);
+  const [showBdayPanel,     setShowBdayPanel]      = useState(false);
+  const [weeklyUpdates,     setWeeklyUpdates]      = useState([]);
+  const [weeklyUpdatesCount,setWeeklyUpdatesCount] = useState(0);
+  const [newUpdate,         setNewUpdate]          = useState('');
   const dailyTips = useRef(getDailyTips());
 
   const { activeBreach, chargingState, registerClick: registerBreachClick } = useDimensionalBreach();
@@ -288,31 +293,32 @@ export default function App() {
     })();
   }, []);
 
+  // ── Sequence: Tour → Bday → Tips → Welcome → Banana ──────
   useEffect(() => {
     if (!account) return;
-    const key = `tour-done-${account.username}`;
-    if (localStorage.getItem(key)) return;
-    const t = setTimeout(() => {
-      setShowTips(false);
-      localStorage.setItem(key, '1');
-      setShowWelcome(true);
-      setTimeout(() => setShowWelcome(false), 3500);
-    }, 600);
-    return () => clearTimeout(t);
-  }, [account]);
+    const tourKey = `tour-done-${account.username}`;
 
-  useEffect(() => {
-    if (!account) return;
-    const todayStr = new Date().toDateString();
-    const tipKey = `tips-shown-${account.username}-${todayStr}`;
-    if (!localStorage.getItem(tipKey)) {
-      const t = setTimeout(() => {
-        setShowTips(true);
-        localStorage.setItem(tipKey, '1');
-      }, 1200);
-      return () => clearTimeout(t);
+    // First-time user: show tour, then welcome confetti
+    if (!localStorage.getItem(tourKey)) {
+      // Tour will show via showTour state — handled below
+      // Welcome fires after tour completes via onDone callback
+      return;
     }
-  }, [account]);
+
+    // Returning user: Bday handled by BirthdayOverlay (isBusy gate)
+    // Tips fire after bday is done (or if no bday today)
+    if (birthdayDone || !hasBirthdayToday) {
+      const todayStr = new Date().toDateString();
+      const tipKey = `tips-shown-${account.username}-${todayStr}`;
+      if (!localStorage.getItem(tipKey)) {
+        const t = setTimeout(() => {
+          setShowTips(true);
+          localStorage.setItem(tipKey, '1');
+        }, 800);
+        return () => clearTimeout(t);
+      }
+    }
+  }, [account, birthdayDone, hasBirthdayToday]);
 
   useEffect(() => {
     if (!account) return;
@@ -352,6 +358,21 @@ export default function App() {
         .on('postgres_changes',{event:'*',schema:'public',table:'emotions'},payload=>{
           if (payload.eventType==='DELETE') setEmotions(e=>{const n={...e};delete n[payload.old.staff_id];return n;});
           else setEmotions(e=>({...e,[payload.new.staff_id]:payload.new.emoji}));
+        }).subscribe();
+
+      // Weekly updates — load this week's, auto-clear old ones
+      const weekStart = (() => {
+        const d=new Date(); const day=d.getDay();
+        d.setDate(d.getDate()-day+(day===0?-6:1));
+        return fmt(d);
+      })();
+      await supabase.from('week_updates').delete().lt('week_start', weekStart);
+      const {data:wData} = await supabase.from('week_updates').select('*').eq('week_start',weekStart).order('created_at',{ascending:true});
+      if (wData) { setWeeklyUpdates(wData); setWeeklyUpdatesCount(wData.length); }
+      supabase.channel('week-updates-changes')
+        .on('postgres_changes',{event:'*',schema:'public',table:'week_updates'},async ()=>{
+          const {data} = await supabase.from('week_updates').select('*').eq('week_start',weekStart).order('created_at',{ascending:true});
+          if (data) { setWeeklyUpdates(data); setWeeklyUpdatesCount(data.length); }
         }).subscribe();
     })();
   }, [account]);
@@ -771,6 +792,9 @@ export default function App() {
     return `${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
   })();
   const hasBirthdayToday = RAW_STAFF_LIST.some(s => s.birthday === todayMMDD);
+  // expose for sequence effect above — note: this runs after hooks so
+  // the effect above reads stale on first render, which is fine since
+  // birthdayDone starts false and the effect re-runs when it changes.
   return (
     <>
       <div style={{minHeight:'100vh',background:'transparent',position:'relative',zIndex:3}} onMouseUp={handleStatusCellMouseUp} onTouchEnd={handleStatusCellTouchEnd}>
@@ -854,6 +878,110 @@ export default function App() {
           );
         })}
 
+       {/* ── Weekly Panel ── */}
+        {showWeeklyPanel && (
+          <div className="dsz" style={{position:'fixed',top:NAV_H+8,right:16,zIndex:10600,width:380,maxWidth:'95vw',background:'rgba(10,8,32,0.96)',backdropFilter:'blur(20px)',borderRadius:20,border:'1px solid rgba(167,139,250,0.2)',boxShadow:'0 20px 60px rgba(0,0,0,0.5)',animation:'dropIn 0.2s ease',fontFamily:"'Plus Jakarta Sans',sans-serif"}} onClick={e=>e.stopPropagation()}>
+            <div style={{padding:'18px 20px 14px',borderBottom:'1px solid rgba(167,139,250,0.1)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+              <span style={{fontSize:16,fontWeight:700,color:'#fff'}}>Team week at a glance</span>
+              <button onClick={()=>setShowWeeklyPanel(false)} style={{width:28,height:28,borderRadius:'50%',border:'none',background:'rgba(255,255,255,0.08)',cursor:'pointer',color:'rgba(232,229,255,0.6)',fontSize:13,display:'flex',alignItems:'center',justifyContent:'center'}} onMouseOver={e=>e.currentTarget.style.background='rgba(255,255,255,0.14)'} onMouseOut={e=>e.currentTarget.style.background='rgba(255,255,255,0.08)'}>✕</button>
+            </div>
+            {/* Add update */}
+            <div style={{padding:'14px 20px',borderBottom:'1px solid rgba(167,139,250,0.08)',display:'flex',gap:10}}>
+              <input
+                value={newUpdate}
+                onChange={e=>setNewUpdate(e.target.value)}
+                onKeyDown={async e=>{ if(e.key==='Enter'&&newUpdate.trim()){
+                  const weekStart=fmt((() => { const d=new Date(); const day=d.getDay(); d.setDate(d.getDate()-day+(day===0?-6:1)); return d; })());
+                  const emoji = newUpdate.toLowerCase().includes('birthday')?'🎂':newUpdate.toLowerCase().includes('holiday')||newUpdate.toLowerCase().includes('leave')?'🌴':newUpdate.toLowerCase().includes('office')?'🏢':'📌';
+                  await supabase.from('week_updates').insert({week_start:weekStart,emoji,title:newUpdate.trim(),body:'',author_id:meStaff?.id||'guest'});
+                  setNewUpdate('');
+                }}}
+                placeholder="Add an update — e.g. Brett visits office"
+                style={{flex:1,height:38,borderRadius:10,border:'1px solid rgba(167,139,250,0.2)',background:'rgba(255,255,255,0.05)',color:'#fff',fontSize:13,padding:'0 12px',outline:'none',fontFamily:"'Plus Jakarta Sans',sans-serif"}}
+              />
+              <button
+                onClick={async()=>{ if(!newUpdate.trim()) return;
+                  const weekStart=fmt((() => { const d=new Date(); const day=d.getDay(); d.setDate(d.getDate()-day+(day===0?-6:1)); return d; })());
+                  const emoji = newUpdate.toLowerCase().includes('birthday')?'🎂':newUpdate.toLowerCase().includes('holiday')||newUpdate.toLowerCase().includes('leave')?'🌴':newUpdate.toLowerCase().includes('office')?'🏢':'📌';
+                  await supabase.from('week_updates').insert({week_start:weekStart,emoji,title:newUpdate.trim(),body:'',author_id:meStaff?.id||'guest'});
+                  setNewUpdate('');
+                }}
+                style={{height:38,padding:'0 16px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#009bff,#770bff)',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer'}}
+              >ADD</button>
+            </div>
+            {/* Auto entries: birthdays + holidays this week */}
+            <div style={{maxHeight:320,overflowY:'auto',padding:'8px 12px 12px'}}>
+              {/* Birthdays this week */}
+              {week.map(d => {
+                const bday = RAW_STAFF_LIST.find(s => s.birthday === d.ds.slice(5));
+                if (!bday) return null;
+                return (
+                  <div key={`bday-${d.ds}`} style={{display:'flex',alignItems:'flex-start',gap:12,padding:'10px 8px',borderRadius:12,background:'rgba(255,143,176,0.08)',border:'1px solid rgba(255,143,176,0.15)',marginBottom:8}}>
+                    <div style={{width:36,height:36,borderRadius:10,background:'linear-gradient(135deg,rgba(255,143,176,0.3),rgba(255,183,0,0.3))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>🎂</div>
+                    <div>
+                      <div style={{fontSize:13,fontWeight:700,color:'#fff',marginBottom:2}}>{bday.name.split(' ')[0]}'s birthday {d.isToday?'is today':'this week'}</div>
+                      <div style={{fontSize:12,color:'rgba(232,229,255,0.5)'}}>Say hi or tap Celebrate to send a cake.</div>
+                    </div>
+                  </div>
+                );
+              })}
+              {/* Holidays this week */}
+              {week.filter(d=>d.hol).map(d=>(
+                <div key={`hol-${d.ds}`} style={{display:'flex',alignItems:'flex-start',gap:12,padding:'10px 8px',borderRadius:12,background:'rgba(167,139,250,0.08)',border:'1px solid rgba(167,139,250,0.15)',marginBottom:8}}>
+                  <div style={{width:36,height:36,borderRadius:10,background:'linear-gradient(135deg,rgba(167,139,250,0.3),rgba(106,199,255,0.3))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{d.hol.split(' ')[0]}</div>
+                  <div>
+                    <div style={{fontSize:13,fontWeight:700,color:'#fff',marginBottom:2}}>{d.hol.replace(/^\S+\s/,'')} this {d.dayName}</div>
+                    <div style={{fontSize:12,color:'rgba(232,229,255,0.5)'}}>Public holiday — offices closed.</div>
+                  </div>
+                </div>
+              ))}
+              {/* User-added updates */}
+              {weeklyUpdates.map(u=>(
+                <div key={u.id} style={{display:'flex',alignItems:'flex-start',gap:12,padding:'10px 8px',borderRadius:12,background:'rgba(255,255,255,0.04)',border:'1px solid rgba(167,139,250,0.1)',marginBottom:8}}>
+                  <div style={{width:36,height:36,borderRadius:10,background:'rgba(167,139,250,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{u.emoji}</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:13,fontWeight:700,color:'#fff',marginBottom:2}}>{u.title}</div>
+                    {u.body&&<div style={{fontSize:12,color:'rgba(232,229,255,0.5)'}}>{u.body}</div>}
+                  </div>
+                  {u.author_id===meStaff?.id&&(
+                    <button onClick={async()=>{ await supabase.from('week_updates').delete().eq('id',u.id); }} style={{background:'none',border:'none',color:'rgba(232,229,255,0.3)',cursor:'pointer',fontSize:12,padding:'2px 4px',flexShrink:0}} onMouseOver={e=>e.currentTarget.style.color='rgba(255,100,100,0.7)'} onMouseOut={e=>e.currentTarget.style.color='rgba(232,229,255,0.3)'}>✕</button>
+                  )}
+                </div>
+              ))}
+              {week.every(d=>!RAW_STAFF_LIST.find(s=>s.birthday===d.ds.slice(5)))&&week.every(d=>!d.hol)&&weeklyUpdates.length===0&&(
+                <div style={{textAlign:'center',padding:'24px 0',color:'rgba(232,229,255,0.3)',fontSize:13}}>No updates this week yet.</div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Birthday Panel ── */}
+        {showBdayPanel && (() => {
+          const bdayPerson = RAW_STAFF_LIST.find(s => s.birthday === todayMMDD);
+          if (!bdayPerson) return null;
+          const theme = (() => {
+            const BIRTHDAY_THEMES = ['wizard','upsidedown','polaroid','dinosaur','ufo','corporate','omelet'];
+            const idx = ['heidi','bill','chen','vicky','arthur','yinran','mony','ricardo','shannon','nic','jean','anita','jennifer','charlotte','jason','james_l','brenda','grace'].indexOf(bdayPerson.id);
+            return BIRTHDAY_THEMES[(idx >= 0 ? idx : 0) % BIRTHDAY_THEMES.length];
+          })();
+          return (
+            <div className="dsz" style={{position:'fixed',top:NAV_H+8,right:16,zIndex:10600,width:340,background:'linear-gradient(135deg,rgba(10,5,30,0.97),rgba(20,10,40,0.97))',backdropFilter:'blur(20px)',borderRadius:20,border:'1px solid rgba(255,183,0,0.25)',boxShadow:'0 20px 60px rgba(0,0,0,0.6)',animation:'dropIn 0.2s ease',overflow:'hidden',fontFamily:"'Plus Jakarta Sans',sans-serif"}} onClick={e=>e.stopPropagation()}>
+              <div style={{padding:'16px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1px solid rgba(255,183,0,0.1)'}}>
+                <span style={{fontSize:15,fontWeight:700,color:'#fff'}}>🎂 Happy Birthday, {bdayPerson.name.split(' ')[0]}</span>
+                <button onClick={()=>setShowBdayPanel(false)} style={{width:28,height:28,borderRadius:'50%',border:'none',background:'rgba(255,255,255,0.08)',cursor:'pointer',color:'rgba(232,229,255,0.6)',fontSize:13,display:'flex',alignItems:'center',justifyContent:'center'}} onMouseOver={e=>e.currentTarget.style.background='rgba(255,255,255,0.14)'} onMouseOut={e=>e.currentTarget.style.background='rgba(255,255,255,0.08)'}>✕</button>
+              </div>
+             <div style={{aspectRatio:'3/2',position:'relative',overflow:'hidden'}}>
+                <BirthdaySceneInline staffId={RAW_STAFF_LIST.find(s=>s.birthday===todayMMDD)?.id||'yinran'}/>
+              </div>
+              <div style={{padding:'12px 20px 16px',textAlign:'center'}}>
+                <button onClick={()=>{setShowBdayPanel(false);handleCelebrate(RAW_STAFF_LIST.find(s=>s.birthday===todayMMDD));}} style={{background:'linear-gradient(90deg,#009bff,#770bff)',border:'none',borderRadius:100,padding:'8px 24px',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:"'Plus Jakarta Sans',sans-serif",boxShadow:'0 4px 16px rgba(119,11,255,0.35)'}}>
+                  Celebrate! 🎉
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Tips modal */}
         {showTips && currentTip && (
           <div style={{position:'fixed',inset:0,zIndex:10500,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(15,23,42,0.45)',backdropFilter:'blur(4px)',animation:'dropIn 0.2s ease'}}>
@@ -916,50 +1044,74 @@ export default function App() {
           <div className="nav-right">
             {saveStatus==='saving'&&<span className="save-txt">↻ Saving</span>}
             {saveStatus==='saved' &&<span className="save-ok">✓ Saved</span>}
-            {/* ── Mind Hub 三按钮 ── */}
+           {/* ── Mind Hub 三按钮 ── */}
             <div style={{display:'flex',alignItems:'center',gap:8}}>
 
-              {/* ✨ Team updates */}
+              {/* ✦ Weekly updates */}
               <button
-                onClick={()=>{setTipIdx(0);setShowTips(true);}}
+                onClick={()=>setShowWeeklyPanel(p=>!p)}
                 title="Team week at a glance"
-                style={{position:'relative',width:48,height:48,borderRadius:16,border:'1.5px solid rgba(167,139,250,0.3)',background:'rgba(255,255,255,0.06)',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s'}}
-                onMouseOver={e=>e.currentTarget.style.background='rgba(167,139,250,0.15)'}
-                onMouseOut={e=>e.currentTarget.style.background='rgba(255,255,255,0.06)'}
-                className="mh-btn-sparkle"
+                style={{position:'relative',width:48,height:48,borderRadius:14,border:'1.5px solid rgba(167,139,250,0.3)',background:'rgba(15,10,40,0.7)',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s'}}
+                onMouseOver={e=>e.currentTarget.style.borderColor='rgba(167,139,250,0.6)'}
+                onMouseOut={e=>e.currentTarget.style.borderColor='rgba(167,139,250,0.3)'}
               >
-                <span style={{fontSize:20,lineHeight:1}}>✨</span>
-                <div style={{position:'absolute',top:-6,right:-6,minWidth:18,height:18,borderRadius:9,background:'linear-gradient(135deg,#009bff,#770bff)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:800,color:'#fff',padding:'0 4px'}}>2</div>
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                  <path className="mh-star-1" d="M11 2L12.2 8.8L18 7L13.5 11L18 15L12.2 13.2L11 20L9.8 13.2L4 15L8.5 11L4 7L9.8 8.8L11 2Z" fill="rgba(167,139,250,0.9)" stroke="rgba(196,181,253,0.6)" strokeWidth="0.5"/>
+                  <circle className="mh-star-2" cx="17" cy="4" r="1.5" fill="rgba(106,199,255,0.8)"/>
+                  <circle className="mh-star-3" cx="5" cy="17" r="1" fill="rgba(255,143,176,0.8)"/>
+                </svg>
+                {weeklyUpdatesCount > 0 && (
+                  <div style={{position:'absolute',top:-6,right:-6,minWidth:18,height:18,borderRadius:9,background:'linear-gradient(135deg,#009bff,#770bff)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:800,color:'#fff',padding:'0 4px',boxShadow:'0 2px 8px rgba(119,11,255,0.4)'}}>{weeklyUpdatesCount}</div>
+                )}
               </button>
 
-              {/* 🎂 Birthday */}
-              <button
-                onClick={()=>{}}
-                title="Birthday"
-                style={{position:'relative',width:48,height:48,borderRadius:16,border:'1.5px solid rgba(255,183,0,0.35)',background:'rgba(255,183,0,0.08)',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s'}}
-                onMouseOver={e=>e.currentTarget.style.background='rgba(255,183,0,0.18)'}
-                onMouseOut={e=>e.currentTarget.style.background='rgba(255,183,0,0.08)'}
-                className="mh-btn-cake"
-              >
-                <span style={{fontSize:22,lineHeight:1,display:'inline-block',animation:'cakeWobble 2s ease-in-out infinite'}}>🎂</span>
-                {hasBirthdayToday && <div style={{position:'absolute',top:-6,right:-6,minWidth:18,height:18,borderRadius:9,background:'linear-gradient(135deg,#ff8fb0,#e63946)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:800,color:'#fff',padding:'0 4px'}}>1</div>}
-              </button>
+              {/* 🎂 Birthday — only when there's a birthday today */}
+              {hasBirthdayToday && (
+                <button
+                  onClick={()=>setShowBdayPanel(p=>!p)}
+                  title="Birthday today!"
+                  style={{position:'relative',width:48,height:48,borderRadius:14,border:'1.5px solid rgba(255,183,0,0.45)',background:'rgba(30,15,5,0.7)',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s',overflow:'visible'}}
+                  onMouseOver={e=>e.currentTarget.style.borderColor='rgba(255,220,100,0.7)'}
+                  onMouseOut={e=>e.currentTarget.style.borderColor='rgba(255,183,0,0.45)'}
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    {/* cake base */}
+                    <rect x="4" y="13" width="16" height="8" rx="2" fill="rgba(255,143,176,0.7)" stroke="rgba(255,183,0,0.6)" strokeWidth="1"/>
+                    <rect x="6" y="10" width="12" height="5" rx="1.5" fill="rgba(255,183,0,0.5)" stroke="rgba(255,225,74,0.5)" strokeWidth="1"/>
+                    {/* candles */}
+                    <rect x="8" y="5" width="2" height="5" rx="1" fill="rgba(167,139,250,0.8)"/>
+                    <rect x="14" y="5" width="2" height="5" rx="1" fill="rgba(106,199,255,0.8)"/>
+                    {/* flames */}
+                    <ellipse className="mh-flame" cx="9" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,220,50,0.95)"/>
+                    <ellipse className="mh-flame" cx="15" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,160,50,0.95)" style={{animationDelay:'0.2s'}}/>
+                  </svg>
+                  <div style={{position:'absolute',top:-6,right:-6,minWidth:18,height:18,borderRadius:9,background:'linear-gradient(135deg,#ff8fb0,#e63946)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:800,color:'#fff',padding:'0 4px',boxShadow:'0 2px 8px rgba(255,100,150,0.4)'}}>1</div>
+                </button>
+              )}
 
               {/* 🪐 Tips / Mind Huddle */}
               <button
-                onClick={()=>{setTipIdx(0);setShowTips(true);}}
+                onClick={()=>{ setTipIdx(0); setShowTips(true); }}
                 title="Daily Mind Huddle"
-                style={{position:'relative',width:48,height:48,borderRadius:16,border:'1.5px solid rgba(167,139,250,0.45)',background:'linear-gradient(135deg,#2d1b69,#1e1b4b)',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s',overflow:'visible'}}
-                onMouseOver={e=>e.currentTarget.style.border='1.5px solid rgba(196,181,253,0.7)'}
-                onMouseOut={e=>e.currentTarget.style.border='1.5px solid rgba(167,139,250,0.45)'}
-                className="mh-btn-planet"
+                style={{position:'relative',width:48,height:48,borderRadius:14,border:'1.5px solid rgba(139,92,246,0.45)',background:'linear-gradient(135deg,rgba(45,27,105,0.8),rgba(30,27,75,0.8))',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s',overflow:'visible'}}
+                onMouseOver={e=>e.currentTarget.style.borderColor='rgba(196,181,253,0.7)'}
+                onMouseOut={e=>e.currentTarget.style.borderColor='rgba(139,92,246,0.45)'}
               >
-                <div style={{position:'relative',width:24,height:24,display:'flex',alignItems:'center',justifyContent:'center'}}>
-                  <div style={{width:16,height:16,borderRadius:'50%',background:'radial-gradient(circle at 35% 32%,#c4b5fd 0%,#8b5cf6 35%,#5b21b6 65%,#2e1065 100%)',boxShadow:'0 0 10px rgba(139,92,246,0.7)',position:'relative',zIndex:2}}/>
-                  <div style={{position:'absolute',width:28,height:8,borderRadius:'50%',border:'2px solid rgba(167,139,250,0.8)',background:'transparent',transform:'rotateX(72deg)',animation:'ringOrbit 2s linear infinite',boxShadow:'0 0 8px rgba(167,139,250,0.4)'}}/>
-                </div>
+                <svg width="26" height="26" viewBox="0 0 26 26" fill="none" overflow="visible">
+                  <circle className="mh-planet-body" cx="13" cy="13" r="7" fill="url(#planetGrad)"/>
+                  <defs>
+                    <radialGradient id="planetGrad" cx="35%" cy="32%" r="65%">
+                      <stop offset="0%" stopColor="#c4b5fd"/>
+                      <stop offset="40%" stopColor="#8b5cf6"/>
+                      <stop offset="100%" stopColor="#2e1065"/>
+                    </radialGradient>
+                  </defs>
+                  <ellipse className="mh-ring" cx="13" cy="13" rx="13" ry="4" fill="none" stroke="rgba(167,139,250,0.75)" strokeWidth="1.5" style={{transformOrigin:'13px 13px'}}/>
+                </svg>
               </button>
             </div>
+
+              
             <div className="online-pill">
               <div className="online-stack">
                 {onlineUsers.length === 0 ? (
@@ -1206,8 +1358,14 @@ export default function App() {
                                           data-shift={shift}
                                           id={isFirst&&si===0?AM_REF:undefined}
                                           className={[cls,isPreview?'preview':'',isSnapping?'cell-snap':'',isBulkSelected?'bulk-selected':'',staggerDelay!==undefined?'cell-stagger':''].filter(Boolean).join(' ')}
-                                          style={{
-                                            ...(sid!=='none'?{background:cfg.bg,color:cfg.color,border:`1.5px solid ${cfg.color}30`}:{}),
+                                        style={{
+                                            ...(sid!=='none'?{
+                                              background:cfg.bg,
+                                              color:cfg.color,
+                                              border:`1.5px solid ${cfg.border||cfg.color}`,
+                                              boxShadow:cfg.glow||'none',
+                                              backdropFilter:'blur(8px) saturate(120%)',
+                                            }:{}),
                                             ...(staggerDelay!==undefined?{animationDelay:`${staggerDelay}ms`}:{}),
                                             touchAction:'none',
                                           }}
