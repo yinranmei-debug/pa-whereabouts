@@ -373,21 +373,21 @@ const GlobalStyles = () => (
     .pill:hover.hol .pill-card{box-shadow:inset 0 1px 0 rgba(255,255,255,0.12),0 0 28px rgba(217,70,239,0.45),0 0 56px rgba(168,85,247,0.25);filter:saturate(1.6) brightness(1.15);transition:filter 0.15s,box-shadow 0.25s;}
     .pill:hover.we  .pill-card{box-shadow:inset 0 1px 0 rgba(255,255,255,0.1),0 0 28px rgba(99,102,241,0.45),0 0 56px rgba(0,155,255,0.28);filter:saturate(1.6) brightness(1.15);transition:filter 0.15s,box-shadow 0.25s;}
 
-    @keyframes pillHoverBounce{
-      0%  {transform:translateY(0) scale(1);}
-      18% {transform:translateY(-10px) scale(1.03);}
-      34% {transform:translateY(0px) scale(0.98);}
-      50% {transform:translateY(-6px) scale(1.02);}
-      65% {transform:translateY(0px) scale(0.99);}
-      78% {transform:translateY(-3px) scale(1.01);}
-      100%{transform:translateY(0) scale(1);}
+  @keyframes pillHoverBounce{
+      0%  {transform:translateY(0);}
+      18% {transform:translateY(-10px);}
+      34% {transform:translateY(0px);}
+      50% {transform:translateY(-6px);}
+      65% {transform:translateY(0px);}
+      78% {transform:translateY(-3px);}
+      100%{transform:translateY(0);}
     }
     .pill-hover-bounce .pill-card{animation:pillHoverBounce 0.75s cubic-bezier(0.34,1.46,0.64,1) both;}
 
-    @keyframes pillClickBounceY{
-      0%{transform:scaleY(1) translateY(0);}20%{transform:scaleY(0.92) translateY(4px);}
-      45%{transform:scaleY(1.06) translateY(-6px);}65%{transform:scaleY(0.97) translateY(2px);}
-      82%{transform:scaleY(1.02) translateY(-2px);}100%{transform:scaleY(1) translateY(0);}
+   @keyframes pillClickBounceY{
+      0%{transform:scaleY(1) translateY(0);}20%{transform:scaleY(0.97) translateY(1.3px);}
+      45%{transform:scaleY(1.02) translateY(-2px);}65%{transform:scaleY(0.99) translateY(0.7px);}
+      82%{transform:scaleY(1.01) translateY(-0.7px);}100%{transform:scaleY(1) translateY(0);}
     }
     .pill.holi-tap .pill-card{animation:pillClickBounceY 0.48s cubic-bezier(0.34,1.56,0.64,1) forwards;transform-origin:center bottom;}
 
