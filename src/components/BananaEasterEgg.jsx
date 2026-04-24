@@ -404,7 +404,7 @@ export default function BananaEasterEgg({ readySignal = false }) {
       firedRef.current = true;
       sessionStorage.setItem(sessionKey, '1');
       setActive(true);
-    }, 5000);
+    }, 2000);
     return () => clearTimeout(t);
   }, [readySignal]); // readySignal 变化驱动重跑
 
