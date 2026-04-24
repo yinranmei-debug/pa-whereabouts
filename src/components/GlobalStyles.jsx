@@ -289,7 +289,7 @@ const GlobalStyles = () => (
 
     .nw{height:${ROW_H}px;display:flex;align-items:center;gap:12px;padding:0 10px;border-bottom:1px solid rgba(167,139,250,0.08);overflow:visible;background:rgba(8,12,35,0.96);}
     tr:last-child .nw{border-bottom:none;}
-   .dw{height:${ROW_H}px;display:flex;flex-direction:column;justify-content:center;gap:7px;padding:0 6px;border-bottom:1px solid rgba(167,139,250,0.08);}
+   .dw{height:${ROW_H}px;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:0 6px;border-bottom:1px solid rgba(167,139,250,0.08);}
     tr:last-child .dw{border-bottom:none;}
 
     /* ── Row hover tint (spec: rgba(167,139,250,0.08)) ── */
