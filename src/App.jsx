@@ -1014,7 +1014,7 @@ export default function App() {
                                       pillEl.classList.remove('pill-hover-bounce');
                                       void pillEl.offsetWidth;
                                       pillEl.classList.add('pill-hover-bounce');
-                                      setTimeout(() => pillEl.classList.remove('pill-hover-bounce'), 650);
+                                      setTimeout(() => pillEl.classList.remove('pill-hover-bounce'), 800);
                                     }}
                                     onMouseLeave={()=>setHoveredPill(null)}
                                   >

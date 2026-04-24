@@ -186,8 +186,7 @@ const GlobalStyles = () => (
     .sh.bulk-selected{background:linear-gradient(135deg,rgba(0,155,255,0.2),rgba(119,11,255,0.2)) !important;border:none !important;box-shadow:0 0 0 2px rgba(119,11,255,0.55),0 0 10px rgba(119,11,255,0.18) !important;}
 
     /* ── Pills ── */
-    td.ptd{height:1px;padding:0 6px;vertical-align:top;position:relative;overflow:hidden;}
-    .pill{position:relative;height:100%;width:100%;cursor:pointer;user-select:none;overflow:hidden;border-radius:14px;isolation:isolate;}
+td.ptd{height:1px;padding:0 6px;vertical-align:top;position:relative;overflow:visible;}    .pill{position:relative;height:100%;width:100%;cursor:pointer;user-select:none;overflow:hidden;border-radius:14px;isolation:isolate;}
     .pill-card{position:absolute;inset:0;border-radius:14px;transition:box-shadow 0.25s,transform 0.2s;will-change:transform;}
     .hol .pill-card{background:linear-gradient(160deg,rgba(251,207,232,0.75) 0%,rgba(221,214,254,0.65) 50%,rgba(196,181,253,0.55) 100%);border:1.5px solid rgba(217,70,239,0.25);box-shadow:inset 0 1px 0 rgba(255,255,255,0.7),0 2px 12px rgba(217,70,239,0.12);}
     .we  .pill-card{background:linear-gradient(160deg,rgba(199,210,254,0.75) 0%,rgba(196,181,253,0.65) 50%,rgba(167,139,250,0.55) 100%);border:1.5px solid rgba(139,92,246,0.25);box-shadow:inset 0 1px 0 rgba(255,255,255,0.7),0 2px 12px rgba(139,92,246,0.14);}
