@@ -3,7 +3,7 @@ import React from 'react';
 const NAV_H  = 72;
 const TB_H   = 56;
 const LG_H   = 40;
-const ROW_H  = 152;
+const ROW_H  = 140;
 const HEADER_STICKY_TOP = NAV_H + TB_H + LG_H;
 
 const GlobalStyles = () => (
