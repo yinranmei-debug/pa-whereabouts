@@ -543,7 +543,17 @@ function BirthdayConfetti() {
   );
 }
 
-
+// ── Inline Scene Viewer (for 🎂 button panel) ─────────────────
+export function BirthdaySceneInline({ staffId }) {
+  const theme = pickTheme(staffId);
+  const frame = usePixelTick(8, true);
+  const Scene = theme.scene;
+  return (
+    <div style={{ width: '100%', height: '100%', background: theme.bg, overflow: 'hidden' }}>
+      <Scene frame={frame} />
+    </div>
+  );
+}
 
 // ── Main export ────────────────────────────────────────────────
 export default function BirthdayOverlay({ currentUserEmail, isBusy, onClose, onCelebrate, _forceStaffId }) {
@@ -639,7 +649,7 @@ export default function BirthdayOverlay({ currentUserEmail, isBusy, onClose, onC
           <div style={{fontFamily:"'Plus Jakarta Sans',sans-serif",fontSize:13,color:'rgba(255,255,255,0.6)',lineHeight:1.6,marginBottom:20,animation:'bdaySloganIn 0.4s ease 0.7s both'}}>
             {isMe ? "Wishing you a wonderful day full of joy.✨" : `Give ${firstName} some love today — it's their special day 🥳`}
           </div>
-          <button onClick={e=>{e.stopPropagation();handleClose();onCelebrate?.(birthdayPerson);}} style={{background:'linear-gradient(90deg,#009bff,#770bff)',border:'none',borderRadius:100,padding:'10px 32px',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:"'Plus Jakarta Sans',sans-serif",boxShadow:'0 4px 20px rgba(119,11,255,0.4)',animation:'bdaySloganIn 0.4s ease 0.8s both'}} onMouseOver={e=>e.currentTarget.style.opacity='0.85'} onMouseOut={e=>e.currentTarget.style.opacity='1'}>
+         <button onClick={e=>{e.stopPropagation();onCelebrate?.(birthdayPerson);handleClose();}} style={{background:'linear-gradient(90deg,#009bff,#770bff)',border:'none',borderRadius:100,padding:'10px 32px',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:"'Plus Jakarta Sans',sans-serif",boxShadow:'0 4px 20px rgba(119,11,255,0.4)',animation:'bdaySloganIn 0.4s ease 0.8s both'}} onMouseOver={e=>e.currentTarget.style.opacity='0.85'} onMouseOut={e=>e.currentTarget.style.opacity='1'}>
             Celebrate! 🎉
           </button>
           <div style={{marginTop:12,fontSize:10,color:'rgba(255,255,255,0.25)',fontFamily:'monospace',letterSpacing:'0.1em'}}>CLICK ANYWHERE TO DISMISS</div>
