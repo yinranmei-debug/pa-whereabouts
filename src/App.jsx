@@ -1277,8 +1277,8 @@ export default function App() {
                       const isMe=m.email.toLowerCase()===me;
                       const isFirst=rowIdx===0;
                       return (
-                       <tr key={m.id} id={isMe?'my-row':`bday-row-${m.id}`}>
-                         <td className="sticky-c" style={{padding:'0 8px 0 0',background:'rgba(8,12,35,0.96)'}}>
+                     <tr key={m.id} id={isMe?'my-row':`bday-row-${m.id}`}>
+                          <td className="sticky-c" style={{padding:'0 8px 0 0',background:'rgba(8,12,35,0.96)'}}>
                             <div className="nw">
                               <div style={{display:'flex',alignItems:'center',gap:'10px',position:'relative',cursor:isMe?'pointer':'default'}} onClick={()=>{ if (!isMe) return; setSocialMenu(socialMenu===m.id?null:m.id); }}>
                                 <div
