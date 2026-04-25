@@ -412,7 +412,7 @@ export default function App() {
         }
         const thrower=payload.throwerName||'Someone';
         const bdayFirst=payload.birthdayName?.split(' ')[0]||'them';
-        setBdayToast({text:`🎂 ${thrower} threw a cake at ${bdayFirst}!`});
+        setBdayToast({text:` ${thrower} threw a cake at ${bdayFirst}!`});
         setBdayToastOut(false);
         setTimeout(()=>{setBdayToastOut(true);setTimeout(()=>setBdayToast(null),400);},4000);
       })
@@ -774,7 +774,7 @@ const handleCelebrate = (person) => {
     setCakeThrowActive(true);
    glowLevelRef.current=Math.min(glowLevelRef.current+0.8,1);
     const bdayFirst=person.name.split(' ')[0];
-    setBdayToast({text:`🎂 You threw a cake at ${bdayFirst}!`});
+    setBdayToast({text:`You threw a cake at ${bdayFirst}!`});
     setBdayToastOut(false);
     setTimeout(()=>{setBdayToastOut(true);setTimeout(()=>setBdayToast(null),400);},4000);
     presenceRef.current?.send({
@@ -1147,14 +1147,14 @@ const handleCelebrate = (person) => {
                   <ellipse className="mh-flame" cx="9" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,220,50,0.95)"/>
                   <ellipse className="mh-flame" cx="15" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,160,50,0.95)" style={{animationDelay:'0.2s'}}/>
                 </svg>
-                {hasBirthdayToday && !birthdayDone && (
-                  <div style={{position:'absolute',top:-5,right:-5,width:10,height:10,borderRadius:'50%',background:'#e63946',boxShadow:'0 0 6px rgba(230,57,70,0.7)'}}/>
+              {hasBirthdayToday && !birthdayDone && (
+                  <div style={{position:'absolute',top:-6,right:-6,minWidth:18,height:18,borderRadius:9,background:'linear-gradient(135deg,#ff8fb0,#e63946)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:800,color:'#fff',padding:'0 4px',boxShadow:'0 2px 8px rgba(255,100,150,0.4)'}}>1</div>
                 )}
               </button>
 
               {/* 📅 Weekly updates */}
-              <button
-                onClick={()=>setShowWeeklyPanel(p=>!p)}
+             <button
+                onClick={()=>{ setShowWeeklyPanel(p=>!p); setWeeklyUpdatesCount(0); }}
                 title="Team week at a glance"
                 style={{position:'relative',width:48,height:48,borderRadius:14,border:'1.5px solid rgba(167,139,250,0.3)',background:'rgba(15,10,40,0.7)',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s'}}
                onMouseOver={e=>{e.currentTarget.style.borderColor='rgba(167,139,250,0.6)';e.currentTarget.style.transform='scale(1.12)';}}
