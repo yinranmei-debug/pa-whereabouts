@@ -1504,6 +1504,11 @@ const handleCelebrate = (person) => {
             me={me}
             meStaff={meStaff}
             STATUS_CONFIG={STATUS_CONFIG}
+            bdaysThisWeek={week.reduce((acc,d)=>{
+              const bday = RAW_STAFF_LIST.find(s => s.birthday === d.ds.slice(5));
+              if (bday) acc.push({id:bday.id, name:bday.name, ds:d.ds, isToday:d.isToday, dayName:d.dayName});
+              return acc;
+            },[])}
             onStatusSelect={(key, sId) => {
               const parts=key.split('-');
               const shift=parts[parts.length-1],staffId=parts[0],date=parts.slice(1,-1).join('-');

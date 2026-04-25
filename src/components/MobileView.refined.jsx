@@ -19,6 +19,7 @@ const MobileView = ({
   week = [],
   records = {},
   me,
+  meStaff,
   STATUS_CONFIG = {},
   onStatusSelect,
   onStatusClear,
@@ -32,8 +33,7 @@ const MobileView = ({
   const [selectedDs, setSelectedDs] = useState(todayDay?.ds);
   const [picker, setPicker]         = useState(null); // { ds, shift }
 
-  const myStaff = staffList.find(m => m.email?.toLowerCase() === me);
-  const myId    = myStaff?.id;
+  const myId = meStaff?.id;
 
   const openPicker  = (ds, shift) => setPicker({ ds, shift });
   const closePicker = () => setPicker(null);
