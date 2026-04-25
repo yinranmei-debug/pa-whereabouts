@@ -197,6 +197,10 @@ export default function App() {
     const key = `bday-done-${new Date().toDateString()}`;
     return !!localStorage.getItem(key);
   });
+  const [bdayNotifRead, setBdayNotifRead] = useState(() => {
+    const key = `bday-notif-read-${new Date().toDateString()}`;
+    return !!localStorage.getItem(key);
+  });
   const [celebrateTarget, setCelebrateTarget] = useState(null);
   const [celebratePrompt, setCelebratePrompt] = useState(false);
   const [crownedId,       setCrownedId]       = useState(null);
@@ -205,7 +209,10 @@ export default function App() {
   const [bdayToastOut,    setBdayToastOut]    = useState(false);
   const [staffTitles,     setStaffTitles]     = useState({});
  const [cakeThrowActive, setCakeThrowActive] = useState(false);
-  const [bdayHatId,       setBdayHatId]       = useState(null);
+ const [bdayHatId, setBdayHatId] = useState(() => {
+    const saved = localStorage.getItem(`bday-hat-${new Date().toDateString()}`);
+    return saved || null;
+  });
  const [cakeThrowHistory,  setCakeThrowHistory]  = useState([]);
   const [showCakeHistory,   setShowCakeHistory]   = useState(false);
   const [impersonatedId,    setImpersonatedId]    = useState(null);
@@ -962,7 +969,10 @@ const handleCelebrate = (person) => {
           target={celebrateTarget}
           active={cakeThrowActive}
           onComplete={()=>setCakeThrowActive(false)}
-          onHatReady={(id)=>setBdayHatId(id)}
+         onHatReady={(id)=>{
+            setBdayHatId(id);
+            localStorage.setItem(`bday-hat-${new Date().toDateString()}`, id);
+          }}
         />
        <BirthdayOverlay
           currentUserEmail={account?.username}
@@ -1314,7 +1324,13 @@ const handleCelebrate = (person) => {
 
              {/* 🎂 Birthday button — always visible, red dot when bday + not yet celebrated */}
              <button
-                onClick={()=>setShowBdayPanel(p=>!p)}
+                onClick={()=>{
+                  setShowBdayPanel(p=>!p);
+                  if (hasBirthdayToday && !bdayNotifRead) {
+                    setBdayNotifRead(true);
+                    localStorage.setItem(`bday-notif-read-${new Date().toDateString()}`, '1');
+                  }
+                }}
                 title={hasBirthdayToday ? "Birthday today!" : "Birthdays"}
                 style={{position:'relative',width:48,height:48,borderRadius:14,border:'1.5px solid rgba(167,139,250,0.22)',background:'rgba(15,10,40,0.7)',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s',overflow:'visible',
                   ...(hasBirthdayToday && !birthdayDone ? {border:'1.5px solid rgba(255,183,0,0.55)',background:'rgba(30,15,5,0.7)'} : {})
@@ -1330,7 +1346,7 @@ const handleCelebrate = (person) => {
                   <ellipse className="mh-flame" cx="9" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,220,50,0.95)"/>
                   <ellipse className="mh-flame" cx="15" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,160,50,0.95)" style={{animationDelay:'0.2s'}}/>
                 </svg>
-             {hasBirthdayToday && !birthdayDone && (
+             {hasBirthdayToday && !bdayNotifRead && (
                 <div style={{position:'absolute',top:-6,right:-6,width:18,height:18,borderRadius:'50%',background:'linear-gradient(135deg,#ff4444,#e63946)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:800,color:'#fff',boxShadow:'0 2px 8px rgba(230,57,70,0.6)',zIndex:10,pointerEvents:'none',animation:'bdayDotPulse 2s ease-in-out infinite'}}>1</div>
               )}
               </button>
