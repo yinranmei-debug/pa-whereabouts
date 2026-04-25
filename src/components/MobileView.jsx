@@ -26,13 +26,32 @@ const MobileView = ({
   staffPhotos = {},
   onlineUsers = [],
   bdaysThisWeek = [],
+  onSwipeWeek,
 }) => {
   const editableDays = week.filter(d => d.editable);
   const todayDay     = editableDays.find(d => d.isToday) || editableDays[0];
 
   const [selectedDs, setSelectedDs] = useState(todayDay?.ds);
-  const [picker, setPicker]         = useState(null); // { ds, shift }
+  const [picker, setPicker]         = useState(null);
+  const swipeRef = React.useRef(null);
+  const touchStartX = React.useRef(null);
+  const touchStartY = React.useRef(null);
 
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current);
+    if (Math.abs(dx) > 60 && dy < 40) {
+      if (dx < 0) swipeRef.current?.('next');
+      else swipeRef.current?.('prev');
+    }
+    touchStartX.current = null;
+  };
+React.useEffect(() => { swipeRef.current = onSwipeWeek; }, [onSwipeWeek]);
   const myId = meStaff?.id;
 
   const openPicker  = (ds, shift) => setPicker({ ds, shift });
@@ -52,11 +71,15 @@ const MobileView = ({
   const selectedDay = week.find(d => d.ds === selectedDs);
 
   return (
-    <div style={{
-      fontFamily:"'Plus Jakarta Sans',sans-serif",
-      paddingBottom:120, minHeight:'100vh',
-      background:'transparent', position:'relative',
-    }}>
+  <div
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      style={{
+        fontFamily:"'Plus Jakarta Sans',sans-serif",
+        paddingBottom:120, minHeight:'100vh',
+        background:'transparent', position:'relative',
+      }}
+    >
       <style>{`
         @keyframes mvFadeIn { from{opacity:0} to{opacity:1} }
         @keyframes mvSheetUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
@@ -81,7 +104,16 @@ const MobileView = ({
       )}
 
       {/* week strip */}
-      <div style={{padding:'14px 12px 14px',display:'flex',gap:6}}>
+      <div style={{padding:'14px 12px 6px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
+        <div style={{fontSize:13,fontWeight:700,color:'rgba(232,229,255,0.7)',letterSpacing:'-0.01em'}}>
+          {new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
+        </div>
+        <div
+          onClick={()=>setSelectedDs(editableDays.find(d=>d.isToday)?.ds || editableDays[0]?.ds)}
+          style={{padding:'4px 12px',borderRadius:100,background:'linear-gradient(90deg,#009bff,#770bff)',fontSize:11,fontWeight:700,color:'#fff',cursor:'pointer',flexShrink:0}}
+        >Today</div>
+      </div>
+      <div style={{padding:'0 12px 14px',display:'flex',gap:6}}>
         {editableDays.map(d => {
           const isSel = d.ds === selectedDs;
           const am = myId && records[`${myId}-${d.ds}-AM`];
@@ -276,10 +308,10 @@ const MobileView = ({
         const others = staffList.filter(m => m.email?.toLowerCase() !== me);
         const byStatus = {};
         others.forEach(t => {
-          const sid = records[`${t.id}-${todayDay.ds}-AM`] || '__office';
-          (byStatus[sid] = byStatus[sid] || []).push(t);
+          const sid = records[`${t.id}-${todayDay.ds}-AM`];
+          if (sid) (byStatus[sid] = byStatus[sid] || []).push(t);
         });
-        const statusOrder = ['__office', ...Object.keys(STATUS_CONFIG)];
+        const statusOrder = Object.keys(STATUS_CONFIG);
         const visible = statusOrder.filter(s => byStatus[s]?.length);
 
         return (
@@ -399,6 +431,17 @@ const MobileView = ({
                 </div>
               </div>
 
+             {(() => {
+                const curSid = myId && records[`${myId}-${picker.ds}-${picker.shift}`];
+                return curSid ? (
+                  <div
+                    onClick={() => { if (myId) onStatusClear(`${myId}-${picker.ds}-${picker.shift}`); closePicker(); }}
+                    style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,padding:'10px',borderRadius:12,background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',cursor:'pointer',marginBottom:10}}
+                  >
+                    <span style={{fontSize:13,fontWeight:700,color:'rgba(255,100,100,0.9)'}}>✕ Clear status</span>
+                  </div>
+                ) : null;
+              })()}
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
                 {/* Office option (clears the record — Office = no record) */}
                 <div
