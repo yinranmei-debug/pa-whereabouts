@@ -257,27 +257,59 @@ body.day-mode .sh.mine {
       border-color: rgba(119,11,255,0.3) !important;
       box-shadow: 0 3px 12px rgba(119,11,255,0.1) !important;
     }
-  /* Empty cells for others — subtle neutral */
-    body.day-mode .sh.other {
+  /* Empty cells — others */
+    body.day-mode .sh.other:not(.set) {
       background: rgba(0,155,255,0.04) !important;
       border: 1px solid rgba(0,155,255,0.1) !important;
-      color: rgba(26,24,48,0.25) !important;
+      color: rgba(26,24,48,0.22) !important;
     }
-/* Filled status — boost colors for white background */
-    body.day-mode .sh.set,
-    body.day-mode .sh.set.other {
-      filter: saturate(1.8) brightness(0.88) !important;
+
+    /* Filled status cells — override inline rgba colors to be opaque on white bg */
+    /* The JSON colors are rgba with low alpha — we make them opaque here */
+    body.day-mode .sh.set {
+      filter: none !important;
       opacity: 1 !important;
     }
-    body.day-mode .sh.set:hover {
-      filter: saturate(2) brightness(0.85) !important;
-      transform: translateY(-1px) !important;
+    /* WFH purple */
+    body.day-mode .sh.set[style*="167,139,250"] {
+      background: rgba(147,119,230,0.35) !important;
+      border-color: rgba(147,119,230,0.7) !important;
+      color: rgba(80,50,160,1) !important;
     }
-    /* Empty other cells — neutral */
-    body.day-mode .sh.other:not(.set) {
-      background: rgba(0,155,255,0.03) !important;
-      border: 1px solid rgba(0,155,255,0.09) !important;
-      color: rgba(26,24,48,0.2) !important;
+    /* AL/SL pink */
+    body.day-mode .sh.set[style*="255,143,176"] {
+      background: rgba(235,100,145,0.28) !important;
+      border-color: rgba(235,100,145,0.7) !important;
+      color: rgba(180,50,90,1) !important;
+    }
+    /* BT/BL/PL yellow */
+    body.day-mode .sh.set[style*="255,225,74"] {
+      background: rgba(220,175,0,0.22) !important;
+      border-color: rgba(220,175,0,0.65) !important;
+      color: rgba(140,100,0,1) !important;
+    }
+    /* OL teal */
+    body.day-mode .sh.set[style*="0,229,168"] {
+      background: rgba(0,180,130,0.25) !important;
+      border-color: rgba(0,180,130,0.65) !important;
+      color: rgba(0,110,80,1) !important;
+    }
+    /* ML cyan */
+    body.day-mode .sh.set[style*="122,255,212"] {
+      background: rgba(0,200,160,0.22) !important;
+      border-color: rgba(0,200,160,0.6) !important;
+      color: rgba(0,120,90,1) !important;
+    }
+    /* DV blue */
+    body.day-mode .sh.set[style*="0,155,255"] {
+      background: rgba(0,130,230,0.22) !important;
+      border-color: rgba(0,130,230,0.6) !important;
+      color: rgba(0,80,160,1) !important;
+    }
+    body.day-mode .sh.set:hover {
+      filter: brightness(0.95) !important;
+      transform: translateY(-1px) !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
     }
 
     /* ── Pills (weekend / holiday) — day ── */
