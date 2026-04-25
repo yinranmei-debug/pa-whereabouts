@@ -362,7 +362,11 @@ body.day-mode .we .pill-card {
     body.day-mode .s-opt:hover {
       background: linear-gradient(135deg, rgba(0,155,255,0.07), rgba(119,11,255,0.07)) !important;
     }
-    body.day-mode .s-opt-label { color: #1A1830 !important; }
+   body.day-mode .s-opt-label { color: #1A1830 !important; }
+
+   /* Holiday Planner — date text white */
+    body.day-mode .plan-date { color: rgba(232,229,255,0.85) !important; }
+    body.day-mode .plan-name { color: rgba(232,229,255,0.45) !important; }
 
     /* ── Emoji picker ── */
     body.day-mode .emo-picker {
@@ -480,6 +484,23 @@ body.day-mode .we .pill-card {
       background: linear-gradient(90deg,#009bff,#770bff) !important;
       -webkit-background-clip: text !important; background-clip: text !important;
       color: transparent !important;
+    }
+   /* Holiday planner — force white on all text inside dark panel */
+    body.day-mode [style*="rgba(13,10,35,0.96)"] .plan-date,
+    body.day-mode [style*="rgba(13,10,35,0.96)"] .plan-date * { 
+      color: rgba(232,229,255,0.9) !important;
+      background: none !important;
+      -webkit-text-fill-color: rgba(232,229,255,0.9) !important;
+    }
+    body.day-mode [style*="rgba(13,10,35,0.96)"] .plan-name {
+      color: rgba(232,229,255,0.45) !important;
+    }
+    body.day-mode [style*="rgba(13,10,35,0.96)"] div[style*="color"] {
+      color: #a78bfa !important;
+    }
+    /* Also target the header text */
+    body.day-mode [style*="rgba(232,229,255,0.45)"] {
+      color: rgba(232,229,255,0.45) !important;
     }
 
     body.day-mode .tb-select option { background: #fff !important; color: #1A1830 !important; }
