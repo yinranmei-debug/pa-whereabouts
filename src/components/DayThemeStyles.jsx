@@ -152,30 +152,23 @@ const DayThemeStyles = () => (
     }
     body.day-mode .tb-month { color: #1A1830 !important; font-weight: 700 !important; }
  body.day-mode .leg-item { color: rgba(26,24,48,0.65) !important; }
-    /* All dots — base override so they're visible */
-    body.day-mode .leg-dot {
-      opacity: 1 !important;
-      filter: none !important;
+    body.day-mode .leg-dot { opacity: 1 !important; filter: none !important; }
+    /* Use nth-of-type on toolbar — Holiday, Weekend, My days, Team days */
+    body.day-mode .toolbar .leg-item:nth-of-type(1) .leg-dot {
+      background: linear-gradient(135deg,#5a0a32,#3c0a3c) !important;
+      border: 1.5px solid rgba(217,70,239,0.6) !important;
     }
-    /* Holiday — 1st dot */
-    body.day-mode .leg-item:nth-child(1) .leg-dot {
-      background: rgba(139,11,180,0.75) !important;
-      border-color: rgba(119,11,255,0.55) !important;
+    body.day-mode .toolbar .leg-item:nth-of-type(2) .leg-dot {
+      background: linear-gradient(135deg,#0a3060,#140f5a) !important;
+      border: 1.5px solid rgba(106,199,255,0.6) !important;
     }
-    /* Weekend — 2nd dot */
-    body.day-mode .leg-item:nth-child(2) .leg-dot {
-      background: rgba(0,120,220,0.7) !important;
-      border-color: rgba(0,155,255,0.5) !important;
+    body.day-mode .toolbar .leg-item:nth-of-type(3) .leg-dot {
+      background: linear-gradient(135deg,#2a1060,#3a1580) !important;
+      border: 1.5px solid rgba(167,139,250,0.55) !important;
     }
-    /* My days — 3rd dot */
-    body.day-mode .leg-item:nth-child(3) .leg-dot {
-      background: rgba(100,40,200,0.65) !important;
-      border-color: rgba(119,11,255,0.4) !important;
-    }
-    /* Team days — 4th dot */
-    body.day-mode .leg-item:nth-child(4) .leg-dot {
-      background: rgba(0,155,255,0.18) !important;
-      border-color: rgba(0,155,255,0.35) !important;
+    body.day-mode .toolbar .leg-item:nth-of-type(4) .leg-dot {
+      background: rgba(0,155,255,0.15) !important;
+      border: 1.5px solid rgba(0,155,255,0.35) !important;
     }
     body.day-mode .team-summary {
       background: linear-gradient(90deg, rgba(0,155,255,0.07), rgba(119,11,255,0.07)) !important;
@@ -271,18 +264,24 @@ const DayThemeStyles = () => (
         0 0 0 2px rgba(0,155,255,0.35),
         0 0 10px 3px rgba(119,11,255,0.1) !important;
     }
-
-    /* ── Status cells — day ── */
+/* My empty cells — slight blue tint, interactive feel */
     body.day-mode .sh.mine {
-      background: rgba(0,155,255,0.05) !important;
-      border-color: rgba(0,155,255,0.14) !important;
-      color: rgba(26,24,48,0.35) !important;
+      background: rgba(0,155,255,0.07) !important;
+      border: 1.5px solid rgba(0,155,255,0.22) !important;
+      color: rgba(26,24,48,0.38) !important;
     }
     body.day-mode .sh.mine:hover {
-      background: rgba(0,155,255,0.09) !important;
-      border-color: rgba(0,155,255,0.28) !important;
-      box-shadow: 0 3px 12px rgba(0,155,255,0.12) !important;
+      background: rgba(0,155,255,0.12) !important;
+      border-color: rgba(0,155,255,0.35) !important;
+      box-shadow: 0 3px 12px rgba(0,155,255,0.1) !important;
     }
+    /* Other empty cells — more neutral, clearly non-interactive */
+    body.day-mode .sh.other {
+      background: rgba(26,24,48,0.028) !important;
+      border: 1px solid rgba(26,24,48,0.07) !important;
+      color: rgba(26,24,48,0.2) !important;
+    }
+   
    body.day-mode .sh.other {
       background: rgba(0,155,255,0.04) !important;
       border-color: rgba(0,155,255,0.12) !important;
@@ -316,9 +315,9 @@ const DayThemeStyles = () => (
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 2px 14px rgba(119,11,255,0.14) !important;
     }
    body.day-mode .we .pill-card {
-      background: linear-gradient(160deg, rgba(0,155,255,0.13), rgba(119,11,255,0.07)) !important;
-      border-color: rgba(0,155,255,0.28) !important;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 2px 10px rgba(0,155,255,0.12) !important;
+      background: linear-gradient(160deg, rgba(0,155,255,0.07), rgba(0,155,255,0.04)) !important;
+      border: 1.5px solid rgba(106,199,255,0.3) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 2px 8px rgba(0,155,255,0.07) !important;
     }
     body.day-mode .pill:hover.hol .pill-card {
       box-shadow:
