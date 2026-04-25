@@ -122,9 +122,13 @@ const GlobalStyles = () => (
       animation:bdayChipPulse 2s ease-in-out infinite;
       white-space:nowrap;
     }
-    @keyframes bdayChipPulse{
+  @keyframes bdayChipPulse{
       0%,100%{box-shadow:0 0 0 0 rgba(255,183,0,0.3);}
       50%{box-shadow:0 0 12px 3px rgba(255,183,0,0.2);}
+    }
+    @keyframes bdayDotPulse{
+      0%,100%{transform:scale(1);box-shadow:0 2px 8px rgba(230,57,70,0.6);}
+      50%{transform:scale(1.2);box-shadow:0 2px 14px rgba(230,57,70,0.9);}
     }
 
     /* ── Planet button ── */
@@ -252,30 +256,24 @@ const GlobalStyles = () => (
     .bday-hdr-cake svg{transition:transform 0.15s cubic-bezier(0.34,1.56,0.64,1);}
     .bday-hdr-cake:hover svg{transform:scale(1.25);}
     .bday-hdr-tip{
-      position:absolute;top:calc(100% + 8px);right:-4px;
-      background:linear-gradient(135deg,rgba(13,10,35,0.97),rgba(7,24,54,0.97));
-      border:1px solid rgba(255,183,0,0.4);
-      border-radius:10px;padding:6px 10px;
-      font-size:11px;font-weight:700;color:#fff;
+      position:absolute;top:calc(100% + 6px);left:50%;
+      transform:translateX(-50%) translateY(3px);
+      background:linear-gradient(90deg,rgba(255,183,0,0.15),rgba(255,100,150,0.12));
+      border:1px solid rgba(255,183,0,0.5);
+      border-radius:6px;padding:4px 10px;
+      font-size:10px;font-weight:700;color:#fff;
       white-space:nowrap;
-      box-shadow:0 6px 20px rgba(0,0,0,0.4);
       pointer-events:none;
-      opacity:0;transform:translateY(4px) scale(0.95);
+      opacity:0;
       transition:opacity 0.15s ease,transform 0.15s ease;
       font-family:'Plus Jakarta Sans',sans-serif;
       z-index:999;
+      letter-spacing:0.03em;
     }
     .bday-hdr-cake:hover .bday-hdr-tip{
-      opacity:1;transform:translateY(0) scale(1);
+      opacity:1;transform:translateX(-50%) translateY(0);
     }
-    .bday-hdr-tip-arrow{
-      position:absolute;bottom:-5px;right:10px;
-      width:9px;height:9px;
-      background:rgba(13,10,35,0.97);
-      border:1px solid rgba(255,183,0,0.4);
-      border-top:none;border-left:none;
-      transform:rotate(45deg);
-    }
+    .bday-hdr-tip-arrow{ display:none; }
 
     /* ── Table ── */
     .tbl-outer{
