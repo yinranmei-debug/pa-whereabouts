@@ -308,10 +308,9 @@ export default function App() {
     if (!account) return;
     const tourKey = `tour-done-${account.username}`;
 
-    // First-time user: show tour, then welcome confetti
-    if (!localStorage.getItem(tourKey)) {
-      // Tour will show via showTour state — handled below
-      // Welcome fires after tour completes via onDone callback
+    // DEV: always show tour on refresh — remove `true ||` when done testing
+    if (true || !localStorage.getItem(tourKey)) {
+      setShowTour(true);
       return;
     }
 
@@ -1132,26 +1131,26 @@ const handleCelebrate = (person) => {
            {/* ── Mind Hub 三按钮 ── */}
             <div style={{display:'flex',alignItems:'center',gap:8}}>
 
-              {/* 🎂 Birthday — only when there's a birthday today */}
-              {hasBirthdayToday && (
-                <button
-                  onClick={()=>setShowBdayPanel(p=>!p)}
-                  title="Birthday today!"
-                  style={{position:'relative',width:48,height:48,borderRadius:14,border:'1.5px solid rgba(255,183,0,0.45)',background:'rgba(30,15,5,0.7)',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s',overflow:'visible'}}
-                  onMouseOver={e=>{e.currentTarget.style.borderColor='rgba(255,220,100,0.7)';e.currentTarget.style.transform='scale(1.12)';}}
-                  onMouseOut={e=>{e.currentTarget.style.borderColor='rgba(255,183,0,0.45)';e.currentTarget.style.transform='scale(1)';}}
-                >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <rect x="4" y="13" width="16" height="8" rx="2" fill="rgba(255,143,176,0.7)" stroke="rgba(255,183,0,0.6)" strokeWidth="1"/>
-                    <rect x="6" y="10" width="12" height="5" rx="1.5" fill="rgba(255,183,0,0.5)" stroke="rgba(255,225,74,0.5)" strokeWidth="1"/>
-                    <rect x="8" y="5" width="2" height="5" rx="1" fill="rgba(167,139,250,0.8)"/>
-                    <rect x="14" y="5" width="2" height="5" rx="1" fill="rgba(106,199,255,0.8)"/>
-                    <ellipse className="mh-flame" cx="9" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,220,50,0.95)"/>
-                    <ellipse className="mh-flame" cx="15" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,160,50,0.95)" style={{animationDelay:'0.2s'}}/>
-                  </svg>
-                  <div style={{position:'absolute',top:-6,right:-6,minWidth:18,height:18,borderRadius:9,background:'linear-gradient(135deg,#ff8fb0,#e63946)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:800,color:'#fff',padding:'0 4px',boxShadow:'0 2px 8px rgba(255,100,150,0.4)'}}>1</div>
-                </button>
-              )}
+             {/* 🎂 Birthday button — always visible, red dot when bday + not yet celebrated */}
+              <button
+                onClick={()=>setShowBdayPanel(p=>!p)}
+                title={hasBirthdayToday ? "Birthday today!" : "Birthdays"}
+                style={{position:'relative',width:48,height:48,borderRadius:14,border:`1.5px solid ${hasBirthdayToday && !birthdayDone ? 'rgba(255,183,0,0.55)' : 'rgba(167,139,250,0.22)'}`,background:hasBirthdayToday && !birthdayDone ? 'rgba(30,15,5,0.7)' : 'rgba(15,10,40,0.7)',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s',overflow:'visible'}}
+                onMouseOver={e=>{e.currentTarget.style.transform='scale(1.12)';e.currentTarget.style.borderColor=hasBirthdayToday && !birthdayDone ? 'rgba(255,220,100,0.7)' : 'rgba(167,139,250,0.5)';}}
+                onMouseOut={e=>{e.currentTarget.style.transform='scale(1)';e.currentTarget.style.borderColor=hasBirthdayToday && !birthdayDone ? 'rgba(255,183,0,0.55)' : 'rgba(167,139,250,0.22)';}}
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <rect x="4" y="13" width="16" height="8" rx="2" fill="rgba(255,143,176,0.7)" stroke="rgba(255,183,0,0.6)" strokeWidth="1"/>
+                  <rect x="6" y="10" width="12" height="5" rx="1.5" fill="rgba(255,183,0,0.5)" stroke="rgba(255,225,74,0.5)" strokeWidth="1"/>
+                  <rect x="8" y="5" width="2" height="5" rx="1" fill="rgba(167,139,250,0.8)"/>
+                  <rect x="14" y="5" width="2" height="5" rx="1" fill="rgba(106,199,255,0.8)"/>
+                  <ellipse className="mh-flame" cx="9" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,220,50,0.95)"/>
+                  <ellipse className="mh-flame" cx="15" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,160,50,0.95)" style={{animationDelay:'0.2s'}}/>
+                </svg>
+                {hasBirthdayToday && !birthdayDone && (
+                  <div style={{position:'absolute',top:-5,right:-5,width:10,height:10,borderRadius:'50%',background:'#e63946',boxShadow:'0 0 6px rgba(230,57,70,0.7)'}}/>
+                )}
+              </button>
 
               {/* 📅 Weekly updates */}
               <button
@@ -1183,12 +1182,10 @@ const handleCelebrate = (person) => {
               </button>
 
             
-
-              {/* 🪐 Tips / Mind Huddle */}
-              <button
+<button
                 onClick={()=>{ setTipIdx(0); setShowTips(true); }}
                 title="Daily Mind Huddle"
-                style={{position:'relative',width:48,height:48,borderRadius:14,border:'1.5px solid rgba(139,92,246,0.45)',background:'linear-gradient(135deg,rgba(45,27,105,0.8),rgba(30,27,75,0.8))',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s',overflow:'visible',perspective:'120px'}}
+                style={{position:'relative',width:48,height:48,borderRadius:14,border:'1.5px solid rgba(139,92,246,0.45)',background:'linear-gradient(135deg,rgba(45,27,105,0.8),rgba(30,27,75,0.8))',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s',overflow:'visible'}}
                 onMouseOver={e=>{e.currentTarget.style.borderColor='rgba(196,181,253,0.7)';e.currentTarget.style.transform='scale(1.12)';}}
                 onMouseOut={e=>{e.currentTarget.style.borderColor='rgba(139,92,246,0.45)';e.currentTarget.style.transform='scale(1)';}}
               >
@@ -1201,7 +1198,7 @@ const handleCelebrate = (person) => {
                     </radialGradient>
                   </defs>
                   <circle className="mh-planet-body" cx="13" cy="13" r="7" fill="url(#planetGrad)"/>
-                  <ellipse className="mh-ring" cx="13" cy="13" rx="13" ry="4" fill="none" stroke="rgba(167,139,250,0.75)" strokeWidth="1.5" style={{transformOrigin:'13px 13px'}}/>
+                  <ellipse className="mh-ring" cx="13" cy="13" rx="13" ry="4" fill="none" stroke="rgba(167,139,250,0.75)" strokeWidth="1.5"/>
                   <circle className="mh-star-1" cx="2" cy="4" r="1.1" fill="rgba(196,181,253,0.8)"/>
                   <circle className="mh-star-2" cx="23" cy="3" r="0.85" fill="rgba(106,199,255,0.8)"/>
                   <circle className="mh-star-3" cx="24" cy="22" r="1" fill="rgba(196,181,253,0.7)"/>
