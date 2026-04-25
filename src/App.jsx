@@ -206,9 +206,10 @@ export default function App() {
   const [staffTitles,     setStaffTitles]     = useState({});
  const [cakeThrowActive, setCakeThrowActive] = useState(false);
   const [bdayHatId,       setBdayHatId]       = useState(null);
-  const [cakeThrowHistory, setCakeThrowHistory] = useState([]);
-  const [showCakeHistory,  setShowCakeHistory]  = useState(false);
-  const [isDayMode,       setIsDayMode]       = useState(
+ const [cakeThrowHistory,  setCakeThrowHistory]  = useState([]);
+  const [showCakeHistory,   setShowCakeHistory]   = useState(false);
+  const [impersonatedId,    setImpersonatedId]    = useState(null);
+  const [isDayMode,         setIsDayMode]         = useState(
     () => localStorage.getItem('whereabouts-theme') === 'day'
   );
   const toggleTheme = () => {
@@ -552,8 +553,13 @@ export default function App() {
   if (denied)   return <AccessDeniedScreen email={account?.username||''} onLogout={logout}/>;
   if (!account) return <LoginScreen onLogin={login} isInitializing={!isInit} error={authError}/>;
 
-  const me      = account.username.toLowerCase();
-  const meStaff = getStaffEntry(me);
+const me      = impersonatedId
+    ? (RAW_STAFF_LIST.find(s => s.id === impersonatedId)?.email?.toLowerCase() || account.username.toLowerCase())
+    : account.username.toLowerCase();
+  const meStaff = impersonatedId
+    ? RAW_STAFF_LIST.find(s => s.id === impersonatedId)
+    : getStaffEntry(account.username.toLowerCase());
+  const isSuperViewMode = !!impersonatedId;
 
   const popAvatar = userId => {
     const el = document.getElementById(`av-${userId}`);
@@ -930,6 +936,13 @@ const handleCelebrate = (person) => {
           <style>{`@keyframes starTwinkle{0%,100%{opacity:0.25}50%{opacity:1}}`}</style>
         </div>
         <div ref={glowFrameRef} className="glow-frame"/>
+        {isSuperViewMode && (
+          <div style={{position:'sticky',top:NAV_H,zIndex:490,background:'linear-gradient(90deg,rgba(255,183,0,0.15),rgba(255,100,0,0.1))',borderBottom:'1px solid rgba(255,183,0,0.3)',padding:'6px 32px',display:'flex',alignItems:'center',gap:10,fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
+            <div style={{width:8,height:8,borderRadius:'50%',background:'#ffb700',animation:'pulseDot 2s infinite',flexShrink:0}}/>
+            <span style={{fontSize:12,fontWeight:700,color:'rgba(255,220,100,0.95)'}}>Viewing as {meStaff?.name} — read-only view</span>
+            <button onClick={()=>setImpersonatedId(null)} style={{marginLeft:'auto',background:'none',border:'1px solid rgba(255,183,0,0.4)',borderRadius:6,color:'rgba(255,220,100,0.8)',fontSize:11,fontWeight:700,cursor:'pointer',padding:'2px 10px'}}>Exit</button>
+          </div>
+        )}
         <CakeThrow
           target={celebrateTarget}
           active={cakeThrowActive}
@@ -1258,6 +1271,24 @@ const handleCelebrate = (person) => {
             )}
           </div>
          
+          <div className="nav-sep"/>
+          {isSuperUser(account.username.toLowerCase()) && (
+            <div style={{display:'flex',alignItems:'center',gap:8,marginLeft:8}}>
+              <select
+                value={impersonatedId || ''}
+                onChange={e => setImpersonatedId(e.target.value || null)}
+                style={{height:32,padding:'0 10px',borderRadius:8,border:`1px solid ${impersonatedId?'rgba(255,183,0,0.5)':'rgba(167,139,250,0.2)'}`,background:impersonatedId?'rgba(255,183,0,0.1)':'rgba(255,255,255,0.05)',color:impersonatedId?'rgba(255,220,100,0.95)':'rgba(232,229,255,0.5)',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:"'Plus Jakarta Sans',sans-serif",appearance:'none',paddingRight:24}}
+              >
+                <option value=''>👤 View as...</option>
+                {STAFF_LIST.map(s=>(
+                  <option key={s.id} value={s.id} style={{background:'#0f172a',color:'#e8e5ff'}}>{s.name}</option>
+                ))}
+              </select>
+              {impersonatedId && (
+                <button onClick={()=>setImpersonatedId(null)} style={{height:32,padding:'0 10px',borderRadius:8,border:'1px solid rgba(255,183,0,0.4)',background:'rgba(255,183,0,0.1)',color:'rgba(255,220,100,0.9)',fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:"'Plus Jakarta Sans',sans-serif"}}>✕ Exit</button>
+              )}
+            </div>
+          )}
           <div className="nav-sep"/>
           <div className="nav-right">
            {saveStatus==='saving'&&<span className="save-txt">↻ Saving</span>}
