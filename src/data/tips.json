@@ -1,487 +1,70 @@
 [
-  {
-    "category": "Mind Oasis",
-    "text": "Starting with a small, easy task builds dopamine momentum that makes harder tasks easier.",
-    "icon": "🌱"
-  },
-  {
-    "category": "Inner Peace",
-    "text": "It's okay to take a moment before responding—you don't need to rush.",
-    "icon": "⏳"
-  },
-  {
-    "category": "Body Guard",
-    "text": "Let your back rest against the chair—it doesn't have to hold everything alone.",
-    "icon": "🪑"
-  },
-  {
-    "category": "Ground & Breathe",
-    "text": "A body check-in—scanning from head to toe—can catch tension before it builds.",
-    "icon": "🧘"
-  },
-  {
-    "category": "Heart Sync",
-    "text": "A simple 'got it' can reassure someone more than silence.",
-    "icon": "👌"
-  },
-  {
-    "category": "Fun Fact",
-    "text": "Dolphins have names for each other.",
-    "icon": "🐬"
-  },
-  {
-    "category": "Mind Oasis",
-    "text": "Writing down your thoughts can sometimes make them feel lighter.",
-    "icon": "📝"
-  },
-  {
-    "category": "Inner Peace",
-    "text": "Allowing emotions to pass without suppressing them reduces their mental load over time.",
-    "icon": "💙"
-  },
-  {
-    "category": "Body Guard",
-    "text": "Keeping your neck aligned with your spine can reduce quiet strain.",
-    "icon": "📏"
-  },
-  {
-    "category": "Ground & Breathe",
-    "text": "Watching your breath for 10 seconds activates the parasympathetic nervous system.",
-    "icon": "🫁"
-  },
-  {
-    "category": "Vitality",
-    "text": "A steady rhythm of eating can help your energy stay balanced.",
-    "icon": "🍱"
-  },
-  {
-    "category": "Vitality",
-    "text": "Fresh air, even briefly, can feel surprisingly refreshing.",
-    "icon": "🌬️"
-  },
-  {
-    "category": "Heart Sync",
-    "text": "Checking in with someone can create a sense of ease.",
-    "icon": "💬"
-  },
-  {
-    "category": "Fun Fact",
-    "text": "A group of flamingos is called a flamboyance.",
-    "icon": "🦩"
-  },
-  {
-    "category": "Mind Oasis",
-    "text": "Each time you redirect a wandering mind, you strengthen the neural circuits for focus.",
-    "icon": "🎯"
-  },
-  {
-    "category": "Inner Peace",
-    "text": "It's okay to not have everything figured out yet.",
-    "icon": "🌱"
-  },
-  {
-    "category": "Ground & Breathe",
-    "text": "Shifting visual focus to the background can reduce eye strain and calm overstimulation.",
-    "icon": "🌗"
-  },
-  {
-    "category": "Vitality",
-    "text": "A small snack might help if your energy feels low.",
-    "icon": "🥜"
-  },
-  {
-    "category": "Heart Sync",
-    "text": "A kind tone can change how a message is received.",
-    "icon": "🎵"
-  },
-  {
-    "category": "Fun Fact",
-    "text": "Sea otters hold hands while sleeping.",
-    "icon": "🦦"
-  },
-  {
-    "category": "Mind Oasis",
-    "text": "Doing one thing fully can feel calmer than doing many halfway.",
-    "icon": "🧠"
-  },
-  {
-    "category": "Inner Peace",
-    "text": "Cognitive defusion—observing thoughts as events, not facts—is a core anxiety-reduction skill.",
-    "icon": "☁️"
-  },
-  {
-    "category": "Body Guard",
-    "text": "Keeping your screen at a comfortable distance can ease your eyes.",
-    "icon": "👀"
-  },
-  {
-    "category": "Ground & Breathe",
-    "text": "Tuning into background silence for 30 seconds can lower your cortisol response.",
-    "icon": "🔇"
-  },
-  {
-    "category": "Vitality",
-    "text": "Standing up for a moment can gently reset your body.",
-    "icon": "🧍"
-  },
-  {
-    "category": "Heart Sync",
-    "text": "Small encouragement can go a long way.",
-    "icon": "🌟"
-  },
-  {
-    "category": "Mind Oasis",
-    "text": "You might try finishing one thing before starting another.",
-    "icon": "✅"
-  },
-  {
-    "category": "Inner Peace",
-    "text": "Letting go, even a little, can feel freeing.",
-    "icon": "🕊️"
-  },
-  {
-    "category": "Body Guard",
-    "text": "Relaxing your face muscles can ease hidden tension.",
-    "icon": "😌"
-  },
-  {
-    "category": "Ground & Breathe",
-    "text": "Slow, rhythmic breathing at 5–6 breaths per minute activates your body's calm state.",
-    "icon": "🌬️"
-  },
-  {
-    "category": "Heart Sync",
-    "text": "Listening with attention can build trust quietly.",
-    "icon": "👂"
-  },
-  {
-    "category": "Fun Fact",
-    "text": "Butterflies can taste with their feet.",
-    "icon": "🦋"
-  },
-  {
-    "category": "Mind Oasis",
-    "text": "You might focus on what matters most right now.",
-    "icon": "🧭"
-  },
-  {
-    "category": "Inner Peace",
-    "text": "It's okay to move at your own pace.",
-    "icon": "🐢"
-  },
-  {
-    "category": "Vitality",
-    "text": "A bit of movement can help your mind feel clearer.",
-    "icon": "🚶‍♂️"
-  },
-  {
-    "category": "Fun Fact",
-    "text": "Jellyfish have been around for over 500 million years.",
-    "icon": "🪼"
-  },
-  {
-    "category": "Body Guard",
-    "text": "Keeping your posture neutral can support long-term comfort.",
-    "icon": "📐"
-  },
-  {
-    "category": "Vitality",
-    "text": "A short break can help you come back refreshed.",
-    "icon": "☕"
-  },
-  {
-    "category": "Ground & Breathe",
-    "text": "Pressing your feet firmly into the floor is a grounding technique that reduces anxiety.",
-    "icon": "🦶"
-  },
-  {
-    "category": "Vitality",
-    "text": "Hydration can support steady focus.",
-    "icon": "💧"
-  },
-  {
-    "category": "Mind Oasis",
-    "text": "Physical clutter competes for cognitive resources—clearing one surface frees mental bandwidth.",
-    "icon": "🧹"
-  },
-  {
-    "category": "Inner Peace",
-    "text": "A 60-second eyes-closed rest reduces visual cortex load and lowers mental fatigue.",
-    "icon": "😌"
-  },
-  {
-    "category": "Body Guard",
-    "text": "Dropping your shoulders an inch can release unseen tension.",
-    "icon": "📉"
-  },
-  {
-    "category": "Ground & Breathe",
-    "text": "Passive sound awareness grounds your nervous system by anchoring you to the present.",
-    "icon": "🎧"
-  },
-  {
-    "category": "Vitality",
-    "text": "A glass of cool water might gently wake up your system.",
-    "icon": "🧊"
-  },
-  {
-    "category": "Heart Sync",
-    "text": "Giving someone the benefit of the doubt can soften a difficult moment.",
-    "icon": "🤝"
-  },
-  {
-    "category": "Fun Fact",
-    "text": "Octopuses have three hearts.",
-    "icon": "🐙"
-  },
-  {
-    "category": "Inner Peace",
-    "text": "You don't have to carry yesterday's worries into today.",
-    "icon": "🌅"
-  },
-  {
-    "category": "Body Guard",
-    "text": "Making sure your feet rest flat can physically ground your posture.",
-    "icon": "👣"
-  },
-  {
-    "category": "Ground & Breathe",
-    "text": "Noticing physical sensations like temperature interrupts stress loops in the brain.",
-    "icon": "🌡️"
-  },
-  {
-    "category": "Heart Sync",
-    "text": "A brief thank you can make someone feel truly seen.",
-    "icon": "🙏"
-  },
-  {
-    "category": "Fun Fact",
-    "text": "Honey never spoils; archaeologists found edible honey in ancient Egyptian tombs.",
-    "icon": "🍯"
-  },
-  {
-    "category": "Inner Peace",
-    "text": "Brief mental rest—even 60 seconds—allows your prefrontal cortex to recover and refocus.",
-    "icon": "🛋️"
-  },
-  {
-    "category": "Body Guard",
-    "text": "Stretching your fingers wide can relieve hidden typing fatigue.",
-    "icon": "🖐️"
-  },
-  {
-    "category": "Heart Sync",
-    "text": "Assuming good intentions can make collaboration much smoother.",
-    "icon": "🤝"
-  },
-  {
-    "category": "Fun Fact",
-    "text": "Cows have best friends and get stressed when separated.",
-    "icon": "🐄"
-  },
-  {
-    "category": "Mind Oasis",
-    "text": "Closing tabs you no longer need might clear some mental space.",
-    "icon": "✖️"
-  },
-  {
-    "category": "Inner Peace",
-    "text": "It is okay if today is just about getting through the day.",
-    "icon": "🛡️"
-  },
-  {
-    "category": "Body Guard",
-    "text": "Gently tilting your head side to side can ease a stiff neck.",
-    "icon": "↔️"
-  },
-  {
-    "category": "Ground & Breathe",
-    "text": "Tactile focus—touching a surface and noticing its texture—is a proven anxiety anchor.",
-    "icon": "🧶"
-  },
-  {
-    "category": "Heart Sync",
-    "text": "Validating someone's feelings doesn't cost anything but means everything.",
-    "icon": "💖"
-  },
-  {
-    "category": "Fun Fact",
-    "text": "Wombat poop is cube-shaped to stop it from rolling away.",
-    "icon": "🟫"
-  },
-  {
-    "category": "Mind Oasis",
-    "text": "You might set a timer for five minutes and just see what gets done.",
-    "icon": "⏱️"
-  },
-  {
-    "category": "Inner Peace",
-    "text": "Self-compassion can be far more motivating than self-criticism.",
-    "icon": "🫂"
-  },
-  {
-    "category": "Vitality",
-    "text": "Splashing cold water on your face can be a quick reset button.",
-    "icon": "💦"
-  },
-  {
-    "category": "Heart Sync",
-    "text": "Smiling when you speak can actually be heard in your voice.",
-    "icon": "😊"
-  },
-  {
-    "category": "Fun Fact",
-    "text": "A single day on Venus is longer than an entire year on Venus.",
-    "icon": "🪐"
-  },
-  {
-    "category": "Mind Oasis",
-    "text": "Externalizing distractions onto paper frees working memory and reduces cognitive interference.",
-    "icon": "📥"
-  },
-  {
-    "category": "Ground & Breathe",
-    "text": "Natural light exposure during the day helps regulate your melatonin and sleep cycle.",
-    "icon": "🌇"
-  },
-  {
-    "category": "Heart Sync",
-    "text": "Asking a simple how are you can bridge a quiet gap.",
-    "icon": "🌉"
-  },
-  {
-    "category": "Fun Fact",
-    "text": "Bananas are technically berries, but strawberries are not.",
-    "icon": "🍌"
-  },
-  {
-    "category": "Mind Oasis",
-    "text": "You might focus on the very next step, rather than the whole staircase.",
-    "icon": "📶"
-  },
-  {
-    "category": "Inner Peace",
-    "text": "Giving yourself grace during a tough task is completely fair.",
-    "icon": "⚖️"
-  },
-  {
-    "category": "Body Guard",
-    "text": "Uncrossing your legs can gently help improve your circulation.",
-    "icon": "🩸"
-  },
-  {
-    "category": "Ground & Breathe",
-    "text": "Body weight awareness is a somatic technique that helps discharge accumulated stress.",
-    "icon": "🧥"
-  },
-  {
-    "category": "Fun Fact",
-    "text": "The Eiffel Tower can be up to 15 centimeters taller during the summer.",
-    "icon": "🗼"
-  },
-  {
-    "category": "Inner Peace",
-    "text": "It is completely okay to set boundaries around your time and energy.",
-    "icon": "🚧"
-  },
-  {
-    "category": "Body Guard",
-    "text": "Rolling your wrists in gentle circles can release built-up stiffness.",
-    "icon": "🔄"
-  },
-  {
-    "category": "Ground & Breathe",
-    "text": "The pause after a full exhale—called the 'rest point'—is when the body resets most deeply.",
-    "icon": "🌬️"
-  },
-  {
-    "category": "Vitality",
-    "text": "Having a warm cup of tea can be a deeply comforting energy boost.",
-    "icon": "🍵"
-  },
-  {
-    "category": "Heart Sync",
-    "text": "Expressing appreciation for a small act can significantly strengthen a bond.",
-    "icon": "🎀"
-  },
-  {
-    "category": "Fun Fact",
-    "text": "Penguins propose to their lifelong mates by offering them a perfect pebble.",
-    "icon": "🐧"
-  },
-  {
-    "category": "Inner Peace",
-    "text": "Forgiving yourself for a small mistake allows you to keep moving forward.",
-    "icon": "🕊️"
-  },
-  {
-    "category": "Vitality",
-    "text": "Getting natural sunlight in the morning helps set your energy clock.",
-    "icon": "☀️"
-  },
-  {
-    "category": "Heart Sync",
-    "text": "A shared laugh can instantly dissolve unnecessary tension in a room.",
-    "icon": "😂"
-  },
-  {
-    "category": "Fun Fact",
-    "text": "A single strand of spider silk is thinner than a human hair but stronger than steel.",
-    "icon": "🕷️"
-  },
-  {
-    "category": "Mind Oasis",
-    "text": "Putting your phone completely out of sight might help you sink into deep work.",
-    "icon": "📱"
-  },
-  {
-    "category": "Inner Peace",
-    "text": "You do not have to earn your right to rest and recover.",
-    "icon": "🛏️"
-  },
-  {
-    "category": "Body Guard",
-    "text": "Releasing your jaw can relieve pressure you did not even know you had.",
-    "icon": "😬"
-  },
-  {
-    "category": "Vitality",
-    "text": "A protein-rich snack might keep your focus steady for a bit longer.",
-    "icon": "🥚"
-  },
-  {
-    "category": "Heart Sync",
-    "text": "Letting someone finish their thought completely can show profound respect.",
-    "icon": "🛑"
-  },
-  {
-    "category": "Fun Fact",
-    "text": "Seahorses mate for life and often travel holding each other tails.",
-    "icon": "🌊"
-  },
-  {
-    "category": "Body Guard",
-    "text": "Supporting your lower back properly can prevent aches before they ever start.",
-    "icon": "🛋️"
-  },
-  {
-    "category": "Vitality",
-    "text": "Taking the stairs for just one flight can get your blood pumping nicely.",
-    "icon": "🧗"
-  },
-  {
-    "category": "Heart Sync",
-    "text": "A thoughtful, specific compliment can brighten someone entire day.",
-    "icon": "🌻"
-  },
-  {
-    "category": "Body Guard",
-    "text": "Keeping your elbows at a 90-degree angle can support your arms properly.",
-    "icon": "📐"
-  },
-  {
-    "category": "Body Guard",
-    "text": "Looking at something 20 feet away every 20 minutes protects your vision.",
-    "icon": "🔭"
-  }
+  { "category": "Mind Oasis", "text": "Starting with a small, easy task builds dopamine momentum that makes harder tasks easier.", "icon": "🌱" },
+  { "category": "Inner Peace", "text": "It's okay to take a moment before responding—you don't need to rush.", "icon": "⏳" },
+  { "category": "Body Guard", "text": "Let your back rest against the chair—it doesn't have to hold everything alone.", "icon": "🪑" },
+  { "category": "Ground & Breathe", "text": "A body check-in—scanning from head to toe—can catch tension before it builds.", "icon": "🧘" },
+  { "category": "Fun Fact", "text": "Dolphins have names for each other.", "icon": "🐬" },
+  { "category": "Mind Oasis", "text": "Writing down your thoughts can sometimes make them feel lighter.", "icon": "📝" },
+  { "category": "Body Guard", "text": "Keeping your neck aligned with your spine can reduce quiet strain.", "icon": "📏" },
+  { "category": "Ground & Breathe", "text": "Watching your breath for 10 seconds activates the parasympathetic nervous system.", "icon": "🫁" },
+  { "category": "Vitality", "text": "A steady rhythm of eating can help your energy stay balanced.", "icon": "🍱" },
+  { "category": "Vitality", "text": "Fresh air, even briefly, can feel surprisingly refreshing.", "icon": "🌬️" },
+  { "category": "Fun Fact", "text": "A group of flamingos is called a flamboyance.", "icon": "🦩" },
+  { "category": "Mind Oasis", "text": "Each time you redirect a wandering mind, you strengthen the neural circuits for focus.", "icon": "🎯" },
+  { "category": "Inner Peace", "text": "It's okay to not have everything figured out yet.", "icon": "🌱" },
+  { "category": "Ground & Breathe", "text": "Shifting visual focus to the background can reduce eye strain and calm overstimulation.", "icon": "🌗" },
+  { "category": "Vitality", "text": "A small snack might help if your energy feels low.", "icon": "🥜" },
+  { "category": "Fun Fact", "text": "Sea otters hold hands while sleeping.", "icon": "🦦" },
+  { "category": "Mind Oasis", "text": "Doing one thing fully can feel calmer than doing many halfway.", "icon": "🧠" },
+  { "category": "Body Guard", "text": "Keeping your screen at a comfortable distance can ease your eyes.", "icon": "👀" },
+  { "category": "Ground & Breathe", "text": "Tuning into background silence for 30 seconds can lower your cortisol response.", "icon": "🔇" },
+  { "category": "Vitality", "text": "Standing up for a moment can gently reset your body.", "icon": "🧍" },
+  { "category": "Inner Peace", "text": "Letting go, even a little, can feel freeing.", "icon": "🕊️" },
+  { "category": "Body Guard", "text": "Relaxing your face muscles can ease hidden tension.", "icon": "😌" },
+  { "category": "Ground & Breathe", "text": "Slow, rhythmic breathing at 5–6 breaths per minute activates your body's calm state.", "icon": "🌬️" },
+  { "category": "Fun Fact", "text": "Butterflies can taste with their feet.", "icon": "🦋" },
+  { "category": "Inner Peace", "text": "It's okay to move at your own pace.", "icon": "🐢" },
+  { "category": "Vitality", "text": "A bit of movement can help your mind feel clearer.", "icon": "🚶‍♂️" },
+  { "category": "Fun Fact", "text": "Jellyfish have been around for over 500 million years.", "icon": "🪼" },
+  { "category": "Body Guard", "text": "Keeping your posture neutral can support long-term comfort.", "icon": "📐" },
+  { "category": "Vitality", "text": "A short break can help you come back refreshed.", "icon": "☕" },
+  { "category": "Ground & Breathe", "text": "Pressing your feet firmly into the floor is a grounding technique that reduces anxiety.", "icon": "🦶" },
+  { "category": "Vitality", "text": "Hydration can support steady focus.", "icon": "💧" },
+  { "category": "Mind Oasis", "text": "Physical clutter competes for cognitive resources—clearing one surface frees mental bandwidth.", "icon": "🧹" },
+  { "category": "Inner Peace", "text": "A 60-second eyes-closed rest reduces visual cortex load and lowers mental fatigue.", "icon": "😌" },
+  { "category": "Body Guard", "text": "Dropping your shoulders an inch can release unseen tension.", "icon": "📉" },
+  { "category": "Ground & Breathe", "text": "Passive sound awareness grounds your nervous system by anchoring you to the present.", "icon": "🎧" },
+  { "category": "Vitality", "text": "A glass of cool water might gently wake up your system.", "icon": "🧊" },
+  { "category": "Fun Fact", "text": "Octopuses have three hearts.", "icon": "🐙" },
+  { "category": "Inner Peace", "text": "You don't have to carry yesterday's worries into today.", "icon": "🌅" },
+  { "category": "Body Guard", "text": "Making sure your feet rest flat can physically ground your posture.", "icon": "👣" },
+  { "category": "Ground & Breathe", "text": "Noticing physical sensations like temperature interrupts stress loops in the brain.", "icon": "🌡️" },
+  { "category": "Fun Fact", "text": "Honey never spoils; archaeologists found edible honey in ancient Egyptian tombs.", "icon": "🍯" },
+  { "category": "Inner Peace", "text": "Brief mental rest—even 60 seconds—allows your prefrontal cortex to recover and refocus.", "icon": "🛋️" },
+  { "category": "Body Guard", "text": "Stretching your fingers wide can relieve hidden typing fatigue.", "icon": "🖐️" },
+  { "category": "Fun Fact", "text": "Cows have best friends and get stressed when separated.", "icon": "🐄" },
+  { "category": "Mind Oasis", "text": "Closing tabs you no longer need might clear some mental space.", "icon": "✖️" },
+  { "category": "Body Guard", "text": "Gently tilting your head side to side can ease a stiff neck.", "icon": "↔️" },
+  { "category": "Ground & Breathe", "text": "Tactile focus—touching a surface and noticing its texture—is a proven anxiety anchor.", "icon": "🧶" },
+  { "category": "Fun Fact", "text": "Wombat poop is cube-shaped to stop it from rolling away.", "icon": "🟫" },
+  { "category": "Vitality", "text": "Splashing cold water on your face can be a quick reset button.", "icon": "💦" },
+  { "category": "Fun Fact", "text": "A single day on Venus is longer than an entire year on Venus.", "icon": "🪐" },
+  { "category": "Mind Oasis", "text": "Externalizing distractions onto paper frees working memory and reduces cognitive interference.", "icon": "📥" },
+  { "category": "Ground & Breathe", "text": "Natural light exposure during the day helps regulate your melatonin and sleep cycle.", "icon": "🌇" },
+  { "category": "Fun Fact", "text": "Bananas are technically berries, but strawberries are not.", "icon": "🍌" },
+  { "category": "Body Guard", "text": "Uncrossing your legs can gently help improve your circulation.", "icon": "🩸" },
+  { "category": "Ground & Breathe", "text": "Body weight awareness is a somatic technique that helps discharge accumulated stress.", "icon": "🧥" },
+  { "category": "Fun Fact", "text": "The Eiffel Tower can be up to 15 centimeters taller during the summer.", "icon": "🗼" },
+  { "category": "Body Guard", "text": "Rolling your wrists in gentle circles can release built-up stiffness.", "icon": "🔄" },
+  { "category": "Ground & Breathe", "text": "The pause after a full exhale—called the 'rest point'—is when the body resets most deeply.", "icon": "🌬️" },
+  { "category": "Vitality", "text": "Having a warm cup of tea can be a deeply comforting energy boost.", "icon": "🍵" },
+  { "category": "Fun Fact", "text": "Penguins propose to their lifelong mates by offering them a perfect pebble.", "icon": "🐧" },
+  { "category": "Vitality", "text": "Getting natural sunlight in the morning helps set your energy clock.", "icon": "☀️" },
+  { "category": "Fun Fact", "text": "A single strand of spider silk is thinner than a human hair but stronger than steel.", "icon": "🕷️" },
+  { "category": "Body Guard", "text": "Releasing your jaw can relieve pressure you did not even know you had.", "icon": "😬" },
+  { "category": "Vitality", "text": "A protein-rich snack might keep your focus steady for a bit longer.", "icon": "🥚" },
+  { "category": "Body Guard", "text": "Supporting your lower back properly can prevent aches before they ever start.", "icon": "🛋️" },
+  { "category": "Vitality", "text": "Taking the stairs for just one flight can get your blood pumping nicely.", "icon": "🧗" },
+  { "category": "Body Guard", "text": "Keeping your elbows at a 90-degree angle can support your arms properly.", "icon": "📐" },
+  { "category": "Body Guard", "text": "Looking at something 20 feet away every 20 minutes protects your vision.", "icon": "🔭" }
 ]
