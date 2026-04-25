@@ -280,22 +280,17 @@ body.day-mode .sh.mine {
       border: 1px solid rgba(0,155,255,0.1) !important;
       color: rgba(26,24,48,0.25) !important;
     }
-    /* Set status for others — show STATUS_CONFIG colors, just slightly muted */
-    body.day-mode .sh.set.other {
-      filter: saturate(0.82) brightness(1.08) !important;
-      opacity: 1 !important;
-    }
-    body.day-mode .sh.set.other span:last-child {
-      color: rgba(26,24,48,0.6) !important;
-      font-weight: 700 !important;
-    }
-    /* Set status for me — full color */
-    body.day-mode .sh.set:not(.other) {
+    /* All set status cells — full color, no filter override */
+    body.day-mode .sh.set {
       filter: none !important;
       opacity: 1 !important;
     }
+    body.day-mode .sh.set span:last-child {
+      color: rgba(26,24,48,0.6) !important;
+      font-weight: 700 !important;
+    }
     body.day-mode .sh.set:hover {
-      filter: brightness(1.04) saturate(1.08) !important;
+      filter: brightness(1.03) !important;
       box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important;
     }
 
@@ -305,10 +300,10 @@ body.day-mode .sh.mine {
       border-color: rgba(119,11,255,0.35) !important;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 2px 14px rgba(119,11,255,0.14) !important;
     }
-   body.day-mode .we .pill-card {
-      background: linear-gradient(160deg, rgba(0,155,255,0.07), rgba(0,155,255,0.04)) !important;
-      border: 1.5px solid rgba(106,199,255,0.3) !important;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 2px 8px rgba(0,155,255,0.07) !important;
+  body.day-mode .we .pill-card {
+      background: linear-gradient(160deg, rgba(0,100,255,0.1), rgba(80,0,255,0.06)) !important;
+      border: 1.5px solid rgba(0,155,255,0.35) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 2px 12px rgba(0,100,255,0.1) !important;
     }
     body.day-mode .pill:hover.hol .pill-card {
       box-shadow:
