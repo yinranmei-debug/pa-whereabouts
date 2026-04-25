@@ -583,10 +583,13 @@ export default function BirthdayOverlay({ currentUserEmail, isBusy, onClose, onC
     const dd = String(today.getDate()).padStart(2, '0');
     const match = RAW_STAFF_LIST.find(s => s.birthday === `${mm}-${dd}`);
     if (!match) { onClose?.(); return; }
-    sessionStorage.setItem(sessionKey, '1');
+    // Only set the session key HERE — after isBusy cleared, not before
     setTheme(pickTheme(match.id));
     setBirthdayPerson(match);
-    const t = setTimeout(() => setVisible(true), 1200);
+    const t = setTimeout(() => {
+      sessionStorage.setItem(sessionKey, '1');
+      setVisible(true);
+    }, 600);
     return () => clearTimeout(t);
   }, [currentUserEmail, isBusy]);
 
