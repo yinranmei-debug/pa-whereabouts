@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-// ── Pixel art SVG assets ────────────────────────────────────────
-
 function CakeSVG({ size = 40 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -123,88 +121,57 @@ function ConfettiSVG() {
   );
 }
 
-// Pixel art birthday hat SVG
 export function BdayHatSVG({ size = 36 }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 24" width={size} height={Math.round(size * 24/32)}
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 28" width={size} height={Math.round(size * 28/24)}
       shapeRendering="crispEdges" style={{ imageRendering: 'pixelated' }}>
-      {/* base band */}
-      <rect x="4" y="15" width="24" height="5" fill="#ffd84a"/>
-      <rect x="4" y="15" width="24" height="1" fill="#fff2a8"/>
-      <rect x="4" y="19" width="24" height="1" fill="#c99418"/>
-      <rect x="3" y="15" width="1" height="5" fill="#1a1205"/>
-      <rect x="28" y="15" width="1" height="5" fill="#1a1205"/>
-      <rect x="4" y="20" width="24" height="1" fill="#1a1205"/>
-      {/* left peak */}
-      <rect x="4" y="11" width="6" height="4" fill="#ffd84a"/>
-      <rect x="5" y="10" width="4" height="1" fill="#ffd84a"/>
-      <rect x="6" y="9"  width="2" height="1" fill="#ffd84a"/>
-      <rect x="4" y="11" width="6" height="1" fill="#fff2a8"/>
-      <rect x="3" y="11" width="1" height="4" fill="#1a1205"/>
-      <rect x="4" y="10" width="1" height="1" fill="#1a1205"/>
-      <rect x="5" y="9"  width="1" height="1" fill="#1a1205"/>
-      <rect x="6" y="8"  width="2" height="1" fill="#1a1205"/>
-      <rect x="8" y="9"  width="1" height="1" fill="#1a1205"/>
-      <rect x="9" y="10" width="1" height="1" fill="#1a1205"/>
-      <rect x="10" y="11" width="1" height="4" fill="#1a1205"/>
-      {/* center peak */}
-      <rect x="11" y="11" width="10" height="4" fill="#ffd84a"/>
-      <rect x="12" y="8"  width="8"  height="3" fill="#ffd84a"/>
-      <rect x="14" y="5"  width="4"  height="3" fill="#ffd84a"/>
-      <rect x="11" y="11" width="10" height="1" fill="#fff2a8"/>
-      <rect x="11" y="8"  width="1"  height="3" fill="#1a1205"/>
-      <rect x="20" y="8"  width="1"  height="3" fill="#1a1205"/>
-      <rect x="12" y="7"  width="1"  height="1" fill="#1a1205"/>
-      <rect x="19" y="7"  width="1"  height="1" fill="#1a1205"/>
-      <rect x="13" y="6"  width="1"  height="1" fill="#1a1205"/>
-      <rect x="18" y="6"  width="1"  height="1" fill="#1a1205"/>
-      <rect x="14" y="4"  width="4"  height="1" fill="#1a1205"/>
-      {/* right peak */}
-      <rect x="22" y="11" width="6" height="4" fill="#ffd84a"/>
-      <rect x="23" y="10" width="4" height="1" fill="#ffd84a"/>
-      <rect x="24" y="9"  width="2" height="1" fill="#ffd84a"/>
-      <rect x="22" y="11" width="6" height="1" fill="#fff2a8"/>
-      <rect x="28" y="11" width="1" height="4" fill="#1a1205"/>
-      <rect x="27" y="10" width="1" height="1" fill="#1a1205"/>
-      <rect x="26" y="9"  width="1" height="1" fill="#1a1205"/>
-      <rect x="24" y="8"  width="2" height="1" fill="#1a1205"/>
-      <rect x="23" y="9"  width="1" height="1" fill="#1a1205"/>
-      <rect x="22" y="10" width="1" height="1" fill="#1a1205"/>
-      <rect x="21" y="11" width="1" height="4" fill="#1a1205"/>
-      {/* gems */}
-      <rect x="6"  y="6" width="2" height="2" fill="#ff5a6b"/>
-      <rect x="6"  y="6" width="1" height="1" fill="#ffb0b8"/>
-      <rect x="5"  y="6" width="1" height="2" fill="#1a1205"/>
-      <rect x="8"  y="6" width="1" height="2" fill="#1a1205"/>
-      <rect x="6"  y="5" width="2" height="1" fill="#1a1205"/>
-      <rect x="6"  y="8" width="2" height="1" fill="#1a1205"/>
-      <rect x="14" y="2" width="4" height="3" fill="#00e5a8"/>
-      <rect x="14" y="2" width="2" height="1" fill="#7affd4"/>
-      <rect x="13" y="2" width="1" height="3" fill="#1a1205"/>
-      <rect x="18" y="2" width="1" height="3" fill="#1a1205"/>
-      <rect x="14" y="1" width="4" height="1" fill="#1a1205"/>
-      <rect x="24" y="6" width="2" height="2" fill="#6ac7ff"/>
-      <rect x="24" y="6" width="1" height="1" fill="#b8e0ff"/>
-      <rect x="23" y="6" width="1" height="2" fill="#1a1205"/>
-      <rect x="26" y="6" width="1" height="2" fill="#1a1205"/>
-      <rect x="24" y="5" width="2" height="1" fill="#1a1205"/>
-      <rect x="24" y="8" width="2" height="1" fill="#1a1205"/>
-      {/* center band gem */}
-      <rect x="14" y="16" width="4" height="3" fill="#ff5a6b"/>
-      <rect x="14" y="16" width="2" height="1" fill="#ffb0b8"/>
-      <rect x="13" y="16" width="1" height="3" fill="#1a1205"/>
-      <rect x="18" y="16" width="1" height="3" fill="#1a1205"/>
-      <rect x="14" y="15" width="4" height="1" fill="#1a1205"/>
-      {/* pearls */}
-      <rect x="8"  y="17" width="2" height="2" fill="#fff2a8"/>
-      <rect x="8"  y="16" width="2" height="1" fill="#1a1205"/>
-      <rect x="22" y="17" width="2" height="2" fill="#fff2a8"/>
-      <rect x="22" y="16" width="2" height="1" fill="#1a1205"/>
+      <rect x="11" y="2"  width="2" height="2" fill="#ffd84a"/>
+      <rect x="10" y="4"  width="4" height="2" fill="#ff8fb0"/>
+      <rect x="9"  y="6"  width="6" height="2" fill="#ffd84a"/>
+      <rect x="8"  y="8"  width="8" height="2" fill="#a78bfa"/>
+      <rect x="7"  y="10" width="10" height="2" fill="#ffd84a"/>
+      <rect x="6"  y="12" width="12" height="2" fill="#ff8fb0"/>
+      <rect x="5"  y="14" width="14" height="2" fill="#ffd84a"/>
+      <rect x="4"  y="16" width="16" height="2" fill="#a78bfa"/>
+      <rect x="3"  y="18" width="18" height="3" fill="#ffd84a"/>
+      <rect x="3"  y="18" width="18" height="1" fill="#fff2a8"/>
+      <rect x="3"  y="20" width="18" height="1" fill="#c99418"/>
+      <rect x="2"  y="18" width="1"  height="3" fill="#1a1205"/>
+      <rect x="21" y="18" width="1"  height="3" fill="#1a1205"/>
+      <rect x="3"  y="21" width="18" height="1" fill="#1a1205"/>
+      <rect x="11" y="1"  width="2" height="1" fill="#1a1205"/>
+      <rect x="10" y="3"  width="1" height="1" fill="#1a1205"/>
+      <rect x="9"  y="5"  width="1" height="1" fill="#1a1205"/>
+      <rect x="8"  y="7"  width="1" height="1" fill="#1a1205"/>
+      <rect x="7"  y="9"  width="1" height="1" fill="#1a1205"/>
+      <rect x="6"  y="11" width="1" height="1" fill="#1a1205"/>
+      <rect x="5"  y="13" width="1" height="1" fill="#1a1205"/>
+      <rect x="4"  y="15" width="1" height="1" fill="#1a1205"/>
+      <rect x="3"  y="17" width="1" height="1" fill="#1a1205"/>
+      <rect x="13" y="3"  width="1" height="1" fill="#1a1205"/>
+      <rect x="14" y="5"  width="1" height="1" fill="#1a1205"/>
+      <rect x="15" y="7"  width="1" height="1" fill="#1a1205"/>
+      <rect x="16" y="9"  width="1" height="1" fill="#1a1205"/>
+      <rect x="17" y="11" width="1" height="1" fill="#1a1205"/>
+      <rect x="18" y="13" width="1" height="1" fill="#1a1205"/>
+      <rect x="19" y="15" width="1" height="1" fill="#1a1205"/>
+      <rect x="20" y="17" width="1" height="1" fill="#1a1205"/>
+      <rect x="11" y="0"  width="2" height="1" fill="#fff200"/>
+      <rect x="12" y="0"  width="1" height="2" fill="#fff200"/>
+      <rect x="10" y="1"  width="1" height="2" fill="#fff200"/>
+      <rect x="13" y="1"  width="1" height="2" fill="#fff200"/>
+      <rect x="10" y="12" width="4" height="3" fill="#00e5a8"/>
+      <rect x="10" y="12" width="2" height="1" fill="#7affd4"/>
+      <rect x="9"  y="12" width="1" height="3" fill="#1a1205"/>
+      <rect x="14" y="12" width="1" height="3" fill="#1a1205"/>
+      <rect x="10" y="11" width="4" height="1" fill="#1a1205"/>
+      <rect x="10" y="19" width="4" height="2" fill="#ff5a6b"/>
+      <rect x="10" y="19" width="2" height="1" fill="#ffb0b8"/>
+      <rect x="9"  y="19" width="1" height="2" fill="#1a1205"/>
+      <rect x="14" y="19" width="1" height="2" fill="#1a1205"/>
     </svg>
   );
 }
-
-// ── Confetti particles ──────────────────────────────────────────
 
 function ConfettiParticles({ cx, cy }) {
   const COLORS = ['#ffe14a','#ff8fb0','#6ab6ff','#a78bfa','#00e5a8','#ff6b6b','#fff'];
@@ -245,10 +212,7 @@ function ConfettiParticles({ cx, cy }) {
   );
 }
 
-// ── Main component ──────────────────────────────────────────────
-
 export default function CakeThrow({ target, active, onComplete, onHatReady }) {
-  // phase: idle → fly → splat → confetti → done
   const [phase, setPhase] = useState('idle');
   const [avatarPos, setAvatarPos] = useState(null);
   const timers = useRef([]);
@@ -257,28 +221,16 @@ export default function CakeThrow({ target, active, onComplete, onHatReady }) {
 
   useEffect(() => {
     if (!active || !target) return;
-
-    // Find avatar position
     const avEl = document.getElementById(`av-${target.id}`);
     if (!avEl) { onComplete?.(); return; }
-
     const r = avEl.getBoundingClientRect();
-    setAvatarPos({ x: r.left + r.width / 2, y: r.top + r.height / 2, r });
+    setAvatarPos({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
     setPhase('fly');
-
     clearTimers();
-    // fly → splat at 650ms
     timers.current.push(setTimeout(() => setPhase('splat'), 650));
-    // splat → confetti at 850ms
     timers.current.push(setTimeout(() => setPhase('confetti'), 850));
-    // hat notification at 900ms
     timers.current.push(setTimeout(() => onHatReady?.(target.id), 900));
-    // done at 1800ms
-    timers.current.push(setTimeout(() => {
-      setPhase('idle');
-      onComplete?.();
-    }, 1800));
-
+    timers.current.push(setTimeout(() => { setPhase('idle'); onComplete?.(); }, 1800));
     return clearTimers;
   }, [active, target]);
 
@@ -290,70 +242,52 @@ export default function CakeThrow({ target, active, onComplete, onHatReady }) {
     <>
       <style>{`
         @keyframes ctFly {
-          0%   { transform: translate(0, -80px) rotate(0deg) scale(1.2); opacity: 1; }
-          100% { transform: translate(0, 0px)   rotate(540deg) scale(0.9); opacity: 1; }
+          0%   { transform: translate(0,-80px) rotate(0deg) scale(1.2); opacity:1; }
+          100% { transform: translate(0,0px) rotate(540deg) scale(0.9); opacity:1; }
         }
         @keyframes ctSplatIn {
-          0%   { transform: scale(0) rotate(-15deg); opacity: 1; }
+          0%   { transform: scale(0) rotate(-15deg); opacity:1; }
           55%  { transform: scale(1.25) rotate(6deg); }
           75%  { transform: scale(0.92) rotate(-3deg); }
-          100% { transform: scale(1) rotate(0deg); opacity: 1; }
-        }
-        @keyframes ctSplatOut {
-          0%   { opacity: 1; }
-          100% { opacity: 0; transform: scale(0.8); }
+          100% { transform: scale(1) rotate(0deg); opacity:1; }
         }
         @keyframes ctBurst {
-          0%   { transform: translate(0,0) rotate(0deg); opacity: 1; }
-          80%  { opacity: 0.8; }
-          100% { transform: translate(var(--dx), var(--dy)) rotate(var(--spin)); opacity: 0; }
+          0%   { transform: translate(0,0) rotate(0deg); opacity:1; }
+          80%  { opacity:0.8; }
+          100% { transform: translate(var(--dx),var(--dy)) rotate(var(--spin)); opacity:0; }
         }
         @keyframes ctConfettiSheet {
-          0%   { transform: scale(0) rotate(-20deg); opacity: 1; }
-          50%  { transform: scale(1.1) rotate(5deg); opacity: 1; }
-          100% { transform: scale(1) rotate(0deg); opacity: 0; }
+          0%   { transform: scale(0) rotate(-20deg); opacity:1; }
+          50%  { transform: scale(1.1) rotate(5deg); opacity:1; }
+          100% { transform: scale(1) rotate(0deg); opacity:0; }
         }
       `}</style>
 
-      <div style={{ position: 'fixed', inset: 0, zIndex: 13300, pointerEvents: 'none' }}>
-
-        {/* ── Flying cake ── */}
+      <div style={{ position:'fixed', inset:0, zIndex:13300, pointerEvents:'none' }}>
         {phase === 'fly' && (
           <div style={{
-            position: 'absolute',
-            left: cx - 20,
-            top:  cy - 20,
-            animation: 'ctFly 0.65s cubic-bezier(0.4,0,0.2,1) forwards',
+            position:'absolute', left:cx-20, top:cy-20,
+            animation:'ctFly 0.65s cubic-bezier(0.4,0,0.2,1) forwards',
           }}>
             <CakeSVG size={40}/>
           </div>
         )}
-
-        {/* ── Splat ── */}
         {phase === 'splat' && (
           <div style={{
-            position: 'absolute',
-            left: cx - 36,
-            top:  cy - 36,
-            animation: 'ctSplatIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both',
+            position:'absolute', left:cx-36, top:cy-36,
+            animation:'ctSplatIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both',
           }}>
             <SplatSVG size={72}/>
           </div>
         )}
-
-        {/* ── Confetti ── */}
         {phase === 'confetti' && (
           <>
-            {/* Confetti pixel sheet fades out */}
             <div style={{
-              position: 'absolute',
-              left: cx - 40,
-              top:  cy - 60,
-              animation: 'ctConfettiSheet 0.9s ease both',
+              position:'absolute', left:cx-40, top:cy-60,
+              animation:'ctConfettiSheet 0.9s ease both',
             }}>
               <ConfettiSVG/>
             </div>
-            {/* Individual particle burst */}
             <ConfettiParticles cx={cx} cy={cy}/>
           </>
         )}
