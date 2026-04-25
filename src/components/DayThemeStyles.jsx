@@ -168,14 +168,17 @@ const DayThemeStyles = () => (
 
     /* ── Name column ── */
     body.day-mode .nw {
-      background: #fff !important;
+      background: rgba(248,249,255,0.95) !important;
       border-bottom-color: rgba(0,155,255,0.07) !important;
     }
     body.day-mode tr:last-child .nw { border-bottom: none !important; }
-    body.day-mode tr:hover .nw { background: rgba(0,155,255,0.03) !important; }
-    body.day-mode tr:hover .dw { background: rgba(0,155,255,0.02) !important; }
-    body.day-mode .sticky-c::after {
-      background: linear-gradient(to right, rgba(255,255,255,0.9), transparent) !important;
+    body.day-mode tr:hover .nw { background: rgba(0,155,255,0.05) !important; }
+    body.day-mode tr:hover .dw { background: rgba(0,155,255,0.025) !important; }
+   body.day-mode .sticky-c::after {
+      background: linear-gradient(to right, rgba(248,249,255,0.9), transparent) !important;
+    }
+    body.day-mode td.sticky-c {
+      background: rgba(248,249,255,0.95) !important;
     }
     body.day-mode .dw {
       border-bottom-color: rgba(0,155,255,0.07) !important;
@@ -294,41 +297,47 @@ const DayThemeStyles = () => (
     body.day-mode .save-txt { color: rgba(26,24,48,0.4) !important; }
     body.day-mode .save-ok  { color: #009bff !important; }
 
-    /* ── Header day col ── */
-    body.day-mode .tbl-hdr-daycol { color: rgba(26,24,48,0.5) !important; }
+  /* ── Header day col ── */
+    body.day-mode .tbl-hdr-daycol { color: rgba(26,24,48,0.72) !important; }
+    body.day-mode .tbl-hdr-daycol div { color: rgba(26,24,48,0.65) !important; }
 
-    /* ── Theme toggle button — shared styles ── */
+  /* ── Theme toggle button — shared styles ── */
     .theme-toggle-btn {
-      display: flex; align-items: center; gap: 6px;
-      height: 36px; padding: 0 14px;
+      display: flex; align-items: center; gap: 7px;
+      height: 34px; padding: 0 13px;
       border-radius: 100px;
       border: 1.5px solid rgba(167,139,250,0.3);
-      background: rgba(255,255,255,0.07);
+      background: rgba(255,255,255,0.08);
       cursor: pointer;
-      font-size: 12px; font-weight: 700;
+      font-size: 11px; font-weight: 700;
       font-family: 'Plus Jakarta Sans', sans-serif;
       color: rgba(232,229,255,0.7);
       transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
       white-space: nowrap;
       backdrop-filter: blur(8px);
+      letter-spacing: 0.04em;
     }
     .theme-toggle-btn:hover {
       transform: scale(1.04);
       border-color: rgba(167,139,250,0.55);
       color: #fff;
+      background: rgba(255,255,255,0.13);
     }
     .theme-toggle-btn:active { transform: scale(0.96); }
 
-    /* Day mode variant of the toggle */
+    /* Day mode variant — clean white pill */
     body.day-mode .theme-toggle-btn {
-      border-color: rgba(0,155,255,0.25) !important;
-      background: rgba(255,255,255,0.85) !important;
-      color: rgba(26,24,48,0.65) !important;
+      border: 1.5px solid rgba(0,155,255,0.22) !important;
+      background: #ffffff !important;
+      color: rgba(26,24,48,0.6) !important;
+      box-shadow: 0 1px 4px rgba(0,155,255,0.1), 0 1px 2px rgba(0,0,0,0.05) !important;
     }
     body.day-mode .theme-toggle-btn:hover {
-      border-color: rgba(0,155,255,0.45) !important;
+      border-color: rgba(0,155,255,0.4) !important;
       color: #009bff !important;
-      background: rgba(255,255,255,1) !important;
+      background: #ffffff !important;
+      box-shadow: 0 2px 10px rgba(0,155,255,0.15) !important;
+      transform: scale(1.04) !important;
     }
 
     /* Toggle track */
