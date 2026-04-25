@@ -52,7 +52,7 @@ const STEPS = [
  {
     id: 'hub-planet',
     title: 'Daily Mind Huddle',
-    desc: '3 mindfulness tips refreshed every day, just for you. Click the planet anytime you need a moment to breathe.',
+    desc: '3 mindfulness tips refreshed every day. Click the planet anytime you need a moment to breathe.',
     position: 'bottom-left',
     highlight: () => document.querySelector('button[title="Daily Mind Huddle"]'),
   },

@@ -179,7 +179,10 @@ export default function App() {
   const [showWelcome,     setShowWelcome]     = useState(false);
   const [isMobile,        setIsMobile]        = useState(() => window.matchMedia('(max-width: 768px)').matches);
   const [hoveredPill,     setHoveredPill]     = useState(null);
-  const [birthdayDone,    setBirthdayDone]    = useState(false);
+  const [birthdayDone, setBirthdayDone] = useState(() => {
+    const key = `bday-done-${new Date().toDateString()}`;
+    return !!localStorage.getItem(key);
+  });
   const [celebrateTarget, setCelebrateTarget] = useState(null);
   const [celebratePrompt, setCelebratePrompt] = useState(false);
   const [crownedId,       setCrownedId]       = useState(null);
@@ -189,7 +192,10 @@ export default function App() {
   const [staffTitles,     setStaffTitles]     = useState({});
   const [cakeThrowActive, setCakeThrowActive] = useState(false);
   const [bdayHatId,       setBdayHatId]       = useState(null);
-  const celebratePromptTimer = useRef(null);
+ const celebratePromptTimer = useRef(null);
+  const weeklyReadKey = account
+    ? `weekly-read-${account.username}-${(() => { const d=new Date(); const day=d.getDay(); d.setDate(d.getDate()-day+(day===0?-6:1)); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })()}`
+    : null;
 
   // 必须在 sequence effect 之前定义
   const todayMMDD_hook = (() => {
@@ -201,7 +207,8 @@ export default function App() {
   const [showWeeklyPanel,   setShowWeeklyPanel]   = useState(false);
   const [showBdayPanel,     setShowBdayPanel]      = useState(false);
   const [weeklyUpdates,     setWeeklyUpdates]      = useState([]);
-  const [weeklyUpdatesCount,setWeeklyUpdatesCount] = useState(0);
+ const [weeklyUpdatesCount, setWeeklyUpdatesCount] = useState(0);
+  const [weeklyReadCount,    setWeeklyReadCount]    = useState(0);
   const [newUpdate,         setNewUpdate]          = useState('');
   const dailyTips = useRef(getDailyTips());
 
@@ -377,7 +384,12 @@ export default function App() {
       })();
       await supabase.from('week_updates').delete().lt('week_start', weekStart);
       const {data:wData} = await supabase.from('week_updates').select('*').eq('week_start',weekStart).order('created_at',{ascending:true});
-      if (wData) { setWeeklyUpdates(wData); setWeeklyUpdatesCount(wData.length); }
+     if (wData) {
+        setWeeklyUpdates(wData);
+        setWeeklyUpdatesCount(wData.length);
+        const readSoFar = parseInt(localStorage.getItem(`weekly-read-${account.username}-${weekStart}`) || '0');
+        setWeeklyReadCount(readSoFar);
+      }
       supabase.channel('week-updates-changes')
         .on('postgres_changes',{event:'*',schema:'public',table:'week_updates'},async ()=>{
           const {data} = await supabase.from('week_updates').select('*').eq('week_start',weekStart).order('created_at',{ascending:true});
@@ -729,6 +741,7 @@ export default function App() {
 const handleCelebrate = (person) => {
     if (!person) return;
     setBirthdayDone(true);
+    localStorage.setItem(`bday-done-${new Date().toDateString()}`, '1');
     setCelebrateTarget(person);
 
     const doScroll = () => {
@@ -858,7 +871,10 @@ const handleCelebrate = (person) => {
         <BirthdayOverlay
           currentUserEmail={account?.username}
           isBusy={showTips}
-          onClose={() => setBirthdayDone(true)}
+         onClose={() => {
+            setBirthdayDone(true);
+            localStorage.setItem(`bday-done-${new Date().toDateString()}`, '1');
+          }}
           onCelebrate={handleCelebrate}
         />
 
@@ -1154,7 +1170,16 @@ const handleCelebrate = (person) => {
 
               {/* 📅 Weekly updates */}
              <button
-                onClick={()=>{ setShowWeeklyPanel(p=>!p); setWeeklyUpdatesCount(0); }}
+                onClick={()=>{
+                  setShowWeeklyPanel(p => {
+                    if (!p && weeklyReadKey) {
+                      // marking as read — store current count
+                      localStorage.setItem(weeklyReadKey, String(weeklyUpdatesCount));
+                      setWeeklyReadCount(weeklyUpdatesCount);
+                    }
+                    return !p;
+                  });
+                }}
                 title="Team week at a glance"
                 style={{position:'relative',width:48,height:48,borderRadius:14,border:'1.5px solid rgba(167,139,250,0.3)',background:'rgba(15,10,40,0.7)',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s'}}
                onMouseOver={e=>{e.currentTarget.style.borderColor='rgba(167,139,250,0.6)';e.currentTarget.style.transform='scale(1.12)';}}
@@ -1176,8 +1201,8 @@ const handleCelebrate = (person) => {
                   <circle cx="8" cy="18.5" r="1.5" fill="rgba(167,139,250,0.5)"/>
                   <circle cx="12" cy="18.5" r="1.5" fill="rgba(196,181,253,0.7)"/>
                 </svg>
-                {weeklyUpdatesCount > 0 && (
-                  <div style={{position:'absolute',top:-6,right:-6,minWidth:18,height:18,borderRadius:9,background:'linear-gradient(135deg,#009bff,#770bff)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:800,color:'#fff',padding:'0 4px',boxShadow:'0 2px 8px rgba(119,11,255,0.4)'}}>{weeklyUpdatesCount}</div>
+                {weeklyUpdatesCount > weeklyReadCount && (
+                  <div style={{position:'absolute',top:-6,right:-6,minWidth:18,height:18,borderRadius:9,background:'linear-gradient(135deg,#009bff,#770bff)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:800,color:'#fff',padding:'0 4px',boxShadow:'0 2px 8px rgba(119,11,255,0.4)'}}>{weeklyUpdatesCount - weeklyReadCount}</div>
                 )}
               </button>
 
