@@ -263,17 +263,21 @@ body.day-mode .sh.mine {
       border: 1px solid rgba(0,155,255,0.1) !important;
       color: rgba(26,24,48,0.25) !important;
     }
-    /* Set cells — let inline style (cfg.bg/color/border) take full effect */
-    body.day-mode .sh.set {
-      filter: none !important;
-      opacity: 1 !important;
-      cursor: default;
-    }
+/* Filled status — boost colors for white background */
+    body.day-mode .sh.set,
     body.day-mode .sh.set.other {
-      cursor: default !important;
+      filter: saturate(1.8) brightness(0.88) !important;
+      opacity: 1 !important;
     }
     body.day-mode .sh.set:hover {
-      filter: brightness(1.04) !important;
+      filter: saturate(2) brightness(0.85) !important;
+      transform: translateY(-1px) !important;
+    }
+    /* Empty other cells — neutral */
+    body.day-mode .sh.other:not(.set) {
+      background: rgba(0,155,255,0.03) !important;
+      border: 1px solid rgba(0,155,255,0.09) !important;
+      color: rgba(26,24,48,0.2) !important;
     }
 
     /* ── Pills (weekend / holiday) — day ── */
