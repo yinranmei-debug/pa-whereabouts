@@ -1312,10 +1312,10 @@ const handleCelebrate = (person) => {
             ))}
           </select>
           <div style={{width:1,height:18,background:'rgba(167,139,250,0.15)',flexShrink:0,margin:'0 4px'}}/>
-          <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#5a0a32,#3c0a3c)',border:'1.5px solid rgba(217,70,239,0.5)'}}/>Holiday</div>
-          <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#0a1e50,#140f46)',border:'1.5px solid rgba(106,199,255,0.45)'}}/>Weekend</div>
-          <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#1a1060,#2a1570)',border:'1.5px solid rgba(167,139,250,0.4)'}}/>My days</div>
-          <div className="leg-item"><div className="leg-dot" style={{background:'rgba(255,255,255,0.08)',border:'1.5px solid rgba(167,139,250,0.2)'}}/>Team days</div>
+        <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#5a0a32,#3c0a3c)',border:'1.5px solid rgba(217,70,239,0.5)'}}/>Holiday</div>
+          <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#0055cc,#4400aa)',border:'1.5px solid rgba(0,155,255,0.65)'}}/>Weekend</div>
+          <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#2a1060,#3a1580)',border:'1.5px solid rgba(167,139,250,0.5)'}}/>My days</div>
+          <div className="leg-item"><div className="leg-dot" style={{background:'rgba(180,190,210,0.35)',border:'1.5px solid rgba(150,160,190,0.4)'}}/>Team days</div>
           {isSuperUser(me) && (
             <div className="team-summary" style={{marginLeft:'auto'}}>
               <div className="team-summary-dot"/>
