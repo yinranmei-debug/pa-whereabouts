@@ -1014,7 +1014,16 @@ const handleCelebrate = (person) => {
                 if (!bday) return null;
                 return (
                   <div key={`bday-${d.ds}`} style={{display:'flex',alignItems:'flex-start',gap:12,padding:'10px 8px',borderRadius:12,background:'rgba(255,143,176,0.08)',border:'1px solid rgba(255,143,176,0.15)',marginBottom:8}}>
-                    <div style={{width:36,height:36,borderRadius:10,background:'linear-gradient(135deg,rgba(255,143,176,0.3),rgba(255,183,0,0.3))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>🎂</div>
+                   <div style={{width:36,height:36,borderRadius:10,background:'linear-gradient(135deg,rgba(255,143,176,0.2),rgba(255,183,0,0.2))',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                      <svg width="22" height="22" viewBox="0 0 24s 24" fill="none">
+                        <rect x="4" y="13" width="16" height="8" rx="2" fill="rgba(255,143,176,0.9)" stroke="rgba(255,183,0,0.7)" strokeWidth="1"/>
+                        <rect x="6" y="10" width="12" height="5" rx="1.5" fill="rgba(255,183,0,0.8)" stroke="rgba(255,225,74,0.6)" strokeWidth="1"/>
+                        <rect x="8" y="5" width="2" height="5" rx="1" fill="rgba(167,139,250,1)"/>
+                        <rect x="14" y="5" width="2" height="5" rx="1" fill="rgba(106,199,255,1)"/>
+                        <ellipse className="mh-flame" cx="9" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,220,50,1)"/>
+                        <ellipse className="mh-flame" cx="15" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,160,50,1)" style={{animationDelay:'0.2s'}}/>
+                      </svg>
+                    </div>
                     <div>
                       <div style={{fontSize:13,fontWeight:700,color:'#fff',marginBottom:2}}>{bday.name.split(' ')[0]}'s birthday {d.isToday?'is today':'this week'}</div>
                       <div style={{fontSize:12,color:'rgba(232,229,255,0.5)'}}>Feel free to drop a big happy birthday! 🎂</div>
