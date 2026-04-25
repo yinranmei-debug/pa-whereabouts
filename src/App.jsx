@@ -1542,11 +1542,11 @@ const handleCelebrate = (person) => {
               <div className="tbl-hdr-sticky">
                 <div ref={headerRef} className="tbl-hdr-row">
                   <div className="tbl-hdr-namecol"/>
-                {week.map(d=>{
-                    const bdayOnDay = RAW_STAFF_LIST.find(s => s.birthday === d.ds.slice(5));
+               {week.map(d=>{
+                    const bdayPeople = RAW_STAFF_LIST.filter(s => s.birthday === d.ds.slice(5));
                     return (
                     <div key={d.ds} data-hdr-ds={d.ds} className="tbl-hdr-daycol" style={{position:'relative'}}>
-                     {bdayOnDay && (
+                     {bdayPeople.length > 0 && (
                         <div className="bday-hdr-cake" style={{position:'absolute',top:2,right:2,zIndex:20}}>
                           <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
                             style={{display:'block',filter:'drop-shadow(0 2px 6px rgba(255,183,0,0.6))'}}>
@@ -1558,7 +1558,7 @@ const handleCelebrate = (person) => {
                             <ellipse cx="15" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,160,50,1)"/>
                           </svg>
                           <div className="bday-hdr-tip">
-                            🎂 {bdayOnDay.name.split(' ')[0]}'s birthday!
+                            🎂 {bdayPeople.map(p => p.name.split(' ')[0]).join(' & ')}'s birthday!
                             <div className="bday-hdr-tip-arrow"/>
                           </div>
                         </div>
