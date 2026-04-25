@@ -476,9 +476,7 @@ body.day-mode .we .pill-card {
       transform: translateX(14px);
     }
 
-    /* ── Misc day overrides ── */
-    body.day-mode .plan-date { color: #1A1830 !important; }
-    body.day-mode .plan-name { color: rgba(26,24,48,0.45) !important; }
+ /* ── Misc day overrides ── */
     body.day-mode .plan-row:hover { background: linear-gradient(135deg, rgba(0,155,255,0.06), rgba(119,11,255,0.05)) !important; }
     body.day-mode .plan-row:hover .plan-date {
       background: linear-gradient(90deg,#009bff,#770bff) !important;
@@ -528,7 +526,19 @@ body.day-mode .we .pill-card {
       background: linear-gradient(135deg, rgba(0,155,255,0.16), rgba(119,11,255,0.14)) !important;
       box-shadow: 0 0 0 2px rgba(0,155,255,0.4) !important;
     }
+
+    /* FORCE white text in holiday planner — highest specificity */
+    body.day-mode .plan-row .plan-date,
+    body.day-mode .plan-row .plan-date * {
+      color: rgba(232,229,255,0.9) !important;
+      -webkit-text-fill-color: rgba(232,229,255,0.9) !important;
+    }
+    body.day-mode .plan-row .plan-name {
+      color: rgba(232,229,255,0.45) !important;
+      -webkit-text-fill-color: rgba(232,229,255,0.45) !important;
+    }
   `}</style>
 );
+
 
 export default DayThemeStyles;
