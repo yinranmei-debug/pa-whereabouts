@@ -33,11 +33,10 @@ const isChinaExtra = em => CHINA_EXTRA.includes(em.toLowerCase());
 const getStaffEntry = em => RAW_STAFF_LIST.find(s => s.email.toLowerCase() === em.toLowerCase());
 
 const ROW_H  = 140;
-const NAV_H  = 72;
-const TB_H   = 56;
-const LG_H   = 40;
+const NAV_H  = 80;
+const TB_H   = 48;
 const AM_REF = 'am-ref-btn';
-const HEADER_STICKY_TOP = NAV_H + TB_H + LG_H;
+const HEADER_STICKY_TOP = NAV_H + TB_H;
 
 const fmt = date => {
   const y = date.getFullYear();
@@ -1129,12 +1128,11 @@ export default function App() {
               <button
                 onClick={()=>{ setTipIdx(0); setShowTips(true); }}
                 title="Daily Mind Huddle"
-                style={{position:'relative',width:48,height:48,borderRadius:14,border:'1.5px solid rgba(139,92,246,0.45)',background:'linear-gradient(135deg,rgba(45,27,105,0.8),rgba(30,27,75,0.8))',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s',overflow:'visible'}}
+                style={{position:'relative',width:48,height:48,borderRadius:14,border:'1.5px solid rgba(139,92,246,0.45)',background:'linear-gradient(135deg,rgba(45,27,105,0.8),rgba(30,27,75,0.8))',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s',overflow:'visible',perspective:'120px'}}
                 onMouseOver={e=>e.currentTarget.style.borderColor='rgba(196,181,253,0.7)'}
                 onMouseOut={e=>e.currentTarget.style.borderColor='rgba(139,92,246,0.45)'}
               >
                 <svg width="26" height="26" viewBox="0 0 26 26" fill="none" overflow="visible">
-                  <circle className="mh-planet-body" cx="13" cy="13" r="7" fill="url(#planetGrad)"/>
                   <defs>
                     <radialGradient id="planetGrad" cx="35%" cy="32%" r="65%">
                       <stop offset="0%" stopColor="#c4b5fd"/>
@@ -1142,7 +1140,11 @@ export default function App() {
                       <stop offset="100%" stopColor="#2e1065"/>
                     </radialGradient>
                   </defs>
+                  <circle className="mh-planet-body" cx="13" cy="13" r="7" fill="url(#planetGrad)"/>
                   <ellipse className="mh-ring" cx="13" cy="13" rx="13" ry="4" fill="none" stroke="rgba(167,139,250,0.75)" strokeWidth="1.5" style={{transformOrigin:'13px 13px'}}/>
+                  <circle className="mh-star-1" cx="2" cy="4" r="1.1" fill="rgba(196,181,253,0.8)"/>
+                  <circle className="mh-star-2" cx="23" cy="3" r="0.85" fill="rgba(106,199,255,0.8)"/>
+                  <circle className="mh-star-3" cx="24" cy="22" r="1" fill="rgba(196,181,253,0.7)"/>
                 </svg>
               </button>
             </div>
@@ -1199,21 +1201,20 @@ export default function App() {
               <option key={i} value={i}>{new Date(2026,i,1).toLocaleString('en-US',{month:'long'})}</option>
             ))}
           </select>
-          {isSuperUser(me) && (
-            <div className="team-summary">
-              <div className="team-summary-dot"/>
-              <span>TEAM SUMMARY: {inOffice.n} / {inOffice.total} IN OFFICE TODAY</span>
-            </div>
-          )}
-        </div>
-
-        {/* LEGEND */}
-        <div className="legend">
+          <div style={{width:1,height:18,background:'rgba(167,139,250,0.15)',flexShrink:0,margin:'0 4px'}}/>
           <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#5a0a32,#3c0a3c)',border:'1.5px solid rgba(217,70,239,0.5)'}}/>Holiday</div>
           <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#0a1e50,#140f46)',border:'1.5px solid rgba(106,199,255,0.45)'}}/>Weekend</div>
           <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#1a1060,#2a1570)',border:'1.5px solid rgba(167,139,250,0.4)'}}/>My days</div>
           <div className="leg-item"><div className="leg-dot" style={{background:'rgba(255,255,255,0.08)',border:'1.5px solid rgba(167,139,250,0.2)'}}/>Team days</div>
+          {isSuperUser(me) && (
+            <div className="team-summary" style={{marginLeft:'auto'}}>
+              <div className="team-summary-dot"/>
+              <span>TEAM: {inOffice.n} / {inOffice.total} IN OFFICE</span>
+            </div>
+          )}
         </div>
+
+       
 
         {/* MAIN TABLE / MOBILE */}
         {isMobile ? (
