@@ -727,27 +727,33 @@ export default function App() {
       headerRef.current.scrollLeft=scrollRef.current.scrollLeft;
   };
 
-  const handleCelebrate = (person) => {
+ const handleCelebrate = (person) => {
     if (!person) return;
     setBirthdayDone(true);
     setCelebrateTarget(person);
     setTimeout(()=>{
-      const rowEl=document.getElementById(`bday-row-${person.id}`);
-      if (rowEl) rowEl.scrollIntoView({behavior:'smooth',block:'center'});
+      const rowEl = document.getElementById(`bday-row-${person.id}`);
+      if (rowEl) {
+        // smooth scroll with visible motion
+        rowEl.scrollIntoView({ behavior:'smooth', block:'center' });
+        // highlight the row briefly so user sees where we landed
+        rowEl.style.transition = 'background 0.3s ease';
+        rowEl.style.background = 'rgba(255,183,0,0.08)';
+        setTimeout(()=>{ rowEl.style.background = ''; }, 1200);
+      }
       setTimeout(()=>{
         setCelebratePrompt(true);
         clearTimeout(celebratePromptTimer.current);
-        celebratePromptTimer.current=setTimeout(()=>setCelebratePrompt(false),8000);
-      },500);
-    },150);
+        celebratePromptTimer.current = setTimeout(()=>setCelebratePrompt(false), 8000);
+      }, 800);
+    }, 150);
   };
 
   const handleBirthdayAvatarClick = (person) => {
     setCelebratePrompt(false);
     clearTimeout(celebratePromptTimer.current);
     setCakeThrowActive(true);
-    firePartyLocal('birthday','🎂',1);
-    glowLevelRef.current=Math.min(glowLevelRef.current+0.8,1);
+   glowLevelRef.current=Math.min(glowLevelRef.current+0.8,1);
     const bdayFirst=person.name.split(' ')[0];
     setBdayToast({text:`🎂 You threw a cake at ${bdayFirst}!`});
     setBdayToastOut(false);
@@ -838,12 +844,12 @@ export default function App() {
         />
 
         {/* Floating cake prompt */}
-        {celebratePrompt && celebrateTarget && (() => {
+    {celebratePrompt && celebrateTarget && (() => {
           const avEl=document.getElementById(`av-${celebrateTarget.id}`);
           if (!avEl) return null;
-         const r=avEl.getBoundingClientRect();
+          const r=avEl.getBoundingClientRect();
           return (
-         <div style={{position:'fixed',left:240,top:NAV_H+16,zIndex:13200,pointerEvents:'auto',display:'flex',alignItems:'center',gap:6,animation:'cakePromptFadeIn 0.3s ease both',cursor:'pointer'}} onClick={()=>handleBirthdayAvatarClick(celebrateTarget)}>
+            <div style={{position:'fixed',left:r.right+12,top:r.top+r.height/2,zIndex:13200,pointerEvents:'auto',display:'flex',alignItems:'center',gap:6,animation:'cakePromptFadeIn 0.3s ease both',cursor:'pointer',transform:'translateY(-50%)'}} onClick={()=>handleBirthdayAvatarClick(celebrateTarget)}>
               <div style={{fontSize:20,lineHeight:1,animation:'cakePromptArrow 0.8s ease-in-out infinite'}}>👈</div>
               <div style={{background:'linear-gradient(135deg,#1e1b4b,#0f172a)',border:'1.5px solid rgba(167,139,250,0.5)',borderRadius:12,padding:'8px 14px',display:'flex',alignItems:'center',gap:8,boxShadow:'0 8px 32px rgba(119,11,255,0.4)',fontFamily:"'Plus Jakarta Sans',sans-serif",whiteSpace:'nowrap',animation:'cakePromptPulse 1.6s ease-in-out infinite'}}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
