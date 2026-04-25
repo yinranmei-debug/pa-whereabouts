@@ -4,7 +4,8 @@ const STEPS = [
   {
     id: 'preface',
     title: 'Welcome to Whereabouts',
-   desc: `Stay in sync. Work well. Live well.\n\nA lighter, clearer way to share your status, stay in step with your team, and make space for focus, balance, and small moments of fun.\n\nP.S. Keep your eyes open — a certain someone might drop by unannounced.`,
+    desc: `Stay in sync. Work well. Live well.\n\nA lighter, clearer way to share your status, stay in step with your team, and make space for focus, balance, and small moments of fun.\n\nP.S. Keep your eyes open — a certain someone might drop by unannounced.`,
+    position: 'center',
     highlight: () => null,
   },
   {
@@ -38,7 +39,7 @@ const STEPS = [
   {
     id: 'hub-weekly',
     title: 'Team Week at a Glance',
-    desc: 'See what\'s happening this week — birthdays, holidays, and team updates. Add a quick note for everyone to see.',
+    desc: "See what's happening this week — birthdays, holidays, and team updates. Add a quick note for everyone to see.",
     position: 'bottom-left',
     highlight: () => document.querySelector('button[title="Team week at a glance"]'),
   },
@@ -49,7 +50,7 @@ const STEPS = [
     position: 'bottom-left',
     highlight: () => document.querySelector('button[title="Birthday today!"]') || document.querySelector('button[title="Birthdays"]'),
   },
- {
+  {
     id: 'hub-planet',
     title: 'Daily Mind Huddle',
     desc: '3 mindfulness tips refreshed every day. Click the planet anytime you need a moment to breathe.',
@@ -59,7 +60,7 @@ const STEPS = [
   {
     id: 'celebrate',
     title: 'Tap to Celebrate!',
-  desc: "See a weekend or holiday column? Tap it — confetti flies for the whole team instantly.\n\nSecret: when enough teammates tap together at the same time, something unexpected happens. You'll know it when you see it!",
+    desc: "See a weekend or holiday column? Tap it — confetti flies for the whole team instantly.\n\nSecret: when enough teammates tap together at the same time, something unexpected happens. You'll know it when you see it!",
     position: 'top',
     highlight: () => document.querySelector('.pill.we') || document.querySelector('.pill.hol'),
   },
@@ -130,24 +131,21 @@ export default function TourOverlay({ onDone }) {
   };
   const handleBack = (e) => { e.stopPropagation(); if (step > 0) setStep(s => s - 1); };
 
- const PatternLogoMini = () => (
+  const PatternLogoMini = () => (
     <svg viewBox="0 0 28 16" width="28" height="16"
       style={{ imageRendering:'pixelated', shapeRendering:'crispEdges', verticalAlign:'middle', marginLeft:4 }}>
-      {/* top parallelogram */}
       {[
         {y:0,xs:5,xe:14},{y:1,xs:4,xe:13},{y:2,xs:3,xe:12},{y:3,xs:2,xe:11},
         {y:4,xs:1,xe:10},{y:5,xs:0,xe:9},
       ].map((r,i)=>(
         <rect key={'t'+i} x={r.xs} y={r.y} width={r.xe-r.xs+1} height={1} fill="#3bb8ff"/>
       ))}
-      {/* bottom parallelogram */}
       {[
-        {y:7, xs:8,xe:17},{y:8, xs:7,xe:16},{y:9, xs:6,xe:15},{y:10,xs:5,xe:14},
+        {y:7,xs:8,xe:17},{y:8,xs:7,xe:16},{y:9,xs:6,xe:15},{y:10,xs:5,xe:14},
         {y:11,xs:4,xe:13},{y:12,xs:3,xe:12},
       ].map((r,i)=>(
         <rect key={'b'+i} x={r.xs} y={r.y} width={r.xe-r.xs+1} height={1} fill="#1e9eff"/>
       ))}
-      {/* outline dots */}
       <rect x="5" y="0" width="10" height="1" fill="#08324d"/>
       <rect x="0" y="5" width="10" height="1" fill="#08324d"/>
       <rect x="8" y="7" width="10" height="1" fill="#08324d"/>
@@ -171,17 +169,16 @@ export default function TourOverlay({ onDone }) {
       </p>
     ));
 
-  // Icon for each step
   const stepIcons = {
-    preface:    <svg width="28" height="28" viewBox="0 0 26 26" fill="none"><defs><radialGradient id="ti1" cx="35%" cy="32%" r="65%"><stop offset="0%" stopColor="#c4b5fd"/><stop offset="40%" stopColor="#8b5cf6"/><stop offset="100%" stopColor="#2e1065"/></radialGradient></defs><circle cx="13" cy="13" r="9" fill="url(#ti1)"/><ellipse cx="13" cy="13" rx="13" ry="4" fill="none" stroke="rgba(167,139,250,0.75)" strokeWidth="1.5"/></svg>,
-    nav:        <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="4" rx="2" fill="rgba(167,139,250,0.4)" stroke="rgba(167,139,250,0.7)" strokeWidth="1.2"/><rect x="3" y="9" width="8" height="12" rx="2" fill="rgba(167,139,250,0.2)" stroke="rgba(167,139,250,0.5)" strokeWidth="1"/><rect x="13" y="9" width="8" height="12" rx="2" fill="rgba(106,199,255,0.2)" stroke="rgba(106,199,255,0.5)" strokeWidth="1"/></svg>,
-    toolbar:    <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="2" y="10" width="4" height="4" rx="1" fill="rgba(167,139,250,0.7)"/><rect x="10" y="8" width="4" height="8" rx="2" fill="rgba(0,155,255,0.9)"/><rect x="18" y="10" width="4" height="4" rx="1" fill="rgba(167,139,250,0.7)"/></svg>,
-    status:     <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="3" fill="rgba(167,139,250,0.15)" stroke="rgba(167,139,250,0.6)" strokeWidth="1.2"/><rect x="7" y="10" width="4" height="3" rx="1" fill="rgba(106,199,255,0.8)"/><rect x="13" y="10" width="4" height="3" rx="1" fill="rgba(167,139,250,0.8)"/></svg>,
-    mood:       <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="rgba(167,139,250,0.25)" stroke="rgba(167,139,250,0.7)" strokeWidth="1.2"/><circle cx="9" cy="10" r="1.5" fill="rgba(196,181,253,0.9)"/><circle cx="15" cy="10" r="1.5" fill="rgba(196,181,253,0.9)"/><path d="M8 15 Q12 18 16 15" stroke="rgba(196,181,253,0.9)" strokeWidth="1.5" fill="none" strokeLinecap="round"/></svg>,
-   'hub-weekly': <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="3" fill="rgba(167,139,250,0.12)" stroke="rgba(167,139,250,0.65)" strokeWidth="1.4"/><rect x="3" y="5" width="18" height="5" rx="3" fill="rgba(167,139,250,0.32)"/><rect x="3" y="8" width="18" height="2" fill="rgba(167,139,250,0.32)"/><rect x="8" y="3" width="2" height="4" rx="1" fill="rgba(196,181,253,0.9)"/><rect x="14" y="3" width="2" height="4" rx="1" fill="rgba(106,199,255,0.9)"/><circle cx="8" cy="15" r="1.4" fill="rgba(196,181,253,0.85)"/><circle cx="12" cy="15" r="1.4" fill="rgba(167,139,250,0.6)"/><circle cx="16" cy="15" r="1.4" fill="rgba(106,199,255,0.8)"/></svg>,
-    'hub-bday': <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="4" y="13" width="16" height="8" rx="2" fill="rgba(255,143,176,0.8)" stroke="rgba(255,183,0,0.6)" strokeWidth="1"/><rect x="6" y="10" width="12" height="5" rx="1.5" fill="rgba(255,183,0,0.6)"/><rect x="8" y="5" width="2" height="5" rx="1" fill="rgba(167,139,250,0.9)"/><rect x="14" y="5" width="2" height="5" rx="1" fill="rgba(106,199,255,0.9)"/><ellipse cx="9" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,220,50,1)"/><ellipse cx="15" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,160,50,1)"/></svg>,
+    preface:      <svg width="28" height="28" viewBox="0 0 26 26" fill="none"><defs><radialGradient id="ti1" cx="35%" cy="32%" r="65%"><stop offset="0%" stopColor="#c4b5fd"/><stop offset="40%" stopColor="#8b5cf6"/><stop offset="100%" stopColor="#2e1065"/></radialGradient></defs><circle cx="13" cy="13" r="9" fill="url(#ti1)"/><ellipse cx="13" cy="13" rx="13" ry="4" fill="none" stroke="rgba(167,139,250,0.75)" strokeWidth="1.5"/></svg>,
+    nav:          <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="4" rx="2" fill="rgba(167,139,250,0.4)" stroke="rgba(167,139,250,0.7)" strokeWidth="1.2"/><rect x="3" y="9" width="8" height="12" rx="2" fill="rgba(167,139,250,0.2)" stroke="rgba(167,139,250,0.5)" strokeWidth="1"/><rect x="13" y="9" width="8" height="12" rx="2" fill="rgba(106,199,255,0.2)" stroke="rgba(106,199,255,0.5)" strokeWidth="1"/></svg>,
+    toolbar:      <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="2" y="10" width="4" height="4" rx="1" fill="rgba(167,139,250,0.7)"/><rect x="10" y="8" width="4" height="8" rx="2" fill="rgba(0,155,255,0.9)"/><rect x="18" y="10" width="4" height="4" rx="1" fill="rgba(167,139,250,0.7)"/></svg>,
+    status:       <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="3" fill="rgba(167,139,250,0.15)" stroke="rgba(167,139,250,0.6)" strokeWidth="1.2"/><rect x="7" y="10" width="4" height="3" rx="1" fill="rgba(106,199,255,0.8)"/><rect x="13" y="10" width="4" height="3" rx="1" fill="rgba(167,139,250,0.8)"/></svg>,
+    mood:         <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="rgba(167,139,250,0.25)" stroke="rgba(167,139,250,0.7)" strokeWidth="1.2"/><circle cx="9" cy="10" r="1.5" fill="rgba(196,181,253,0.9)"/><circle cx="15" cy="10" r="1.5" fill="rgba(196,181,253,0.9)"/><path d="M8 15 Q12 18 16 15" stroke="rgba(196,181,253,0.9)" strokeWidth="1.5" fill="none" strokeLinecap="round"/></svg>,
+    'hub-weekly': <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="3" fill="rgba(167,139,250,0.12)" stroke="rgba(167,139,250,0.65)" strokeWidth="1.4"/><rect x="3" y="5" width="18" height="5" rx="3" fill="rgba(167,139,250,0.32)"/><rect x="3" y="8" width="18" height="2" fill="rgba(167,139,250,0.32)"/><rect x="8" y="3" width="2" height="4" rx="1" fill="rgba(196,181,253,0.9)"/><rect x="14" y="3" width="2" height="4" rx="1" fill="rgba(106,199,255,0.9)"/><circle cx="8" cy="15" r="1.4" fill="rgba(196,181,253,0.85)"/><circle cx="12" cy="15" r="1.4" fill="rgba(167,139,250,0.6)"/><circle cx="16" cy="15" r="1.4" fill="rgba(106,199,255,0.8)"/></svg>,
+    'hub-bday':   <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="4" y="13" width="16" height="8" rx="2" fill="rgba(255,143,176,0.8)" stroke="rgba(255,183,0,0.6)" strokeWidth="1"/><rect x="6" y="10" width="12" height="5" rx="1.5" fill="rgba(255,183,0,0.6)"/><rect x="8" y="5" width="2" height="5" rx="1" fill="rgba(167,139,250,0.9)"/><rect x="14" y="5" width="2" height="5" rx="1" fill="rgba(106,199,255,0.9)"/><ellipse cx="9" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,220,50,1)"/><ellipse cx="15" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,160,50,1)"/></svg>,
     'hub-planet': <svg width="28" height="28" viewBox="0 0 26 26" fill="none"><defs><radialGradient id="ti2" cx="35%" cy="32%" r="65%"><stop offset="0%" stopColor="#c4b5fd"/><stop offset="40%" stopColor="#8b5cf6"/><stop offset="100%" stopColor="#2e1065"/></radialGradient></defs><circle cx="13" cy="13" r="7" fill="url(#ti2)"/><ellipse cx="13" cy="13" rx="13" ry="4" fill="none" stroke="rgba(167,139,250,0.75)" strokeWidth="1.5"/><circle cx="2" cy="4" r="1.1" fill="rgba(196,181,253,0.8)"/><circle cx="23" cy="3" r="0.85" fill="rgba(106,199,255,0.8)"/></svg>,
-    celebrate:  <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="2" y="4" width="20" height="16" rx="3" fill="rgba(90,10,50,0.6)" stroke="rgba(217,70,239,0.5)" strokeWidth="1.2"/><rect x="10" y="8" width="4" height="8" rx="1" fill="rgba(217,70,239,0.4)"/></svg>,
+    celebrate:    <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="2" y="4" width="20" height="16" rx="3" fill="rgba(90,10,50,0.6)" stroke="rgba(217,70,239,0.5)" strokeWidth="1.2"/><rect x="10" y="8" width="4" height="8" rx="1" fill="rgba(217,70,239,0.4)"/></svg>,
   };
 
   return (
@@ -202,7 +199,6 @@ export default function TourOverlay({ onDone }) {
         }
       `}</style>
 
-      {/* Overlay */}
       {!box && (
         <div style={{ position:'fixed', inset:0, background:'rgba(4,13,26,0.85)', zIndex:11000, pointerEvents:'none' }}/>
       )}
@@ -221,7 +217,6 @@ export default function TourOverlay({ onDone }) {
         );
       })()}
 
-      {/* Spotlight ring */}
       {box && (
         <div className="tour-ring" style={{
           position:'fixed', top:box.top, left:box.left,
@@ -231,7 +226,6 @@ export default function TourOverlay({ onDone }) {
         }}/>
       )}
 
-      {/* Tip card — dark cosmic theme */}
       <div
         key={step}
         className="tour-overlay-card"
@@ -253,14 +247,12 @@ export default function TourOverlay({ onDone }) {
           fontFamily:"'Plus Jakarta Sans', sans-serif",
         }}
       >
-        {/* top gradient bar */}
         <div style={{
           position:'absolute', top:0, left:0, right:0, height:3,
           background:'linear-gradient(90deg,#009bff,#770bff)',
           borderRadius:'20px 20px 0 0',
         }}/>
 
-        {/* progress dots */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18 }}>
           <div style={{ display:'flex', gap:5 }}>
             {STEPS.map((_,i) => (
@@ -278,7 +270,6 @@ export default function TourOverlay({ onDone }) {
           </span>
         </div>
 
-        {/* icon + title */}
         <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:14 }}>
           <div style={{
             width:44, height:44, borderRadius:13, flexShrink:0,
@@ -293,12 +284,10 @@ export default function TourOverlay({ onDone }) {
           </div>
         </div>
 
-        {/* description */}
         <div style={{ marginBottom:22 }}>
           {renderDesc(current.desc)}
         </div>
 
-        {/* buttons */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
           <button onClick={handleSkip} style={{
             fontSize:12, color:'rgba(167,139,250,0.45)', background:'none', border:'none',
@@ -325,7 +314,7 @@ export default function TourOverlay({ onDone }) {
               boxShadow:'0 4px 14px rgba(119,11,255,0.35)',
               fontFamily:"'Plus Jakarta Sans',sans-serif",
             }}>
-            {isLast ? "Let's go!" : 'Next →'}
+              {isLast ? "Let's go!" : 'Next →'}
             </button>
           </div>
         </div>

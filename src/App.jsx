@@ -26,7 +26,7 @@ const supabase = createClient(
 
 const msalInstance = new PublicClientApplication(msalConfig);
 const STAFF_LIST = RAW_STAFF_LIST.filter(p => p.id !== 'arthur');
-const SUPER_USERS = ['arthur.cheung@patternasia.com', 'brenda.lee@patternasia.com'];
+const SUPER_USERS = ['arthur.cheung@patternasia.com', 'brenda.lee@patternasia.com', 'yinran.mei@patternasia.com'];
 const CHINA_EXTRA = ['jessica.rao@patternasia.com'];
 
 const isSuperUser  = em => SUPER_USERS.includes(em.toLowerCase());
@@ -316,7 +316,7 @@ export default function App() {
     const tourKey = `tour-done-${account.username}`;
 
     // DEV: always show tour on refresh — remove `true ||` when done testing
-    if (true || !localStorage.getItem(tourKey)) {
+   if (!localStorage.getItem(tourKey)) {
       setShowTour(true);
       return;
     }
