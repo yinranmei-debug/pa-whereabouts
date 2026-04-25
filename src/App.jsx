@@ -469,15 +469,24 @@ export default function App() {
         registerBreachClick(payload.key, payload.userId, null);
       })
       .on('broadcast',{event:'birthday-cake'},({payload})=>{
-        if (payload.throwerId !== meStaffLocal?.id) {
+        const realMyId = meStaffLocal?.id;
+        const isMyOwnThrow = payload.throwerId === realMyId;
+        // Show crown/splat on birthday person unless I was the one who threw
+        // (even if I threw via impersonation, don't show crown on myself)
+        if (!isMyOwnThrow) {
           setCrownedId(payload.birthdayId);
           setTimeout(()=>setCrownedId(null),4000);
           setSplatId(payload.birthdayId);
           setTimeout(()=>setSplatId(null),800);
         }
+        // Always show toast for everyone including the thrower
         const thrower=payload.throwerName||'Someone';
         const bdayFirst=payload.birthdayName?.split(' ')[0]||'them';
-        setBdayToast({text:` ${thrower} threw a cake at ${bdayFirst}!`});
+        const isImpersonatedThrow = payload.realThrowerId === realMyId;
+        setBdayToast({text: isImpersonatedThrow
+          ? `You (as ${thrower}) threw a cake at ${bdayFirst}!`
+          : ` ${thrower} threw a cake at ${bdayFirst}!`
+        });
         setBdayToastOut(false);
         setTimeout(()=>{setBdayToastOut(true);setTimeout(()=>setBdayToast(null),400);},4000);
       })
@@ -848,9 +857,15 @@ const handleCelebrate = (person) => {
     setBdayToast({text:`You threw a cake at ${bdayFirst}!`});
     setBdayToastOut(false);
     setTimeout(()=>{setBdayToastOut(true);setTimeout(()=>setBdayToast(null),400);},4000);
-    presenceRef.current?.send({
+   presenceRef.current?.send({
       type:'broadcast',event:'birthday-cake',
-      payload:{birthdayId:person.id,birthdayName:person.name,throwerId:meStaff?.id,throwerName:meStaff?.name||account.name},
+      payload:{
+        birthdayId:person.id,
+        birthdayName:person.name,
+        throwerId:meStaff?.id,
+        throwerName:meStaff?.name||account.name,
+        realThrowerId: getStaffEntry(account.username.toLowerCase())?.id,
+      },
     });
     // Persist to Supabase
     await supabase.from('cake_throws').insert({
