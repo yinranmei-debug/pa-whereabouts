@@ -1,10 +1,9 @@
 import React from 'react';
 
-const NAV_H  = 72;
-const TB_H   = 56;
-const LG_H   = 40;
+const NAV_H  = 80;
+const TB_H   = 48;
 const ROW_H  = 140;
-const HEADER_STICKY_TOP = NAV_H + TB_H + LG_H;
+const HEADER_STICKY_TOP = NAV_H + TB_H;
 
 const GlobalStyles = () => (
   <style>{`
@@ -159,7 +158,7 @@ const GlobalStyles = () => (
       box-shadow:0 0 8px rgba(167,139,250,0.4);
     }
     .bulb-btn:hover{transform:scale(1.1);border-color:rgba(196,181,253,0.7);}
-    .bulb-btn:hover::before{border-color:rgba(99,179,255,0.95);box-shadow:0 0 14px rgba(0,155,255,0.7);animation:ringOrbit 1.4s linear infinite;}
+    .bulb-btn:hover::before{border-color:rgba(99,179,255,0.95);box-shadow:0 0 14px rgba(0,155,255,0.7);animation:ringOrbit3D 1.4s linear infinite;}
     .bulb-btn:hover::after{box-shadow:0 0 18px rgba(139,92,246,0.95),inset 0 -2px 4px rgba(0,0,0,0.4);}
 
     /* ── Online / user chips ── */
@@ -245,17 +244,8 @@ const GlobalStyles = () => (
     .today-glint::after{opacity:1;animation:glint 0.55s ease-in-out;}
     @keyframes glint{0%{left:-150%;}100%{left:150%;}}
 
-    /* ── Legend ── */
-    .legend{
-      height:${LG_H}px;padding:0 32px;
-      background:linear-gradient(135deg,rgba(10,15,40,0.82) 0%,rgba(15,10,35,0.86) 100%);
-      backdrop-filter:blur(12px);
-      border-bottom:1px solid rgba(167,139,250,0.1);
-      display:flex;align-items:center;gap:24px;
-      position:sticky;top:${NAV_H+TB_H}px;z-index:470;
-    }
-    .leg-item{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:500;color:rgba(232,229,255,0.55);}
-    .leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+    .leg-item{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:500;color:rgba(232,229,255,0.48);white-space:nowrap;}
+    .leg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
 
     /* ── Table ── */
     .tbl-outer{
@@ -270,12 +260,21 @@ const GlobalStyles = () => (
       backdrop-filter:blur(20px) saturate(140%);
       position:relative;
     }
+   button:hover .mh-planet-body{animation:planetFloat 2.5s ease-in-out infinite;}
+    button:hover .mh-ring{animation:ringOrbit3D 2s linear infinite;}
+    .mh-ring{transform-box:fill-box;transform-origin:center;transform:rotateX(72deg);}
+    .mh-planet-body{transform-box:fill-box;transform-origin:center;}
+    @keyframes ringOrbit3D{
+      0%{transform:rotateY(0deg) rotateX(72deg);}
+      100%{transform:rotateY(360deg) rotateX(72deg);}
+    }
     .tbl-hdr-sticky{
       position:sticky;top:${HEADER_STICKY_TOP}px;z-index:460;
-      background:rgba(10,15,40,0.85);
-      backdrop-filter:blur(16px);
-      border-bottom:1px solid rgba(167,139,250,0.15);
+      background:rgba(8,12,35,0.97);
+      backdrop-filter:blur(20px) saturate(150%);
+      border-bottom:1px solid rgba(167,139,250,0.2);
       border-radius:20px 20px 0 0;
+      box-shadow:0 4px 24px rgba(0,0,0,0.5),0 1px 0 rgba(167,139,250,0.08);
     }
     .tbl-hdr-row{display:grid;grid-template-columns:220px repeat(7,1fr);min-width:900px;padding:0 24px;}
     .tbl-hdr-namecol{background:transparent;}
@@ -626,7 +625,6 @@ const GlobalStyles = () => (
       .toolbar{gap:4px;padding:0 12px;}
       .tb-btn{height:28px;font-size:11px;padding:0 8px;}
       .tb-select{height:28px;font-size:11px;padding:0 6px;max-width:80px;}
-      .legend{gap:10px;padding:0 12px;}
       .leg-item{font-size:10px;}
       .user-name{display:none;}
       .signout-btn{font-size:10px;padding:0 8px;}
