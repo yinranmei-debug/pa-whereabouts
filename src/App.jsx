@@ -1379,12 +1379,13 @@ const handleCelebrate = (person) => {
                     <div key={d.ds} data-hdr-ds={d.ds} className="tbl-hdr-daycol" style={{position:'relative'}}>
                       {bdayOnDay && (
                         <div style={{
-                          position:'absolute', top:2, right:2,
+                          position:'absolute', top:4, right:4,
                           cursor:'default', zIndex:10, lineHeight:1,
-                        }} title={`${bdayOnDay.name.split(' ')[0]}'s birthday! 🎂`}>
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-                            <rect x="4" y="13" width="16" height="8" rx="2" fill="rgba(255,143,176,0.9)" stroke="rgba(255,183,0,0.7)" strokeWidth="1"/>
-                            <rect x="6" y="10" width="12" height="5" rx="1.5" fill="rgba(255,183,0,0.8)"/>
+                          filter:'drop-shadow(0 1px 4px rgba(255,183,0,0.5))',
+                        }} title={`🎂 ${bdayOnDay.name.split(' ')[0]}'s birthday!`}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <rect x="4" y="13" width="16" height="8" rx="2" fill="rgba(255,143,176,0.95)" stroke="rgba(255,183,0,0.8)" strokeWidth="1"/>
+                            <rect x="6" y="10" width="12" height="5" rx="1.5" fill="rgba(255,183,0,0.9)" stroke="rgba(255,225,74,0.6)" strokeWidth="0.8"/>
                             <rect x="8" y="5" width="2" height="5" rx="1" fill="rgba(167,139,250,1)"/>
                             <rect x="14" y="5" width="2" height="5" rx="1" fill="rgba(106,199,255,1)"/>
                             <ellipse cx="9" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,220,50,1)"/>
@@ -1516,29 +1517,9 @@ const handleCelebrate = (person) => {
                                     const isBulkSelected=bulkSelectCells.includes(key);
                                     const isSnapping=snapCellKey===key;
                                     const staggerDelay=staggerCells[key];
-                                    const cls=!isMe?'sh other':sid!=='none'?'sh set':'sh mine';
-                                    const isBdayCell = (() => {
-                                      const bdayMMDD = RAW_STAFF_LIST.find(s=>s.id===m.id)?.birthday;
-                                      return bdayMMDD && d.ds.slice(5) === bdayMMDD;
-                                    })();
-                                    return (
+                                    const cls=!isMe?(sid!=='none'?'sh set other':'sh other'):sid!=='none'?'sh set':'sh mine';
+                                  return (
                                       <div key={shift} style={{position:'relative'}}>
-                                        {isBdayCell && shift==='AM' && (
-                                          <div style={{
-                                            position:'absolute',top:2,right:4,zIndex:10,
-                                            pointerEvents:'auto',cursor:'default',
-                                            lineHeight:1,
-                                          }} title={`${m.name.split(' ')[0]}'s birthday! 🎂`}>
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                                              <rect x="4" y="13" width="16" height="8" rx="2" fill="rgba(255,143,176,0.9)" stroke="rgba(255,183,0,0.7)" strokeWidth="1"/>
-                                              <rect x="6" y="10" width="12" height="5" rx="1.5" fill="rgba(255,183,0,0.8)"/>
-                                              <rect x="8" y="5" width="2" height="5" rx="1" fill="rgba(167,139,250,1)"/>
-                                              <rect x="14" y="5" width="2" height="5" rx="1" fill="rgba(106,199,255,1)"/>
-                                              <ellipse cx="9" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,220,50,1)"/>
-                                              <ellipse cx="15" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,160,50,1)"/>
-                                            </svg>
-                                          </div>
-                                        )}
                                         <div
                                           data-cell-key={key}
                                           data-cell-touch="1"
