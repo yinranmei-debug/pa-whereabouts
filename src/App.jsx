@@ -206,6 +206,8 @@ export default function App() {
   const [staffTitles,     setStaffTitles]     = useState({});
  const [cakeThrowActive, setCakeThrowActive] = useState(false);
   const [bdayHatId,       setBdayHatId]       = useState(null);
+  const [cakeThrowHistory, setCakeThrowHistory] = useState([]);
+  const [showCakeHistory,  setShowCakeHistory]  = useState(false);
   const [isDayMode,       setIsDayMode]       = useState(
     () => localStorage.getItem('whereabouts-theme') === 'day'
   );
@@ -339,11 +341,30 @@ export default function App() {
     })();
   }, []);
 
-  // ── Sequence: Tour → Bday → Tips → Welcome → Banana ──────
+ // ── Sequence: Tour → Bday → Tips → Welcome → Banana ──────
+  useEffect(() => {
+    if (!account || !meStaff) return;
+    if (!hasBirthdayToday_hook) return;
+    const bdayPerson = RAW_STAFF_LIST.find(s => s.birthday === todayMMDD_hook);
+    if (bdayPerson?.id !== meStaff.id) return;
+    const todayStr = fmt(new Date());
+    supabase.from('cake_throws')
+      .select('*').eq('birthday_id', meStaff.id).eq('birthday_date', todayStr)
+      .order('created_at', { ascending: true })
+      .then(({ data }) => { if (data?.length) { setCakeThrowHistory(data); setShowCakeHistory(true); } });
+    const ch = supabase.channel('cake-throws-changes')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cake_throws' }, payload => {
+        if (payload.new.birthday_id === meStaff.id) {
+          setCakeThrowHistory(prev => [...prev, payload.new]);
+          setShowCakeHistory(true);
+        }
+      }).subscribe();
+    return () => supabase.removeChannel(ch);
+  }, [account, meStaff]);
+
   useEffect(() => {
     if (!account) return;
     const tourKey = `tour-done-${account.username}`;
-
     // DEV: always show tour on refresh — remove `true ||` when done testing
    if (!localStorage.getItem(tourKey)) {
       setShowTour(true);
@@ -810,11 +831,11 @@ const handleCelebrate = (person) => {
     requestAnimationFrame(() => requestAnimationFrame(doScroll));
   };
 
-  const handleBirthdayAvatarClick = (person) => {
+ const handleBirthdayAvatarClick = async (person) => {
     setCelebratePrompt(false);
     clearTimeout(celebratePromptTimer.current);
     setCakeThrowActive(true);
-   glowLevelRef.current=Math.min(glowLevelRef.current+0.8,1);
+    glowLevelRef.current=Math.min(glowLevelRef.current+0.8,1);
     const bdayFirst=person.name.split(' ')[0];
     setBdayToast({text:`You threw a cake at ${bdayFirst}!`});
     setBdayToastOut(false);
@@ -823,6 +844,20 @@ const handleCelebrate = (person) => {
       type:'broadcast',event:'birthday-cake',
       payload:{birthdayId:person.id,birthdayName:person.name,throwerId:meStaff?.id,throwerName:meStaff?.name||account.name},
     });
+    // Persist to Supabase
+    await supabase.from('cake_throws').insert({
+      birthday_date: fmt(new Date()),
+      birthday_id: person.id,
+      thrower_id: meStaff?.id || 'guest',
+      thrower_name: meStaff?.name || account.name,
+    });
+    // Refresh local list if I am the birthday person
+    if (person.id === meStaff?.id) {
+      const { data } = await supabase.from('cake_throws')
+        .select('*').eq('birthday_id', person.id).eq('birthday_date', fmt(new Date()))
+        .order('created_at', { ascending: true });
+      if (data) setCakeThrowHistory(data);
+    }
   };
 
   const today    = fmt(new Date());
@@ -927,6 +962,48 @@ const handleCelebrate = (person) => {
                   <ellipse className="mh-flame" cx="15" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,160,50,0.95)" style={{animationDelay:'0.2s'}}/>
                 </svg>
                 <span style={{fontSize:13,fontWeight:700,color:'#fff'}}>Click to throw a cake!</span>
+              </div>
+            </div>
+          );
+        })()}
+
+      {/* ── Cake throw history panel — only visible to birthday person ── */}
+        {showCakeHistory && cakeThrowHistory.length > 0 && meStaff && hasBirthdayToday && (() => {
+          const bdayPerson = RAW_STAFF_LIST.find(s => s.birthday === todayMMDD);
+          if (bdayPerson?.id !== meStaff.id) return null;
+          return (
+            <div style={{position:'fixed',right:20,top:NAV_H+16,zIndex:12100,width:280,fontFamily:"'Plus Jakarta Sans',sans-serif",animation:'dropIn 0.3s ease'}}>
+              <div style={{background:'linear-gradient(135deg,rgba(13,8,40,0.97),rgba(20,10,55,0.97))',border:'1.5px solid rgba(255,183,0,0.3)',borderRadius:18,overflow:'hidden',boxShadow:'0 16px 48px rgba(0,0,0,0.5)'}}>
+                <div style={{padding:'12px 16px 10px',borderBottom:'1px solid rgba(255,183,0,0.12)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <rect x="4" y="13" width="16" height="8" rx="2" fill="rgba(255,143,176,0.9)" stroke="rgba(255,183,0,0.7)" strokeWidth="1"/>
+                      <rect x="6" y="10" width="12" height="5" rx="1.5" fill="rgba(255,183,0,0.8)"/>
+                      <rect x="8" y="5" width="2" height="5" rx="1" fill="rgba(167,139,250,1)"/>
+                      <rect x="14" y="5" width="2" height="5" rx="1" fill="rgba(106,199,255,1)"/>
+                      <ellipse cx="9" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,220,50,1)"/>
+                      <ellipse cx="15" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,160,50,1)"/>
+                    </svg>
+                    <span style={{fontSize:12,fontWeight:700,color:'rgba(255,220,100,0.95)'}}>Cakes thrown at you 🎂</span>
+                  </div>
+                  <button onClick={()=>setShowCakeHistory(false)} style={{background:'none',border:'none',color:'rgba(255,255,255,0.35)',cursor:'pointer',fontSize:13,padding:'0 2px',lineHeight:1}}>✕</button>
+                </div>
+                <div style={{maxHeight:280,overflowY:'auto',padding:'8px 10px 10px'}}>
+                  {cakeThrowHistory.map((row, i) => (
+                    <div key={row.id||i} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 8px',borderRadius:10,background:i%2===0?'rgba(255,255,255,0.03)':'transparent',marginBottom:2}}>
+                      <div style={{width:32,height:32,borderRadius:10,background:'linear-gradient(135deg,rgba(255,143,176,0.2),rgba(255,183,0,0.2))',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:16}}>🎂</div>
+                      <div>
+                        <div style={{fontSize:12,fontWeight:700,color:'#fff',lineHeight:1.3}}>{row.thrower_name}</div>
+                        <div style={{fontSize:10,color:'rgba(255,255,255,0.35)',marginTop:2}}>
+                          {new Date(row.created_at).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{padding:'8px 16px 12px',borderTop:'1px solid rgba(255,183,0,0.08)',textAlign:'center'}}>
+                  <span style={{fontSize:11,color:'rgba(255,220,100,0.6)',fontWeight:600}}>{cakeThrowHistory.length} cake{cakeThrowHistory.length!==1?'s':''} thrown today!</span>
+                </div>
               </div>
             </div>
           );
@@ -1188,12 +1265,14 @@ const handleCelebrate = (person) => {
             <div style={{display:'flex',alignItems:'center',gap:8}}>
 
              {/* 🎂 Birthday button — always visible, red dot when bday + not yet celebrated */}
-              <button
+             <button
                 onClick={()=>setShowBdayPanel(p=>!p)}
                 title={hasBirthdayToday ? "Birthday today!" : "Birthdays"}
-                style={{position:'relative',width:48,height:48,borderRadius:14,border:`1.5px solid ${hasBirthdayToday && !birthdayDone ? 'rgba(255,183,0,0.55)' : 'rgba(167,139,250,0.22)'}`,background:hasBirthdayToday && !birthdayDone ? 'rgba(30,15,5,0.7)' : 'rgba(15,10,40,0.7)',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s',overflow:'visible'}}
-                onMouseOver={e=>{e.currentTarget.style.transform='scale(1.12)';e.currentTarget.style.borderColor=hasBirthdayToday && !birthdayDone ? 'rgba(255,220,100,0.7)' : 'rgba(167,139,250,0.5)';}}
-                onMouseOut={e=>{e.currentTarget.style.transform='scale(1)';e.currentTarget.style.borderColor=hasBirthdayToday && !birthdayDone ? 'rgba(255,183,0,0.55)' : 'rgba(167,139,250,0.22)';}}
+                style={{position:'relative',width:48,height:48,borderRadius:14,border:'1.5px solid rgba(167,139,250,0.22)',background:'rgba(15,10,40,0.7)',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s',overflow:'visible',
+                  ...(hasBirthdayToday && !birthdayDone ? {border:'1.5px solid rgba(255,183,0,0.55)',background:'rgba(30,15,5,0.7)'} : {})
+                }}
+                onMouseOver={e=>{e.currentTarget.style.transform='scale(1.12)';}}
+                onMouseOut={e=>{e.currentTarget.style.transform='scale(1)';}}
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                   <rect x="4" y="13" width="16" height="8" rx="2" fill="rgba(255,143,176,0.7)" stroke="rgba(255,183,0,0.6)" strokeWidth="1"/>
@@ -1203,9 +1282,9 @@ const handleCelebrate = (person) => {
                   <ellipse className="mh-flame" cx="9" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,220,50,0.95)"/>
                   <ellipse className="mh-flame" cx="15" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,160,50,0.95)" style={{animationDelay:'0.2s'}}/>
                 </svg>
-              {hasBirthdayToday && !birthdayDone && (
-                  <div style={{position:'absolute',top:-6,right:-6,minWidth:18,height:18,borderRadius:9,background:'linear-gradient(135deg,#ff8fb0,#e63946)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:800,color:'#fff',padding:'0 4px',boxShadow:'0 2px 8px rgba(255,100,150,0.4)'}}>1</div>
-                )}
+             {hasBirthdayToday && !birthdayDone && (
+                <div style={{position:'absolute',top:-6,right:-6,width:18,height:18,borderRadius:'50%',background:'linear-gradient(135deg,#ff4444,#e63946)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:800,color:'#fff',boxShadow:'0 2px 8px rgba(230,57,70,0.6)',zIndex:10,pointerEvents:'none',animation:'bdayDotPulse 2s ease-in-out infinite'}}>1</div>
+              )}
               </button>
 
               {/* 📅 Weekly updates */}
