@@ -26,11 +26,11 @@ const LoginScreen = ({ onLogin, isInitializing, error }) => {
       padding: '24px', textAlign: 'center',
       position: 'relative', overflow: 'hidden',
       background: '#040d1a',
-      fontFamily: "'Plus Jakarta Sans', sans-serif",
+      fontFamily: "'Wix Madefor Display', 'Plus Jakarta Sans', sans-serif",
     }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
+       @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Wix+Madefor+Display:wght@400;500;600;700;800&display=swap');
         @keyframes starTwinkle { 0%,100%{opacity:0.2} 50%{opacity:1} }
         @keyframes auroraRot1 { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
         @keyframes auroraRot2 { from{transform:rotate(0deg)} to{transform:rotate(-360deg)} }
@@ -284,10 +284,10 @@ const LoginScreen = ({ onLogin, isInitializing, error }) => {
                   }}
                 >
                   <svg width="18" height="18" viewBox="0 0 21 21" fill="none">
-                    <rect x="1" y="1" width="9" height="9" fill="white"/>
-                    <rect x="11" y="1" width="9" height="9" fill="white" fillOpacity="0.65"/>
-                    <rect x="1" y="11" width="9" height="9" fill="white" fillOpacity="0.65"/>
-                    <rect x="11" y="11" width="9" height="9" fill="white" fillOpacity="0.35"/>
+                    <rect x="1" y="1" width="9" height="9" fill="#F25022"/>
+                    <rect x="11" y="1" width="9" height="9" fill="#7FBA00"/>
+                    <rect x="1" y="11" width="9" height="9" fill="#00A4EF"/>
+                    <rect x="11" y="11" width="9" height="9" fill="#FFB900"/>
                   </svg>
                   Sign in with Microsoft
                 </button>
