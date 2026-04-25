@@ -731,20 +731,41 @@ export default function App() {
     if (!person) return;
     setBirthdayDone(true);
     setCelebrateTarget(person);
-    // scroll FIRST immediately — before any state settles
-    const rowEl = document.getElementById(`bday-row-${person.id}`);
-    if (rowEl) {
-      rowEl.scrollIntoView({ behavior:'smooth', block:'center' });
-      rowEl.style.transition = 'background 0.4s ease';
-      rowEl.style.background = 'rgba(255,183,0,0.1)';
-      setTimeout(()=>{ rowEl.style.background = ''; }, 1400);
-    }
-    // show prompt AFTER scroll animation (smooth scroll ~600ms)
-    setTimeout(()=>{
-      setCelebratePrompt(true);
-      clearTimeout(celebratePromptTimer.current);
-      celebratePromptTimer.current = setTimeout(()=>setCelebratePrompt(false), 8000);
-    }, 650);
+
+    const doScroll = () => {
+      const rowEl = document.getElementById(`bday-row-${person.id}`);
+      if (rowEl) {
+        rowEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        rowEl.style.transition = 'background 0.4s ease';
+        rowEl.style.background = 'rgba(255,183,0,0.1)';
+        setTimeout(() => { rowEl.style.background = ''; }, 1400);
+        // show prompt after scroll settles
+        setTimeout(() => {
+          setCelebratePrompt(true);
+          clearTimeout(celebratePromptTimer.current);
+          celebratePromptTimer.current = setTimeout(() => setCelebratePrompt(false), 8000);
+        }, 700);
+      } else {
+        // row not found yet — retry once after next paint
+        requestAnimationFrame(() => {
+          const retryEl = document.getElementById(`bday-row-${person.id}`);
+          if (retryEl) {
+            retryEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            retryEl.style.transition = 'background 0.4s ease';
+            retryEl.style.background = 'rgba(255,183,0,0.1)';
+            setTimeout(() => { retryEl.style.background = ''; }, 1400);
+          }
+          setTimeout(() => {
+            setCelebratePrompt(true);
+            clearTimeout(celebratePromptTimer.current);
+            celebratePromptTimer.current = setTimeout(() => setCelebratePrompt(false), 8000);
+          }, 700);
+        });
+      }
+    };
+
+    // use requestAnimationFrame to ensure DOM has painted after overlay closes
+    requestAnimationFrame(() => requestAnimationFrame(doScroll));
   };
 
   const handleBirthdayAvatarClick = (person) => {
