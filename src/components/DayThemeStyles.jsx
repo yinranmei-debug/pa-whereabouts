@@ -151,26 +151,31 @@ const DayThemeStyles = () => (
       color: rgba(26,24,48,0.65) !important;
     }
     body.day-mode .tb-month { color: #1A1830 !important; font-weight: 700 !important; }
-  body.day-mode .leg-item { color: rgba(26,24,48,0.65) !important; }
-    /* Holiday dot — purple */
-    body.day-mode .leg-dot[style*="217,70,239"] {
-      background: linear-gradient(135deg,rgba(119,11,255,0.7),rgba(90,10,50,0.6)) !important;
-      border: 1.5px solid rgba(119,11,255,0.5) !important;
+ body.day-mode .leg-item { color: rgba(26,24,48,0.65) !important; }
+    /* All dots — base override so they're visible */
+    body.day-mode .leg-dot {
+      opacity: 1 !important;
+      filter: none !important;
     }
-    /* Weekend dot — blue */
-    body.day-mode .leg-dot[style*="106,199,255"] {
-      background: linear-gradient(135deg,rgba(0,155,255,0.7),rgba(119,11,255,0.35)) !important;
-      border: 1.5px solid rgba(0,155,255,0.45) !important;
+    /* Holiday — 1st dot */
+    body.day-mode .leg-item:nth-child(1) .leg-dot {
+      background: rgba(139,11,180,0.75) !important;
+      border-color: rgba(119,11,255,0.55) !important;
     }
-    /* My days dot — purple */
-    body.day-mode .leg-dot[style*="167,139,250"] {
-      background: linear-gradient(135deg,rgba(119,11,255,0.55),rgba(167,139,250,0.45)) !important;
-      border: 1.5px solid rgba(119,11,255,0.35) !important;
+    /* Weekend — 2nd dot */
+    body.day-mode .leg-item:nth-child(2) .leg-dot {
+      background: rgba(0,120,220,0.7) !important;
+      border-color: rgba(0,155,255,0.5) !important;
     }
-    /* Team days dot — light */
-    body.day-mode .leg-dot[style*="255,255,255,0.08"] {
-      background: rgba(0,155,255,0.12) !important;
-      border: 1.5px solid rgba(0,155,255,0.25) !important;
+    /* My days — 3rd dot */
+    body.day-mode .leg-item:nth-child(3) .leg-dot {
+      background: rgba(100,40,200,0.65) !important;
+      border-color: rgba(119,11,255,0.4) !important;
+    }
+    /* Team days — 4th dot */
+    body.day-mode .leg-item:nth-child(4) .leg-dot {
+      background: rgba(0,155,255,0.18) !important;
+      border-color: rgba(0,155,255,0.35) !important;
     }
     body.day-mode .team-summary {
       background: linear-gradient(90deg, rgba(0,155,255,0.07), rgba(119,11,255,0.07)) !important;
@@ -284,17 +289,20 @@ const DayThemeStyles = () => (
       color: rgba(26,24,48,0.35) !important;
     }
     /* Set status cells owned by others — make icons more visible */
-    body.day-mode .sh.set {
-      filter: saturate(0.85) brightness(1.05) !important;
+   body.day-mode .sh.set {
+      filter: saturate(0.9) brightness(1.08) !important;
       border-width: 1.5px !important;
+      opacity: 0.82 !important;
     }
     body.day-mode .sh.set .sh-icon {
-      filter: saturate(1.1) !important;
-      opacity: 0.9 !important;
+      filter: saturate(1.15) !important;
+      opacity: 1 !important;
+      font-size: 22px !important;
     }
     body.day-mode .sh.set span:last-child {
-      color: rgba(26,24,48,0.55) !important;
+      color: rgba(26,24,48,0.6) !important;
       font-weight: 700 !important;
+      font-size: 10px !important;
     }
     body.day-mode .sh.set:hover {
       filter: brightness(1.05) saturate(1.1) !important;
@@ -302,10 +310,10 @@ const DayThemeStyles = () => (
     }
 
     /* ── Pills (weekend / holiday) — day ── */
-   body.day-mode .hol .pill-card {
-      background: linear-gradient(160deg, rgba(119,11,255,0.12), rgba(90,10,50,0.08)) !important;
-      border-color: rgba(119,11,255,0.28) !important;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 2px 10px rgba(119,11,255,0.1) !important;
+ body.day-mode .hol .pill-card {
+      background: linear-gradient(160deg, rgba(119,11,255,0.16), rgba(90,10,50,0.12)) !important;
+      border-color: rgba(119,11,255,0.35) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 2px 14px rgba(119,11,255,0.14) !important;
     }
    body.day-mode .we .pill-card {
       background: linear-gradient(160deg, rgba(0,155,255,0.13), rgba(119,11,255,0.07)) !important;
