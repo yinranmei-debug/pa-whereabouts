@@ -177,13 +177,7 @@ const LoginScreen = ({ onLogin, isInitializing, error }) => {
 
         {/* Slogan above card */}
         <div className="ls-card-inner" style={{ animationDelay: '0.1s', opacity: 0, marginBottom: 36 }}>
-          <div style={{
-            fontSize: 'clamp(11px,1.4vw,13px)', fontWeight: 700,
-            letterSpacing: '0.18em', color: 'rgba(167,139,250,0.7)',
-            textTransform: 'uppercase', marginBottom: 14,
-          }}>
-            Pattern Asia · Internal
-          </div>
+        
           <h1 style={{
             fontSize: 'clamp(32px,5vw,52px)', fontWeight: 800,
             letterSpacing: '-0.03em', lineHeight: 1.1,
@@ -214,8 +208,8 @@ const LoginScreen = ({ onLogin, isInitializing, error }) => {
 
             {/* Logo mark — graphic planet + orbiting dot */}
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
-              <div style={{ position: 'relative', width: 72, height: 72, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="56" height="56" viewBox="0 0 26 26" fill="none" overflow="visible" style={{ position: 'relative', zIndex: 2 }}>
+             <div style={{ position: 'relative', width: 110, height: 110, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="90" height="90" viewBox="0 0 26 26" fill="none" overflow="visible" style={{ position: 'relative', zIndex: 2 }}>
                   <defs>
                     <radialGradient id="lpGrad" cx="35%" cy="32%" r="68%">
                       <stop offset="0%" stopColor="#e0d4ff"/>
@@ -314,26 +308,19 @@ const LoginScreen = ({ onLogin, isInitializing, error }) => {
               </>
             )}
 
-            {/* Footer */}
+           {/* Footer */}
             <div style={{
               marginTop: 28, paddingTop: 24,
               borderTop: '1px solid rgba(167,139,250,0.1)',
               display: 'flex', flexDirection: 'column',
-              alignItems: 'center', gap: 6,
+              alignItems: 'center', gap: 8,
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                <div style={{
-                  width: 6, height: 6, borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #009bff, #770bff)',
-                  boxShadow: '0 0 6px rgba(119,11,255,0.5)',
-                }}/>
-                <span style={{
-                  fontSize: 11, fontWeight: 700, letterSpacing: '0.1em',
-                  color: 'rgba(167,139,250,0.45)', textTransform: 'uppercase',
-                }}>
-                  Pattern Asia
-                </span>
-              </div>
+              <img
+                src="https://i.ibb.co/YTQHg15F/Pattern-Logo.png"
+                alt="Pattern"
+                style={{ height: 28, objectFit: 'contain', opacity: 0.55 }}
+                onError={e => { e.currentTarget.style.display = 'none'; }}
+              />
               <p style={{
                 fontSize: 11, color: 'rgba(167,139,250,0.3)',
                 margin: 0, lineHeight: 1.6,
