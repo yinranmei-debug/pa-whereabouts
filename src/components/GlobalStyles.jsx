@@ -252,7 +252,7 @@ const GlobalStyles = () => (
     .bday-hdr-cake svg{transition:transform 0.15s cubic-bezier(0.34,1.56,0.64,1);}
     .bday-hdr-cake:hover svg{transform:scale(1.25);}
     .bday-hdr-tip{
-      position:absolute;bottom:calc(100% + 10px);right:-4px;
+      position:absolute;top:calc(100% + 8px);right:-4px;
       background:linear-gradient(135deg,rgba(13,10,35,0.97),rgba(7,24,54,0.97));
       border:1px solid rgba(255,183,0,0.4);
       border-radius:10px;padding:6px 10px;

@@ -1312,10 +1312,24 @@ const handleCelebrate = (person) => {
             ))}
           </select>
          <div style={{width:1,height:18,background:'rgba(167,139,250,0.15)',flexShrink:0,margin:'0 4px'}}/>
-          <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#ff0078,#b400ff)',border:'1.5px solid rgba(255,0,120,0.6)'}}/>Holiday</div>
-          <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#009bff,#6400ff)',border:'1.5px solid rgba(0,155,255,0.65)'}}/>Weekend</div>
-          <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#2a1060,#3a1580)',border:'1.5px solid rgba(167,139,250,0.5)'}}/>My days</div>
-          <div className="leg-item"><div className="leg-dot" style={{background:'rgba(180,190,210,0.35)',border:'1.5px solid rgba(150,160,190,0.4)'}}/>Team days</div>
+          <div className="leg-item"><div className="leg-dot" style={{
+            background:'linear-gradient(135deg,#ff0078,#b400ff)',
+            border:'1.5px solid #ff0096',
+            boxShadow:'0 0 4px rgba(255,0,120,0.4)'
+          }}/>Holiday</div>
+          <div className="leg-item"><div className="leg-dot" style={{
+            background:'linear-gradient(135deg,#009bff,#6400ff)',
+            border:'1.5px solid #009bff',
+            boxShadow:'0 0 4px rgba(0,155,255,0.4)'
+          }}/>Weekend</div>
+          <div className="leg-item"><div className="leg-dot" style={{
+            background:'linear-gradient(135deg,#2a1060,#3a1580)',
+            border:'1.5px solid rgba(167,139,250,0.5)'
+          }}/>My days</div>
+          <div className="leg-item"><div className="leg-dot" style={{
+            background:'rgba(180,190,210,0.3)',
+            border:'1.5px solid rgba(150,160,190,0.4)'
+          }}/>Team days</div>
           {isSuperUser(me) && (
             <div className="team-summary" style={{marginLeft:'auto'}}>
               <div className="team-summary-dot"/>

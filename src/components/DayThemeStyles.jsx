@@ -152,24 +152,7 @@ const DayThemeStyles = () => (
     }
     body.day-mode .tb-month { color: #1A1830 !important; font-weight: 700 !important; }
  body.day-mode .leg-item { color: rgba(26,24,48,0.65) !important; }
-    body.day-mode .leg-dot { opacity: 1 !important; filter: none !important; }
-    /* Use nth-of-type on toolbar — Holiday, Weekend, My days, Team days */
-    body.day-mode .toolbar .leg-item:nth-of-type(1) .leg-dot {
-      background: linear-gradient(135deg,#5a0a32,#3c0a3c) !important;
-      border: 1.5px solid rgba(217,70,239,0.6) !important;
-    }
-   body.day-mode .toolbar .leg-item:nth-of-type(2) .leg-dot {
-      background: linear-gradient(135deg,#0055cc,#4400aa) !important;
-      border: 1.5px solid rgba(0,155,255,0.65) !important;
-    }
-    body.day-mode .toolbar .leg-item:nth-of-type(3) .leg-dot {
-      background: linear-gradient(135deg,#2a1060,#3a1580) !important;
-      border: 1.5px solid rgba(167,139,250,0.55) !important;
-    }
-    body.day-mode .toolbar .leg-item:nth-of-type(4) .leg-dot {
-      background: rgba(0,155,255,0.15) !important;
-      border: 1.5px solid rgba(0,155,255,0.35) !important;
-    }
+   body.day-mode .leg-dot { opacity: 1 !important; filter: none !important; }
     body.day-mode .team-summary {
       background: linear-gradient(90deg, rgba(0,155,255,0.07), rgba(119,11,255,0.07)) !important;
       border-color: rgba(119,11,255,0.18) !important;
