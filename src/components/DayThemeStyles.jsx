@@ -280,30 +280,29 @@ body.day-mode .sh.mine {
       border: 1px solid rgba(0,155,255,0.1) !important;
       color: rgba(26,24,48,0.25) !important;
     }
-    /* All set status cells — full color, no filter override */
+    /* Set cells — let inline style (cfg.bg/color/border) take full effect */
     body.day-mode .sh.set {
       filter: none !important;
       opacity: 1 !important;
+      cursor: default;
     }
-    body.day-mode .sh.set span:last-child {
-      color: rgba(26,24,48,0.6) !important;
-      font-weight: 700 !important;
+    body.day-mode .sh.set.other {
+      cursor: default !important;
     }
     body.day-mode .sh.set:hover {
-      filter: brightness(1.03) !important;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important;
+      filter: brightness(1.04) !important;
     }
 
     /* ── Pills (weekend / holiday) — day ── */
- body.day-mode .hol .pill-card {
-      background: linear-gradient(160deg, rgba(119,11,255,0.16), rgba(90,10,50,0.12)) !important;
-      border-color: rgba(119,11,255,0.35) !important;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 2px 14px rgba(119,11,255,0.14) !important;
+body.day-mode .hol .pill-card {
+      background: linear-gradient(160deg, rgba(255,0,120,0.18), rgba(180,0,255,0.14)) !important;
+      border: 2px solid rgba(255,0,150,0.55) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 2px 16px rgba(255,0,120,0.16) !important;
     }
-  body.day-mode .we .pill-card {
-      background: linear-gradient(160deg, rgba(0,100,255,0.1), rgba(80,0,255,0.06)) !important;
-      border: 1.5px solid rgba(0,155,255,0.35) !important;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 2px 12px rgba(0,100,255,0.1) !important;
+body.day-mode .we .pill-card {
+      background: linear-gradient(160deg, rgba(0,155,255,0.16), rgba(100,0,255,0.13)) !important;
+      border: 2px solid rgba(0,155,255,0.55) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 2px 16px rgba(0,155,255,0.18) !important;
     }
     body.day-mode .pill:hover.hol .pill-card {
       box-shadow:
