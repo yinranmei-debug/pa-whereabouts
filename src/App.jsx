@@ -1415,7 +1415,7 @@ const handleCelebrate = (person) => {
             </div>
 
               
-            <div className="online-pill">
+            {!isMobile && <div className="online-pill">
               <div className="online-stack">
                 {onlineUsers.length === 0 ? (
                   <div id={`online-av-${meStaff?.id}`} title={account.name} className="online-av" style={{zIndex:10,marginLeft:0}}>
@@ -1434,13 +1434,11 @@ const handleCelebrate = (person) => {
                 <div className="online-live-dot"/>
                 <span className="online-live-count" style={{fontSize:11,color:'rgba(255,255,255,0.5)',fontWeight:500}}>{Math.max(onlineUsers.length,1)} online</span>
               </div>
-            </div>
+            </div>}
             <div className="user-chip">
-              <span className="user-name">{account.name}</span>
+              {!isMobile && <span className="user-name">{account.name}</span>}
               <Avatar name={meStaff?.name||account.name} photoUrl={staffPhotos[meStaff?.id]} size={28}/>
-              <button className="signout-btn" onClick={logout} title="Sign out">
-                {isMobile ? '→' : 'Sign out'}
-              </button>
+              <button className="signout-btn" onClick={logout} title="Sign out">→</button>
             </div>
           </div>
         </nav>
@@ -1459,14 +1457,14 @@ const handleCelebrate = (person) => {
           }}>Today</button>}
           <button className="tb-btn icon" onClick={()=>navigateWeek(7)}>›</button>
           {!isMobile && <span className="tb-month">{viewDate.toLocaleString('en-US',{month:'long',year:'numeric'})}</span>}
-          <select className="tb-select" value={viewDate.getMonth()} onChange={e=>{
+         {!isMobile && <select className="tb-select" value={viewDate.getMonth()} onChange={e=>{
             const d=new Date(viewDate); d.setMonth(+e.target.value); d.setDate(1); navigateWeek(0,d);
           }}>
             {Array.from({length:12}).map((_,i)=>(
               <option key={i} value={i}>{new Date(2026,i,1).toLocaleString('en-US',{month:'long'})}</option>
             ))}
-          </select>
-         <div style={{width:1,height:18,background:'rgba(167,139,250,0.15)',flexShrink:0,margin:'0 4px'}}/>
+          </select>}
+        {!isMobile && <><div style={{width:1,height:18,background:'rgba(167,139,250,0.15)',flexShrink:0,margin:'0 4px'}}/>
           <div className="leg-item"><div className="leg-dot" style={{
             background:'linear-gradient(135deg,#ff0078,#b400ff)',
             border:'1.5px solid #ff0096',
@@ -1485,7 +1483,8 @@ const handleCelebrate = (person) => {
             background:'rgba(180,190,210,0.3)',
             border:'1.5px solid rgba(150,160,190,0.4)'
           }}/>Team days</div>
-          {isSuperUser(me) && (
+         </>}
+          {!isMobile && isSuperUser(me) && (
             <div className="team-summary" style={{marginLeft:'auto'}}>
               <div className="team-summary-dot"/>
               <span>TEAM: {inOffice.n} / {inOffice.total} IN OFFICE</span>
