@@ -1,5 +1,5 @@
 import DayThemeStyles from './components/DayThemeStyles';
-import ThemeToggle   from './components/ThemeToggle';
+import ThemeToggle from './components/ThemeToggle';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { PublicClientApplication } from "@azure/msal-browser";
 import { msalConfig, loginRequest } from "./authConfig";
