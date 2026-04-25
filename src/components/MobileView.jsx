@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Avatar from './Avatar';
 
 /**
@@ -19,7 +19,7 @@ const MobileView = ({
   bdaysThisWeek = [],
   onSwipeWeek,
 }) => {
-const editableDays = week.filter(d => d.editable);
+  const editableDays = week.filter(d => d.editable);
   const todayDay     = editableDays.find(d => d.isToday);
 
   const fmt = d => {
@@ -28,18 +28,23 @@ const editableDays = week.filter(d => d.editable);
   };
   const realTodayDs = fmt(new Date());
 
+  const swipeRef = useRef(null);
+  const touchStartX = useRef(null);
+  const touchStartY = useRef(null);
+  const [picker, setPicker] = useState(null);
+
   const [selectedDs, setSelectedDs] = useState(() => {
     const inWeek = week.find(d => d.ds === realTodayDs);
     return inWeek ? realTodayDs : editableDays[0]?.ds;
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     const inWeek = week.find(d => d.ds === realTodayDs);
     if (inWeek) setSelectedDs(realTodayDs);
     else setSelectedDs(editableDays[0]?.ds);
   }, [week]);
 
-  React.useEffect(() => { 
+  useEffect(() => { 
     swipeRef.current = onSwipeWeek; 
   }, [onSwipeWeek]);
 
@@ -405,14 +410,17 @@ const editableDays = week.filter(d => d.editable);
                 </div>
               </div>
 
-              {current && (
-                <div
-                  onClick={() => { if (myId) onStatusClear(`${myId}-${picker.ds}-${picker.shift}`); closePicker(); }}
-                  style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,padding:'10px',borderRadius:12,background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',cursor:'pointer',marginBottom:10}}
-                >
-                  <span style={{fontSize:13,fontWeight:700,color:'rgba(255,100,100,0.9)'}}>✕ Clear status</span>
-                </div>
-              )}
+              {picker && (() => {
+                const curSid = myId && records[`${myId}-${picker.ds}-${picker.shift}`];
+                return curSid ? (
+                  <div
+                    onClick={() => { if (myId) onStatusClear(`${myId}-${picker.ds}-${picker.shift}`); closePicker(); }}
+                    style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,padding:'10px',borderRadius:12,background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',cursor:'pointer',marginBottom:10}}
+                  >
+                    <span style={{fontSize:13,fontWeight:700,color:'rgba(255,100,100,0.9)'}}>✕ Clear status</span>
+                  </div>
+                ) : null;
+              })()}
 
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
                 <div
