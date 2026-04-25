@@ -341,26 +341,28 @@ export default function App() {
     })();
   }, []);
 
- // ── Sequence: Tour → Bday → Tips → Welcome → Banana ──────
+ // ── Cake throw history — load for birthday person ──────
   useEffect(() => {
-    if (!account || !meStaff) return;
+    if (!account) return;
     if (!hasBirthdayToday_hook) return;
+    const realMe = getStaffEntry(account.username.toLowerCase());
+    if (!realMe) return;
     const bdayPerson = RAW_STAFF_LIST.find(s => s.birthday === todayMMDD_hook);
-    if (bdayPerson?.id !== meStaff.id) return;
+    if (bdayPerson?.id !== realMe.id) return;
     const todayStr = fmt(new Date());
     supabase.from('cake_throws')
-      .select('*').eq('birthday_id', meStaff.id).eq('birthday_date', todayStr)
+      .select('*').eq('birthday_id', realMe.id).eq('birthday_date', todayStr)
       .order('created_at', { ascending: true })
       .then(({ data }) => { if (data?.length) { setCakeThrowHistory(data); setShowCakeHistory(true); } });
     const ch = supabase.channel('cake-throws-changes')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cake_throws' }, payload => {
-        if (payload.new.birthday_id === meStaff.id) {
+        if (payload.new.birthday_id === realMe.id) {
           setCakeThrowHistory(prev => [...prev, payload.new]);
           setShowCakeHistory(true);
         }
       }).subscribe();
     return () => supabase.removeChannel(ch);
-  }, [account, meStaff]);
+  }, [account]);
 
   useEffect(() => {
     if (!account) return;
