@@ -731,22 +731,20 @@ export default function App() {
     if (!person) return;
     setBirthdayDone(true);
     setCelebrateTarget(person);
+    // scroll FIRST immediately — before any state settles
+    const rowEl = document.getElementById(`bday-row-${person.id}`);
+    if (rowEl) {
+      rowEl.scrollIntoView({ behavior:'smooth', block:'center' });
+      rowEl.style.transition = 'background 0.4s ease';
+      rowEl.style.background = 'rgba(255,183,0,0.1)';
+      setTimeout(()=>{ rowEl.style.background = ''; }, 1400);
+    }
+    // show prompt AFTER scroll animation (smooth scroll ~600ms)
     setTimeout(()=>{
-      const rowEl = document.getElementById(`bday-row-${person.id}`);
-      if (rowEl) {
-        // smooth scroll with visible motion
-        rowEl.scrollIntoView({ behavior:'smooth', block:'center' });
-        // highlight the row briefly so user sees where we landed
-        rowEl.style.transition = 'background 0.3s ease';
-        rowEl.style.background = 'rgba(255,183,0,0.08)';
-        setTimeout(()=>{ rowEl.style.background = ''; }, 1200);
-      }
-      setTimeout(()=>{
-        setCelebratePrompt(true);
-        clearTimeout(celebratePromptTimer.current);
-        celebratePromptTimer.current = setTimeout(()=>setCelebratePrompt(false), 8000);
-      }, 800);
-    }, 150);
+      setCelebratePrompt(true);
+      clearTimeout(celebratePromptTimer.current);
+      celebratePromptTimer.current = setTimeout(()=>setCelebratePrompt(false), 8000);
+    }, 650);
   };
 
   const handleBirthdayAvatarClick = (person) => {
