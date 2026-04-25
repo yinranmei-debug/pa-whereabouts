@@ -19,20 +19,23 @@ const MobileView = ({
   bdaysThisWeek = [],
   onSwipeWeek,
 }) => {
-  const editableDays = week.filter(d => d.editable);
-  const todayDay     = editableDays.find(d => d.isToday) || editableDays[0];
+const editableDays = week.filter(d => d.editable);
+  const todayDay     = editableDays.find(d => d.isToday);
 
-  const [selectedDs, setSelectedDs] = useState(todayDay?.ds);
-  const [picker, setPicker]         = useState(null);
-  
-  const swipeRef = React.useRef(null);
-  const touchStartX = React.useRef(null);
-  const touchStartY = React.useRef(null);
+  const fmt = d => {
+    const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${dd}`;
+  };
+  const realTodayDs = fmt(new Date());
 
-  // Sync selectedDs when week changes
+  const [selectedDs, setSelectedDs] = useState(() => {
+    const inWeek = week.find(d => d.ds === realTodayDs);
+    return inWeek ? realTodayDs : editableDays[0]?.ds;
+  });
+
   React.useEffect(() => {
-    const today = editableDays.find(d => d.isToday);
-    if (today) setSelectedDs(today.ds);
+    const inWeek = week.find(d => d.ds === realTodayDs);
+    if (inWeek) setSelectedDs(realTodayDs);
     else setSelectedDs(editableDays[0]?.ds);
   }, [week]);
 
