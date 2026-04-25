@@ -30,7 +30,7 @@ const DayThemeStyles = () => (
     body.day-mode::after      { display: none !important; }
     body.day-mode .aurora-wrap { display: none !important; }
     body.day-mode .starfield   { display: none !important; }
-    body.day-mode .glow-frame  { display: none !important; }
+    body.day-mode .glow-frame  { mix-blend-mode: multiply !important; }
 
     /* ── Soft background ── */
     body.day-mode .day-bg-layer {
@@ -274,36 +274,29 @@ body.day-mode .sh.mine {
       border-color: rgba(119,11,255,0.3) !important;
       box-shadow: 0 3px 12px rgba(119,11,255,0.1) !important;
     }
-    /* Other empty cells — more neutral, clearly non-interactive */
+  /* Empty cells for others — subtle neutral */
     body.day-mode .sh.other {
-      background: rgba(26,24,48,0.028) !important;
-      border: 1px solid rgba(26,24,48,0.07) !important;
-      color: rgba(26,24,48,0.2) !important;
-    }
-   
-   body.day-mode .sh.other {
       background: rgba(0,155,255,0.04) !important;
-      border-color: rgba(0,155,255,0.12) !important;
-      color: rgba(26,24,48,0.35) !important;
+      border: 1px solid rgba(0,155,255,0.1) !important;
+      color: rgba(26,24,48,0.25) !important;
     }
-    /* Set status cells owned by others — make icons more visible */
-  /* Other users set status — show full color, just slightly desaturated */
-    body.day-mode .sh.set {
-      filter: saturate(0.75) brightness(1.12) !important;
-      border-width: 1.5px !important;
+    /* Set status for others — show STATUS_CONFIG colors, just slightly muted */
+    body.day-mode .sh.set.other {
+      filter: saturate(0.82) brightness(1.08) !important;
       opacity: 1 !important;
     }
-    body.day-mode .sh.set .sh-icon {
-      filter: saturate(1.2) !important;
-      opacity: 1 !important;
-    }
-    body.day-mode .sh.set span:last-child {
-      color: rgba(26,24,48,0.65) !important;
+    body.day-mode .sh.set.other span:last-child {
+      color: rgba(26,24,48,0.6) !important;
       font-weight: 700 !important;
     }
+    /* Set status for me — full color */
+    body.day-mode .sh.set:not(.other) {
+      filter: none !important;
+      opacity: 1 !important;
+    }
     body.day-mode .sh.set:hover {
-      filter: brightness(1.05) saturate(1.1) !important;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.1) !important;
+      filter: brightness(1.04) saturate(1.08) !important;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important;
     }
 
     /* ── Pills (weekend / holiday) — day ── */
