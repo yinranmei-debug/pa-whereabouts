@@ -42,7 +42,21 @@ const DayThemeStyles = () => (
         linear-gradient(160deg, #EEF1FA 0%, #F0F2F8 50%, #EBEEf8 100%);
     }
 
-    /* ── Nav ── */
+   /* ── Nav ── */
+    body.day-mode .nav {
+      background: rgba(255,255,255,0.94) !important;
+    }
+    /* All nav buttons — force white bg */
+    body.day-mode .nav button:not(.signout-btn):not(.theme-toggle-btn) {
+      background: #ffffff !important;
+      border-color: rgba(0,155,255,0.18) !important;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+    }
+    body.day-mode .nav button:not(.signout-btn):not(.theme-toggle-btn):hover {
+      background: #f5f8ff !important;
+      border-color: rgba(0,155,255,0.35) !important;
+      box-shadow: 0 3px 10px rgba(0,155,255,0.12) !important;
+    }
     body.day-mode .nav {
       background: rgba(255,255,255,0.94) !important;
       backdrop-filter: blur(20px) saturate(160%) !important;
@@ -137,8 +151,27 @@ const DayThemeStyles = () => (
       color: rgba(26,24,48,0.65) !important;
     }
     body.day-mode .tb-month { color: #1A1830 !important; font-weight: 700 !important; }
-   body.day-mode .leg-item { color: rgba(26,24,48,0.65) !important; }
-    body.day-mode .leg-dot { opacity: 1 !important; filter: saturate(1.2) brightness(0.85) !important; }
+  body.day-mode .leg-item { color: rgba(26,24,48,0.65) !important; }
+    /* Holiday dot — purple */
+    body.day-mode .leg-dot[style*="217,70,239"] {
+      background: linear-gradient(135deg,rgba(119,11,255,0.7),rgba(90,10,50,0.6)) !important;
+      border: 1.5px solid rgba(119,11,255,0.5) !important;
+    }
+    /* Weekend dot — blue */
+    body.day-mode .leg-dot[style*="106,199,255"] {
+      background: linear-gradient(135deg,rgba(0,155,255,0.7),rgba(119,11,255,0.35)) !important;
+      border: 1.5px solid rgba(0,155,255,0.45) !important;
+    }
+    /* My days dot — purple */
+    body.day-mode .leg-dot[style*="167,139,250"] {
+      background: linear-gradient(135deg,rgba(119,11,255,0.55),rgba(167,139,250,0.45)) !important;
+      border: 1.5px solid rgba(119,11,255,0.35) !important;
+    }
+    /* Team days dot — light */
+    body.day-mode .leg-dot[style*="255,255,255,0.08"] {
+      background: rgba(0,155,255,0.12) !important;
+      border: 1.5px solid rgba(0,155,255,0.25) !important;
+    }
     body.day-mode .team-summary {
       background: linear-gradient(90deg, rgba(0,155,255,0.07), rgba(119,11,255,0.07)) !important;
       border-color: rgba(119,11,255,0.18) !important;
@@ -245,10 +278,23 @@ const DayThemeStyles = () => (
       border-color: rgba(0,155,255,0.28) !important;
       box-shadow: 0 3px 12px rgba(0,155,255,0.12) !important;
     }
-    body.day-mode .sh.other {
-      background: rgba(26,24,48,0.025) !important;
-      border-color: rgba(26,24,48,0.07) !important;
-      color: rgba(26,24,48,0.2) !important;
+   body.day-mode .sh.other {
+      background: rgba(0,155,255,0.04) !important;
+      border-color: rgba(0,155,255,0.12) !important;
+      color: rgba(26,24,48,0.35) !important;
+    }
+    /* Set status cells owned by others — make icons more visible */
+    body.day-mode .sh.set {
+      filter: saturate(0.85) brightness(1.05) !important;
+      border-width: 1.5px !important;
+    }
+    body.day-mode .sh.set .sh-icon {
+      filter: saturate(1.1) !important;
+      opacity: 0.9 !important;
+    }
+    body.day-mode .sh.set span:last-child {
+      color: rgba(26,24,48,0.55) !important;
+      font-weight: 700 !important;
     }
     body.day-mode .sh.set:hover {
       filter: brightness(1.05) saturate(1.1) !important;
@@ -256,15 +302,15 @@ const DayThemeStyles = () => (
     }
 
     /* ── Pills (weekend / holiday) — day ── */
-    body.day-mode .hol .pill-card {
-      background: linear-gradient(160deg, rgba(119,11,255,0.08), rgba(90,10,50,0.06)) !important;
-      border-color: rgba(119,11,255,0.2) !important;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 2px 8px rgba(119,11,255,0.08) !important;
+   body.day-mode .hol .pill-card {
+      background: linear-gradient(160deg, rgba(119,11,255,0.12), rgba(90,10,50,0.08)) !important;
+      border-color: rgba(119,11,255,0.28) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 2px 10px rgba(119,11,255,0.1) !important;
     }
-    body.day-mode .we .pill-card {
-      background: linear-gradient(160deg, rgba(0,155,255,0.07), rgba(0,155,255,0.04)) !important;
-      border-color: rgba(0,155,255,0.18) !important;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 2px 8px rgba(0,155,255,0.07) !important;
+   body.day-mode .we .pill-card {
+      background: linear-gradient(160deg, rgba(0,155,255,0.13), rgba(119,11,255,0.07)) !important;
+      border-color: rgba(0,155,255,0.28) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 2px 10px rgba(0,155,255,0.12) !important;
     }
     body.day-mode .pill:hover.hol .pill-card {
       box-shadow:
@@ -374,10 +420,16 @@ const DayThemeStyles = () => (
       box-shadow: 0 2px 10px rgba(0,155,255,0.15) !important;
       transform: scale(1.04) !important;
     }
-    /* Hub buttons day — also white */
+    /* Hub buttons day — light with subtle border */
     body.day-mode .nav-right > div:first-child button {
       background: #ffffff !important;
+      border-color: rgba(0,155,255,0.18) !important;
       box-shadow: 0 1px 4px rgba(0,155,255,0.08), 0 1px 2px rgba(0,0,0,0.04) !important;
+    }
+    body.day-mode .nav-right > div:first-child button svg rect,
+    body.day-mode .nav-right > div:first-child button svg circle,
+    body.day-mode .nav-right > div:first-child button svg ellipse {
+      opacity: 1 !important;
     }
 
     /* Toggle track */
