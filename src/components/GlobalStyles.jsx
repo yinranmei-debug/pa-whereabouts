@@ -1,307 +1,670 @@
-import React, { useState, useRef, useEffect } from 'react';
-import Avatar from './Avatar';
+import React from 'react';
 
-/**
- * MobileView — refined.
- */
-const MobileView = ({
-  staffList = [],
-  week = [],
-  records = {},
-  me,
-  meStaff,
-  STATUS_CONFIG = {},
-  onStatusSelect,
-  onStatusClear,
-  staffPhotos = {},
-  onlineUsers = [],
-  bdaysThisWeek = [],
-  onSwipeWeek,
-}) => {
-  const editableDays = week.filter(d => d.editable);
-  const todayDay     = editableDays.find(d => d.isToday) || editableDays[0];
+const NAV_H  = 80;
+const TB_H   = 48;
+const ROW_H  = 140;
+const HEADER_STICKY_TOP = NAV_H + TB_H;
 
-  const fmt = d => {
-    const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), dd = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${dd}`;
-  };
-  const realTodayDs = fmt(new Date());
+const GlobalStyles = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600;700&display=swap');
 
-  // 1. FIXED: Initialize Refs
-  const swipeRef = useRef(null);
-  const touchStartX = useRef(null);
-  const touchStartY = useRef(null);
-  const [picker, setPicker] = useState(null);
-
-  const [selectedDs, setSelectedDs] = useState(() => {
-    const inWeek = week.find(d => d.ds === realTodayDs);
-    return inWeek ? realTodayDs : editableDays[0]?.ds;
-  });
-
-  // Sync selectedDs when week changes
-  useEffect(() => {
-    const inWeek = week.find(d => d.ds === realTodayDs);
-    if (inWeek) setSelectedDs(realTodayDs);
-    else setSelectedDs(editableDays[0]?.ds);
-  }, [week]);
-
-  useEffect(() => {
-    swipeRef.current = onSwipeWeek;
-  }, [onSwipeWeek]);
-
-  const handleTouchStart = (e) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].clientY;
-  };
-
-  const handleTouchEnd = (e) => {
-    if (touchStartX.current === null) return;
-    const dx = e.changedTouches[0].clientX - touchStartX.current;
-    const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current);
-    if (Math.abs(dx) > 60 && dy < 40) {
-      if (dx < 0) swipeRef.current?.('next');
-      else swipeRef.current?.('prev');
+    *,*:before,*:after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family:'Plus Jakarta Sans','Segoe UI',-apple-system,sans-serif;
+      color:#e8e5ff;
+      -webkit-font-smoothing:antialiased;
+      background:#071836;
     }
-    touchStartX.current = null;
-  };
 
-  const myId = meStaff?.id;
-  const openPicker = (ds, shift) => setPicker({ ds, shift });
-  const closePicker = () => setPicker(null);
+    /* ── Cosmic background ── */
+    body::before{
+      content:'';
+      position:fixed;inset:0;z-index:0;pointer-events:none;
+      background:
+        radial-gradient(ellipse 80% 60% at 15% 10%, rgba(0,155,255,0.38) 0%, transparent 60%),
+        radial-gradient(ellipse 70% 55% at 88% 8%,  rgba(119,0,191,0.34) 0%, transparent 60%),
+        radial-gradient(ellipse 55% 50% at 85% 55%, rgba(76,195,174,0.30) 0%, transparent 55%),
+        radial-gradient(ellipse 65% 45% at 10% 75%, rgba(0,155,255,0.22) 0%, transparent 55%),
+        radial-gradient(ellipse 70% 40% at 50% 100%,rgba(119,0,191,0.22) 0%, transparent 55%),
+        linear-gradient(180deg,#071836 0%,#0A1F42 35%,#0D2440 70%,#08182F 100%);
+    }
+    body::after{
+      content:'';
+      position:fixed;inset:0;z-index:0;pointer-events:none;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px);
+      background-size:22px 22px;
+      mask-image:linear-gradient(180deg,rgba(0,0,0,0.6) 0%,rgba(0,0,0,0.2) 100%);
+    }
 
-  const pickStatus = (sid) => {
-    if (!picker || !myId) return;
-    onStatusSelect(`${myId}-${picker.ds}-${picker.shift}`, sid);
-    closePicker();
-  };
+    /* ── Aurora ribbons ── */
+    .aurora-wrap{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden;mix-blend-mode:screen;}
+    .aurora-1,.aurora-2,.aurora-3{position:absolute;border-radius:50%;filter:blur(60px);}
+    .aurora-1{
+      width:700px;height:300px;top:-80px;left:-100px;opacity:0.6;
+      background:conic-gradient(from 0deg,#009bff,#7700bf,#4cc3ae,#009bff);
+      animation:auroraRot1 28s linear infinite;
+    }
+    .aurora-2{
+      width:600px;height:250px;top:20%;right:-120px;opacity:0.55;
+      background:conic-gradient(from 120deg,#7700bf,#4cc3ae,#009bff,#7700bf);
+      animation:auroraRot2 34s linear infinite reverse;
+    }
+    .aurora-3{
+      width:500px;height:200px;bottom:10%;left:20%;opacity:0.5;
+      background:conic-gradient(from 240deg,#4cc3ae,#009bff,#7700bf,#4cc3ae);
+      animation:auroraRot3 40s linear infinite;
+    }
+    @keyframes auroraRot1{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+    @keyframes auroraRot2{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+    @keyframes auroraRot3{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
 
-  const selectedDay = week.find(d => d.ds === selectedDs);
+    /* ── Starfield ── */
+    .starfield{position:fixed;inset:0;z-index:2;pointer-events:none;}
 
-  return (
-    <div
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      style={{
-        fontFamily: "'Plus Jakarta Sans',sans-serif",
-        paddingBottom: 120, minHeight: '100vh',
-        background: 'transparent', position: 'relative',
-      }}
-    >
-      <style>{`
-        @keyframes mvFadeIn { from{opacity:0} to{opacity:1} }
-        @keyframes mvSheetUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
-        .mv-tile:active { transform:scale(0.97); }
-        .mv-day:active  { transform:scale(0.94); }
-        .mv-opt:active  { transform:scale(0.92); }
-      `}</style>
+    /* ── Glow frame ── */
+    .glow-frame{position:fixed;inset:0;pointer-events:none;z-index:9998;opacity:0;box-shadow:none;will-change:opacity,box-shadow;transform:translateZ(0);}
 
-      {/* Online Status */}
-      {onlineUsers.length > 0 && (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          padding: '4px 10px', margin: '8px 14px 0', marginLeft: 'auto', width: 'fit-content',
-          background: 'rgba(74,222,128,0.1)',
-          border: '1px solid rgba(74,222,128,0.3)',
-          borderRadius: 100,
-          fontSize: 10, fontWeight: 700, color: '#4ade80', letterSpacing: '0.06em',
-        }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 8px #4ade80' }} />
-          {onlineUsers.length} ONLINE
-        </div>
-      )}
+    /* ── Logo shimmer ── */
+    .nav-logo-text{
+      font-size:20px;font-weight:800;font-family:'Plus Jakarta Sans',sans-serif;
+      letter-spacing:-0.02em;margin-right:32px;
+      background:linear-gradient(90deg,#009bff 0%,#5b21b6 30%,#770bff 50%,#a78bfa 70%,#009bff 100%);
+      background-size:200% auto;
+      -webkit-background-clip:text;background-clip:text;
+      -webkit-text-fill-color:transparent;color:transparent;
+      animation:logoIdleDrift 6s linear infinite;
+    }
+    .nav-logo-text:hover{
+      animation:logoShimmer 0.6s linear forwards;
+      filter:drop-shadow(0 0 8px rgba(0,155,255,0.5)) drop-shadow(0 0 16px rgba(119,11,255,0.35));
+    }
+    @keyframes logoIdleDrift{0%{background-position:0% center;}100%{background-position:200% center;}}
+    @keyframes logoShimmer{0%{background-position:0% center;}100%{background-position:200% center;}}
 
-      {/* Week Strip */}
-      <div style={{ padding: '14px 12px 6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(232,229,255,0.7)', letterSpacing: '-0.01em' }}>
-          {selectedDs ? new Date(selectedDs + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
-        </div>
-        {(!editableDays.find(d => d.isToday) || selectedDs !== editableDays.find(d => d.isToday)?.ds) && (
-          <div
-            onClick={() => setSelectedDs(editableDays.find(d => d.isToday)?.ds || editableDays[0]?.ds)}
-            style={{ padding: '4px 12px', borderRadius: 100, background: 'linear-gradient(90deg,#009bff,#770bff)', fontSize: 11, fontWeight: 700, color: '#fff', cursor: 'pointer', flexShrink: 0 }}
-          >Today</div>
-        )}
-      </div>
+    /* ── Nav ── */
+    .nav{
+      height:${NAV_H}px;
+      background:linear-gradient(135deg,rgba(7,24,54,0.92) 0%,rgba(13,10,35,0.95) 50%,rgba(7,24,54,0.92) 100%);
+      backdrop-filter:blur(20px) saturate(140%);
+      border-bottom:1px solid rgba(167,139,250,0.18);
+      display:flex;align-items:center;padding:0 32px;
+      position:sticky;top:0;z-index:500;
+      box-shadow:0 2px 24px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+    .nav-tab{
+      height:${NAV_H}px;display:flex;align-items:center;padding:0 16px;
+      font-size:14px;font-weight:500;font-family:'Plus Jakarta Sans',sans-serif;
+      color:rgba(232,229,255,0.5);cursor:pointer;
+      border-bottom:2px solid transparent;transition:all 0.15s;
+      white-space:nowrap;user-select:none;
+    }
+    .nav-tab:hover{color:rgba(232,229,255,0.9);}
+    .nav-tab.active{
+      color:#fff;font-weight:700;
+      border-bottom:2px solid transparent;
+      border-image:linear-gradient(90deg,#009bff,#770bff) 1;
+      text-shadow:0 0 12px rgba(119,11,255,0.45);
+    }
+    .nav-sep{width:1px;height:24px;background:rgba(167,139,250,0.2);margin:0 12px;flex-shrink:0;}
+    .nav-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
 
-      <div style={{ padding: '0 12px 14px', display: 'flex', gap: 6 }}>
-        {editableDays.map(d => {
-          const isSel = d.ds === selectedDs;
-          const am = myId && records[`${myId}-${d.ds}-AM`];
-          const pm = myId && records[`${myId}-${d.ds}-PM`];
-          const filled = (am ? 1 : 0) + (pm ? 1 : 0);
-          return (
-            <div
-              key={d.ds}
-              className="mv-day"
-              onClick={() => setSelectedDs(d.ds)}
-              style={{
-                flex: 1, minWidth: 0,
-                padding: '10px 4px 8px', borderRadius: 14,
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                cursor: 'pointer',
-                background: isSel ? 'linear-gradient(180deg,rgba(0,155,255,0.18),rgba(119,11,255,0.18))' : 'rgba(255,255,255,0.03)',
-                border: isSel ? '1.5px solid rgba(167,139,250,0.5)' : '1px solid rgba(167,139,250,0.1)',
-                boxShadow: isSel ? '0 4px 16px rgba(119,11,255,0.25)' : 'none',
-                transition: 'all 0.18s',
-              }}
-            >
-              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: d.isToday ? '#a78bfa' : isSel ? 'rgba(232,229,255,0.9)' : 'rgba(232,229,255,0.4)' }}>
-                {(d.dayName || '').slice(0, 3).toUpperCase()}
-              </div>
-              <div style={{ width: 30, height: 30, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: d.isToday ? 'linear-gradient(135deg,#009bff,#770bff)' : 'transparent', color: '#fff', fontSize: 14, fontWeight: 700, boxShadow: d.isToday ? '0 4px 12px rgba(119,11,255,0.4)' : 'none' }}>
-                {d.num}
-              </div>
-              <div style={{ display: 'flex', gap: 3, marginTop: 2, height: 5 }}>
-                <div style={{ width: 5, height: 5, borderRadius: '50%', background: filled >= 1 ? '#4ade80' : 'rgba(167,139,250,0.2)' }} />
-                <div style={{ width: 5, height: 5, borderRadius: '50%', background: filled >= 2 ? '#4ade80' : 'rgba(167,139,250,0.2)' }} />
-              </div>
-            </div>
-          );
-        })}
-      </div>
+    /* ── Birthday nav chip ── */
+    .bday-nav-chip{
+      display:flex;align-items:center;gap:6px;
+      padding:4px 12px;
+      background:linear-gradient(135deg,rgba(255,183,0,0.15),rgba(255,143,176,0.12));
+      border:1px solid rgba(255,183,0,0.35);
+      border-radius:100px;font-size:12px;font-weight:600;
+      color:rgba(255,220,100,0.95);
+      animation:bdayChipPulse 2s ease-in-out infinite;
+      white-space:nowrap;
+    }
+    @keyframes bdayChipPulse{
+      0%,100%{box-shadow:0 0 0 0 rgba(255,183,0,0.3);}
+      50%{box-shadow:0 0 12px 3px rgba(255,183,0,0.2);}
+    }
 
-      {/* My Day Card */}
-      {selectedDay && myId && (
-        <div style={{ padding: '0 14px' }}>
-          <div style={{
-            background: 'linear-gradient(135deg,rgba(255,255,255,0.07),rgba(255,255,255,0.02))',
-            backdropFilter: 'blur(20px) saturate(140%)',
-            border: '1px solid rgba(167,139,250,0.2)',
-            borderRadius: 22, padding: 16,
-            boxShadow: '0 12px 40px rgba(10,5,32,0.5), inset 0 1px 0 rgba(255,255,255,0.06)',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 14 }}>
-              <div>
-                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', color: 'rgba(167,139,250,0.7)', marginBottom: 4 }}>YOUR STATUS</div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', letterSpacing: '-0.01em' }}>
-                  {selectedDay.isToday ? `Today, ${selectedDay.dayName} ${selectedDay.num}` : `${selectedDay.dayName} ${selectedDay.num}`}
-                </div>
-              </div>
-              {selectedDay.isToday && (
-                <div style={{ padding: '4px 10px', borderRadius: 100, background: 'linear-gradient(90deg,rgba(0,155,255,0.2),rgba(119,11,255,0.2))', border: '1px solid rgba(167,139,250,0.4)', fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', color: '#c4b5fd' }}>NOW</div>
-              )}
-            </div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              {['AM', 'PM'].map(shift => {
-                const sid = records[`${myId}-${selectedDay.ds}-${shift}`];
-                const cfg = sid && STATUS_CONFIG[sid];
-                return (
-                  <div key={shift} className="mv-tile" onClick={() => openPicker(selectedDay.ds, shift)} style={{ flex: 1, minHeight: 128, borderRadius: 18, padding: '14px 14px 16px', cursor: 'pointer', background: cfg ? cfg.bg : 'rgba(255,255,255,0.04)', border: cfg ? `1.5px solid ${cfg.border || cfg.color}` : '1.5px dashed rgba(167,139,250,0.25)', backdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                    <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.16em', color: cfg ? (cfg.color || '#fff') : 'rgba(232,229,255,0.4)' }}>{shift === 'AM' ? 'MORNING' : 'AFTERNOON'}</div>
-                    {cfg ? (
-                      <div>
-                        <div style={{ fontSize: 36, lineHeight: 1, marginBottom: 6 }}>{cfg.icon}</div>
-                        <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>{cfg.label}</div>
-                        <div style={{ fontSize: 10, color: 'rgba(232,229,255,0.45)', marginTop: 4 }}>tap to change</div>
-                      </div>
-                    ) : (
-                      <div>
-                        <div style={{ width: 38, height: 38, borderRadius: 12, background: 'linear-gradient(135deg,rgba(0,155,255,0.2),rgba(119,11,255,0.2))', border: '1px solid rgba(167,139,250,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, color: '#fff', marginBottom: 8 }}>+</div>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: 'rgba(232,229,255,0.75)' }}>Add status</div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
+    /* ── Planet button ── */
+    @keyframes planetPulse{
+      0%,100%{filter:drop-shadow(0 0 6px rgba(167,139,250,0.6)) drop-shadow(0 0 12px rgba(119,11,255,0.3));}
+      50%{filter:drop-shadow(0 0 14px rgba(119,11,255,0.9)) drop-shadow(0 0 28px rgba(0,155,255,0.5));}
+    }
+    @keyframes ringOrbit{
+      from{transform:rotate(0deg) scaleY(0.3);}
+      to{transform:rotate(360deg) scaleY(0.3);}
+    }
+    .bulb-btn{
+      position:relative;width:54px;height:30px;border-radius:100px;
+      background:linear-gradient(135deg,#2d1b69 0%,#1e1b4b 50%,#0f172a 100%);
+      border:1.5px solid rgba(167,139,250,0.45);
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;transition:all 0.3s;
+      animation:planetPulse 3s ease-in-out infinite;overflow:visible;
+    }
+    .bulb-btn::after{
+      content:'';position:absolute;width:18px;height:18px;border-radius:50%;
+      background:radial-gradient(circle at 35% 32%,#c4b5fd 0%,#8b5cf6 35%,#5b21b6 65%,#2e1065 100%);
+      box-shadow:0 0 10px rgba(139,92,246,0.7),inset 0 -2px 4px rgba(0,0,0,0.4);
+      pointer-events:none;
+    }
+    .bulb-btn::before{
+      content:'';position:absolute;width:34px;height:10px;border-radius:50%;
+      border:2.5px solid rgba(167,139,250,0.7);background:transparent;
+      transform:rotateX(72deg);pointer-events:none;
+      transition:border-color 0.3s,box-shadow 0.3s;
+      box-shadow:0 0 8px rgba(167,139,250,0.4);
+    }
+    .bulb-btn:hover{transform:scale(1.1);border-color:rgba(196,181,253,0.7);}
+    .bulb-btn:hover::before{border-color:rgba(99,179,255,0.95);box-shadow:0 0 14px rgba(0,155,255,0.7);animation:ringOrbit3D 1.4s linear infinite;}
+    .bulb-btn:hover::after{box-shadow:0 0 18px rgba(139,92,246,0.95),inset 0 -2px 4px rgba(0,0,0,0.4);}
 
-      {/* Birthdays Strip */}
-      {bdaysThisWeek.length > 0 && (
-        <div style={{ padding: '18px 14px 0' }}>
-          <div style={{ background: 'linear-gradient(135deg,rgba(255,183,0,0.12),rgba(244,114,182,0.1))', border: '1px solid rgba(255,183,0,0.3)', borderRadius: 18, padding: '14px 14px 12px', backdropFilter: 'blur(12px)', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-              <span style={{ fontSize: 18 }}>🎂</span>
-              <div style={{ fontSize: 11, fontWeight: 800, color: '#fde68a' }}>BIRTHDAYS THIS WEEK</div>
-            </div>
-            {bdaysThisWeek.map(b => {
-              const t = staffList.find(s => s.id === b.id);
-              if (!t) return null;
-              return (
-                <div key={b.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: b.isToday ? '10px 12px' : '6px 4px', marginBottom: 6, background: b.isToday ? 'rgba(255,183,0,0.2)' : 'transparent', borderRadius: 12 }}>
-                  <Avatar name={t.name} photoUrl={staffPhotos[t.id]} size={b.isToday ? 36 : 26} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: b.isToday ? 14 : 13, fontWeight: 700, color: '#fff' }}>{t.name}</div>
-                    {b.isToday && <div style={{ fontSize: 11, color: '#fde68a' }}>🎉 Today!</div>}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+    /* ── Online / user chips ── */
+    .online-pill{
+      display:flex;align-items:center;gap:10px;padding:7px 14px;
+      background:rgba(255,255,255,0.06);
+      border:1px solid rgba(167,139,250,0.18);border-radius:100px;
+      backdrop-filter:blur(8px);
+    }
+    .online-stack{display:flex;align-items:center;}
+    .online-av{width:28px;height:28px;border-radius:50%;border:2px solid rgba(167,139,250,0.3);margin-left:-7px;background:#1e1b4b;overflow:visible;flex-shrink:0;}
+    .online-av:first-child{margin-left:0;}
+    .online-count{width:28px;height:28px;border-radius:50%;border:2px solid rgba(167,139,250,0.3);margin-left:-7px;background:#1e1b4b;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;}
+    .online-live-dot{width:6px;height:6px;border-radius:50%;background:#4ade80;animation:pulseDot 2s infinite;flex-shrink:0;}
+    .online-live-count{font-size:10px;color:rgba(232,229,255,0.4);font-weight:500;margin-top:1px;}
+    .user-chip{
+      display:flex;align-items:center;gap:8px;padding:5px 5px 5px 14px;
+      background:rgba(255,255,255,0.06);
+      border:1px solid rgba(167,139,250,0.18);border-radius:100px;
+      backdrop-filter:blur(8px);
+    }
+    .user-name{font-size:13px;font-weight:600;color:rgba(232,229,255,0.85);}
+    .signout-btn{height:28px;padding:0 12px;border-radius:100px;border:none;background:rgba(255,255,255,0.1);color:rgba(232,229,255,0.6);font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;}
+    .signout-btn:hover{background:rgba(255,255,255,0.2);color:#fff;}
+    .save-txt{font-size:12px;color:rgba(232,229,255,0.45);animation:pulse 1.2s infinite;}
+    .save-ok{font-size:12px;color:#4ade80;animation:fadeUp 0.2s ease;}
 
-      {/* Team Today Strip */}
-      {todayDay && (() => {
-        const others = staffList.filter(m => m.email?.toLowerCase() !== me);
-        const peopleStatus = others.map(t => ({
-          ...t,
-          am: records[`${t.id}-${todayDay.ds}-AM`] || null,
-          pm: records[`${t.id}-${todayDay.ds}-PM`] || null,
-        })).filter(t => t.am || t.pm);
+    /* ── Toolbar ── */
+    .toolbar{
+      height:${TB_H}px;padding:0 32px;
+      background:linear-gradient(135deg,rgba(10,15,40,0.88) 0%,rgba(15,10,35,0.92) 100%);
+      backdrop-filter:blur(16px) saturate(130%);
+      border-bottom:1px solid rgba(167,139,250,0.14);
+      display:flex;align-items:center;gap:8px;
+      position:sticky;top:${NAV_H}px;z-index:480;
+      box-shadow:0 2px 16px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    .tb-btn{
+      height:32px;padding:0 12px;border-radius:8px;
+      border:1px solid rgba(167,139,250,0.2);
+      background:rgba(255,255,255,0.05);
+      font-size:13px;font-weight:500;color:rgba(232,229,255,0.7);
+      cursor:pointer;transition:all 0.15s;
+      display:flex;align-items:center;justify-content:center;
+    }
+    .tb-btn:hover{background:rgba(167,139,250,0.12);border-color:rgba(167,139,250,0.4);color:#fff;}
+    .tb-btn.icon{width:32px;padding:0;font-size:15px;}
+    .tb-select{
+      height:32px;padding:0 12px;border-radius:8px;
+      border:1px solid rgba(167,139,250,0.2);
+      background:rgba(255,255,255,0.05);
+      font-size:13px;color:rgba(232,229,255,0.7);
+      cursor:pointer;appearance:none;
+      font-family:'Plus Jakarta Sans',sans-serif;
+    }
+    .tb-select option{background:#0f172a;color:#e8e5ff;}
+    .tb-month{
+      font-size:15px;font-weight:700;color:#fff;
+      letter-spacing:-0.01em;
+      font-family:'Plus Jakarta Sans',sans-serif;
+    }
+    .team-summary{
+      display:flex;align-items:center;gap:8px;margin-left:auto;
+      padding:7px 16px;
+      background:linear-gradient(90deg,rgba(0,155,255,0.1),rgba(119,11,255,0.1));
+      border:1.5px solid rgba(119,11,255,0.25);
+      border-radius:100px;font-size:11px;font-weight:700;
+      color:rgba(196,181,253,0.9);letter-spacing:0.02em;
+    }
+    .team-summary-dot{width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg,#009bff,#770bff);flex-shrink:0;animation:pulseDot 2s ease-in-out infinite;}
 
-        if (peopleStatus.length === 0) return null;
-        return (
-          <div style={{ padding: '18px 14px 0' }}>
-            <div style={{ fontSize: 11, fontWeight: 800, color: 'rgba(167,139,250,0.7)', padding: '0 4px 10px' }}>THE TEAM TODAY</div>
-            <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 18, padding: '4px 0' }}>
-              {peopleStatus.map((t, i) => (
-                <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < peopleStatus.length - 1 ? '1px solid rgba(255,255,255,0.08)' : 'none' }}>
-                  <Avatar name={t.name} photoUrl={staffPhotos[t.id]} size={32} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 5 }}>{t.name.split(' ')[0]}</div>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      {['AM', 'PM'].map(shift => {
-                        const sid = shift === 'AM' ? t.am : t.pm;
-                        const cfg = sid && STATUS_CONFIG[sid];
-                        return (
-                          <div key={shift} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 8, background: cfg ? cfg.bg : 'rgba(255,255,255,0.04)', border: `1px solid ${cfg ? (cfg.border || cfg.color) : 'rgba(255,255,255,0.12)'}` }}>
-                            <span style={{ fontSize: 10 }}>{cfg ? cfg.icon : '🏢'}</span>
-                            <span style={{ fontSize: 10, fontWeight: 700, color: cfg ? '#fff' : 'rgba(255,255,255,0.35)' }}>{shift}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-      })()}
+    .tb-btn.today{
+      position:relative;overflow:hidden;
+      background:linear-gradient(90deg,#009bff,#770bff) !important;
+      color:#fff !important;border:none !important;
+      font-weight:700;padding:0 16px;height:32px;font-size:13px;
+      border-radius:100px;
+      box-shadow:0 4px 16px rgba(119,11,255,0.35);
+    }
+    .tb-btn.today:hover{opacity:0.88;}
+    .tb-btn.today:active{transform:scale(0.93) translateY(1px);}
+    .tb-btn.today::after{content:'';position:absolute;top:0;height:100%;width:44px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.45),transparent);transform:skewX(-20deg);left:-150%;pointer-events:none;opacity:0;}
+    .today-glint::after{opacity:1;animation:glint 0.55s ease-in-out;}
+    @keyframes glint{0%{left:-150%;}100%{left:150%;}}
 
-      {/* Status Picker Bottom Sheet */}
-      {picker && (() => {
-        const day = week.find(d => d.ds === picker.ds);
-        const current = myId && records[`${myId}-${picker.ds}-${picker.shift}`];
-        return (
-          <div onClick={closePicker} style={{ position: 'fixed', inset: 0, zIndex: 900, background: 'rgba(7,12,30,0.55)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'flex-end' }}>
-            <div onClick={e => e.stopPropagation()} style={{ width: '100%', background: '#141030', borderRadius: '24px 24px 0 0', padding: '12px 16px 30px', animation: 'mvSheetUp 0.28s ease' }}>
-              <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.2)', margin: '0 auto 14px' }} />
-              <div style={{ textAlign: 'center', marginBottom: 16 }}>
-                <div style={{ fontSize: 10, color: 'rgba(167,139,250,0.7)' }}>{picker.shift} · {day?.dayName?.toUpperCase()} {day?.num}</div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>Where will you be?</div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-                <div onClick={() => { onStatusClear(`${myId}-${picker.ds}-${picker.shift}`); closePicker(); }} style={{ padding: '14px 8px', borderRadius: 14, background: !current ? 'rgba(0,155,255,0.2)' : 'rgba(255,255,255,0.05)', border: `1.5px solid ${!current ? '#009bff' : 'transparent'}`, textAlign: 'center' }}>
-                  <div style={{ fontSize: 26 }}>🏢</div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>Office</div>
-                </div>
-                {Object.entries(STATUS_CONFIG).map(([sid, cfg]) => (
-                  <div key={sid} onClick={() => pickStatus(sid)} style={{ padding: '14px 8px', borderRadius: 14, background: sid === current ? cfg.bg : 'rgba(255,255,255,0.05)', border: `1.5px solid ${sid === current ? (cfg.border || cfg.color) : 'transparent'}`, textAlign: 'center' }}>
-                    <div style={{ fontSize: 26 }}>{cfg.icon}</div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>{cfg.label}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
-      })()}
-    </div>
-  );
-};
+    .leg-item{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:500;color:rgba(232,229,255,0.48);white-space:nowrap;}
+    .leg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
 
-export default MobileView;
+    /* ── Birthday cake tooltip in thead ── */
+    .bday-hdr-cake{cursor:default;position:relative;}
+    .bday-hdr-cake svg{transition:transform 0.15s cubic-bezier(0.34,1.56,0.64,1);}
+    .bday-hdr-cake:hover svg{transform:scale(1.25);}
+    .bday-hdr-tip{
+      position:absolute;top:calc(100% + 8px);right:-4px;
+      background:linear-gradient(135deg,rgba(13,10,35,0.97),rgba(7,24,54,0.97));
+      border:1px solid rgba(255,183,0,0.4);
+      border-radius:10px;padding:6px 10px;
+      font-size:11px;font-weight:700;color:#fff;
+      white-space:nowrap;
+      box-shadow:0 6px 20px rgba(0,0,0,0.4);
+      pointer-events:none;
+      opacity:0;transform:translateY(4px) scale(0.95);
+      transition:opacity 0.15s ease,transform 0.15s ease;
+      font-family:'Plus Jakarta Sans',sans-serif;
+      z-index:999;
+    }
+    .bday-hdr-cake:hover .bday-hdr-tip{
+      opacity:1;transform:translateY(0) scale(1);
+    }
+    .bday-hdr-tip-arrow{
+      position:absolute;bottom:-5px;right:10px;
+      width:9px;height:9px;
+      background:rgba(13,10,35,0.97);
+      border:1px solid rgba(255,183,0,0.4);
+      border-top:none;border-left:none;
+      transform:rotate(45deg);
+    }
+
+    /* ── Table ── */
+    .tbl-outer{
+      background:transparent;
+      padding:24px 24px 48px;position:relative;z-index:10;
+    }
+    .tbl-card{
+      background:linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02));
+      border-radius:20px;
+      border:1px solid rgba(167,139,250,0.18);
+      box-shadow:0 20px 60px rgba(10,5,32,0.5),inset 0 1px 0 rgba(255,255,255,0.08);
+      backdrop-filter:blur(20px) saturate(140%);
+      position:relative;
+    }
+   button:hover .mh-planet-body{animation:planetFloat 2.5s ease-in-out infinite;}
+    button:hover .mh-ring{animation:ringOrbit3D 2s linear infinite;}
+    .mh-ring{transform-box:fill-box;transform-origin:center;transform:rotateX(72deg);}
+    .mh-planet-body{transform-box:fill-box;transform-origin:center;}
+    @keyframes ringOrbit3D{
+      0%{transform:rotateY(0deg) rotateX(72deg);}
+      100%{transform:rotateY(360deg) rotateX(72deg);}
+    }
+    .tbl-hdr-sticky{
+      position:sticky;top:${HEADER_STICKY_TOP}px;z-index:460;
+      background:rgba(8,12,35,0.97);
+      backdrop-filter:blur(20px) saturate(150%);
+      border-bottom:1px solid rgba(167,139,250,0.2);
+      border-radius:20px 20px 0 0;
+      box-shadow:0 4px 24px rgba(0,0,0,0.5),0 1px 0 rgba(167,139,250,0.08);
+    }
+    .tbl-hdr-row{display:grid;grid-template-columns:220px repeat(7,1fr);min-width:900px;padding:0 24px;}
+    .tbl-hdr-namecol{background:transparent;}
+    .tbl-hdr-daycol{padding:16px 4px 12px;text-align:center;background:transparent;}
+    .tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 24px 24px;}
+    .main-tbl{width:100%;border-collapse:collapse;table-layout:fixed;min-width:900px;}
+    .main-tbl td{padding:0;height:${ROW_H}px;vertical-align:top;}
+    /* ── Sticky name col — light rows on dark card ── */
+    .sticky-c{position:sticky;left:0;z-index:100;overflow:visible;}
+   .sticky-c-bg{display:none;}
+    .sticky-c::after{content:'';position:absolute;top:0;right:-16px;bottom:0;width:16px;background:linear-gradient(to right,rgba(10,15,40,0.12),transparent);pointer-events:none;}
+
+    .nw{height:${ROW_H}px;display:flex;align-items:center;gap:12px;padding:0 10px;border-bottom:1px solid rgba(167,139,250,0.08);overflow:visible;background:rgba(8,12,35,0.96);}
+    tr:last-child .nw{border-bottom:none;}
+ .dw{height:${ROW_H}px;display:flex;flex-direction:column;justify-content:center;gap:12px;padding:6px;border-bottom:1px solid rgba(167,139,250,0.08);}
+    tr:last-child .dw{border-bottom:none;}
+
+    /* ── Row hover tint (spec: rgba(167,139,250,0.08)) ── */
+    tr:hover .nw{background:rgba(20,15,55,0.98);}
+    tr:hover .dw{background:rgba(167,139,250,0.04);}
+
+    /* ── Avatar ── */
+    .n-av-wrap{will-change:transform;transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1),filter 0.3s ease;cursor:pointer;position:relative;}
+    .n-av-wrap.is-me{
+      border-radius:50%;
+      box-shadow:0 0 0 2.5px rgba(0,155,255,0.35),0 0 12px 4px rgba(119,11,255,0.25),0 0 24px 6px rgba(0,155,255,0.12);
+      transition:box-shadow 0.4s ease,transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .n-av-wrap.is-me::before{
+      content:'';position:absolute;inset:-3px;border-radius:50%;
+      background:conic-gradient(from 0deg,#009bff,#770bff,#00e5ff,#a78bfa,#009bff);
+      z-index:-1;opacity:0;transition:opacity 0.3s ease;animation:avatarRingSpin 2s linear infinite;
+    }
+    .n-av-wrap.is-me:hover::before{opacity:1;}
+    .n-av-wrap.is-me:hover{transform:scale(1.18) rotate(3deg);box-shadow:0 0 0 2.5px transparent,0 0 20px 8px rgba(119,11,255,0.4),0 0 40px 12px rgba(0,155,255,0.2);filter:drop-shadow(0 8px 16px rgba(119,11,255,0.22));}
+    .n-av-wrap.is-me:active{transform:scale(0.92);}
+    .n-av-wrap.is-other{border-radius:50%;transition:box-shadow 0.3s ease,transform 0.2s ease;}
+    .n-av-wrap.is-other:hover{transform:scale(1.08) !important;box-shadow:0 0 0 2px rgba(167,139,250,0.5),0 0 10px 3px rgba(119,11,255,0.2),0 0 20px 6px rgba(0,155,255,0.1);}
+    .n-av-wrap.is-other:active{transform:scale(0.95);}
+    @keyframes avatarRingSpin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+
+    .n-name{font-size:14px;font-weight:600;color:rgba(232,229,255,0.9);transition:color 0.15s;}
+    .n-name.me{font-weight:700;color:#fff;}
+    tr:hover .n-name{background:linear-gradient(90deg,#009bff,#770bff);-webkit-background-clip:text;background-clip:text;color:transparent;}
+   .n-you{font-size:9px;font-weight:700;background:linear-gradient(90deg,#009bff,#770bff);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:0.06em;margin-top:2px;display:inline-block;}
+    .n-title{font-size:10px;color:rgba(167,139,250,0.6);font-weight:500;margin-top:2px;letter-spacing:0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;}
+    .emo-tag{position:absolute;bottom:-6px;right:-6px;background:#fff;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 2px 8px rgba(0,0,0,0.15);border:2px solid #fff;}
+    .emo-picker{
+      position:absolute;left:54px;top:4px;z-index:10050;
+      background:rgba(15,10,35,0.95);
+      border-radius:14px;display:flex;padding:8px;gap:4px;
+      box-shadow:0 8px 32px rgba(0,0,0,0.4);
+      border:1px solid rgba(167,139,250,0.25);
+      animation:dropIn 0.15s ease;
+      backdrop-filter:blur(16px);
+    }
+
+  
+    .s-drop{
+      position:absolute;top:46px;left:0;z-index:10001;
+      background:rgba(13,10,35,0.96);
+      border-radius:14px;width:180px;padding:6px;max-height:264px;overflow-y:auto;
+      box-shadow:0 8px 40px rgba(0,0,0,0.4);
+      border:1px solid rgba(167,139,250,0.2);
+      animation:dropIn 0.15s ease;
+      backdrop-filter:blur(16px);
+    }
+    .s-opt{padding:8px 10px;cursor:pointer;border-radius:10px;display:flex;align-items:center;gap:8px;transition:background 0.1s;}
+    .s-opt:hover{background:linear-gradient(135deg,rgba(0,155,255,0.12),rgba(119,11,255,0.12));}
+    .s-opt-icon{font-size:22px;line-height:1;flex-shrink:0;}
+    .s-opt-label{font-size:12px;color:rgba(232,229,255,0.85);font-weight:500;}
+
+    /* ── Preview / bulk ── */
+    @keyframes previewBreath{
+      0%,100%{box-shadow:0 0 0 1.5px rgba(0,155,255,0.45),0 0 6px rgba(119,11,255,0.18);}
+      50%{box-shadow:0 0 0 2.5px rgba(119,11,255,0.75),0 0 14px rgba(119,11,255,0.38);}
+    }
+    .sh.preview{background:linear-gradient(135deg,rgba(0,155,255,0.18),rgba(119,11,255,0.18)) !important;border:none !important;animation:previewBreath 1.1s ease-in-out infinite !important;opacity:1 !important;}
+    .sh.bulk-selected{background:linear-gradient(135deg,rgba(0,155,255,0.25),rgba(119,11,255,0.25)) !important;border:none !important;box-shadow:0 0 0 2px rgba(119,11,255,0.55),0 0 10px rgba(119,11,255,0.2) !important;}
+
+    /* ── Pills (dark tinted with glow borders) ── */
+    td.ptd{height:1px;padding:0 6px;vertical-align:top;position:relative;overflow:visible;}
+    .pill{position:relative;height:100%;width:100%;cursor:pointer;user-select:none;overflow:visible;border-radius:14px;isolation:isolate;}
+    .pill-card{position:absolute;inset:0;border-radius:14px;transition:box-shadow 0.25s,transform 0.2s;will-change:transform;}
+    .hol .pill-card{
+      background:linear-gradient(160deg,rgba(90,10,50,0.7) 0%,rgba(60,10,60,0.65) 50%,rgba(80,20,80,0.6) 100%);
+      border:1.5px solid rgba(217,70,239,0.35);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 2px 16px rgba(217,70,239,0.2);
+    }
+    .we .pill-card{
+      background:linear-gradient(160deg,rgba(10,30,80,0.7) 0%,rgba(20,15,70,0.65) 50%,rgba(30,20,90,0.6) 100%);
+      border:1.5px solid rgba(106,199,255,0.3);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),0 2px 16px rgba(106,199,255,0.15);
+    }
+    .pill:hover.hol .pill-card{box-shadow:inset 0 1px 0 rgba(255,255,255,0.12),0 0 28px rgba(217,70,239,0.45),0 0 56px rgba(168,85,247,0.25);filter:saturate(1.6) brightness(1.15);transition:filter 0.15s,box-shadow 0.25s;}
+    .pill:hover.we  .pill-card{box-shadow:inset 0 1px 0 rgba(255,255,255,0.1),0 0 28px rgba(99,102,241,0.45),0 0 56px rgba(0,155,255,0.28);filter:saturate(1.6) brightness(1.15);transition:filter 0.15s,box-shadow 0.25s;}
+
+  @keyframes pillHoverBounce{
+      0%  {transform:translateY(0);}
+      18% {transform:translateY(-10px);}
+      34% {transform:translateY(0px);}
+      50% {transform:translateY(-6px);}
+      65% {transform:translateY(0px);}
+      78% {transform:translateY(-3px);}
+      100%{transform:translateY(0);}
+    }
+    .pill-hover-bounce .pill-card{animation:pillHoverBounce 0.75s cubic-bezier(0.34,1.46,0.64,1) both;}
+
+   @keyframes pillClickBounceY{
+      0%{transform:scaleY(1) translateY(0);}20%{transform:scaleY(0.97) translateY(1.3px);}
+      45%{transform:scaleY(1.02) translateY(-2px);}65%{transform:scaleY(0.99) translateY(0.7px);}
+      82%{transform:scaleY(1.01) translateY(-0.7px);}100%{transform:scaleY(1) translateY(0);}
+    }
+    .pill.holi-tap .pill-card{animation:pillClickBounceY 0.48s cubic-bezier(0.34,1.56,0.64,1) forwards;transform-origin:center bottom;}
+
+    /* ── Col glow ── */
+    @keyframes colGlowFade{0%{opacity:0;transform:scaleX(0.92);}12%{opacity:1;transform:scaleX(1);}65%{opacity:0.5;}85%{opacity:0.3;}100%{opacity:0;}}
+    .col-glow-overlay{position:fixed;pointer-events:none;z-index:150;border-radius:10px;background:linear-gradient(180deg,rgba(0,229,255,0.07) 0%,rgba(0,155,255,0.09) 30%,rgba(119,11,255,0.09) 70%,rgba(119,11,255,0.05) 100%);box-shadow:inset 0 0 8px 2px rgba(0,155,255,0.35),inset 0 0 18px 4px rgba(119,11,255,0.22);animation:colGlowFade 1.8s cubic-bezier(0.22,0.61,0.36,1) both;will-change:opacity,transform;}
+
+    /* ── Sonar ── */
+    .sonar-ring{position:absolute;border-radius:50%;border:2px solid rgba(119,11,255,0.5);pointer-events:none;}
+    @keyframes sonarPulse{0%{transform:scale(1);opacity:0.7;}100%{transform:scale(2.4);opacity:0;}}
+    .sonar-animate{animation:sonarPulse 1.4s ease-out forwards;}
+
+    /* ── Animations ── */
+    @keyframes dropIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
+    @keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.4)}50%{box-shadow:0 0 0 4px rgba(34,197,94,0)}}
+
+    @keyframes slideInFromRight{from{transform:translateX(52px);opacity:0.3;}to{transform:translateX(0);opacity:1;}}
+    @keyframes slideInFromLeft{from{transform:translateX(-52px);opacity:0.3;}to{transform:translateX(0);opacity:1;}}
+    .td-slide-right{animation:slideInFromRight 0.28s cubic-bezier(0.25,0.46,0.45,0.94) both;}
+    .td-slide-left{animation:slideInFromLeft 0.28s cubic-bezier(0.25,0.46,0.45,0.94) both;}
+
+    @keyframes tipSlideInRight{from{opacity:0;transform:translateX(60px);}to{opacity:1;transform:translateX(0);}}
+    @keyframes tipSlideInLeft{from{opacity:0;transform:translateX(-60px);}to{opacity:1;transform:translateX(0);}}
+    .tip-slide-in-right{animation:tipSlideInRight 0.32s cubic-bezier(0.25,0.46,0.45,0.94) both;}
+    .tip-slide-in-left{animation:tipSlideInLeft 0.32s cubic-bezier(0.25,0.46,0.45,0.94) both;}
+
+    @keyframes cellSnap{0%{transform:scale(1)}30%{transform:scale(1.12)}60%{transform:scale(0.94)}80%{transform:scale(1.04)}100%{transform:scale(1)}}
+    .cell-snap{animation:cellSnap 0.38s cubic-bezier(0.34,1.56,0.64,1) both;}
+
+    @keyframes cellStagger{0%{opacity:0;transform:scale(0.75) translateY(4px);}60%{opacity:1;transform:scale(1.06) translateY(-1px);}100%{opacity:1;transform:scale(1) translateY(0);}}
+    .cell-stagger{animation:cellStagger 0.28s cubic-bezier(0.34,1.56,0.64,1) both;}
+
+    @keyframes avatarSnap{
+      0%{transform:scale(1)}28%{transform:scale(1.55) rotate(10deg)}
+      55%{transform:scale(0.87) rotate(-4deg)}78%{transform:scale(1.16) rotate(2deg)}
+      92%{transform:scale(0.97)}100%{transform:scale(1) rotate(0deg)}
+    }
+    .avatar-snap{animation:avatarSnap 0.52s cubic-bezier(0.34,1.56,0.64,1) both;}
+
+    @keyframes emojiLabelPop{
+      0%{transform:scale(1) rotate(0deg);}22%{transform:scale(1.45) rotate(-10deg);}
+      48%{transform:scale(0.84) rotate(7deg);}68%{transform:scale(1.18) rotate(-4deg);}
+      84%{transform:scale(0.97) rotate(1deg);}100%{transform:scale(1) rotate(0deg);}
+    }
+    .emoji-label-pop{animation:emojiLabelPop 0.65s cubic-bezier(0.34,1.46,0.64,1) both;transform-origin:center center;display:flex;flex-direction:column;align-items:center;gap:8px;}
+
+    @keyframes emojiVibeFloat{
+      0%,100%{transform:translateY(0) rotate(0deg) scale(1);}
+      20%{transform:translateY(-6px) rotate(-4deg) scale(1.08);}
+      40%{transform:translateY(-2px) rotate(3deg) scale(1.04);}
+      60%{transform:translateY(-8px) rotate(-2deg) scale(1.1);}
+      80%{transform:translateY(-3px) rotate(4deg) scale(1.06);}
+    }
+    .pill-emoji-vibe{animation:emojiVibeFloat 2.4s ease-in-out infinite;cursor:pointer;}
+
+    /* ── Holiday planner dropdown ── */
+    .plan-row{padding:9px 12px;margin-bottom:3px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:all 0.15s;}
+    .plan-row:hover{background:linear-gradient(135deg,rgba(0,155,255,0.1),rgba(119,11,255,0.1));}
+    .plan-date{font-weight:600;font-size:12px;color:rgba(232,229,255,0.85);}
+    .plan-row:hover .plan-date{background:linear-gradient(90deg,#009bff,#770bff);-webkit-background-clip:text;background-clip:text;color:transparent;}
+    .plan-name{font-size:11px;font-weight:500;color:rgba(232,229,255,0.45);}
+
+    /* ── Birthday cake throw ── */
+    @keyframes cakePromptPulse{
+      0%,100%{transform:translateX(-50%) translateY(0) scale(1);box-shadow:0 4px 20px rgba(119,11,255,0.3);}
+      50%{transform:translateX(-50%) translateY(-4px) scale(1.04);box-shadow:0 8px 32px rgba(119,11,255,0.55);}
+    }
+    @keyframes cakePromptArrow{
+      0%,100%{transform:translateX(-50%) translateY(0);}
+      50%{transform:translateX(-50%) translateY(5px);}
+    }
+    @keyframes cakePromptIn{
+      from{opacity:0;transform:translateX(-50%) translateY(-12px) scale(0.88);}
+      to{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}
+    }
+    @keyframes cakePromptFadeIn{
+      from{opacity:0;transform:translateY(-50%) translateX(-8px);}
+      to{opacity:1;transform:translateY(-50%) translateX(0);}
+    }
+    @keyframes crownDrop{
+      0%{opacity:0;transform:translate(-50%,-100%) scale(0.6) rotate(-15deg);}
+      55%{transform:translate(-50%,-40%) scale(1.15) rotate(4deg);}
+      75%{transform:translate(-50%,-55%) scale(0.95) rotate(-2deg);}
+      100%{opacity:1;transform:translate(-50%,-60%) scale(1) rotate(0deg);}
+    }
+    @keyframes cakeSplat{
+      0%{opacity:1;transform:translate(-50%,-50%) scale(0);}
+      40%{transform:translate(-50%,-50%) scale(1.4);}
+      70%{transform:translate(-50%,-50%) scale(0.9);}
+      100%{opacity:0;transform:translate(-50%,-50%) scale(1.1);}
+    }
+    @keyframes bdayToastIn{
+      0%{opacity:0;transform:translateX(110%);}
+      60%{transform:translateX(-6%);}
+      100%{opacity:1;transform:translateX(0);}
+    }
+    @keyframes bdayToastOut{
+      from{opacity:1;transform:translateX(0);}
+      to{opacity:0;transform:translateX(110%);}
+    }
+    .bday-crown{position:absolute;top:0;left:50%;animation:crownDrop 0.7s cubic-bezier(0.34,1.56,0.64,1) both;font-size:22px;pointer-events:none;z-index:200;line-height:1;}
+    .bday-splat{position:absolute;top:50%;left:50%;width:70px;height:70px;font-size:44px;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:201;animation:cakeSplat 0.7s cubic-bezier(0.34,1.56,0.64,1) both;}
+    .bday-toast{position:fixed;bottom:80px;right:24px;z-index:13500;background:linear-gradient(135deg,#1e1b4b,#0f172a);border:1.5px solid rgba(167,139,250,0.35);border-radius:16px;padding:14px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 12px 40px rgba(0,0,0,0.4);font-family:'Plus Jakarta Sans',sans-serif;max-width:300px;}
+    .bday-toast.in{animation:bdayToastIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;}
+    .bday-toast.out{animation:bdayToastOut 0.4s ease forwards;}
+
+    /* ── Login screen ── */
+    .ms-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;}
+    .ms-card{background:rgba(15,10,35,0.92);backdrop-filter:blur(20px);border-radius:20px;padding:44px;max-width:420px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,0.4);border:1px solid rgba(167,139,250,0.2);}
+    .ms-title{font-size:24px;font-weight:700;color:#fff;margin:0 0 6px;}
+    .ms-sub{font-size:13px;color:rgba(232,229,255,0.55);margin:0 0 24px;}
+    .ms-btn{width:100%;height:40px;background:linear-gradient(90deg,#009bff,#770bff);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:opacity 0.15s;}
+    .ms-btn:hover{opacity:0.9;}
+    .ms-app-row{display:flex;align-items:center;gap:10px;margin-top:28px;padding-top:16px;border-top:1px solid rgba(167,139,250,0.12);}
+    .ms-app-icon{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#009bff,#770bff);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;}
+    .ms-err{margin-top:14px;color:#fca5a5;background:rgba(239,68,68,0.15);padding:10px 14px;border-radius:8px;font-size:13px;border-left:3px solid #ef4444;}
+
+    /* ── Mind Hub button animations ── */
+    @keyframes sparkleFloat{
+      0%,100%{transform:translateY(0) rotate(0deg) scale(1);opacity:0.7;}
+      25%{transform:translateY(-3px) rotate(15deg) scale(1.2);opacity:1;}
+      50%{transform:translateY(-1px) rotate(-10deg) scale(0.9);opacity:0.8;}
+      75%{transform:translateY(-4px) rotate(20deg) scale(1.15);opacity:1;}
+    }
+    @keyframes cakeWobble{
+      0%,100%{transform:rotate(0deg) scale(1);}
+      20%{transform:rotate(-8deg) scale(1.1);}
+      40%{transform:rotate(8deg) scale(1.08);}
+      60%{transform:rotate(-5deg) scale(1.05);}
+      80%{transform:rotate(3deg) scale(1.02);}
+    }
+    @keyframes candleFlicker{
+      0%,100%{filter:drop-shadow(0 0 4px rgba(255,200,0,0.8)) drop-shadow(0 0 8px rgba(255,150,0,0.5));}
+      33%{filter:drop-shadow(0 0 8px rgba(255,220,0,1)) drop-shadow(0 0 16px rgba(255,180,0,0.7));}
+      66%{filter:drop-shadow(0 0 2px rgba(255,180,0,0.6)) drop-shadow(0 0 6px rgba(255,120,0,0.4));}
+    }
+    .mh-btn-sparkle span{animation:sparkleFloat 1.8s ease-in-out infinite;}
+    .mh-btn-cake span{animation:cakeWobble 2s ease-in-out infinite,candleFlicker 0.8s ease-in-out infinite;}
+    .mh-btn-planet:hover div div:last-child{border-color:rgba(99,179,255,0.95);box-shadow:0 0 14px rgba(0,155,255,0.7);}
+
+    /* ── Status cell hover lift ── */
+    .sh.set:hover{transform:translateY(-2px) scale(1.02);filter:brightness(1.12);box-shadow:0 4px 16px rgba(0,0,0,0.2);}
+    .sh.mine:hover{transform:translateY(-2px) scale(1.02);}
+
+    /* ── Section title bar ── */
+    .section-title{
+      padding:14px 32px 10px;
+      font-size:11px;font-weight:700;
+      color:rgba(232,229,255,0.45);
+      letter-spacing:0.12em;
+      display:flex;align-items:center;justify-content:space-between;
+      position:relative;z-index:10;
+    }
+    .section-title-hint{
+      font-size:11px;font-weight:500;
+      color:rgba(232,229,255,0.3);
+      letter-spacing:0.02em;
+    }
+/* ── Status cell glass texture ── */
+    .sh{
+      height:56px;border-radius:16px;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      font-size:11px;font-weight:700;letter-spacing:0.04em;
+      transition:all 0.15s;user-select:none;cursor:pointer;gap:3px;
+      backdrop-filter:blur(8px) saturate(120%);
+      position:relative;overflow:hidden;
+    }
+    .sh::before{
+      content:'';position:absolute;inset:0;border-radius:16px;
+      background:linear-gradient(135deg,rgba(255,255,255,0.08) 0%,rgba(255,255,255,0.02) 100%);
+      pointer-events:none;
+    }
+    .sh-icon{font-size:20px;line-height:1;flex-shrink:0;}
+    .sh.mine{
+      background:rgba(167,139,250,0.08);
+      border:1px solid rgba(167,139,250,0.2);
+      color:rgba(232,229,255,0.4);
+    }
+    .sh.mine:hover{
+      background:rgba(167,139,250,0.14);
+      border-color:rgba(167,139,250,0.4);
+      transform:translateY(-2px);
+      box-shadow:0 4px 16px rgba(167,139,250,0.15);
+    }
+    .sh.set:hover{transform:translateY(-2px);filter:brightness(1.12);box-shadow:0 4px 16px rgba(0,0,0,0.25);}
+    .sh.other{
+      background:rgba(255,255,255,0.03);
+      border:1px solid rgba(167,139,250,0.08);
+      color:rgba(167,139,250,0.2);
+      cursor:default;
+    }
+
+    /* ── Mind Hub SVG button animations ── */
+    @keyframes twinkleStar{
+      0%,100%{opacity:0.6;transform:scale(0.85) rotate(0deg);}
+      25%{opacity:1;transform:scale(1.15) rotate(15deg);}
+      50%{opacity:0.7;transform:scale(0.9) rotate(-10deg);}
+      75%{opacity:1;transform:scale(1.2) rotate(20deg);}
+    }
+    @keyframes candleFlame{
+      0%,100%{transform:scaleY(1) translateX(0);opacity:0.9;}
+      25%{transform:scaleY(1.2) translateX(1px);opacity:1;}
+      50%{transform:scaleY(0.85) translateX(-1px);opacity:0.8;}
+      75%{transform:scaleY(1.1) translateX(1px);opacity:1;}
+    }
+   
+    @keyframes planetFloat{
+      0%,100%{transform:translateY(0);}
+      50%{transform:translateY(-2px);}
+    }
+   .mh-star-1,.mh-star-2,.mh-star-3{animation:none;}
+    .mh-flame{animation:none;transform-origin:bottom center;}
+    .mh-planet-body{animation:none;}
+    .mh-ring{animation:none;}
+
+    button:hover .mh-star-1{animation:twinkleStar 1.4s ease-in-out infinite;}
+    button:hover .mh-star-2{animation:twinkleStar 1.4s ease-in-out 0.3s infinite;}
+    button:hover .mh-star-3{animation:twinkleStar 1.4s ease-in-out 0.6s infinite;}
+    button:hover .mh-flame{animation:candleFlame 0.6s ease-in-out infinite;}
+    button:hover .mh-planet-body{animation:planetFloat 2.5s ease-in-out infinite;}
+   button:hover .mh-ring{animation:ringOrbit3D 2s linear infinite;}
+    .mh-ring{transform-box:fill-box;transform-origin:center;transform:rotateX(72deg);}
+    @keyframes ringOrbit3D{
+      0%{transform:rotateY(0deg) rotateX(72deg);}
+      100%{transform:rotateY(360deg) rotateX(72deg);}
+    }
+    .mh-planet-body{transform-box:fill-box;transform-origin:center;}
+    .mh-star-1,.mh-star-2,.mh-star-3{transform-box:fill-box;transform-origin:center;}
+    .mh-flame{transform-box:fill-box;transform-origin:bottom center;}
+    @media(max-width:768px){
+      .nav,.toolbar,.legend{padding-left:12px;padding-right:12px;}
+      .tbl-outer{padding:8px 8px 48px;}
+      .nav-logo-text{font-size:15px;margin-right:8px;}
+      .nav-tab{padding:0 8px;font-size:12px;}
+      .online-pill{display:none;}
+      .team-summary{display:none;}
+      .tb-month{font-size:12px;}
+      .toolbar{gap:4px;padding:0 12px;}
+      .tb-btn{height:28px;font-size:11px;padding:0 8px;}
+      .tb-select{height:28px;font-size:11px;padding:0 6px;max-width:80px;}
+      .leg-item{font-size:10px;}
+      .user-name{display:none;}
+      .signout-btn{font-size:10px;padding:0 8px;}
+      .save-txt,.save-ok{display:none;}
+    }
+  `}</style>
+);
+
+export default GlobalStyles;
