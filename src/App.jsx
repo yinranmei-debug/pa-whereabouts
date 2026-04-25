@@ -1,3 +1,5 @@
+import DayThemeStyles from './components/DayThemeStyles';
+import ThemeToggle   from './components/ThemeToggle';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { PublicClientApplication } from "@azure/msal-browser";
 import { msalConfig, loginRequest } from "./authConfig";
@@ -190,8 +192,19 @@ export default function App() {
   const [bdayToast,       setBdayToast]       = useState(null);
   const [bdayToastOut,    setBdayToastOut]    = useState(false);
   const [staffTitles,     setStaffTitles]     = useState({});
-  const [cakeThrowActive, setCakeThrowActive] = useState(false);
+ const [cakeThrowActive, setCakeThrowActive] = useState(false);
   const [bdayHatId,       setBdayHatId]       = useState(null);
+  const [isDayMode,       setIsDayMode]       = useState(
+    () => localStorage.getItem('whereabouts-theme') === 'day'
+  );
+  const toggleTheme = () => {
+    setIsDayMode(prev => {
+      const next = !prev;
+      localStorage.setItem('whereabouts-theme', next ? 'day' : 'night');
+      document.body.classList.toggle('day-mode', next);
+      return next;
+    });
+  };
  const celebratePromptTimer = useRef(null);
   const weeklyReadKey = account
     ? `weekly-read-${account.username}-${(() => { const d=new Date(); const day=d.getDay(); d.setDate(d.getDate()-day+(day===0?-6:1)); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })()}`
@@ -232,6 +245,10 @@ export default function App() {
     mq.addEventListener('change', fn);
     setIsMobile(mq.matches);
     return () => mq.removeEventListener('change', fn);
+  }, []);
+
+  useEffect(() => {
+    document.body.classList.toggle('day-mode', isDayMode);
   }, []);
 
   const measureColX = useCallback(() => {
@@ -846,6 +863,8 @@ const handleCelebrate = (person) => {
     <>
       <div style={{minHeight:'100vh',background:'transparent',position:'relative',zIndex:3}} onMouseUp={handleStatusCellMouseUp} onTouchEnd={handleStatusCellTouchEnd}>
         <GlobalStyles/>
+        <DayThemeStyles/>
+        {isDayMode && <div className="day-bg-layer"/>}
         {/* Aurora */}
         <div className="aurora-wrap">
           <div className="aurora-1"/><div className="aurora-2"/><div className="aurora-3"/>
@@ -1142,8 +1161,9 @@ const handleCelebrate = (person) => {
          
           <div className="nav-sep"/>
           <div className="nav-right">
-            {saveStatus==='saving'&&<span className="save-txt">↻ Saving</span>}
+           {saveStatus==='saving'&&<span className="save-txt">↻ Saving</span>}
             {saveStatus==='saved' &&<span className="save-ok">✓ Saved</span>}
+            <ThemeToggle isDayMode={isDayMode} onToggle={toggleTheme}/>
            {/* ── Mind Hub 三按钮 ── */}
             <div style={{display:'flex',alignItems:'center',gap:8}}>
 
