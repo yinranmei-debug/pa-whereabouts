@@ -727,13 +727,15 @@ export default function App() {
       headerRef.current.scrollLeft=scrollRef.current.scrollLeft;
   };
 
- const handleCelebrate = (person) => {
+const handleCelebrate = (person) => {
     if (!person) return;
     setBirthdayDone(true);
     setCelebrateTarget(person);
 
     const doScroll = () => {
-      const rowEl = document.getElementById(`bday-row-${person.id}`);
+      // if bday person is also "me", their row id is 'my-row'
+      const rowId = person.email?.toLowerCase() === me ? 'my-row' : `bday-row-${person.id}`;
+      const rowEl = document.getElementById(rowId);
       if (rowEl) {
         rowEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         rowEl.style.transition = 'background 0.4s ease';
@@ -746,9 +748,8 @@ export default function App() {
           celebratePromptTimer.current = setTimeout(() => setCelebratePrompt(false), 8000);
         }, 700);
       } else {
-        // row not found yet — retry once after next paint
         requestAnimationFrame(() => {
-          const retryEl = document.getElementById(`bday-row-${person.id}`);
+          const retryEl = document.getElementById(rowId);
           if (retryEl) {
             retryEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
             retryEl.style.transition = 'background 0.4s ease';
