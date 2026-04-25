@@ -17,6 +17,7 @@ import MobileView         from './components/MobileView';
 import { useDimensionalBreach }   from './hooks/useDimensionalBreach';
 import DimensionalBreachOverlay   from './components/DimensionalBreachOverlay';
 import BananaEasterEgg from './components/BananaEasterEgg';
+import CakeThrow, { BdayHatSVG } from './components/CakeThrow';
 
 const supabase = createClient(
   'https://vzdrpydtxlamoqtukgld.supabase.co',
@@ -186,6 +187,8 @@ export default function App() {
   const [bdayToast,       setBdayToast]       = useState(null);
   const [bdayToastOut,    setBdayToastOut]    = useState(false);
   const [staffTitles,     setStaffTitles]     = useState({});
+  const [cakeThrowActive, setCakeThrowActive] = useState(false);
+  const [bdayHatId,       setBdayHatId]       = useState(null);
   const celebratePromptTimer = useRef(null);
 
   // 必须在 sequence effect 之前定义
@@ -742,8 +745,7 @@ export default function App() {
   const handleBirthdayAvatarClick = (person) => {
     setCelebratePrompt(false);
     clearTimeout(celebratePromptTimer.current);
-    setSplatId(person.id); setTimeout(()=>setSplatId(null),800);
-    setCrownedId(person.id); setTimeout(()=>setCrownedId(null),4000);
+    setCakeThrowActive(true);
     firePartyLocal('birthday','🎂',1);
     glowLevelRef.current=Math.min(glowLevelRef.current+0.8,1);
     const bdayFirst=person.name.split(' ')[0];
@@ -822,6 +824,12 @@ export default function App() {
           <style>{`@keyframes starTwinkle{0%,100%{opacity:0.25}50%{opacity:1}}`}</style>
         </div>
         <div ref={glowFrameRef} className="glow-frame"/>
+        <CakeThrow
+          target={celebrateTarget}
+          active={cakeThrowActive}
+          onComplete={()=>setCakeThrowActive(false)}
+          onHatReady={(id)=>setBdayHatId(id)}
+        />
         <BirthdayOverlay
           currentUserEmail={account?.username}
           isBusy={showTips}
@@ -1308,8 +1316,12 @@ export default function App() {
                                 >
                                   <Avatar name={m.name} photoUrl={staffPhotos[m.id]} size={60} isMe={isMe}/>
                                   {emotions[m.id]&&<div className="emo-tag">{emotions[m.id]}</div>}
-                                  {crownedId===m.id&&<div className="bday-crown">👑</div>}
-                                  {splatId===m.id&&<div className="bday-splat">🎂</div>}
+                                  {bdayHatId===m.id&&(
+                                    <div style={{position:'absolute',top:-26,left:'50%',transform:'translateX(-50%)',pointerEvents:'none',zIndex:202,filter:'drop-shadow(0 2px 6px rgba(255,183,0,0.5))'}}>
+                                      <BdayHatSVG size={40}/>
+                                    </div>
+                                  )}
+                                 
                                 </div>
                                 <div>
                                   <div className={`n-name${isMe?' me':''}`}>{m.name}</div>
