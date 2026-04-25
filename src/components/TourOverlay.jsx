@@ -40,30 +40,21 @@ const STEPS = [
     title: 'Team Week at a Glance',
     desc: 'See what\'s happening this week — birthdays, holidays, and team updates. Add a quick note for everyone to see.',
     position: 'bottom-left',
-    highlight: () => {
-      const btns = document.querySelectorAll('.nav-right button');
-      return btns[0] || null;
-    },
+    highlight: () => document.querySelector('button[title="Team week at a glance"]'),
   },
   {
     id: 'hub-bday',
     title: 'Birthday Celebrations',
-   desc: "When it's someone's birthday, this lights up. Every birthday star gets their own unique birthday scene — don't hesitate to celebrate and drop a cake on them!",
+    desc: "When it's someone's birthday, this lights up. Every birthday star gets their own unique birthday scene — don't hesitate to celebrate and drop a cake on them!",
     position: 'bottom-left',
-    highlight: () => {
-      const btns = document.querySelectorAll('.nav-right button');
-      return btns[1] || btns[0] || null;
-    },
+    highlight: () => document.querySelector('button[title="Birthday today!"]') || document.querySelector('button[title="Birthdays"]'),
   },
-  {
+ {
     id: 'hub-planet',
     title: 'Daily Mind Huddle',
     desc: '3 mindfulness tips refreshed every day, just for you. Click the planet anytime you need a moment to breathe.',
     position: 'bottom-left',
-    highlight: () => {
-      const btns = document.querySelectorAll('.nav-right button');
-      return btns[btns.length - 1] || null;
-    },
+    highlight: () => document.querySelector('button[title="Daily Mind Huddle"]'),
   },
   {
     id: 'celebrate',
@@ -187,7 +178,7 @@ export default function TourOverlay({ onDone }) {
     toolbar:    <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="2" y="10" width="4" height="4" rx="1" fill="rgba(167,139,250,0.7)"/><rect x="10" y="8" width="4" height="8" rx="2" fill="rgba(0,155,255,0.9)"/><rect x="18" y="10" width="4" height="4" rx="1" fill="rgba(167,139,250,0.7)"/></svg>,
     status:     <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="3" fill="rgba(167,139,250,0.15)" stroke="rgba(167,139,250,0.6)" strokeWidth="1.2"/><rect x="7" y="10" width="4" height="3" rx="1" fill="rgba(106,199,255,0.8)"/><rect x="13" y="10" width="4" height="3" rx="1" fill="rgba(167,139,250,0.8)"/></svg>,
     mood:       <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="rgba(167,139,250,0.25)" stroke="rgba(167,139,250,0.7)" strokeWidth="1.2"/><circle cx="9" cy="10" r="1.5" fill="rgba(196,181,253,0.9)"/><circle cx="15" cy="10" r="1.5" fill="rgba(196,181,253,0.9)"/><path d="M8 15 Q12 18 16 15" stroke="rgba(196,181,253,0.9)" strokeWidth="1.5" fill="none" strokeLinecap="round"/></svg>,
-    'hub-weekly': <svg width="28" height="28" viewBox="0 0 22 22" fill="none"><path d="M11 2L12.2 8.8L18 7L13.5 11L18 15L12.2 13.2L11 20L9.8 13.2L4 15L8.5 11L4 7L9.8 8.8L11 2Z" fill="rgba(167,139,250,0.8)" stroke="rgba(196,181,253,0.5)" strokeWidth="0.5"/><circle cx="17" cy="4" r="1.5" fill="rgba(106,199,255,0.8)"/></svg>,
+   'hub-weekly': <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="3" fill="rgba(167,139,250,0.12)" stroke="rgba(167,139,250,0.65)" strokeWidth="1.4"/><rect x="3" y="5" width="18" height="5" rx="3" fill="rgba(167,139,250,0.32)"/><rect x="3" y="8" width="18" height="2" fill="rgba(167,139,250,0.32)"/><rect x="8" y="3" width="2" height="4" rx="1" fill="rgba(196,181,253,0.9)"/><rect x="14" y="3" width="2" height="4" rx="1" fill="rgba(106,199,255,0.9)"/><circle cx="8" cy="15" r="1.4" fill="rgba(196,181,253,0.85)"/><circle cx="12" cy="15" r="1.4" fill="rgba(167,139,250,0.6)"/><circle cx="16" cy="15" r="1.4" fill="rgba(106,199,255,0.8)"/></svg>,
     'hub-bday': <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="4" y="13" width="16" height="8" rx="2" fill="rgba(255,143,176,0.8)" stroke="rgba(255,183,0,0.6)" strokeWidth="1"/><rect x="6" y="10" width="12" height="5" rx="1.5" fill="rgba(255,183,0,0.6)"/><rect x="8" y="5" width="2" height="5" rx="1" fill="rgba(167,139,250,0.9)"/><rect x="14" y="5" width="2" height="5" rx="1" fill="rgba(106,199,255,0.9)"/><ellipse cx="9" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,220,50,1)"/><ellipse cx="15" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,160,50,1)"/></svg>,
     'hub-planet': <svg width="28" height="28" viewBox="0 0 26 26" fill="none"><defs><radialGradient id="ti2" cx="35%" cy="32%" r="65%"><stop offset="0%" stopColor="#c4b5fd"/><stop offset="40%" stopColor="#8b5cf6"/><stop offset="100%" stopColor="#2e1065"/></radialGradient></defs><circle cx="13" cy="13" r="7" fill="url(#ti2)"/><ellipse cx="13" cy="13" rx="13" ry="4" fill="none" stroke="rgba(167,139,250,0.75)" strokeWidth="1.5"/><circle cx="2" cy="4" r="1.1" fill="rgba(196,181,253,0.8)"/><circle cx="23" cy="3" r="0.85" fill="rgba(106,199,255,0.8)"/></svg>,
     celebrate:  <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="2" y="4" width="20" height="16" rx="3" fill="rgba(90,10,50,0.6)" stroke="rgba(217,70,239,0.5)" strokeWidth="1.2"/><rect x="10" y="8" width="4" height="8" rx="1" fill="rgba(217,70,239,0.4)"/></svg>,
