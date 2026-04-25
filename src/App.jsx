@@ -1445,10 +1445,10 @@ const handleCelebrate = (person) => {
           </div>
         </nav>
 
-        {/* TOOLBAR */}
+       {/* TOOLBAR */}
         <div className="toolbar">
           <button className="tb-btn icon" onClick={()=>navigateWeek(-7)}>‹</button>
-          <button className="tb-btn today" onClick={e=>{
+          {!isMobile && <button className="tb-btn today" onClick={e=>{
             navigateWeek(0,new Date());
             const btn=e.currentTarget;
             btn.classList.remove('today-glint'); void btn.offsetWidth;
@@ -1456,9 +1456,9 @@ const handleCelebrate = (person) => {
             setTimeout(()=>btn.classList.remove('today-glint'),600);
             setTodaySonar(true);
             setTimeout(()=>setTodaySonar(false),2000);
-          }}>Today</button>
+          }}>Today</button>}
           <button className="tb-btn icon" onClick={()=>navigateWeek(7)}>›</button>
-          <span className="tb-month">{viewDate.toLocaleString('en-US',{month:'long',year:'numeric'})}</span>
+          {!isMobile && <span className="tb-month">{viewDate.toLocaleString('en-US',{month:'long',year:'numeric'})}</span>}
           <select className="tb-select" value={viewDate.getMonth()} onChange={e=>{
             const d=new Date(viewDate); d.setMonth(+e.target.value); d.setDate(1); navigateWeek(0,d);
           }}>
@@ -1497,7 +1497,8 @@ const handleCelebrate = (person) => {
 
         {/* MAIN TABLE / MOBILE */}
         {isMobile ? (
-          <MobileView
+         <MobileView
+            onSwipeWeek={(dir) => navigateWeek(dir === 'next' ? 7 : -7)}
             staffList={staffList}
             week={week}
             records={records}

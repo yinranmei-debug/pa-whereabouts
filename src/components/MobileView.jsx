@@ -3,15 +3,6 @@ import Avatar from './Avatar';
 
 /**
  * MobileView — refined.
- * Scope:
- *   • Editable: my own AM/PM status for any editable day in the week
- *   • Read-only: birthdays this week + team peek today (grouped by status)
- *
- * Props (same shape as before):
- *   staffList, week, records, me, meStaff, STATUS_CONFIG,
- *   onStatusSelect(key, statusId), onStatusClear(key),
- *   staffPhotos, onlineUsers,
- *   bdaysThisWeek?: [{ id, name, ds, isToday }]   // optional — pass from App
  */
 
 const MobileView = ({
@@ -33,14 +24,27 @@ const MobileView = ({
 
   const [selectedDs, setSelectedDs] = useState(todayDay?.ds);
   const [picker, setPicker]         = useState(null);
+  
   const swipeRef = React.useRef(null);
   const touchStartX = React.useRef(null);
   const touchStartY = React.useRef(null);
+
+  // Sync selectedDs when week changes
+  React.useEffect(() => {
+    const today = editableDays.find(d => d.isToday);
+    if (today) setSelectedDs(today.ds);
+    else setSelectedDs(editableDays[0]?.ds);
+  }, [week]);
+
+  React.useEffect(() => { 
+    swipeRef.current = onSwipeWeek; 
+  }, [onSwipeWeek]);
 
   const handleTouchStart = (e) => {
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
   };
+
   const handleTouchEnd = (e) => {
     if (touchStartX.current === null) return;
     const dx = e.changedTouches[0].clientX - touchStartX.current;
@@ -51,7 +55,7 @@ const MobileView = ({
     }
     touchStartX.current = null;
   };
-React.useEffect(() => { swipeRef.current = onSwipeWeek; }, [onSwipeWeek]);
+
   const myId = meStaff?.id;
 
   const openPicker  = (ds, shift) => setPicker({ ds, shift });
@@ -62,16 +66,11 @@ React.useEffect(() => { swipeRef.current = onSwipeWeek; }, [onSwipeWeek]);
     onStatusSelect(`${myId}-${picker.ds}-${picker.shift}`, sid);
     closePicker();
   };
-  const clearStatus = () => {
-    if (!picker || !myId) return;
-    onStatusClear(`${myId}-${picker.ds}-${picker.shift}`);
-    closePicker();
-  };
 
   const selectedDay = week.find(d => d.ds === selectedDs);
 
   return (
-  <div
+    <div
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       style={{
@@ -88,7 +87,7 @@ React.useEffect(() => { swipeRef.current = onSwipeWeek; }, [onSwipeWeek]);
         .mv-opt:active  { transform:scale(0.92); }
       `}</style>
 
-      {/* online (subtle, top-right) */}
+      {/* online status */}
       {onlineUsers.length > 0 && (
         <div style={{
           display:'flex',alignItems:'center',gap:6,
@@ -106,13 +105,16 @@ React.useEffect(() => { swipeRef.current = onSwipeWeek; }, [onSwipeWeek]);
       {/* week strip */}
       <div style={{padding:'14px 12px 6px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
         <div style={{fontSize:13,fontWeight:700,color:'rgba(232,229,255,0.7)',letterSpacing:'-0.01em'}}>
-          {new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
+          {selectedDs ? new Date(selectedDs+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : ''}
         </div>
-        <div
-          onClick={()=>setSelectedDs(editableDays.find(d=>d.isToday)?.ds || editableDays[0]?.ds)}
-          style={{padding:'4px 12px',borderRadius:100,background:'linear-gradient(90deg,#009bff,#770bff)',fontSize:11,fontWeight:700,color:'#fff',cursor:'pointer',flexShrink:0}}
-        >Today</div>
+        {(!editableDays.find(d=>d.isToday) || selectedDs !== editableDays.find(d=>d.isToday)?.ds) && (
+          <div
+            onClick={()=>setSelectedDs(editableDays.find(d=>d.isToday)?.ds || editableDays[0]?.ds)}
+            style={{padding:'4px 12px',borderRadius:100,background:'linear-gradient(90deg,#009bff,#770bff)',fontSize:11,fontWeight:700,color:'#fff',cursor:'pointer',flexShrink:0}}
+          >Today</div>
+        )}
       </div>
+
       <div style={{padding:'0 12px 14px',display:'flex',gap:6}}>
         {editableDays.map(d => {
           const isSel = d.ds === selectedDs;
@@ -303,82 +305,51 @@ React.useEffect(() => { swipeRef.current = onSwipeWeek; }, [onSwipeWeek]);
         </div>
       )}
 
-      {/* team today (read-only, grouped by status) */}
+      {/* team today */}
       {todayDay && (() => {
         const others = staffList.filter(m => m.email?.toLowerCase() !== me);
-        const byStatus = {};
-        others.forEach(t => {
-          const sid = records[`${t.id}-${todayDay.ds}-AM`];
-          if (sid) (byStatus[sid] = byStatus[sid] || []).push(t);
-        });
-        const statusOrder = Object.keys(STATUS_CONFIG);
-        const visible = statusOrder.filter(s => byStatus[s]?.length);
+        const peopleStatus = others.map(t => ({
+          ...t,
+          am: records[`${t.id}-${todayDay.ds}-AM`] || null,
+          pm: records[`${t.id}-${todayDay.ds}-PM`] || null,
+        })).filter(t => t.am || t.pm);
+
+        if (peopleStatus.length === 0) return null;
 
         return (
           <div style={{padding:'18px 14px 0'}}>
-            <div style={{
-              display:'flex',alignItems:'baseline',justifyContent:'space-between',
-              padding:'0 4px 10px',
-            }}>
-              <div style={{fontSize:11,fontWeight:800,letterSpacing:'0.14em',color:'rgba(167,139,250,0.7)'}}>
-                THE TEAM TODAY
-              </div>
-              <div style={{fontSize:11,color:'rgba(232,229,255,0.4)',fontWeight:500}}>
-                {others.length} people
-              </div>
+            <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between',padding:'0 4px 10px'}}>
+              <div style={{fontSize:11,fontWeight:800,letterSpacing:'0.14em',color:'rgba(167,139,250,0.7)'}}>THE TEAM TODAY</div>
+              <div style={{fontSize:11,color:'rgba(232,229,255,0.4)',fontWeight:500}}>{peopleStatus.length} away</div>
             </div>
-
-            <div style={{
-              background:'linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.015))',
-              border:'1px solid rgba(167,139,250,0.15)',
-              borderRadius:18, padding:'4px 0',
-              backdropFilter:'blur(12px)',
-            }}>
-              {visible.map((sid, i) => {
-                const cfg = sid === '__office'
-                  ? { icon:'🏢', label:'At Office',
-                      bg:'rgba(0,155,255,0.12)',
-                      border:'rgba(0,155,255,0.4)' }
-                  : STATUS_CONFIG[sid];
-                const people = byStatus[sid];
+            <div style={{background:'linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.015))',border:'1px solid rgba(167,139,250,0.15)',borderRadius:18,padding:'4px 0',backdropFilter:'blur(12px)'}}>
+              {peopleStatus.map((t, i) => {
+                const amCfg = t.am && STATUS_CONFIG[t.am];
+                const pmCfg = t.pm && STATUS_CONFIG[t.pm];
                 return (
-                  <div key={sid} style={{
-                    display:'flex',alignItems:'center',gap:12,
-                    padding:'12px 14px',
-                    borderBottom: i < visible.length-1 ? '1px solid rgba(167,139,250,0.08)' : 'none',
-                  }}>
-                    <div style={{
-                      width:34,height:34,borderRadius:11,flexShrink:0,
-                      display:'flex',alignItems:'center',justifyContent:'center',
-                      fontSize:16,
-                      background: cfg.bg,
-                      border:`1px solid ${cfg.border || cfg.color}`,
-                    }}>
-                      {cfg.icon}
+                  <div key={t.id} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 14px',borderBottom:i<peopleStatus.length-1?'1px solid rgba(167,139,250,0.08)':'none'}}>
+                    <div style={{border:'2px solid rgba(167,139,250,0.2)',borderRadius:'50%'}}>
+                      <Avatar name={t.name} photoUrl={staffPhotos[t.id]} size={32}/>
                     </div>
                     <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:13,fontWeight:700,color:'#fff'}}>
-                        {cfg.label}
+                      <div style={{fontSize:13,fontWeight:700,color:'#fff',marginBottom:5}}>{t.name.split(' ')[0]}</div>
+                      <div style={{display:'flex',gap:6}}>
+                        {['AM','PM'].map(shift => {
+                          const sid = shift === 'AM' ? t.am : t.pm;
+                          const cfg = sid && STATUS_CONFIG[sid];
+                          return (
+                            <div key={shift} style={{
+                              display:'flex',alignItems:'center',gap:4,
+                              padding:'3px 8px',borderRadius:8,
+                              background: cfg ? cfg.bg : 'rgba(255,255,255,0.04)',
+                              border:`1px solid ${cfg ? (cfg.border||cfg.color) : 'rgba(167,139,250,0.12)'}`,
+                            }}>
+                              <span style={{fontSize:10}}>{cfg ? cfg.icon : '🏢'}</span>
+                              <span style={{fontSize:10,fontWeight:700,color:cfg?'#fff':'rgba(232,229,255,0.35)',letterSpacing:'0.04em'}}>{shift}</span>
+                            </div>
+                          );
+                        })}
                       </div>
-                      <div style={{fontSize:11,color:'rgba(232,229,255,0.45)',marginTop:1,
-                                   whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
-                        {people.map(p => p.name.split(' ')[0]).join(', ')}
-                      </div>
-                    </div>
-                    <div style={{display:'flex'}}>
-                      {people.slice(0,3).map((p,j)=>(
-                        <div key={p.id} style={{marginLeft:j===0?0:-8,zIndex:10-j,border:'2px solid #0b1228',borderRadius:'50%'}}>
-                          <Avatar name={p.name} photoUrl={staffPhotos[p.id]} size={24}/>
-                        </div>
-                      ))}
-                      {people.length > 3 && (
-                        <div style={{
-                          marginLeft:-8,width:24,height:24,borderRadius:'50%',
-                          background:'rgba(255,255,255,0.08)',border:'2px solid #0b1228',
-                          display:'flex',alignItems:'center',justifyContent:'center',
-                          fontSize:9,fontWeight:700,color:'rgba(232,229,255,0.7)',
-                        }}>+{people.length-3}</div>
-                      )}
                     </div>
                   </div>
                 );
@@ -431,19 +402,16 @@ React.useEffect(() => { swipeRef.current = onSwipeWeek; }, [onSwipeWeek]);
                 </div>
               </div>
 
-             {(() => {
-                const curSid = myId && records[`${myId}-${picker.ds}-${picker.shift}`];
-                return curSid ? (
-                  <div
-                    onClick={() => { if (myId) onStatusClear(`${myId}-${picker.ds}-${picker.shift}`); closePicker(); }}
-                    style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,padding:'10px',borderRadius:12,background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',cursor:'pointer',marginBottom:10}}
-                  >
-                    <span style={{fontSize:13,fontWeight:700,color:'rgba(255,100,100,0.9)'}}>✕ Clear status</span>
-                  </div>
-                ) : null;
-              })()}
+              {current && (
+                <div
+                  onClick={() => { if (myId) onStatusClear(`${myId}-${picker.ds}-${picker.shift}`); closePicker(); }}
+                  style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,padding:'10px',borderRadius:12,background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',cursor:'pointer',marginBottom:10}}
+                >
+                  <span style={{fontSize:13,fontWeight:700,color:'rgba(255,100,100,0.9)'}}>✕ Clear status</span>
+                </div>
+              )}
+
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
-                {/* Office option (clears the record — Office = no record) */}
                 <div
                   className="mv-opt"
                   onClick={() => { if (myId) onStatusClear(`${myId}-${picker.ds}-${picker.shift}`); closePicker(); }}
