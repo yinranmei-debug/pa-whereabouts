@@ -247,6 +247,36 @@ const GlobalStyles = () => (
     .leg-item{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:500;color:rgba(232,229,255,0.48);white-space:nowrap;}
     .leg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
 
+    /* ── Birthday cake tooltip in thead ── */
+    .bday-hdr-cake{cursor:default;position:relative;}
+    .bday-hdr-cake svg{transition:transform 0.15s cubic-bezier(0.34,1.56,0.64,1);}
+    .bday-hdr-cake:hover svg{transform:scale(1.25);}
+    .bday-hdr-tip{
+      position:absolute;bottom:calc(100% + 10px);right:-4px;
+      background:linear-gradient(135deg,rgba(13,10,35,0.97),rgba(7,24,54,0.97));
+      border:1px solid rgba(255,183,0,0.4);
+      border-radius:10px;padding:6px 10px;
+      font-size:11px;font-weight:700;color:#fff;
+      white-space:nowrap;
+      box-shadow:0 6px 20px rgba(0,0,0,0.4);
+      pointer-events:none;
+      opacity:0;transform:translateY(4px) scale(0.95);
+      transition:opacity 0.15s ease,transform 0.15s ease;
+      font-family:'Plus Jakarta Sans',sans-serif;
+      z-index:999;
+    }
+    .bday-hdr-cake:hover .bday-hdr-tip{
+      opacity:1;transform:translateY(0) scale(1);
+    }
+    .bday-hdr-tip-arrow{
+      position:absolute;bottom:-5px;right:10px;
+      width:9px;height:9px;
+      background:rgba(13,10,35,0.97);
+      border:1px solid rgba(255,183,0,0.4);
+      border-top:none;border-left:none;
+      transform:rotate(45deg);
+    }
+
     /* ── Table ── */
     .tbl-outer{
       background:transparent;
@@ -609,8 +639,12 @@ const GlobalStyles = () => (
     button:hover .mh-star-3{animation:twinkleStar 1.4s ease-in-out 0.6s infinite;}
     button:hover .mh-flame{animation:candleFlame 0.6s ease-in-out infinite;}
     button:hover .mh-planet-body{animation:planetFloat 2.5s ease-in-out infinite;}
-    button:hover .mh-ring{animation:ringOrbit 2s linear infinite;}
-    .mh-ring{transform-box:fill-box;transform-origin:center;}
+   button:hover .mh-ring{animation:ringOrbit3D 2s linear infinite;}
+    .mh-ring{transform-box:fill-box;transform-origin:center;transform:rotateX(72deg);}
+    @keyframes ringOrbit3D{
+      0%{transform:rotateY(0deg) rotateX(72deg);}
+      100%{transform:rotateY(360deg) rotateX(72deg);}
+    }
     .mh-planet-body{transform-box:fill-box;transform-origin:center;}
     .mh-star-1,.mh-star-2,.mh-star-3{transform-box:fill-box;transform-origin:center;}
     .mh-flame{transform-box:fill-box;transform-origin:bottom center;}

@@ -1311,6 +1311,7 @@ const handleCelebrate = (person) => {
               <option key={i} value={i}>{new Date(2026,i,1).toLocaleString('en-US',{month:'long'})}</option>
             ))}
           </select>
+         <div style={{width:1,height:18,background:'rgba(167,139,250,0.15)',flexShrink:0,margin:'0 4px'}}/>
           <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#ff0078,#b400ff)',border:'1.5px solid rgba(255,0,120,0.6)'}}/>Holiday</div>
           <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#009bff,#6400ff)',border:'1.5px solid rgba(0,155,255,0.65)'}}/>Weekend</div>
           <div className="leg-item"><div className="leg-dot" style={{background:'linear-gradient(135deg,#2a1060,#3a1580)',border:'1.5px solid rgba(167,139,250,0.5)'}}/>My days</div>
@@ -1376,54 +1377,23 @@ const handleCelebrate = (person) => {
                     const bdayOnDay = RAW_STAFF_LIST.find(s => s.birthday === d.ds.slice(5));
                     return (
                     <div key={d.ds} data-hdr-ds={d.ds} className="tbl-hdr-daycol" style={{position:'relative'}}>
-                      {bdayOnDay && (() => {
-                        const [hov, setHov] = React.useState(false);
-                        return (
-                          <div style={{position:'absolute',top:2,right:2,zIndex:20}}
-                            onMouseEnter={()=>setHov(true)}
-                            onMouseLeave={()=>setHov(false)}>
-                            <div style={{
-                              cursor:'default', lineHeight:1,
-                              filter:'drop-shadow(0 2px 6px rgba(255,183,0,0.6))',
-                              transition:'transform 0.15s',
-                              transform: hov ? 'scale(1.2)' : 'scale(1)',
-                            }}>
-                              <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-                                <rect x="4" y="13" width="16" height="8" rx="2" fill="rgba(255,143,176,0.95)" stroke="rgba(255,183,0,0.8)" strokeWidth="1"/>
-                                <rect x="6" y="10" width="12" height="5" rx="1.5" fill="rgba(255,183,0,0.9)" stroke="rgba(255,225,74,0.6)" strokeWidth="0.8"/>
-                                <rect x="8" y="5" width="2" height="5" rx="1" fill="rgba(167,139,250,1)"/>
-                                <rect x="14" y="5" width="2" height="5" rx="1" fill="rgba(106,199,255,1)"/>
-                                <ellipse cx="9" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,220,50,1)"/>
-                                <ellipse cx="15" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,160,50,1)"/>
-                              </svg>
-                            </div>
-                            {hov && (
-                              <div style={{
-                                position:'absolute', bottom:'calc(100% + 8px)', right:0,
-                                background:'linear-gradient(135deg,rgba(13,10,35,0.97),rgba(7,24,54,0.97))',
-                                border:'1px solid rgba(255,183,0,0.35)',
-                                borderRadius:10, padding:'6px 10px',
-                                fontSize:11, fontWeight:700, color:'#fff',
-                                whiteSpace:'nowrap',
-                                boxShadow:'0 4px 16px rgba(0,0,0,0.35)',
-                                pointerEvents:'none',
-                                animation:'dropIn 0.15s ease',
-                                fontFamily:"'Plus Jakarta Sans',sans-serif",
-                              }}>
-                                🎂 {bdayOnDay.name.split(' ')[0]}'s birthday!
-                                <div style={{
-                                  position:'absolute', bottom:-5, right:8,
-                                  width:10, height:10,
-                                  background:'rgba(13,10,35,0.97)',
-                                  border:'1px solid rgba(255,183,0,0.35)',
-                                  borderTop:'none', borderLeft:'none',
-                                  transform:'rotate(45deg)',
-                                }}/>
-                              </div>
-                            )}
+                     {bdayOnDay && (
+                        <div className="bday-hdr-cake" style={{position:'absolute',top:2,right:2,zIndex:20}}>
+                          <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+                            style={{display:'block',filter:'drop-shadow(0 2px 6px rgba(255,183,0,0.6))'}}>
+                            <rect x="4" y="13" width="16" height="8" rx="2" fill="rgba(255,143,176,0.95)" stroke="rgba(255,183,0,0.8)" strokeWidth="1"/>
+                            <rect x="6" y="10" width="12" height="5" rx="1.5" fill="rgba(255,183,0,0.9)" stroke="rgba(255,225,74,0.6)" strokeWidth="0.8"/>
+                            <rect x="8" y="5" width="2" height="5" rx="1" fill="rgba(167,139,250,1)"/>
+                            <rect x="14" y="5" width="2" height="5" rx="1" fill="rgba(106,199,255,1)"/>
+                            <ellipse cx="9" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,220,50,1)"/>
+                            <ellipse cx="15" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,160,50,1)"/>
+                          </svg>
+                          <div className="bday-hdr-tip">
+                            🎂 {bdayOnDay.name.split(' ')[0]}'s birthday!
+                            <div className="bday-hdr-tip-arrow"/>
                           </div>
-                        );
-                      })()}
+                        </div>
+                      )}
                       <div style={{fontSize:'11px',fontWeight:'700',letterSpacing:'0.06em',marginBottom:'6px',color:d.isToday?'#770bff':'#9ca3af'}}>{d.dayName.toUpperCase()}</div>
                       <div style={{position:'relative',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto',width:'34px',height:'34px'}}>
                         {d.isToday && todaySonar && (
