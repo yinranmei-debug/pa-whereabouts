@@ -1157,9 +1157,9 @@ const handleCelebrate = (person) => {
                 <div style={{fontSize:'10px',fontWeight:'700',color:'rgba(232,229,255,0.45)',letterSpacing:'0.1em',marginBottom:'10px',padding:'0 4px'}}>{region.toUpperCase()} PUBLIC HOLIDAYS 2026</div>
                 <div style={{maxHeight:'360px',overflowY:'auto',display:'flex',flexDirection:'column',gap:'2px'}}>
                   {plannerList().map(h=>(
-                    <div key={h.date} className="plan-row" onClick={()=>jumpToDate(h.date)}>
-                      <div><div className="plan-date">{h.date}</div><div className="plan-name">{h.day}</div></div>
-                      <div style={{padding:'3px 10px',borderRadius:'8px',background:'linear-gradient(135deg,rgba(0,155,255,0.1),rgba(119,11,255,0.1))',fontSize:'11px',fontWeight:'600',color:'#5b21b6'}}>{h.name}</div>
+                   <div key={h.date} className="plan-row" onClick={()=>jumpToDate(h.date)}>
+                      <div><div className="plan-date" style={{color:'rgba(232,229,255,0.85)'}}>{h.date}</div><div className="plan-name">{h.day}</div></div>
+<div style={{padding:'3px 10px',borderRadius:'8px',background:'linear-gradient(135deg,rgba(0,155,255,0.2),rgba(119,11,255,0.2))',fontSize:'11px',fontWeight:'600',color:'#a78bfa'}}>{h.name}</div>
                     </div>
                   ))}
                 </div>
