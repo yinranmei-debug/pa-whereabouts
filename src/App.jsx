@@ -133,15 +133,27 @@ function WelcomeConfetti() {
       </div>
       <div style={{position:'fixed',inset:0,display:'flex',alignItems:'center',justifyContent:'center',zIndex:12001,pointerEvents:'none'}}>
         <div style={{
-          background:'linear-gradient(135deg,#009bff,#770bff)',
-          borderRadius:24, padding:'28px 40px',
-          boxShadow:'0 24px 64px rgba(119,11,255,0.35)',
+         background:'linear-gradient(135deg,rgba(13,8,40,0.97) 0%,rgba(20,10,55,0.97) 50%,rgba(10,15,50,0.97) 100%)',
+          borderRadius:24, padding:'36px 40px 32px',
+          border:'1.5px solid rgba(119,11,255,0.35)',
+          boxShadow:'0 0 60px rgba(0,155,255,0.12),0 24px 64px rgba(119,11,255,0.35)',
           animation:'welcomePop 0.5s cubic-bezier(0.34,1.56,0.64,1) both, welcomeFade 0.4s ease 2.4s both',
           textAlign:'center', fontFamily:"'Plus Jakarta Sans',sans-serif",
+          position:'relative', overflow:'hidden', width:380,
         }}>
-          <div style={{fontSize:32,marginBottom:8}}>✦</div>
-          <div style={{fontSize:22,fontWeight:800,color:'#fff',letterSpacing:'-0.02em',marginBottom:6}}>Welcome to Whereabouts!</div>
-          <div style={{fontSize:14,color:'rgba(255,255,255,0.75)',fontWeight:500}}>You're all set. Have a great day 🎯</div>
+          <div style={{position:'absolute',top:0,left:0,right:0,height:3,background:'linear-gradient(90deg,#009bff,#770bff,#00e5ff,#a78bfa,#009bff)',backgroundSize:'200% auto',animation:'logoIdleDrift 3s linear infinite'}}/>
+          <div style={{position:'absolute',top:-60,left:'50%',transform:'translateX(-50%)',width:200,height:200,borderRadius:'50%',background:'radial-gradient(circle,rgba(119,11,255,0.18) 0%,transparent 70%)',pointerEvents:'none'}}/>
+          <div style={{width:64,height:64,borderRadius:20,margin:'0 auto 20px',background:'linear-gradient(135deg,rgba(0,155,255,0.15),rgba(119,11,255,0.2))',border:'1.5px solid rgba(119,11,255,0.35)',display:'flex',alignItems:'center',justifyContent:'center',position:'relative',zIndex:1}}>
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none" overflow="visible">
+              <defs><radialGradient id="wPlanet" cx="35%" cy="30%" r="65%"><stop offset="0%" stopColor="#c4b5fd"/><stop offset="40%" stopColor="#8b5cf6"/><stop offset="100%" stopColor="#2e1065"/></radialGradient></defs>
+              <circle cx="18" cy="18" r="10" fill="url(#wPlanet)"/>
+              <ellipse cx="18" cy="18" rx="18" ry="5.5" fill="none" stroke="rgba(167,139,250,0.7)" strokeWidth="1.8" style={{transformOrigin:'18px 18px',transform:'rotateX(72deg)'}}/>
+            </svg>
+          </div>
+          <div style={{fontSize:11,fontWeight:700,letterSpacing:'0.1em',color:'rgba(0,155,255,0.8)',marginBottom:8,textTransform:'uppercase',position:'relative',zIndex:1}}>Whereabouts</div>
+          <div style={{fontSize:24,fontWeight:900,color:'#fff',letterSpacing:'-0.03em',lineHeight:1.15,marginBottom:10,position:'relative',zIndex:1}}>Welcome!<br/>You're all set.</div>
+          <div style={{fontSize:14,color:'rgba(196,181,253,0.6)',lineHeight:1.6,position:'relative',zIndex:1}}>Have a great day 🎯</div>
+          <div style={{margin:'20px auto 0',width:60,height:2,background:'linear-gradient(90deg,transparent,rgba(119,11,255,0.4),transparent)'}}/>
         </div>
       </div>
     </>
@@ -887,9 +899,9 @@ const handleCelebrate = (person) => {
           onComplete={()=>setCakeThrowActive(false)}
           onHatReady={(id)=>setBdayHatId(id)}
         />
-        <BirthdayOverlay
+       <BirthdayOverlay
           currentUserEmail={account?.username}
-          isBusy={showTips}
+          isBusy={showTour || showWelcome || showTips}
          onClose={() => {
             setBirthdayDone(true);
             localStorage.setItem(`bday-done-${new Date().toDateString()}`, '1');
@@ -1604,8 +1616,7 @@ const handleCelebrate = (person) => {
 
         <DimensionalBreachOverlay breach={activeBreach} chargingState={chargingState} />
       </div>
-
-      {showTour && (
+{showTour && (
         <TourOverlay
           key={`tour-${account.username}`}
           onDone={() => {
@@ -1617,6 +1628,15 @@ const handleCelebrate = (person) => {
             setTimeout(() => {
               setShowWelcome(false);
               finishingTourRef.current = false;
+              // After welcome fades, fire tips (if not shown today)
+              const todayStr = new Date().toDateString();
+              const tipKey = `tips-shown-${account.username}-${todayStr}`;
+              if (!localStorage.getItem(tipKey)) {
+                setTimeout(() => {
+                  setShowTips(true);
+                  localStorage.setItem(tipKey, '1');
+                }, 600);
+              }
             }, 3500);
           }}
         />
