@@ -887,9 +887,16 @@ const handleCelebrate = (person) => {
         })()}
 
         {/* Bday toast */}
-        {bdayToast && (
+       {bdayToast && (
           <div className={`bday-toast${bdayToastOut?' out':' in'}`}>
-            <span style={{fontSize:22}}>🎂</span>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{flexShrink:0}}>
+              <rect x="4" y="13" width="16" height="8" rx="2" fill="rgba(255,143,176,0.9)" stroke="rgba(255,183,0,0.7)" strokeWidth="1"/>
+              <rect x="6" y="10" width="12" height="5" rx="1.5" fill="rgba(255,183,0,0.8)" stroke="rgba(255,225,74,0.6)" strokeWidth="1"/>
+              <rect x="8" y="5" width="2" height="5" rx="1" fill="rgba(167,139,250,1)"/>
+              <rect x="14" y="5" width="2" height="5" rx="1" fill="rgba(106,199,255,1)"/>
+              <ellipse className="mh-flame" cx="9" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,220,50,1)"/>
+              <ellipse className="mh-flame" cx="15" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,160,50,1)" style={{animationDelay:'0.2s'}}/>
+            </svg>
             <span style={{fontSize:13,fontWeight:600,color:'#fff',lineHeight:1.4}}>{bdayToast.text}</span>
           </div>
         )}
@@ -965,7 +972,11 @@ const handleCelebrate = (person) => {
             <div style={{maxHeight:320,overflowY:'auto',padding:'8px 12px 12px'}}>
               {/* Birthdays this week */}
               {week.map(d => {
-                const bday = RAW_STAFF_LIST.find(s => s.birthday === d.ds.slice(5));
+                const bday = RAW_STAFF_LIST.find(s => {
+                  const bd = s.birthday; // expected "MM-DD"
+                  const ds = d.ds.slice(5); // "MM-DD" from "YYYY-MM-DD"
+                  return bd === ds;
+                });
                 if (!bday) return null;
                 return (
                   <div key={`bday-${d.ds}`} style={{display:'flex',alignItems:'flex-start',gap:12,padding:'10px 8px',borderRadius:12,background:'rgba(255,143,176,0.08)',border:'1px solid rgba(255,143,176,0.15)',marginBottom:8}}>
@@ -1050,7 +1061,22 @@ const handleCelebrate = (person) => {
               <div style={{position:'absolute',top:0,left:0,right:0,height:3,background:'linear-gradient(90deg,#009bff,#770bff)'}}/>
               <button onClick={()=>setShowTips(false)} style={{position:'absolute',top:16,right:16,width:28,height:28,borderRadius:'50%',border:'none',background:'rgba(255,255,255,0.08)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,color:'rgba(232,229,255,0.6)'}} onMouseOver={e=>{e.currentTarget.style.background='rgba(255,255,255,0.14)';}} onMouseOut={e=>{e.currentTarget.style.background='rgba(255,255,255,0.08)';}}>✕</button>
               <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:22}}>
-                <div style={{width:40,height:40,borderRadius:12,background:'linear-gradient(135deg,rgba(119,11,255,0.25),rgba(0,155,255,0.18))',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:20}}>🪐</div>
+               <div style={{width:40,height:40,borderRadius:12,background:'linear-gradient(135deg,rgba(45,27,105,0.8),rgba(30,27,75,0.8))',border:'1.5px solid rgba(139,92,246,0.45)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                  <svg width="22" height="22" viewBox="0 0 26 26" fill="none" overflow="visible">
+                    <defs>
+                      <radialGradient id="tipPlanetGrad" cx="35%" cy="32%" r="65%">
+                        <stop offset="0%" stopColor="#c4b5fd"/>
+                        <stop offset="40%" stopColor="#8b5cf6"/>
+                        <stop offset="100%" stopColor="#2e1065"/>
+                      </radialGradient>
+                    </defs>
+                    <circle cx="13" cy="13" r="7" fill="url(#tipPlanetGrad)"/>
+                    <ellipse cx="13" cy="13" rx="13" ry="4" fill="none" stroke="rgba(167,139,250,0.75)" strokeWidth="1.5" style={{transformOrigin:'13px 13px'}}/>
+                    <circle cx="2" cy="4" r="1.1" fill="rgba(196,181,253,0.8)"/>
+                    <circle cx="23" cy="3" r="0.85" fill="rgba(106,199,255,0.8)"/>
+                    <circle cx="24" cy="22" r="1" fill="rgba(196,181,253,0.7)"/>
+                  </svg>
+                </div>
                 <div>
                   <div style={{fontSize:18,fontWeight:700,color:'#fff',letterSpacing:'-0.01em'}}>Daily Mind Huddle</div>
                   <div style={{fontSize:12,fontWeight:500,color:'rgba(232,229,255,0.45)',marginTop:'3px'}}>{tipIdx+1} of {dailyTips.current.length} today</div>
@@ -1112,8 +1138,8 @@ const handleCelebrate = (person) => {
                   onClick={()=>setShowBdayPanel(p=>!p)}
                   title="Birthday today!"
                   style={{position:'relative',width:48,height:48,borderRadius:14,border:'1.5px solid rgba(255,183,0,0.45)',background:'rgba(30,15,5,0.7)',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s',overflow:'visible'}}
-                  onMouseOver={e=>e.currentTarget.style.borderColor='rgba(255,220,100,0.7)'}
-                  onMouseOut={e=>e.currentTarget.style.borderColor='rgba(255,183,0,0.45)'}
+                  onMouseOver={e=>{e.currentTarget.style.borderColor='rgba(255,220,100,0.7)';e.currentTarget.style.transform='scale(1.12)';}}
+                  onMouseOut={e=>{e.currentTarget.style.borderColor='rgba(255,183,0,0.45)';e.currentTarget.style.transform='scale(1)';}}
                 >
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                     <rect x="4" y="13" width="16" height="8" rx="2" fill="rgba(255,143,176,0.7)" stroke="rgba(255,183,0,0.6)" strokeWidth="1"/>
@@ -1132,8 +1158,8 @@ const handleCelebrate = (person) => {
                 onClick={()=>setShowWeeklyPanel(p=>!p)}
                 title="Team week at a glance"
                 style={{position:'relative',width:48,height:48,borderRadius:14,border:'1.5px solid rgba(167,139,250,0.3)',background:'rgba(15,10,40,0.7)',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s'}}
-                onMouseOver={e=>e.currentTarget.style.borderColor='rgba(167,139,250,0.6)'}
-                onMouseOut={e=>e.currentTarget.style.borderColor='rgba(167,139,250,0.3)'}
+               onMouseOver={e=>{e.currentTarget.style.borderColor='rgba(167,139,250,0.6)';e.currentTarget.style.transform='scale(1.12)';}}
+                onMouseOut={e=>{e.currentTarget.style.borderColor='rgba(167,139,250,0.3)';e.currentTarget.style.transform='scale(1)';}}
               >
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                   {/* calendar body */}
@@ -1163,8 +1189,8 @@ const handleCelebrate = (person) => {
                 onClick={()=>{ setTipIdx(0); setShowTips(true); }}
                 title="Daily Mind Huddle"
                 style={{position:'relative',width:48,height:48,borderRadius:14,border:'1.5px solid rgba(139,92,246,0.45)',background:'linear-gradient(135deg,rgba(45,27,105,0.8),rgba(30,27,75,0.8))',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s',overflow:'visible',perspective:'120px'}}
-                onMouseOver={e=>e.currentTarget.style.borderColor='rgba(196,181,253,0.7)'}
-                onMouseOut={e=>e.currentTarget.style.borderColor='rgba(139,92,246,0.45)'}
+                onMouseOver={e=>{e.currentTarget.style.borderColor='rgba(196,181,253,0.7)';e.currentTarget.style.transform='scale(1.12)';}}
+                onMouseOut={e=>{e.currentTarget.style.borderColor='rgba(139,92,246,0.45)';e.currentTarget.style.transform='scale(1)';}}
               >
                 <svg width="26" height="26" viewBox="0 0 26 26" fill="none" overflow="visible">
                   <defs>
