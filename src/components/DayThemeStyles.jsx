@@ -158,9 +158,9 @@ const DayThemeStyles = () => (
       background: linear-gradient(135deg,#5a0a32,#3c0a3c) !important;
       border: 1.5px solid rgba(217,70,239,0.6) !important;
     }
-    body.day-mode .toolbar .leg-item:nth-of-type(2) .leg-dot {
-      background: linear-gradient(135deg,#0a3060,#140f5a) !important;
-      border: 1.5px solid rgba(106,199,255,0.6) !important;
+   body.day-mode .toolbar .leg-item:nth-of-type(2) .leg-dot {
+      background: linear-gradient(135deg,#0055cc,#4400aa) !important;
+      border: 1.5px solid rgba(0,155,255,0.65) !important;
     }
     body.day-mode .toolbar .leg-item:nth-of-type(3) .leg-dot {
       background: linear-gradient(135deg,#2a1060,#3a1580) !important;
@@ -264,16 +264,15 @@ const DayThemeStyles = () => (
         0 0 0 2px rgba(0,155,255,0.35),
         0 0 10px 3px rgba(119,11,255,0.1) !important;
     }
-/* My empty cells — slight blue tint, interactive feel */
-    body.day-mode .sh.mine {
-      background: rgba(0,155,255,0.07) !important;
-      border: 1.5px solid rgba(0,155,255,0.22) !important;
+body.day-mode .sh.mine {
+      background: linear-gradient(135deg, rgba(0,155,255,0.08), rgba(119,11,255,0.06)) !important;
+      border: 1.5px solid rgba(119,11,255,0.18) !important;
       color: rgba(26,24,48,0.38) !important;
     }
     body.day-mode .sh.mine:hover {
-      background: rgba(0,155,255,0.12) !important;
-      border-color: rgba(0,155,255,0.35) !important;
-      box-shadow: 0 3px 12px rgba(0,155,255,0.1) !important;
+      background: linear-gradient(135deg, rgba(0,155,255,0.13), rgba(119,11,255,0.1)) !important;
+      border-color: rgba(119,11,255,0.3) !important;
+      box-shadow: 0 3px 12px rgba(119,11,255,0.1) !important;
     }
     /* Other empty cells — more neutral, clearly non-interactive */
     body.day-mode .sh.other {
@@ -288,20 +287,19 @@ const DayThemeStyles = () => (
       color: rgba(26,24,48,0.35) !important;
     }
     /* Set status cells owned by others — make icons more visible */
-   body.day-mode .sh.set {
-      filter: saturate(0.9) brightness(1.08) !important;
+  /* Other users set status — show full color, just slightly desaturated */
+    body.day-mode .sh.set {
+      filter: saturate(0.75) brightness(1.12) !important;
       border-width: 1.5px !important;
-      opacity: 0.82 !important;
+      opacity: 1 !important;
     }
     body.day-mode .sh.set .sh-icon {
-      filter: saturate(1.15) !important;
+      filter: saturate(1.2) !important;
       opacity: 1 !important;
-      font-size: 22px !important;
     }
     body.day-mode .sh.set span:last-child {
-      color: rgba(26,24,48,0.6) !important;
+      color: rgba(26,24,48,0.65) !important;
       font-weight: 700 !important;
-      font-size: 10px !important;
     }
     body.day-mode .sh.set:hover {
       filter: brightness(1.05) saturate(1.1) !important;
@@ -335,16 +333,18 @@ const DayThemeStyles = () => (
       filter: saturate(1.5) brightness(1.04) !important;
       transition: filter 0.15s, box-shadow 0.25s !important;
     }
-    /* Click glow — day */
+  /* Click glow — day: gradient frame wrap */
     body.day-mode .col-glow-overlay {
       background: linear-gradient(180deg,
-        rgba(0,155,255,0.08) 0%,
-        rgba(0,155,255,0.11) 30%,
-        rgba(119,11,255,0.11) 70%,
-        rgba(119,11,255,0.06) 100%) !important;
+        rgba(0,155,255,0.09) 0%,
+        rgba(0,155,255,0.12) 30%,
+        rgba(119,11,255,0.12) 70%,
+        rgba(119,11,255,0.07) 100%) !important;
       box-shadow:
-        inset 0 0 10px 3px rgba(0,155,255,0.25),
-        inset 0 0 20px 5px rgba(119,11,255,0.15) !important;
+        inset 0 0 0 2px rgba(0,155,255,0.35),
+        inset 0 0 12px 3px rgba(0,155,255,0.2),
+        inset 0 0 24px 6px rgba(119,11,255,0.12) !important;
+      border-radius: 14px !important;
     }
     /* ── Status dropdown ── */
     body.day-mode .s-drop {
