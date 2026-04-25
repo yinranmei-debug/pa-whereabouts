@@ -1065,33 +1065,13 @@ export default function App() {
               </div>
             )}
           </div>
-          {hasBirthdayToday && !birthdayDone && (
-            <div className="bday-nav-chip">🎂 <span>Celebrate — throw a cake!</span></div>
-          )}
+         
           <div className="nav-sep"/>
           <div className="nav-right">
             {saveStatus==='saving'&&<span className="save-txt">↻ Saving</span>}
             {saveStatus==='saved' &&<span className="save-ok">✓ Saved</span>}
            {/* ── Mind Hub 三按钮 ── */}
             <div style={{display:'flex',alignItems:'center',gap:8}}>
-
-              {/* ✦ Weekly updates */}
-              <button
-                onClick={()=>setShowWeeklyPanel(p=>!p)}
-                title="Team week at a glance"
-                style={{position:'relative',width:48,height:48,borderRadius:14,border:'1.5px solid rgba(167,139,250,0.3)',background:'rgba(15,10,40,0.7)',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s'}}
-                onMouseOver={e=>e.currentTarget.style.borderColor='rgba(167,139,250,0.6)'}
-                onMouseOut={e=>e.currentTarget.style.borderColor='rgba(167,139,250,0.3)'}
-              >
-                <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-                  <path className="mh-star-1" d="M11 2L12.2 8.8L18 7L13.5 11L18 15L12.2 13.2L11 20L9.8 13.2L4 15L8.5 11L4 7L9.8 8.8L11 2Z" fill="rgba(167,139,250,0.9)" stroke="rgba(196,181,253,0.6)" strokeWidth="0.5"/>
-                  <circle className="mh-star-2" cx="17" cy="4" r="1.5" fill="rgba(106,199,255,0.8)"/>
-                  <circle className="mh-star-3" cx="5" cy="17" r="1" fill="rgba(255,143,176,0.8)"/>
-                </svg>
-                {weeklyUpdatesCount > 0 && (
-                  <div style={{position:'absolute',top:-6,right:-6,minWidth:18,height:18,borderRadius:9,background:'linear-gradient(135deg,#009bff,#770bff)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:800,color:'#fff',padding:'0 4px',boxShadow:'0 2px 8px rgba(119,11,255,0.4)'}}>{weeklyUpdatesCount}</div>
-                )}
-              </button>
 
               {/* 🎂 Birthday — only when there's a birthday today */}
               {hasBirthdayToday && (
@@ -1103,19 +1083,47 @@ export default function App() {
                   onMouseOut={e=>e.currentTarget.style.borderColor='rgba(255,183,0,0.45)'}
                 >
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    {/* cake base */}
                     <rect x="4" y="13" width="16" height="8" rx="2" fill="rgba(255,143,176,0.7)" stroke="rgba(255,183,0,0.6)" strokeWidth="1"/>
                     <rect x="6" y="10" width="12" height="5" rx="1.5" fill="rgba(255,183,0,0.5)" stroke="rgba(255,225,74,0.5)" strokeWidth="1"/>
-                    {/* candles */}
                     <rect x="8" y="5" width="2" height="5" rx="1" fill="rgba(167,139,250,0.8)"/>
                     <rect x="14" y="5" width="2" height="5" rx="1" fill="rgba(106,199,255,0.8)"/>
-                    {/* flames */}
                     <ellipse className="mh-flame" cx="9" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,220,50,0.95)"/>
                     <ellipse className="mh-flame" cx="15" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,160,50,0.95)" style={{animationDelay:'0.2s'}}/>
                   </svg>
                   <div style={{position:'absolute',top:-6,right:-6,minWidth:18,height:18,borderRadius:9,background:'linear-gradient(135deg,#ff8fb0,#e63946)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:800,color:'#fff',padding:'0 4px',boxShadow:'0 2px 8px rgba(255,100,150,0.4)'}}>1</div>
                 </button>
               )}
+
+              {/* 📅 Weekly updates */}
+              <button
+                onClick={()=>setShowWeeklyPanel(p=>!p)}
+                title="Team week at a glance"
+                style={{position:'relative',width:48,height:48,borderRadius:14,border:'1.5px solid rgba(167,139,250,0.3)',background:'rgba(15,10,40,0.7)',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s'}}
+                onMouseOver={e=>e.currentTarget.style.borderColor='rgba(167,139,250,0.6)'}
+                onMouseOut={e=>e.currentTarget.style.borderColor='rgba(167,139,250,0.3)'}
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                  {/* calendar body */}
+                  <rect className="mh-star-1" x="3" y="5" width="18" height="16" rx="3" fill="rgba(167,139,250,0.15)" stroke="rgba(167,139,250,0.7)" strokeWidth="1.5"/>
+                  {/* header band */}
+                  <rect x="3" y="5" width="18" height="5" rx="3" fill="rgba(167,139,250,0.35)"/>
+                  <rect x="3" y="8" width="18" height="2" fill="rgba(167,139,250,0.35)"/>
+                  {/* date hooks */}
+                  <rect x="8" y="3" width="2" height="4" rx="1" fill="rgba(196,181,253,0.9)"/>
+                  <rect x="14" y="3" width="2" height="4" rx="1" fill="rgba(106,199,255,0.9)"/>
+                  {/* date dots */}
+                  <circle className="mh-star-2" cx="8" cy="15" r="1.5" fill="rgba(196,181,253,0.9)"/>
+                  <circle cx="12" cy="15" r="1.5" fill="rgba(167,139,250,0.6)"/>
+                  <circle className="mh-star-3" cx="16" cy="15" r="1.5" fill="rgba(106,199,255,0.8)"/>
+                  <circle cx="8" cy="18.5" r="1.5" fill="rgba(167,139,250,0.5)"/>
+                  <circle cx="12" cy="18.5" r="1.5" fill="rgba(196,181,253,0.7)"/>
+                </svg>
+                {weeklyUpdatesCount > 0 && (
+                  <div style={{position:'absolute',top:-6,right:-6,minWidth:18,height:18,borderRadius:9,background:'linear-gradient(135deg,#009bff,#770bff)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:800,color:'#fff',padding:'0 4px',boxShadow:'0 2px 8px rgba(119,11,255,0.4)'}}>{weeklyUpdatesCount}</div>
+                )}
+              </button>
+
+            
 
               {/* 🪐 Tips / Mind Huddle */}
               <button
