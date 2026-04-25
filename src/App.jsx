@@ -1373,8 +1373,25 @@ const handleCelebrate = (person) => {
               <div className="tbl-hdr-sticky">
                 <div ref={headerRef} className="tbl-hdr-row">
                   <div className="tbl-hdr-namecol"/>
-                  {week.map(d=>(
-                    <div key={d.ds} data-hdr-ds={d.ds} className="tbl-hdr-daycol">
+                {week.map(d=>{
+                    const bdayOnDay = RAW_STAFF_LIST.find(s => s.birthday === d.ds.slice(5));
+                    return (
+                    <div key={d.ds} data-hdr-ds={d.ds} className="tbl-hdr-daycol" style={{position:'relative'}}>
+                      {bdayOnDay && (
+                        <div style={{
+                          position:'absolute', top:2, right:2,
+                          cursor:'default', zIndex:10, lineHeight:1,
+                        }} title={`${bdayOnDay.name.split(' ')[0]}'s birthday! 🎂`}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                            <rect x="4" y="13" width="16" height="8" rx="2" fill="rgba(255,143,176,0.9)" stroke="rgba(255,183,0,0.7)" strokeWidth="1"/>
+                            <rect x="6" y="10" width="12" height="5" rx="1.5" fill="rgba(255,183,0,0.8)"/>
+                            <rect x="8" y="5" width="2" height="5" rx="1" fill="rgba(167,139,250,1)"/>
+                            <rect x="14" y="5" width="2" height="5" rx="1" fill="rgba(106,199,255,1)"/>
+                            <ellipse cx="9" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,220,50,1)"/>
+                            <ellipse cx="15" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,160,50,1)"/>
+                          </svg>
+                        </div>
+                      )}
                       <div style={{fontSize:'11px',fontWeight:'700',letterSpacing:'0.06em',marginBottom:'6px',color:d.isToday?'#770bff':'#9ca3af'}}>{d.dayName.toUpperCase()}</div>
                       <div style={{position:'relative',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto',width:'34px',height:'34px'}}>
                         {d.isToday && todaySonar && (
@@ -1388,7 +1405,8 @@ const handleCelebrate = (person) => {
                         </div>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
