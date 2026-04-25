@@ -137,7 +137,8 @@ const DayThemeStyles = () => (
       color: rgba(26,24,48,0.65) !important;
     }
     body.day-mode .tb-month { color: #1A1830 !important; font-weight: 700 !important; }
-    body.day-mode .leg-item { color: rgba(26,24,48,0.5) !important; }
+   body.day-mode .leg-item { color: rgba(26,24,48,0.65) !important; }
+    body.day-mode .leg-dot { opacity: 1 !important; filter: saturate(1.2) brightness(0.85) !important; }
     body.day-mode .team-summary {
       background: linear-gradient(90deg, rgba(0,155,255,0.07), rgba(119,11,255,0.07)) !important;
       border-color: rgba(119,11,255,0.18) !important;
@@ -162,6 +163,22 @@ const DayThemeStyles = () => (
       border-bottom: 1px solid rgba(0,155,255,0.1) !important;
       box-shadow: 0 2px 8px rgba(0,155,255,0.06) !important;
       backdrop-filter: blur(12px) !important;
+    }
+    /* Day name text */
+    body.day-mode .tbl-hdr-daycol div:first-child {
+      color: rgba(26,24,48,0.55) !important;
+    }
+    /* Today circle — white text on gradient bg stays readable */
+    body.day-mode .tbl-hdr-daycol div div {
+      color: rgba(26,24,48,0.75) !important;
+    }
+    /* Today circle override — keep white text on the gradient pill */
+    body.day-mode .tbl-hdr-daycol div div[style*="linear-gradient"] {
+      color: #ffffff !important;
+    }
+    /* Non-today date numbers */
+    body.day-mode .tbl-hdr-daycol div div[style*="transparent"] {
+      color: rgba(26,24,48,0.8) !important;
     }
     body.day-mode .section-title { color: rgba(26,24,48,0.4) !important; }
     body.day-mode .section-title-hint { color: rgba(26,24,48,0.3) !important; }
@@ -250,14 +267,32 @@ const DayThemeStyles = () => (
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 2px 8px rgba(0,155,255,0.07) !important;
     }
     body.day-mode .pill:hover.hol .pill-card {
-      box-shadow: 0 0 24px rgba(119,11,255,0.2), 0 0 48px rgba(168,85,247,0.12) !important;
-      filter: saturate(1.4) brightness(1.05) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.8),
+        0 0 28px rgba(119,11,255,0.28),
+        0 0 56px rgba(168,85,247,0.16) !important;
+      filter: saturate(1.5) brightness(1.04) !important;
+      transition: filter 0.15s, box-shadow 0.25s !important;
     }
     body.day-mode .pill:hover.we .pill-card {
-      box-shadow: 0 0 24px rgba(0,155,255,0.2), 0 0 48px rgba(0,155,255,0.1) !important;
-      filter: saturate(1.4) brightness(1.05) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.8),
+        0 0 28px rgba(0,155,255,0.28),
+        0 0 56px rgba(0,155,255,0.15) !important;
+      filter: saturate(1.5) brightness(1.04) !important;
+      transition: filter 0.15s, box-shadow 0.25s !important;
     }
-
+    /* Click glow — day */
+    body.day-mode .col-glow-overlay {
+      background: linear-gradient(180deg,
+        rgba(0,155,255,0.08) 0%,
+        rgba(0,155,255,0.11) 30%,
+        rgba(119,11,255,0.11) 70%,
+        rgba(119,11,255,0.06) 100%) !important;
+      box-shadow:
+        inset 0 0 10px 3px rgba(0,155,255,0.25),
+        inset 0 0 20px 5px rgba(119,11,255,0.15) !important;
+    }
     /* ── Status dropdown ── */
     body.day-mode .s-drop {
       background: rgba(255,255,255,0.98) !important;
@@ -325,7 +360,7 @@ const DayThemeStyles = () => (
     }
     .theme-toggle-btn:active { transform: scale(0.96); }
 
-    /* Day mode variant — clean white pill */
+   /* Day mode variant — clean white pill */
     body.day-mode .theme-toggle-btn {
       border: 1.5px solid rgba(0,155,255,0.22) !important;
       background: #ffffff !important;
@@ -338,6 +373,11 @@ const DayThemeStyles = () => (
       background: #ffffff !important;
       box-shadow: 0 2px 10px rgba(0,155,255,0.15) !important;
       transform: scale(1.04) !important;
+    }
+    /* Hub buttons day — also white */
+    body.day-mode .nav-right > div:first-child button {
+      background: #ffffff !important;
+      box-shadow: 0 1px 4px rgba(0,155,255,0.08), 0 1px 2px rgba(0,0,0,0.04) !important;
     }
 
     /* Toggle track */
