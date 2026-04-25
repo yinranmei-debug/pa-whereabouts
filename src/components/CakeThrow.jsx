@@ -121,29 +121,28 @@ function ConfettiSVG() {
   );
 }
 
-// ── Geometric bday hat — same style as cake button SVG ──────────
+// ── Bday hat — exact same geometric style as cake button ────────
 export function BdayHatSVG({ size = 32 }) {
-  const s = size / 24;
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      {/* cone — layered rects like cake tiers */}
-      <rect x="11" y="2"  width="2" height="2" rx="0.5" fill="rgba(255,220,50,0.95)"/>
-      <rect x="10" y="4"  width="4" height="2" rx="0.5" fill="rgba(255,143,176,0.9)"/>
-      <rect x="9"  y="6"  width="6" height="2" rx="0.5" fill="rgba(167,139,250,0.9)"/>
-      <rect x="8"  y="8"  width="8" height="2" rx="0.5" fill="rgba(255,183,0,0.85)"/>
-      <rect x="7"  y="10" width="10" height="2" rx="0.5" fill="rgba(106,199,255,0.85)"/>
-      <rect x="6"  y="12" width="12" height="2" rx="0.5" fill="rgba(167,139,250,0.9)"/>
-      {/* brim */}
-      <rect x="4"  y="14" width="16" height="3" rx="1.5" fill="rgba(255,183,0,0.8)" stroke="rgba(255,225,74,0.7)" strokeWidth="0.8"/>
-      {/* star tip */}
-      <ellipse cx="12" cy="2" rx="1.5" ry="1.5" fill="rgba(255,240,80,1)"/>
-      {/* stripe accents on cone */}
-      <rect x="10" y="6"  width="1" height="1" rx="0.3" fill="rgba(255,255,255,0.5)"/>
-      <rect x="13" y="6"  width="1" height="1" rx="0.3" fill="rgba(255,255,255,0.5)"/>
-      <rect x="9"  y="10" width="1" height="1" rx="0.3" fill="rgba(255,255,255,0.45)"/>
-      <rect x="14" y="10" width="1" height="1" rx="0.3" fill="rgba(255,255,255,0.45)"/>
-      {/* gem on brim */}
-      <ellipse cx="12" cy="15.5" rx="1.5" ry="1" fill="rgba(255,100,130,0.9)"/>
+      {/* cone tiers — same rect style as cake body/frosting */}
+      <rect x="11" y="2"  width="2"  height="2"  rx="0.5" fill="rgba(255,220,50,0.95)"  stroke="rgba(255,240,80,0.6)"  strokeWidth="0.5"/>
+      <rect x="10" y="4"  width="4"  height="2"  rx="0.5" fill="rgba(255,143,176,0.9)"  stroke="rgba(255,183,0,0.5)"   strokeWidth="0.5"/>
+      <rect x="9"  y="6"  width="6"  height="2"  rx="0.5" fill="rgba(167,139,250,0.9)"  stroke="rgba(196,181,253,0.5)"  strokeWidth="0.5"/>
+      <rect x="8"  y="8"  width="8"  height="2"  rx="0.5" fill="rgba(255,183,0,0.85)"   stroke="rgba(255,225,74,0.5)"   strokeWidth="0.5"/>
+      <rect x="7"  y="10" width="10" height="2"  rx="0.5" fill="rgba(106,199,255,0.85)" stroke="rgba(167,220,255,0.5)"  strokeWidth="0.5"/>
+      <rect x="6"  y="12" width="12" height="2"  rx="0.5" fill="rgba(255,143,176,0.9)"  stroke="rgba(255,183,0,0.5)"   strokeWidth="0.5"/>
+      {/* brim — same style as cake base rect */}
+      <rect x="4"  y="14" width="16" height="4"  rx="2"   fill="rgba(255,183,0,0.75)"   stroke="rgba(255,225,74,0.7)"   strokeWidth="1"/>
+      {/* candle on top — reuse exact candle style from cake button */}
+      <rect x="11" y="0"  width="2"  height="2"  rx="0.5" fill="rgba(167,139,250,0.9)"/>
+      {/* flame on candle — reuse ellipse from cake button */}
+      <ellipse cx="12" cy="0.8" rx="0.9" ry="1.1" fill="rgba(255,220,50,1)"/>
+      {/* sprinkle dots on brim — matching cake frosting dots */}
+      <rect x="7"  y="15.5" width="1.5" height="1" rx="0.3" fill="rgba(167,139,250,0.8)"/>
+      <rect x="10" y="16"   width="1.5" height="1" rx="0.3" fill="rgba(106,199,255,0.8)"/>
+      <rect x="14" y="15.5" width="1.5" height="1" rx="0.3" fill="rgba(255,220,50,0.9)"/>
+      <rect x="17" y="16"   width="1.5" height="1" rx="0.3" fill="rgba(255,143,176,0.9)"/>
     </svg>
   );
 }
