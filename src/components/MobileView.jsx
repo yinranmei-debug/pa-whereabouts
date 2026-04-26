@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Avatar from './Avatar';
 
 /**
@@ -35,15 +35,30 @@ const MobileView = ({
 
   const touchStartX = useRef(null);
   const touchStartY = useRef(null);
+  const dayStripRef = useRef(null);
+  const didAutoSelectToday = useRef(false);
   const [picker, setPicker] = useState(null);
   const [activePane, setActivePane] = useState('calendar');
   const [detailGroup, setDetailGroup] = useState(null);
   const [showBirthdaySheet, setShowBirthdaySheet] = useState(false);
+  const [showOnlineSheet, setShowOnlineSheet] = useState(false);
 
   const [selectedDs, setSelectedDs] = useState(() => {
     const inWeek = week.find(d => d.ds === realTodayDs);
     return inWeek ? realTodayDs : week[0]?.ds;
   });
+
+  useEffect(() => {
+    if (didAutoSelectToday.current || !realTodayDay) return;
+    didAutoSelectToday.current = true;
+    const frame = requestAnimationFrame(() => {
+      setSelectedDs(realTodayDs);
+      dayStripRef.current
+        ?.querySelector(`[data-day-ds="${realTodayDs}"]`)
+        ?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [realTodayDay, realTodayDs]);
 
   const handleTouchStart = (e) => {
     if (e.target.closest('[data-no-page-swipe]')) return;
@@ -163,17 +178,22 @@ const MobileView = ({
 
       {/* online status */}
       {onlineUsers.length > 0 && (
-        <div style={{
+        <button
+          onClick={() => setShowOnlineSheet(true)}
+          aria-label="Show online teammates"
+          style={{
           display:'flex',alignItems:'center',gap:6,
           padding:'4px 10px',margin:'8px 14px 0',marginLeft:'auto',width:'fit-content',
           background:'rgba(74,222,128,0.1)',
           border:'1px solid rgba(74,222,128,0.3)',
           borderRadius:100,
           fontSize:10,fontWeight:700,color:'#4ade80',letterSpacing:'0.06em',
+          fontFamily:"'Plus Jakarta Sans',sans-serif",
+          cursor:'pointer',
         }}>
           <span style={{width:6,height:6,borderRadius:'50%',background:'#4ade80',boxShadow:'0 0 8px #4ade80'}}/>
           {onlineUsers.length} ONLINE
-        </div>
+        </button>
       )}
 
       {/* week strip */}
@@ -203,6 +223,7 @@ const MobileView = ({
 
       <div
         data-no-page-swipe
+        ref={dayStripRef}
         className="mv-scroll"
         style={{
           padding:'0 12px 14px',
@@ -221,6 +242,7 @@ const MobileView = ({
           return (
             <div
               key={d.ds}
+              data-day-ds={d.ds}
               className="mv-day"
               onClick={()=>setSelectedDs(d.ds)}
               style={{
@@ -536,6 +558,57 @@ const MobileView = ({
                 <div style={{fontSize:24,color:'rgba(232,229,255,0.32)',paddingRight:2}}>›</div>
               </button>
             ))}
+          </div>
+        </div>
+      )}
+
+      {showOnlineSheet && (
+        <div
+          onClick={() => setShowOnlineSheet(false)}
+          style={{
+            position:'fixed',inset:0,zIndex:870,
+            background:'rgba(7,12,30,0.55)',backdropFilter:'blur(8px)',
+            animation:'mvFadeIn 0.18s ease',
+            display:'flex',alignItems:'flex-end',
+          }}
+        >
+          <div
+            onClick={e=>e.stopPropagation()}
+            style={{
+              width:'100%',maxHeight:'70vh',overflowY:'auto',
+              background:'linear-gradient(180deg,rgba(20,16,48,0.98),rgba(11,18,40,0.98))',
+              borderRadius:'24px 24px 0 0',
+              border:'1px solid rgba(74,222,128,0.24)',
+              borderBottom:'none',
+              padding:'12px 16px 30px',
+              boxShadow:'0 -16px 48px rgba(0,0,0,0.5)',
+              animation:'mvSheetUp 0.28s cubic-bezier(0.25,0.46,0.45,0.94)',
+            }}
+          >
+            <div style={{width:40,height:4,borderRadius:2,background:'rgba(74,222,128,0.28)',margin:'0 auto 14px'}}/>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,marginBottom:14}}>
+              <div>
+                <div style={{fontSize:10,fontWeight:900,letterSpacing:'0.14em',color:'rgba(74,222,128,0.74)',marginBottom:4}}>ONLINE NOW</div>
+                <div style={{fontSize:18,fontWeight:900,color:'#fff'}}>{onlineUsers.length} teammate{onlineUsers.length === 1 ? '' : 's'}</div>
+              </div>
+              <button onClick={() => setShowOnlineSheet(false)} style={{width:32,height:32,borderRadius:12,border:'1px solid rgba(74,222,128,0.18)',background:'rgba(255,255,255,0.06)',color:'rgba(232,229,255,0.78)',fontSize:17,cursor:'pointer'}}>×</button>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:8}}>
+              {onlineUsers.map(user => (
+                <div key={user.email || user.id || user.name} style={{
+                  display:'flex',alignItems:'center',gap:12,
+                  padding:'10px 8px',borderRadius:14,
+                  background:'rgba(255,255,255,0.04)',
+                  border:'1px solid rgba(74,222,128,0.12)',
+                }}>
+                  <Avatar name={user.name} photoUrl={staffPhotos[user.id]} size={34}/>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:14,fontWeight:800,color:'#fff',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{user.name}</div>
+                    <div style={{fontSize:11,color:'rgba(74,222,128,0.7)',marginTop:2}}>Online</div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
