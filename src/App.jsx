@@ -1595,7 +1595,7 @@ const handleCelebrate = (person) => {
                {week.map(d=>{
                     const bdayPeople = RAW_STAFF_LIST.filter(s => s.birthday === d.ds.slice(5));
                     return (
-                    <div key={d.ds} data-hdr-ds={d.ds} className={`tbl-hdr-daycol ${d.hol ? 'holiday-hdr' : d.isWE ? 'weekend-hdr' : ''}`} style={{position:'relative'}}>
+                    <div key={d.ds} data-hdr-ds={d.ds} className="tbl-hdr-daycol" style={{position:'relative'}}>
                      {bdayPeople.length > 0 && (
                         <div className="bday-hdr-cake" style={{position:'absolute',top:2,right:2,zIndex:20}}>
                           <svg width="26" height="26" viewBox="0 0 24 24" fill="none"

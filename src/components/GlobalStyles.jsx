@@ -306,19 +306,7 @@ const GlobalStyles = () => (
     }
     .tbl-hdr-row{display:grid;grid-template-columns:220px repeat(7,1fr);min-width:900px;padding:0 24px;}
     .tbl-hdr-namecol{background:transparent;}
-    .tbl-hdr-daycol{padding:16px 4px 12px;text-align:center;background:transparent;border-radius:14px 14px 0 0;transition:background 0.18s,border-color 0.18s,box-shadow 0.18s;}
-    .tbl-hdr-daycol.weekend-hdr{
-      background:linear-gradient(180deg,rgba(0,155,255,0.14),rgba(99,102,241,0.055));
-      border:1px solid rgba(0,155,255,0.16);
-      border-bottom:none;
-      box-shadow:inset 0 1px 0 rgba(255,255,255,0.045);
-    }
-    .tbl-hdr-daycol.holiday-hdr{
-      background:linear-gradient(180deg,rgba(255,0,120,0.15),rgba(217,70,239,0.06));
-      border:1px solid rgba(255,0,150,0.18);
-      border-bottom:none;
-      box-shadow:inset 0 1px 0 rgba(255,255,255,0.045);
-    }
+    .tbl-hdr-daycol{padding:16px 4px 12px;text-align:center;background:transparent;}
     .tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 24px 24px;}
     .main-tbl{width:100%;border-collapse:collapse;table-layout:fixed;min-width:900px;}
     .main-tbl td{padding:0;height:${ROW_H}px;vertical-align:top;}
