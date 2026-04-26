@@ -1498,6 +1498,7 @@ const handleCelebrate = (person) => {
         {isMobile ? (
          <MobileView
             onSwipeWeek={(dir) => navigateWeek(dir === 'next' ? 7 : -7)}
+            onToday={(ds) => navigateWeek(0, new Date(`${ds}T00:00:00`))}
             staffList={staffList}
             week={week}
             records={records}

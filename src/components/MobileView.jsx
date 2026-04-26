@@ -18,15 +18,16 @@ const MobileView = ({
   onlineUsers = [],
   bdaysThisWeek = [],
   onSwipeWeek,
+  onToday,
 }) => {
   const editableDays = week.filter(d => d.editable);
-  const todayDay     = editableDays.find(d => d.isToday);
 
   const fmt = d => {
     const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
     return `${y}-${m}-${dd}`;
   };
   const realTodayDs = fmt(new Date());
+  const realTodayDay = week.find(d => d.ds === realTodayDs);
 
   const swipeRef = useRef(null);
   const touchStartX = useRef(null);
@@ -37,12 +38,6 @@ const MobileView = ({
     const inWeek = week.find(d => d.ds === realTodayDs);
     return inWeek ? realTodayDs : editableDays[0]?.ds;
   });
-
-  useEffect(() => {
-    const inWeek = week.find(d => d.ds === realTodayDs);
-    if (inWeek) setSelectedDs(realTodayDs);
-    else setSelectedDs(editableDays[0]?.ds);
-  }, [week]);
 
   useEffect(() => { 
     swipeRef.current = onSwipeWeek; 
@@ -75,7 +70,58 @@ const MobileView = ({
     closePicker();
   };
 
-  const selectedDay = week.find(d => d.ds === selectedDs);
+  const selectedDsInWeek = week.some(d => d.ds === selectedDs);
+  const activeSelectedDs = selectedDsInWeek ? selectedDs : (realTodayDay ? realTodayDs : editableDays[0]?.ds);
+  const selectedDay = week.find(d => d.ds === activeSelectedDs);
+  const selectedIsRealToday = activeSelectedDs === realTodayDs;
+  const goToToday = () => {
+    setSelectedDs(realTodayDs);
+    onToday?.(realTodayDs);
+  };
+
+  const atOfficeConfig = {
+    label: 'At Office',
+    icon: '🏢',
+    color: 'rgba(106,199,255,0.95)',
+    bg: 'linear-gradient(135deg,rgba(0,155,255,0.16),rgba(0,229,168,0.12))',
+    border: 'rgba(0,155,255,0.55)',
+  };
+
+  const getInitials = name => name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part[0]?.toUpperCase())
+    .join('');
+
+  const teamRecap = realTodayDay
+    ? (() => {
+        const emptyGroups = {
+          OFFICE: { id: 'OFFICE', cfg: atOfficeConfig, people: [] },
+          ...Object.fromEntries(
+            Object.entries(STATUS_CONFIG).map(([sid, cfg]) => [sid, { id: sid, cfg, people: [] }])
+          ),
+        };
+
+        staffList
+          .filter(member => member.email?.toLowerCase() !== me)
+          .forEach(member => {
+            const shifts = ['AM', 'PM'].map(shift => ({
+              shift,
+              sid: records[`${member.id}-${realTodayDs}-${shift}`] || 'OFFICE',
+            }));
+
+            Object.keys(emptyGroups).forEach(sid => {
+              const memberShifts = shifts.filter(item => item.sid === sid).map(item => item.shift);
+              if (memberShifts.length > 0) {
+                emptyGroups[sid].people.push({ ...member, shifts: memberShifts });
+              }
+            });
+          });
+
+        return Object.values(emptyGroups).filter(group => group.people.length > 0);
+      })()
+    : [];
 
   return (
     <div
@@ -113,11 +159,11 @@ const MobileView = ({
       {/* week strip */}
       <div style={{padding:'14px 12px 6px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
         <div style={{fontSize:13,fontWeight:700,color:'rgba(232,229,255,0.7)',letterSpacing:'-0.01em'}}>
-          {selectedDs ? new Date(selectedDs+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : ''}
+          {activeSelectedDs ? new Date(activeSelectedDs+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : ''}
         </div>
-        {(!editableDays.find(d=>d.isToday) || selectedDs !== editableDays.find(d=>d.isToday)?.ds) && (
+        {!selectedIsRealToday && (
           <div
-            onClick={()=>setSelectedDs(editableDays.find(d=>d.isToday)?.ds || editableDays[0]?.ds)}
+            onClick={goToToday}
             style={{padding:'4px 12px',borderRadius:100,background:'linear-gradient(90deg,#009bff,#770bff)',fontSize:11,fontWeight:700,color:'#fff',cursor:'pointer',flexShrink:0}}
           >Today</div>
         )}
@@ -125,7 +171,7 @@ const MobileView = ({
 
       <div style={{padding:'0 12px 14px',display:'flex',gap:6}}>
         {editableDays.map(d => {
-          const isSel = d.ds === selectedDs;
+          const isSel = d.ds === activeSelectedDs;
           const am = myId && records[`${myId}-${d.ds}-AM`];
           const pm = myId && records[`${myId}-${d.ds}-PM`];
           const filled = (am?1:0) + (pm?1:0);
@@ -314,58 +360,77 @@ const MobileView = ({
       )}
 
       {/* team today */}
-      {todayDay && (() => {
-        const others = staffList.filter(m => m.email?.toLowerCase() !== me);
-        const peopleStatus = others.map(t => ({
-          ...t,
-          am: records[`${t.id}-${todayDay.ds}-AM`] || null,
-          pm: records[`${t.id}-${todayDay.ds}-PM`] || null,
-        })).filter(t => t.am || t.pm);
-
-        if (peopleStatus.length === 0) return null;
-
-        return (
-          <div style={{padding:'18px 14px 0'}}>
-            <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between',padding:'0 4px 10px'}}>
-              <div style={{fontSize:11,fontWeight:800,letterSpacing:'0.14em',color:'rgba(167,139,250,0.7)'}}>THE TEAM TODAY</div>
-              <div style={{fontSize:11,color:'rgba(232,229,255,0.4)',fontWeight:500}}>{peopleStatus.length} away</div>
-            </div>
-            <div style={{background:'linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.015))',border:'1px solid rgba(167,139,250,0.15)',borderRadius:18,padding:'4px 0',backdropFilter:'blur(12px)'}}>
-              {peopleStatus.map((t, i) => {
-                const amCfg = t.am && STATUS_CONFIG[t.am];
-                const pmCfg = t.pm && STATUS_CONFIG[t.pm];
-                return (
-                  <div key={t.id} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 14px',borderBottom:i<peopleStatus.length-1?'1px solid rgba(167,139,250,0.08)':'none'}}>
-                    <div style={{border:'2px solid rgba(167,139,250,0.2)',borderRadius:'50%'}}>
-                      <Avatar name={t.name} photoUrl={staffPhotos[t.id]} size={32}/>
-                    </div>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:13,fontWeight:700,color:'#fff',marginBottom:5}}>{t.name.split(' ')[0]}</div>
-                      <div style={{display:'flex',gap:6}}>
-                        {['AM','PM'].map(shift => {
-                          const sid = shift === 'AM' ? t.am : t.pm;
-                          const cfg = sid && STATUS_CONFIG[sid];
-                          return (
-                            <div key={shift} style={{
-                              display:'flex',alignItems:'center',gap:4,
-                              padding:'3px 8px',borderRadius:8,
-                              background: cfg ? cfg.bg : 'rgba(255,255,255,0.04)',
-                              border:`1px solid ${cfg ? (cfg.border||cfg.color) : 'rgba(167,139,250,0.12)'}`,
-                            }}>
-                              <span style={{fontSize:10}}>{cfg ? cfg.icon : '🏢'}</span>
-                              <span style={{fontSize:10,fontWeight:700,color:cfg?'#fff':'rgba(232,229,255,0.35)',letterSpacing:'0.04em'}}>{shift}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
+      {teamRecap.length > 0 && (
+        <div style={{padding:'18px 14px 0'}}>
+          <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between',padding:'0 4px 10px'}}>
+            <div style={{fontSize:11,fontWeight:800,letterSpacing:'0.14em',color:'rgba(167,139,250,0.7)'}}>THE TEAM TODAY</div>
+            <div style={{fontSize:11,color:'rgba(232,229,255,0.4)',fontWeight:500}}>{staffList.filter(m => m.email?.toLowerCase() !== me).length} people</div>
+          </div>
+          <div style={{display:'flex',flexDirection:'column',gap:10}}>
+            {teamRecap.map(group => (
+              <div key={group.id} style={{
+                display:'flex',alignItems:'center',gap:12,
+                background:'linear-gradient(135deg,rgba(255,255,255,0.07),rgba(255,255,255,0.025))',
+                border:`1px solid ${group.cfg.border || 'rgba(167,139,250,0.18)'}`,
+                borderRadius:18,padding:'13px 12px',
+                backdropFilter:'blur(12px)',
+                boxShadow:'inset 0 1px 0 rgba(255,255,255,0.05)',
+              }}>
+                <div style={{
+                  width:42,height:42,borderRadius:14,
+                  display:'flex',alignItems:'center',justifyContent:'center',
+                  background:group.cfg.bg,
+                  border:`1px solid ${group.cfg.border || group.cfg.color}`,
+                  fontSize:22,flexShrink:0,
+                }}>
+                  {group.cfg.icon}
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+                    <div style={{fontSize:15,fontWeight:800,color:'#fff',letterSpacing:'-0.01em'}}>{group.cfg.label}</div>
+                    <div style={{fontSize:10,fontWeight:800,color:group.cfg.color,padding:'2px 7px',borderRadius:100,background:'rgba(255,255,255,0.06)'}}>
+                      {group.people.length}
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                  <div style={{
+                    fontSize:12,color:'rgba(232,229,255,0.48)',
+                    whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',
+                    lineHeight:1.35,
+                  }}>
+                    {group.people.map(person => `${person.name.split(' ')[0]} ${person.shifts.join('/')}`).join(', ')}
+                  </div>
+                </div>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'flex-end',minWidth:74,flexShrink:0}}>
+                  {group.people.slice(0, 3).map((person, i) => (
+                    <div key={person.id} style={{
+                      width:32,height:32,borderRadius:'50%',
+                      marginLeft:i === 0 ? 0 : -9,
+                      display:'flex',alignItems:'center',justifyContent:'center',
+                      background:'linear-gradient(135deg,rgba(167,139,250,0.95),rgba(0,155,255,0.9))',
+                      border:'2px solid rgba(12,18,48,0.95)',
+                      color:'#fff',fontSize:10,fontWeight:900,
+                      boxShadow:'0 4px 10px rgba(0,0,0,0.28)',
+                    }}>
+                      {getInitials(person.name)}
+                    </div>
+                  ))}
+                  {group.people.length > 3 && (
+                    <div style={{
+                      width:32,height:32,borderRadius:'50%',marginLeft:-9,
+                      display:'flex',alignItems:'center',justifyContent:'center',
+                      background:'rgba(12,18,48,0.9)',
+                      border:'2px solid rgba(167,139,250,0.35)',
+                      color:'rgba(232,229,255,0.85)',fontSize:10,fontWeight:900,
+                    }}>
+                      +{group.people.length - 3}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
-        );
-      })()}
+        </div>
+      )}
 
       {/* status picker bottom sheet */}
       {picker && (() => {
