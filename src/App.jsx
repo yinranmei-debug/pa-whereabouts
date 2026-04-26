@@ -57,9 +57,24 @@ const fmt = date => {
   return `${y}-${m}-${d}`;
 };
 
-const currentYearRange = () => {
-  const y = new Date().getFullYear();
+const currentYearRange = (year = new Date().getFullYear()) => {
+  const y = year;
   return { start: `${y}-01-01`, end: `${y}-12-31`, year: y };
+};
+
+const birthdayWindow = (birthday, now = new Date()) => {
+  if (!birthday) return null;
+  const [month, day] = birthday.split('-').map(Number);
+  const today = fmt(now);
+  for (const year of [now.getFullYear(), now.getFullYear() - 1]) {
+    const bday = new Date(year, month - 1, day);
+    const dayAfter = new Date(bday);
+    dayAfter.setDate(dayAfter.getDate() + 1);
+    if (today === fmt(bday) || today === fmt(dayAfter)) {
+      return { year, isBirthday: today === fmt(bday), isDayAfter: today === fmt(dayAfter) };
+    }
+  }
+  return null;
 };
 
 const getDailyTips = () => {
@@ -368,12 +383,11 @@ export default function App() {
  // ── Cake throw history — load for birthday person ──────
   useEffect(() => {
     if (!account) return;
-    if (!hasBirthdayToday_hook) return;
     const realMe = getStaffEntry(account.username.toLowerCase());
     if (!realMe) return;
-    const bdayPerson = RAW_STAFF_LIST.find(s => s.birthday === todayMMDD_hook);
-    if (bdayPerson?.id !== realMe.id) return;
-    const { start, end } = currentYearRange();
+    const activeBirthdayWindow = birthdayWindow(realMe.birthday);
+    if (!activeBirthdayWindow) return;
+    const { start, end } = currentYearRange(activeBirthdayWindow.year);
     supabase.from('cake_throws')
       .select('*')
       .eq('birthday_id', realMe.id)
@@ -966,6 +980,7 @@ const handleCelebrate = (person) => {
     return `${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
   })();
   const hasBirthdayToday = RAW_STAFF_LIST.some(s => s.birthday === todayMMDD);
+  const myBirthdayWindow = meStaff ? birthdayWindow(meStaff.birthday) : null;
   // expose for sequence effect above — note: this runs after hooks so
   // the effect above reads stale on first render, which is fine since
   // birthdayDone starts false and the effect re-runs when it changes.
@@ -1041,9 +1056,7 @@ const handleCelebrate = (person) => {
         })()}
 
       {/* ── Cake throw history panel — only visible to birthday person ── */}
-        {showCakeHistory && cakeThrowHistory.length > 0 && meStaff && hasBirthdayToday && (() => {
-          const bdayPerson = RAW_STAFF_LIST.find(s => s.birthday === todayMMDD);
-          if (bdayPerson?.id !== meStaff.id) return null;
+        {showCakeHistory && cakeThrowHistory.length > 0 && meStaff && myBirthdayWindow && (() => {
           const CakeMiniIcon = ({ size = 18 }) => (
             <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
               <rect x="4" y="13" width="16" height="8" rx="2" fill="rgba(255,143,176,0.9)" stroke="rgba(255,183,0,0.7)" strokeWidth="1"/>
@@ -1054,13 +1067,22 @@ const handleCelebrate = (person) => {
               <ellipse cx="15" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,160,50,1)"/>
             </svg>
           );
+          const celebrationTitle = myBirthdayWindow.isDayAfter
+            ? "Don't miss your birthday celebration"
+            : "Your Birthday Celebration";
+          const celebrationHint = myBirthdayWindow.isDayAfter
+            ? "Here's the cake love you got yesterday."
+            : "Here's who celebrated you today.";
           return (
             <div style={{position:'fixed',right:20,top:NAV_H+16,zIndex:12100,width:330,fontFamily:"'Plus Jakarta Sans',sans-serif",animation:'dropIn 0.3s ease'}}>
               <div style={{background:'linear-gradient(135deg,rgba(13,8,40,0.97),rgba(20,10,55,0.97))',border:'1.5px solid rgba(255,183,0,0.3)',borderRadius:18,overflow:'hidden',boxShadow:'0 16px 48px rgba(0,0,0,0.5)'}}>
                 <div style={{padding:'12px 16px 10px',borderBottom:'1px solid rgba(255,183,0,0.12)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                   <div style={{display:'flex',alignItems:'center',gap:8}}>
                     <CakeMiniIcon size={19}/>
-                    <span style={{fontSize:13,fontWeight:800,color:'rgba(255,220,100,0.95)'}}>Your Birthday Celebration</span>
+                    <div style={{display:'flex',flexDirection:'column',gap:2,minWidth:0}}>
+                      <span style={{fontSize:13,fontWeight:800,color:'rgba(255,220,100,0.95)',lineHeight:1.2}}>{celebrationTitle}</span>
+                      <span style={{fontSize:10,color:'rgba(255,255,255,0.45)',lineHeight:1.25}}>{celebrationHint}</span>
+                    </div>
                   </div>
                   <button onClick={()=>setShowCakeHistory(false)} style={{background:'none',border:'none',color:'rgba(255,255,255,0.35)',cursor:'pointer',fontSize:13,padding:'0 2px',lineHeight:1}}>✕</button>
                 </div>
