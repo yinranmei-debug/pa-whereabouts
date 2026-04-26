@@ -492,7 +492,9 @@ export default function App() {
         glowLevelRef.current=Math.min(glowLevelRef.current+0.65,1);
       })
       .on('broadcast',{event:'pill-click'},({payload})=>{
-        registerBreachClick(payload.key, payload.userId, null);
+        if (!window.matchMedia('(max-width: 768px)').matches) {
+          registerBreachClick(payload.key, payload.userId, null);
+        }
       })
       .on('broadcast',{event:'birthday-cake'},({payload})=>{
         const realMyId = meStaffLocal?.id;
@@ -563,11 +565,8 @@ export default function App() {
   useEffect(() => {
     const fn = e => {
       const { type, text, ds } = e.detail;
-      const pr = chargingState?.progress || 0;
-      const intensity = pr < 30 ? 1 : Math.max(0, 1 - (pr - 30) / 70);
-      firePartyLocal(type, text, intensity);
+      firePartyLocal(type, text, 1);
       if (ds) { setBouncingDs(ds); setTimeout(()=>setBouncingDs(null), 700); }
-      glowLevelRef.current = Math.min(glowLevelRef.current + 0.65, 1);
     };
     document.addEventListener('mob-party', fn);
     return () => document.removeEventListener('mob-party', fn);
@@ -1596,7 +1595,7 @@ const handleCelebrate = (person) => {
                {week.map(d=>{
                     const bdayPeople = RAW_STAFF_LIST.filter(s => s.birthday === d.ds.slice(5));
                     return (
-                    <div key={d.ds} data-hdr-ds={d.ds} className="tbl-hdr-daycol" style={{position:'relative'}}>
+                    <div key={d.ds} data-hdr-ds={d.ds} className={`tbl-hdr-daycol ${d.hol ? 'holiday-hdr' : d.isWE ? 'weekend-hdr' : ''}`} style={{position:'relative'}}>
                      {bdayPeople.length > 0 && (
                         <div className="bday-hdr-cake" style={{position:'absolute',top:2,right:2,zIndex:20}}>
                           <svg width="26" height="26" viewBox="0 0 24 24" fill="none"

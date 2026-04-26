@@ -239,6 +239,16 @@ const MobileView = ({
           const am = myId && records[`${myId}-${d.ds}-AM`];
           const pm = myId && records[`${myId}-${d.ds}-PM`];
           const filled = (am?1:0) + (pm?1:0);
+          const dayBg = d.hol
+            ? 'linear-gradient(180deg,rgba(255,0,120,0.14),rgba(217,70,239,0.055))'
+            : d.isWE
+              ? 'linear-gradient(180deg,rgba(0,155,255,0.13),rgba(99,102,241,0.05))'
+              : 'rgba(255,255,255,0.03)';
+          const dayBorder = d.hol
+            ? '1px solid rgba(255,0,150,0.2)'
+            : d.isWE
+              ? '1px solid rgba(0,155,255,0.18)'
+              : '1px solid rgba(167,139,250,0.1)';
           return (
             <div
               key={d.ds}
@@ -253,10 +263,10 @@ const MobileView = ({
                 scrollSnapAlign:'start',
                 background: isSel
                   ? 'linear-gradient(180deg,rgba(0,155,255,0.18),rgba(119,11,255,0.18))'
-                  : d.editable ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.018)',
+                  : dayBg,
                 border: isSel
                   ? '1.5px solid rgba(167,139,250,0.5)'
-                  : '1px solid rgba(167,139,250,0.1)',
+                  : dayBorder,
                 boxShadow: isSel ? '0 4px 16px rgba(119,11,255,0.25)' : 'none',
                 transition:'all 0.18s',
               }}
