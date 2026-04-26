@@ -4,7 +4,7 @@ const STEPS = [
   {
     title: 'Install Whereabouts',
     icon: '🪐',
-    body: 'Add Whereabouts to your home screen for a full-screen app experience.',
+    body: 'Add Whereabouts to your phone home screen so it opens like a mobile app.',
   },
   {
     title: 'Move Through Weeks',
@@ -35,6 +35,7 @@ export default function MobileOnboarding({ onDone }) {
   const isLast = step === STEPS.length - 1;
   const isInstallStep = step === 0;
   const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
   useEffect(() => {
     const handlePrompt = event => {
@@ -115,21 +116,58 @@ export default function MobileOnboarding({ onDone }) {
         </div>
 
         {isInstallStep && (
-          <div style={{
-            marginTop:16,
-            padding:'12px 13px',
-            borderRadius:18,
-            border:'1px solid rgba(0,155,255,0.22)',
-            background:'rgba(0,155,255,0.07)',
-            color:'rgba(232,229,255,0.68)',
-            fontSize:12,
-            lineHeight:1.45,
-          }}>
-            {installPrompt
-              ? 'Your browser supports direct install. Tap Install below.'
-              : isiOS
-                ? 'On iPhone: tap Share, then Add to Home Screen.'
-                : 'If Install is not shown, open your browser menu and choose Install app or Add to Home screen.'}
+          <div style={{display:'flex',flexDirection:'column',gap:8,marginTop:16}}>
+            {isStandalone ? (
+              <div style={{
+                padding:'12px 13px',borderRadius:18,
+                border:'1px solid rgba(74,222,128,0.24)',
+                background:'rgba(74,222,128,0.08)',
+                color:'rgba(220,255,235,0.78)',fontSize:12,lineHeight:1.45,
+              }}>
+                You are already using the installed app view.
+              </div>
+            ) : (
+              <>
+                {(installPrompt && !isiOS) && (
+                  <div style={{
+                    padding:'12px 13px',borderRadius:18,
+                    border:'1px solid rgba(0,155,255,0.24)',
+                    background:'rgba(0,155,255,0.08)',
+                    color:'rgba(232,229,255,0.72)',fontSize:12,lineHeight:1.45,
+                  }}>
+                    Android Chrome can install directly. Tap Install below, then confirm.
+                  </div>
+                )}
+
+                {isiOS ? (
+                  <div style={{display:'grid',gap:8}}>
+                    {[
+                      ['1', 'Tap the Share button in Safari.'],
+                      ['2', 'Choose Add to Home Screen.'],
+                      ['3', 'Tap Add. Open Whereabouts from the new icon.'],
+                    ].map(([num, text]) => (
+                      <div key={num} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 11px',borderRadius:15,border:'1px solid rgba(0,155,255,0.18)',background:'rgba(0,155,255,0.065)'}}>
+                        <div style={{width:24,height:24,borderRadius:9,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,155,255,0.18)',color:'#fff',fontSize:11,fontWeight:900,flexShrink:0}}>{num}</div>
+                        <div style={{fontSize:12,color:'rgba(232,229,255,0.72)',lineHeight:1.35}}>{text}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : !installPrompt && (
+                  <div style={{display:'grid',gap:8}}>
+                    {[
+                      ['1', 'Open the browser menu.'],
+                      ['2', 'Choose Install app or Add to Home screen.'],
+                      ['3', 'Confirm Install, then launch it from your home screen.'],
+                    ].map(([num, text]) => (
+                      <div key={num} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 11px',borderRadius:15,border:'1px solid rgba(0,155,255,0.18)',background:'rgba(0,155,255,0.065)'}}>
+                        <div style={{width:24,height:24,borderRadius:9,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,155,255,0.18)',color:'#fff',fontSize:11,fontWeight:900,flexShrink:0}}>{num}</div>
+                        <div style={{fontSize:12,color:'rgba(232,229,255,0.72)',lineHeight:1.35}}>{text}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
 

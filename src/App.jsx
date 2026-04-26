@@ -35,6 +35,14 @@ const CHINA_EXTRA = ['jessica.rao@patternasia.com'];
 const isSuperUser  = em => SUPER_USERS.includes(em.toLowerCase());
 const isChinaExtra = em => CHINA_EXTRA.includes(em.toLowerCase());
 const getStaffEntry = em => RAW_STAFF_LIST.find(s => s.email.toLowerCase() === em.toLowerCase());
+const AUTH_SESSION_MS = 14 * 24 * 60 * 60 * 1000;
+const authSessionKey = email => `whereabouts-auth-session-${email.toLowerCase()}`;
+const rememberAuthSession = email => localStorage.setItem(authSessionKey(email), String(Date.now()));
+const clearAuthSession = email => localStorage.removeItem(authSessionKey(email));
+const hasFreshAuthSession = email => {
+  const saved = Number(localStorage.getItem(authSessionKey(email)) || 0);
+  return saved > 0 && Date.now() - saved < AUTH_SESSION_MS;
+};
 
 const ROW_H  = 140;
 const NAV_H  = 80;
@@ -339,13 +347,14 @@ export default function App() {
         if (res) {
           const em = res.account.username.toLowerCase();
           if (!isAllowed(em)) { setDenied(true); return; }
+          rememberAuthSession(em);
           msalInstance.setActiveAccount(res.account); setAccount(res.account); return;
         }
         const accs = msalInstance.getAllAccounts();
         if (accs.length > 0) {
           const em = accs[0].username.toLowerCase();
-          if (isAllowed(em)) { msalInstance.setActiveAccount(accs[0]); setAccount(accs[0]); }
-          else setDenied(true);
+          if (isAllowed(em) && hasFreshAuthSession(em)) { msalInstance.setActiveAccount(accs[0]); setAccount(accs[0]); }
+          else if (!isAllowed(em)) setDenied(true);
         }
       } catch(e) { setAuthError('Initialization failed. Please refresh.'); }
     })();
@@ -574,7 +583,10 @@ export default function App() {
   };
 
   const login  = async () => { setAuthError(null); try { await msalInstance.loginRedirect(loginRequest); } catch(e) { setAuthError(e.message); } };
-  const logout = () => msalInstance.logoutRedirect();
+  const logout = () => {
+    if (account?.username) clearAuthSession(account.username);
+    msalInstance.logoutRedirect();
+  };
 
   if (denied)   return <AccessDeniedScreen email={account?.username||''} onLogout={logout}/>;
   if (!account) return <LoginScreen onLogin={login} isInitializing={!isInit} error={authError}/>;

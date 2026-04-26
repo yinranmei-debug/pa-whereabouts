@@ -10,7 +10,7 @@ export const msalConfig = {
     redirectUri: "https://pa-whereabouts.vercel.app/",
   },
   cache: {
-    cacheLocation: "sessionStorage", 
+    cacheLocation: "localStorage",
     storeAuthStateInCookie: false,
   },
 };
