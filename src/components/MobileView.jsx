@@ -18,9 +18,6 @@ const MobileView = ({
   onlineUsers = [],
   bdaysThisWeek = [],
   onToday,
-  isDayMode = false,
-  onToggleTheme,
-  onBirthday,
   onWeekly,
   onHuddle,
   onLogout,
@@ -40,6 +37,7 @@ const MobileView = ({
   const [picker, setPicker] = useState(null);
   const [activePane, setActivePane] = useState('calendar');
   const [detailGroup, setDetailGroup] = useState(null);
+  const [showBirthdaySheet, setShowBirthdaySheet] = useState(false);
 
   const [selectedDs, setSelectedDs] = useState(() => {
     const inWeek = week.find(d => d.ds === realTodayDs);
@@ -78,17 +76,10 @@ const MobileView = ({
   const activeSelectedDs = selectedDsInWeek ? selectedDs : (realTodayDay ? realTodayDs : week[0]?.ds);
   const selectedDay = week.find(d => d.ds === activeSelectedDs);
   const selectedIsRealToday = activeSelectedDs === realTodayDs;
+  const selectedHolidayName = selectedDay?.hol;
   const goToToday = () => {
     setSelectedDs(realTodayDs);
     onToday?.(realTodayDs);
-  };
-
-  const atOfficeConfig = {
-    label: 'At Office',
-    icon: '🏢',
-    color: 'rgba(106,199,255,0.95)',
-    bg: 'linear-gradient(135deg,rgba(0,155,255,0.16),rgba(0,229,168,0.12))',
-    border: 'rgba(0,155,255,0.55)',
   };
 
   const getInitials = name => name
@@ -126,7 +117,6 @@ const MobileView = ({
 
   const detailPeople = detailGroup?.people || [];
   const nonMeTeamCount = staffList.filter(m => m.email?.toLowerCase() !== me).length;
-  const atOfficeCount = Math.max(0, nonMeTeamCount - new Set(teamRecap.flatMap(group => group.people.map(person => person.id))).size);
 
   return (
     <div
@@ -347,15 +337,31 @@ const MobileView = ({
       {selectedDay && myId && !selectedDay.editable && (
         <div style={{padding:'0 14px'}}>
           <div style={{
-            background:'linear-gradient(135deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018))',
-            border:'1px solid rgba(167,139,250,0.16)',
+            background:selectedHolidayName
+              ? 'linear-gradient(135deg,rgba(255,0,120,0.13),rgba(255,183,0,0.08))'
+              : 'linear-gradient(135deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018))',
+            border:selectedHolidayName ? '1px solid rgba(255,143,176,0.32)' : '1px solid rgba(167,139,250,0.16)',
             borderRadius:22,padding:18,
             color:'rgba(232,229,255,0.62)',
             backdropFilter:'blur(14px)',
+            display:'flex',alignItems:'center',gap:14,
           }}>
-            <div style={{fontSize:10,fontWeight:800,letterSpacing:'0.14em',color:'rgba(167,139,250,0.58)',marginBottom:6}}>YOUR STATUS</div>
-            <div style={{fontSize:18,fontWeight:800,color:'#fff',marginBottom:6}}>{selectedDay.dayName} {selectedDay.num}</div>
-            <div style={{fontSize:13,lineHeight:1.45}}>No work status is needed for this day.</div>
+            <div style={{
+              width:50,height:50,borderRadius:17,
+              display:'flex',alignItems:'center',justifyContent:'center',
+              background:selectedHolidayName ? 'rgba(255,143,176,0.16)' : 'rgba(167,139,250,0.1)',
+              border:selectedHolidayName ? '1px solid rgba(255,143,176,0.36)' : '1px solid rgba(167,139,250,0.18)',
+              fontSize:27,flexShrink:0,
+            }}>
+              {selectedHolidayName ? '🎉' : '☁️'}
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:10,fontWeight:800,letterSpacing:'0.14em',color:selectedHolidayName ? 'rgba(255,225,74,0.74)' : 'rgba(167,139,250,0.58)',marginBottom:6}}>YOUR STATUS</div>
+              <div style={{fontSize:18,fontWeight:800,color:'#fff',marginBottom:5,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                {selectedHolidayName || `${selectedDay.dayName} ${selectedDay.num}`}
+              </div>
+              <div style={{fontSize:13,lineHeight:1.45}}>No work status is needed for this day.</div>
+            </div>
           </div>
         </div>
       )}
@@ -427,34 +433,15 @@ const MobileView = ({
           </div>
           {teamRecap.length === 0 ? (
             <div style={{
-              background:'linear-gradient(135deg,rgba(0,155,255,0.08),rgba(0,229,168,0.06))',
-              border:'1px solid rgba(0,155,255,0.2)',
+              background:'linear-gradient(135deg,rgba(255,255,255,0.045),rgba(255,255,255,0.018))',
+              border:'1px solid rgba(167,139,250,0.14)',
               borderRadius:18,padding:'14px 14px',
               color:'rgba(232,229,255,0.62)',fontSize:13,
             }}>
-              Everyone is at office by default.
+              No team status updates for this day.
             </div>
           ) : (
           <div style={{display:'flex',flexDirection:'column',gap:10}}>
-            {atOfficeCount > 0 && (
-              <div style={{
-                display:'flex',alignItems:'center',gap:12,
-                background:'linear-gradient(135deg,rgba(255,255,255,0.045),rgba(255,255,255,0.018))',
-                border:'1px solid rgba(0,155,255,0.18)',
-                borderRadius:18,padding:'12px',
-                color:'rgba(232,229,255,0.55)',
-              }}>
-                <div style={{
-                  width:40,height:40,borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',
-                  background:atOfficeConfig.bg,border:`1px solid ${atOfficeConfig.border}`,fontSize:21,
-                }}>{atOfficeConfig.icon}</div>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:14,fontWeight:800,color:'rgba(232,229,255,0.82)'}}>At Office</div>
-                  <div style={{fontSize:12,marginTop:2}}>Default for people without updates</div>
-                </div>
-                <div style={{fontSize:12,fontWeight:900,color:atOfficeConfig.color}}>{atOfficeCount}</div>
-              </div>
-            )}
             {teamRecap.map(group => (
               <button key={group.id} onClick={() => setDetailGroup(group)} style={{
                 display:'flex',alignItems:'center',gap:12,
@@ -502,41 +489,99 @@ const MobileView = ({
         <div style={{padding:'18px 14px 0'}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
             <div>
-              <div style={{fontSize:10,fontWeight:800,letterSpacing:'0.14em',color:'rgba(167,139,250,0.65)',marginBottom:5}}>CONTROL PAGE</div>
+              <div style={{fontSize:10,fontWeight:800,letterSpacing:'0.14em',color:'rgba(167,139,250,0.65)',marginBottom:5}}>TEAM HUB</div>
               <div style={{fontSize:22,fontWeight:900,color:'#fff',letterSpacing:'-0.03em'}}>Quick Actions</div>
             </div>
             <button onClick={() => setActivePane('calendar')} style={{width:40,height:40,borderRadius:14,border:'1px solid rgba(167,139,250,0.22)',background:'rgba(255,255,255,0.055)',color:'#fff',fontSize:20,cursor:'pointer'}}>←</button>
           </div>
 
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-            <button onClick={onToggleTheme} style={{gridColumn:'1 / -1',display:'flex',alignItems:'center',gap:14,borderRadius:20,border:'1px solid rgba(167,139,250,0.24)',background:'linear-gradient(135deg,rgba(255,255,255,0.075),rgba(255,255,255,0.025))',padding:16,color:'#fff',fontFamily:"'Plus Jakarta Sans',sans-serif",cursor:'pointer',textAlign:'left'}}>
-              <div style={{width:48,height:48,borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(119,11,255,0.16)',fontSize:24}}>{isDayMode ? '☀️' : '🌙'}</div>
-              <div style={{flex:1}}>
-                <div style={{fontSize:16,fontWeight:900}}>{isDayMode ? 'Day Mode' : 'Night Mode'}</div>
-                <div style={{fontSize:12,color:'rgba(232,229,255,0.48)',marginTop:3}}>Tap to switch the theme</div>
-              </div>
-              <div style={{fontSize:22,color:'rgba(232,229,255,0.38)'}}>›</div>
-            </button>
-
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
             {[
-              { label:'Birthdays', icon:'🎂', hint:birthdayUnread ? 'New birthday note' : 'This week', badge:birthdayUnread ? '1' : '', onClick:onBirthday },
-              { label:'Team Notes', icon:'🗓️', hint:'Week updates', badge:weeklyUnreadCount || '', onClick:onWeekly },
-              { label:'Mind Huddle', icon:'🪐', hint:'Daily tip', badge:'', onClick:onHuddle },
-              { label:'Sign Out', icon:getInitials(accountName || meStaff?.name || 'Me'), hint:accountName || 'Account', badge:'', onClick:onLogout },
+              { label:'Weekly Team Update', icon:'🗓️', hint:'Open the team notes for this week', badge:weeklyUnreadCount || '', onClick:onWeekly, accent:'rgba(167,139,250,0.55)' },
+              { label:'Birthdays This Week', icon:'🎂', hint:bdaysThisWeek.length ? `${bdaysThisWeek.length} birthday${bdaysThisWeek.length === 1 ? '' : 's'} this week` : 'No birthdays this week', badge:birthdayUnread ? '1' : '', onClick:()=>setShowBirthdaySheet(true), accent:'rgba(255,183,0,0.5)' },
+              { label:'Mind Huddle', icon:'🪐', hint:'Open today’s huddle card', badge:'', onClick:onHuddle, accent:'rgba(139,92,246,0.55)' },
+              { label:'Sign Out', icon:getInitials(accountName || meStaff?.name || 'Me'), hint:accountName || 'Account', badge:'', onClick:onLogout, accent:'rgba(106,199,255,0.45)' },
             ].map(action => (
-              <button key={action.label} onClick={action.onClick} style={{minHeight:132,borderRadius:20,border:'1px solid rgba(167,139,250,0.2)',background:'linear-gradient(135deg,rgba(255,255,255,0.068),rgba(255,255,255,0.02))',color:'#fff',fontFamily:"'Plus Jakarta Sans',sans-serif",padding:14,cursor:'pointer',textAlign:'left',position:'relative',overflow:'hidden'}}>
+              <button key={action.label} onClick={action.onClick} style={{minHeight:92,borderRadius:22,border:`1px solid ${action.accent}`,background:'linear-gradient(135deg,rgba(255,255,255,0.074),rgba(255,255,255,0.022))',color:'#fff',fontFamily:"'Plus Jakarta Sans',sans-serif",padding:14,cursor:'pointer',textAlign:'left',position:'relative',overflow:'hidden',display:'flex',alignItems:'center',gap:14,boxShadow:'inset 0 1px 0 rgba(255,255,255,0.05)'}}>
                 {action.badge !== '' && (
                   <div style={{position:'absolute',top:10,right:10,minWidth:20,height:20,borderRadius:10,background:'linear-gradient(135deg,#009bff,#770bff)',fontSize:10,fontWeight:900,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 5px'}}>
                     {action.badge}
                   </div>
                 )}
-                <div style={{width:46,height:46,borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(15,10,40,0.72)',border:'1px solid rgba(167,139,250,0.18)',fontSize:action.label === 'Sign Out' ? 15 : 24,fontWeight:900,marginBottom:18}}>
+                <div style={{width:48,height:48,borderRadius:17,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(15,10,40,0.72)',border:'1px solid rgba(167,139,250,0.18)',fontSize:action.label === 'Sign Out' ? 15 : 24,fontWeight:900,flexShrink:0}}>
                   {action.icon}
                 </div>
-                <div style={{fontSize:15,fontWeight:900,letterSpacing:'-0.01em'}}>{action.label}</div>
-                <div style={{fontSize:11,color:'rgba(232,229,255,0.45)',marginTop:4,lineHeight:1.35}}>{action.hint}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:16,fontWeight:900,letterSpacing:'-0.01em'}}>{action.label}</div>
+                  <div style={{fontSize:12,color:'rgba(232,229,255,0.45)',marginTop:4,lineHeight:1.35}}>{action.hint}</div>
+                </div>
+                <div style={{fontSize:24,color:'rgba(232,229,255,0.32)',paddingRight:2}}>›</div>
               </button>
             ))}
+          </div>
+        </div>
+      )}
+
+      {showBirthdaySheet && (
+        <div
+          onClick={() => setShowBirthdaySheet(false)}
+          style={{
+            position:'fixed',inset:0,zIndex:875,
+            background:'rgba(7,12,30,0.55)',backdropFilter:'blur(8px)',
+            animation:'mvFadeIn 0.18s ease',
+            display:'flex',alignItems:'flex-end',
+          }}
+        >
+          <div
+            onClick={e=>e.stopPropagation()}
+            style={{
+              width:'100%',maxHeight:'78vh',overflowY:'auto',
+              background:'linear-gradient(180deg,rgba(20,16,48,0.98),rgba(11,18,40,0.98))',
+              borderRadius:'24px 24px 0 0',
+              border:'1px solid rgba(255,183,0,0.26)',
+              borderBottom:'none',
+              padding:'12px 16px 30px',
+              boxShadow:'0 -16px 48px rgba(0,0,0,0.5)',
+              animation:'mvSheetUp 0.28s cubic-bezier(0.25,0.46,0.45,0.94)',
+            }}
+          >
+            <div style={{width:40,height:4,borderRadius:2,background:'rgba(255,183,0,0.28)',margin:'0 auto 14px'}}/>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,marginBottom:14}}>
+              <div>
+                <div style={{fontSize:10,fontWeight:900,letterSpacing:'0.14em',color:'rgba(255,225,74,0.72)',marginBottom:4}}>BIRTHDAYS</div>
+                <div style={{fontSize:18,fontWeight:900,color:'#fff'}}>This Week</div>
+              </div>
+              <button onClick={() => setShowBirthdaySheet(false)} style={{width:32,height:32,borderRadius:12,border:'1px solid rgba(255,183,0,0.18)',background:'rgba(255,255,255,0.06)',color:'rgba(232,229,255,0.78)',fontSize:17,cursor:'pointer'}}>×</button>
+            </div>
+            {bdaysThisWeek.length === 0 ? (
+              <div style={{padding:'18px 14px',borderRadius:18,background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,183,0,0.16)',color:'rgba(232,229,255,0.62)',fontSize:13}}>
+                No birthdays this week.
+              </div>
+            ) : (
+              <div style={{display:'flex',flexDirection:'column',gap:9}}>
+                {bdaysThisWeek.map(b => {
+                  const person = staffList.find(s => s.id === b.id);
+                  if (!person) return null;
+                  return (
+                    <div key={`${b.id}-${b.ds}`} style={{
+                      display:'flex',alignItems:'center',gap:12,
+                      padding:'11px 10px',borderRadius:16,
+                      background:b.isToday ? 'linear-gradient(90deg,rgba(255,183,0,0.17),rgba(244,114,182,0.12))' : 'rgba(255,255,255,0.04)',
+                      border:b.isToday ? '1px solid rgba(255,183,0,0.38)' : '1px solid rgba(255,183,0,0.12)',
+                    }}>
+                      <Avatar name={person.name} photoUrl={staffPhotos[person.id]} size={36}/>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:14,fontWeight:900,color:'#fff',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{person.name}</div>
+                        <div style={{fontSize:11,color:b.isToday ? '#fde68a' : 'rgba(232,229,255,0.46)',marginTop:2}}>
+                          {b.isToday ? 'Today' : b.dayName}
+                        </div>
+                      </div>
+                      <div style={{fontSize:20}}>🎂</div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       )}

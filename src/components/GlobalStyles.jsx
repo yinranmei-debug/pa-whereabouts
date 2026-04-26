@@ -647,6 +647,7 @@ const GlobalStyles = () => (
     .mh-star-1,.mh-star-2,.mh-star-3{transform-box:fill-box;transform-origin:center;}
     .mh-flame{transform-box:fill-box;transform-origin:bottom center;}
     @media(max-width:768px){
+      .nav,.toolbar{display:none !important;}
       .nav,.toolbar,.legend{padding-left:12px;padding-right:12px;}
       .tbl-outer{padding:8px 8px 48px;}
       .nav-logo-text{font-size:15px;margin-right:8px;}
