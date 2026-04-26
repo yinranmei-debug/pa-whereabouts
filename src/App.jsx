@@ -16,6 +16,7 @@ import AccessDeniedScreen from './components/AccessDeniedScreen';
 import EmojiFlyLayer      from './components/EmojiFlyLayer';
 import TourOverlay        from './components/TourOverlay';
 import MobileView         from './components/MobileView';
+import MobileOnboarding   from './components/MobileOnboarding';
 import { useDimensionalBreach }   from './hooks/useDimensionalBreach';
 import DimensionalBreachOverlay   from './components/DimensionalBreachOverlay';
 import BananaEasterEgg from './components/BananaEasterEgg';
@@ -190,6 +191,7 @@ export default function App() {
   const [tipSlideClass,   setTipSlideClass]   = useState('tip-slide-in-right');
   const [tipVisible,      setTipVisible]      = useState(true);
   const [showTour,        setShowTour]        = useState(false);
+  const [showMobileOnboarding, setShowMobileOnboarding] = useState(false);
   const [showWelcome,     setShowWelcome]     = useState(false);
   const [isMobile,        setIsMobile]        = useState(() => window.matchMedia('(max-width: 768px)').matches);
   const [hoveredPill,     setHoveredPill]     = useState(null);
@@ -375,8 +377,16 @@ export default function App() {
   useEffect(() => {
     if (!account) return;
     const tourKey = `tour-done-${account.username}`;
+    const mobileTourKey = `mobile-tour-done-${account.username}`;
+    if (isMobile) {
+      setShowTour(false);
+      if (!localStorage.getItem(mobileTourKey)) {
+        setShowMobileOnboarding(true);
+        return;
+      }
+    }
     // DEV: always show tour on refresh — remove `true ||` when done testing
-   if (!localStorage.getItem(tourKey)) {
+   if (!isMobile && !localStorage.getItem(tourKey)) {
       setShowTour(true);
       return;
     }
@@ -394,7 +404,7 @@ export default function App() {
         return () => clearTimeout(t);
       }
     }
-  }, [account, birthdayDone, hasBirthdayToday_hook]);
+  }, [account, birthdayDone, hasBirthdayToday_hook, isMobile]);
 
   useEffect(() => {
     if (!account) return;
@@ -1814,6 +1824,14 @@ const handleCelebrate = (person) => {
         />
       )}
       {showWelcome && <WelcomeConfetti />}
+      {showMobileOnboarding && (
+        <MobileOnboarding
+          onDone={() => {
+            localStorage.setItem(`mobile-tour-done-${account.username}`, '1');
+            setShowMobileOnboarding(false);
+          }}
+        />
+      )}
     </>
   );
 }

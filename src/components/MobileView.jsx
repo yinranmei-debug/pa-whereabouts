@@ -17,6 +17,7 @@ const MobileView = ({
   staffPhotos = {},
   onlineUsers = [],
   bdaysThisWeek = [],
+  onSwipeWeek,
   onToday,
   onWeekly,
   onHuddle,
@@ -80,6 +81,11 @@ const MobileView = ({
   const goToToday = () => {
     setSelectedDs(realTodayDs);
     onToday?.(realTodayDs);
+  };
+
+  const moveWeek = dir => {
+    onSwipeWeek?.(dir);
+    setSelectedDs(null);
   };
 
   const getInitials = name => name
@@ -172,8 +178,20 @@ const MobileView = ({
 
       {/* week strip */}
       <div style={{padding:'14px 12px 6px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
-        <div style={{fontSize:13,fontWeight:700,color:'rgba(232,229,255,0.7)',letterSpacing:'-0.01em'}}>
-          {activeSelectedDs ? new Date(activeSelectedDs+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : ''}
+        <div style={{display:'flex',alignItems:'center',gap:8,minWidth:0}}>
+          <button
+            onClick={() => moveWeek('prev')}
+            aria-label="Previous week"
+            style={{width:30,height:30,borderRadius:11,border:'1px solid rgba(167,139,250,0.2)',background:'rgba(255,255,255,0.045)',color:'rgba(232,229,255,0.78)',fontSize:22,lineHeight:1,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',padding:0,flexShrink:0}}
+          >‹</button>
+          <div style={{fontSize:13,fontWeight:700,color:'rgba(232,229,255,0.7)',letterSpacing:'-0.01em',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+            {activeSelectedDs ? new Date(activeSelectedDs+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : ''}
+          </div>
+          <button
+            onClick={() => moveWeek('next')}
+            aria-label="Next week"
+            style={{width:30,height:30,borderRadius:11,border:'1px solid rgba(167,139,250,0.2)',background:'rgba(255,255,255,0.045)',color:'rgba(232,229,255,0.78)',fontSize:22,lineHeight:1,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',padding:0,flexShrink:0}}
+          >›</button>
         </div>
         {!selectedIsRealToday && (
           <div

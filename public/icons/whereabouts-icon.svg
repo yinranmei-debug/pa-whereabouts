@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Whereabouts app icon">
+  <defs>
+    <radialGradient id="space" cx="34%" cy="28%" r="78%">
+      <stop offset="0%" stop-color="#24367d"/>
+      <stop offset="42%" stop-color="#123d73"/>
+      <stop offset="72%" stop-color="#20135e"/>
+      <stop offset="100%" stop-color="#07091f"/>
+    </radialGradient>
+    <radialGradient id="aurora" cx="68%" cy="64%" r="54%">
+      <stop offset="0%" stop-color="#00e5c7" stop-opacity="0.42"/>
+      <stop offset="46%" stop-color="#009bff" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#770bff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="planet" cx="35%" cy="32%" r="68%">
+      <stop offset="0%" stop-color="#e9ddff"/>
+      <stop offset="34%" stop-color="#a78bfa"/>
+      <stop offset="68%" stop-color="#6d28d9"/>
+      <stop offset="100%" stop-color="#2e1065"/>
+    </radialGradient>
+    <linearGradient id="ring" x1="70" y1="230" x2="442" y2="286">
+      <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.32"/>
+      <stop offset="42%" stop-color="#c4b5fd" stop-opacity="0.92"/>
+      <stop offset="100%" stop-color="#770bff" stop-opacity="0.42"/>
+    </linearGradient>
+    <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="16" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.37 0 0 0 0 0.14 0 0 0 0 1 0 0 0 0.75 0"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <clipPath id="round">
+      <rect width="512" height="512" rx="112" ry="112"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#round)">
+    <rect width="512" height="512" fill="url(#space)"/>
+    <rect width="512" height="512" fill="url(#aurora)"/>
+    <circle cx="104" cy="84" r="2.8" fill="#d8f3ff" opacity="0.75"/>
+    <circle cx="398" cy="94" r="2.2" fill="#c4b5fd" opacity="0.72"/>
+    <circle cx="422" cy="338" r="2.6" fill="#d8f3ff" opacity="0.62"/>
+    <circle cx="124" cy="370" r="2.1" fill="#c4b5fd" opacity="0.55"/>
+    <circle cx="316" cy="408" r="1.8" fill="#d8f3ff" opacity="0.7"/>
+    <circle cx="72" cy="254" r="1.9" fill="#d8f3ff" opacity="0.5"/>
+    <circle cx="250" cy="120" r="1.6" fill="#c4b5fd" opacity="0.52"/>
+
+    <g filter="url(#softGlow)">
+      <ellipse cx="256" cy="262" rx="178" ry="52" fill="none" stroke="url(#ring)" stroke-width="19"/>
+      <ellipse cx="256" cy="262" rx="178" ry="52" fill="none" stroke="#e9ddff" stroke-width="4" opacity="0.28"/>
+      <circle cx="256" cy="256" r="92" fill="url(#planet)"/>
+      <path d="M184 250c40 18 104 24 156 7" fill="none" stroke="#d8b4fe" stroke-width="10" opacity="0.28" stroke-linecap="round"/>
+      <circle cx="226" cy="218" r="14" fill="#ffffff" opacity="0.22"/>
+    </g>
+  </g>
+</svg>
