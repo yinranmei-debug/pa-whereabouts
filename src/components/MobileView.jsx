@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import Avatar from './Avatar';
 
 /**
@@ -17,11 +17,17 @@ const MobileView = ({
   staffPhotos = {},
   onlineUsers = [],
   bdaysThisWeek = [],
-  onSwipeWeek,
   onToday,
+  isDayMode = false,
+  onToggleTheme,
+  onBirthday,
+  onWeekly,
+  onHuddle,
+  onLogout,
+  accountName = '',
+  weeklyUnreadCount = 0,
+  birthdayUnread = false,
 }) => {
-  const editableDays = week.filter(d => d.editable);
-
   const fmt = d => {
     const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
     return `${y}-${m}-${dd}`;
@@ -29,21 +35,19 @@ const MobileView = ({
   const realTodayDs = fmt(new Date());
   const realTodayDay = week.find(d => d.ds === realTodayDs);
 
-  const swipeRef = useRef(null);
   const touchStartX = useRef(null);
   const touchStartY = useRef(null);
   const [picker, setPicker] = useState(null);
+  const [activePane, setActivePane] = useState('calendar');
+  const [detailGroup, setDetailGroup] = useState(null);
 
   const [selectedDs, setSelectedDs] = useState(() => {
     const inWeek = week.find(d => d.ds === realTodayDs);
-    return inWeek ? realTodayDs : editableDays[0]?.ds;
+    return inWeek ? realTodayDs : week[0]?.ds;
   });
 
-  useEffect(() => { 
-    swipeRef.current = onSwipeWeek; 
-  }, [onSwipeWeek]);
-
   const handleTouchStart = (e) => {
+    if (e.target.closest('[data-no-page-swipe]')) return;
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
   };
@@ -53,8 +57,8 @@ const MobileView = ({
     const dx = e.changedTouches[0].clientX - touchStartX.current;
     const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current);
     if (Math.abs(dx) > 60 && dy < 40) {
-      if (dx < 0) swipeRef.current?.('next');
-      else swipeRef.current?.('prev');
+      if (dx < 0) setActivePane('tools');
+      else setActivePane('calendar');
     }
     touchStartX.current = null;
   };
@@ -71,7 +75,7 @@ const MobileView = ({
   };
 
   const selectedDsInWeek = week.some(d => d.ds === selectedDs);
-  const activeSelectedDs = selectedDsInWeek ? selectedDs : (realTodayDay ? realTodayDs : editableDays[0]?.ds);
+  const activeSelectedDs = selectedDsInWeek ? selectedDs : (realTodayDay ? realTodayDs : week[0]?.ds);
   const selectedDay = week.find(d => d.ds === activeSelectedDs);
   const selectedIsRealToday = activeSelectedDs === realTodayDs;
   const goToToday = () => {
@@ -94,22 +98,19 @@ const MobileView = ({
     .map(part => part[0]?.toUpperCase())
     .join('');
 
-  const teamRecap = realTodayDay
+  const teamRecap = selectedDay
     ? (() => {
-        const emptyGroups = {
-          OFFICE: { id: 'OFFICE', cfg: atOfficeConfig, people: [] },
-          ...Object.fromEntries(
-            Object.entries(STATUS_CONFIG).map(([sid, cfg]) => [sid, { id: sid, cfg, people: [] }])
-          ),
-        };
+        const emptyGroups = Object.fromEntries(
+          Object.entries(STATUS_CONFIG).map(([sid, cfg]) => [sid, { id: sid, cfg, people: [] }])
+        );
 
         staffList
           .filter(member => member.email?.toLowerCase() !== me)
           .forEach(member => {
             const shifts = ['AM', 'PM'].map(shift => ({
               shift,
-              sid: records[`${member.id}-${realTodayDs}-${shift}`] || 'OFFICE',
-            }));
+              sid: records[`${member.id}-${selectedDay.ds}-${shift}`] || null,
+            })).filter(item => item.sid && emptyGroups[item.sid]);
 
             Object.keys(emptyGroups).forEach(sid => {
               const memberShifts = shifts.filter(item => item.sid === sid).map(item => item.shift);
@@ -122,6 +123,10 @@ const MobileView = ({
         return Object.values(emptyGroups).filter(group => group.people.length > 0);
       })()
     : [];
+
+  const detailPeople = detailGroup?.people || [];
+  const nonMeTeamCount = staffList.filter(m => m.email?.toLowerCase() !== me).length;
+  const atOfficeCount = Math.max(0, nonMeTeamCount - new Set(teamRecap.flatMap(group => group.people.map(person => person.id))).size);
 
   return (
     <div
@@ -139,7 +144,26 @@ const MobileView = ({
         .mv-tile:active { transform:scale(0.97); }
         .mv-day:active  { transform:scale(0.94); }
         .mv-opt:active  { transform:scale(0.92); }
+        .mv-scroll::-webkit-scrollbar { display:none; }
       `}</style>
+
+      <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:7,padding:'8px 0 2px'}}>
+        {['calendar','tools'].map(pane => (
+          <button
+            key={pane}
+            onClick={() => setActivePane(pane)}
+            aria-label={pane === 'calendar' ? 'Calendar page' : 'Tools page'}
+            style={{
+              width:activePane === pane ? 22 : 7,height:7,borderRadius:10,border:'none',
+              background:activePane === pane ? 'linear-gradient(90deg,#009bff,#770bff)' : 'rgba(167,139,250,0.28)',
+              padding:0,cursor:'pointer',transition:'all 0.2s',
+            }}
+          />
+        ))}
+      </div>
+
+      {activePane === 'calendar' ? (
+        <>
 
       {/* online status */}
       {onlineUsers.length > 0 && (
@@ -169,8 +193,19 @@ const MobileView = ({
         )}
       </div>
 
-      <div style={{padding:'0 12px 14px',display:'flex',gap:6}}>
-        {editableDays.map(d => {
+      <div
+        data-no-page-swipe
+        className="mv-scroll"
+        style={{
+          padding:'0 12px 14px',
+          display:'flex',gap:8,
+          overflowX:'auto',
+          WebkitOverflowScrolling:'touch',
+          scrollbarWidth:'none',
+          scrollSnapType:'x mandatory',
+        }}
+      >
+        {week.map(d => {
           const isSel = d.ds === activeSelectedDs;
           const am = myId && records[`${myId}-${d.ds}-AM`];
           const pm = myId && records[`${myId}-${d.ds}-PM`];
@@ -181,13 +216,14 @@ const MobileView = ({
               className="mv-day"
               onClick={()=>setSelectedDs(d.ds)}
               style={{
-                flex:1, minWidth:0,
+                flex:'0 0 27%', minWidth:96, maxWidth:112,
                 padding:'10px 4px 8px',borderRadius:14,
                 display:'flex',flexDirection:'column',alignItems:'center',gap:4,
                 cursor:'pointer',
+                scrollSnapAlign:'start',
                 background: isSel
                   ? 'linear-gradient(180deg,rgba(0,155,255,0.18),rgba(119,11,255,0.18))'
-                  : 'rgba(255,255,255,0.03)',
+                  : d.editable ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.018)',
                 border: isSel
                   ? '1.5px solid rgba(167,139,250,0.5)'
                   : '1px solid rgba(167,139,250,0.1)',
@@ -214,13 +250,18 @@ const MobileView = ({
                 <div style={{width:5,height:5,borderRadius:'50%',background:filled>=1?'#4ade80':'rgba(167,139,250,0.2)'}}/>
                 <div style={{width:5,height:5,borderRadius:'50%',background:filled>=2?'#4ade80':'rgba(167,139,250,0.2)'}}/>
               </div>
+              {!d.editable && (
+                <div style={{fontSize:8,fontWeight:800,letterSpacing:'0.08em',color:'rgba(232,229,255,0.26)',height:8}}>
+                  {d.hol ? 'HOL' : 'WEEKEND'}
+                </div>
+              )}
             </div>
           );
         })}
       </div>
 
       {/* my day card */}
-      {selectedDay && myId && (
+      {selectedDay && myId && selectedDay.editable && (
         <div style={{padding:'0 14px'}}>
           <div style={{
             background:'linear-gradient(135deg,rgba(255,255,255,0.07),rgba(255,255,255,0.02))',
@@ -303,6 +344,22 @@ const MobileView = ({
         </div>
       )}
 
+      {selectedDay && myId && !selectedDay.editable && (
+        <div style={{padding:'0 14px'}}>
+          <div style={{
+            background:'linear-gradient(135deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018))',
+            border:'1px solid rgba(167,139,250,0.16)',
+            borderRadius:22,padding:18,
+            color:'rgba(232,229,255,0.62)',
+            backdropFilter:'blur(14px)',
+          }}>
+            <div style={{fontSize:10,fontWeight:800,letterSpacing:'0.14em',color:'rgba(167,139,250,0.58)',marginBottom:6}}>YOUR STATUS</div>
+            <div style={{fontSize:18,fontWeight:800,color:'#fff',marginBottom:6}}>{selectedDay.dayName} {selectedDay.num}</div>
+            <div style={{fontSize:13,lineHeight:1.45}}>No work status is needed for this day.</div>
+          </div>
+        </div>
+      )}
+
       {/* birthdays this week */}
       {bdaysThisWeek.length > 0 && (
         <div style={{padding:'18px 14px 0'}}>
@@ -359,22 +416,54 @@ const MobileView = ({
         </div>
       )}
 
-      {/* team today */}
-      {teamRecap.length > 0 && (
+      {/* team by selected day */}
+      {selectedDay && (
         <div style={{padding:'18px 14px 0'}}>
           <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between',padding:'0 4px 10px'}}>
-            <div style={{fontSize:11,fontWeight:800,letterSpacing:'0.14em',color:'rgba(167,139,250,0.7)'}}>THE TEAM TODAY</div>
-            <div style={{fontSize:11,color:'rgba(232,229,255,0.4)',fontWeight:500}}>{staffList.filter(m => m.email?.toLowerCase() !== me).length} people</div>
+            <div style={{fontSize:11,fontWeight:800,letterSpacing:'0.14em',color:'rgba(167,139,250,0.7)'}}>
+              THE TEAM · {selectedDay.dayName?.toUpperCase()} {selectedDay.num}
+            </div>
+            <div style={{fontSize:11,color:'rgba(232,229,255,0.4)',fontWeight:500}}>{nonMeTeamCount} people</div>
           </div>
+          {teamRecap.length === 0 ? (
+            <div style={{
+              background:'linear-gradient(135deg,rgba(0,155,255,0.08),rgba(0,229,168,0.06))',
+              border:'1px solid rgba(0,155,255,0.2)',
+              borderRadius:18,padding:'14px 14px',
+              color:'rgba(232,229,255,0.62)',fontSize:13,
+            }}>
+              Everyone is at office by default.
+            </div>
+          ) : (
           <div style={{display:'flex',flexDirection:'column',gap:10}}>
+            {atOfficeCount > 0 && (
+              <div style={{
+                display:'flex',alignItems:'center',gap:12,
+                background:'linear-gradient(135deg,rgba(255,255,255,0.045),rgba(255,255,255,0.018))',
+                border:'1px solid rgba(0,155,255,0.18)',
+                borderRadius:18,padding:'12px',
+                color:'rgba(232,229,255,0.55)',
+              }}>
+                <div style={{
+                  width:40,height:40,borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',
+                  background:atOfficeConfig.bg,border:`1px solid ${atOfficeConfig.border}`,fontSize:21,
+                }}>{atOfficeConfig.icon}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:14,fontWeight:800,color:'rgba(232,229,255,0.82)'}}>At Office</div>
+                  <div style={{fontSize:12,marginTop:2}}>Default for people without updates</div>
+                </div>
+                <div style={{fontSize:12,fontWeight:900,color:atOfficeConfig.color}}>{atOfficeCount}</div>
+              </div>
+            )}
             {teamRecap.map(group => (
-              <div key={group.id} style={{
+              <button key={group.id} onClick={() => setDetailGroup(group)} style={{
                 display:'flex',alignItems:'center',gap:12,
                 background:'linear-gradient(135deg,rgba(255,255,255,0.07),rgba(255,255,255,0.025))',
                 border:`1px solid ${group.cfg.border || 'rgba(167,139,250,0.18)'}`,
                 borderRadius:18,padding:'13px 12px',
                 backdropFilter:'blur(12px)',
                 boxShadow:'inset 0 1px 0 rgba(255,255,255,0.05)',
+                width:'100%',textAlign:'left',cursor:'pointer',fontFamily:"'Plus Jakarta Sans',sans-serif",
               }}>
                 <div style={{
                   width:42,height:42,borderRadius:14,
@@ -397,37 +486,126 @@ const MobileView = ({
                     whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',
                     lineHeight:1.35,
                   }}>
-                    {group.people.map(person => `${person.name.split(' ')[0]} ${person.shifts.join('/')}`).join(', ')}
+                    Tap to view AM / PM details
                   </div>
                 </div>
-                <div style={{display:'flex',alignItems:'center',justifyContent:'flex-end',minWidth:74,flexShrink:0}}>
-                  {group.people.slice(0, 3).map((person, i) => (
-                    <div key={person.id} style={{
-                      width:32,height:32,borderRadius:'50%',
-                      marginLeft:i === 0 ? 0 : -9,
-                      display:'flex',alignItems:'center',justifyContent:'center',
-                      background:'linear-gradient(135deg,rgba(167,139,250,0.95),rgba(0,155,255,0.9))',
-                      border:'2px solid rgba(12,18,48,0.95)',
-                      color:'#fff',fontSize:10,fontWeight:900,
-                      boxShadow:'0 4px 10px rgba(0,0,0,0.28)',
-                    }}>
-                      {getInitials(person.name)}
-                    </div>
-                  ))}
-                  {group.people.length > 3 && (
-                    <div style={{
-                      width:32,height:32,borderRadius:'50%',marginLeft:-9,
-                      display:'flex',alignItems:'center',justifyContent:'center',
-                      background:'rgba(12,18,48,0.9)',
-                      border:'2px solid rgba(167,139,250,0.35)',
-                      color:'rgba(232,229,255,0.85)',fontSize:10,fontWeight:900,
-                    }}>
-                      +{group.people.length - 3}
-                    </div>
-                  )}
+                <div style={{fontSize:24,color:'rgba(232,229,255,0.36)',paddingRight:2}}>›</div>
+              </button>
+            ))}
+          </div>
+          )}
+        </div>
+      )}
+
+        </>
+      ) : (
+        <div style={{padding:'18px 14px 0'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
+            <div>
+              <div style={{fontSize:10,fontWeight:800,letterSpacing:'0.14em',color:'rgba(167,139,250,0.65)',marginBottom:5}}>CONTROL PAGE</div>
+              <div style={{fontSize:22,fontWeight:900,color:'#fff',letterSpacing:'-0.03em'}}>Quick Actions</div>
+            </div>
+            <button onClick={() => setActivePane('calendar')} style={{width:40,height:40,borderRadius:14,border:'1px solid rgba(167,139,250,0.22)',background:'rgba(255,255,255,0.055)',color:'#fff',fontSize:20,cursor:'pointer'}}>←</button>
+          </div>
+
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+            <button onClick={onToggleTheme} style={{gridColumn:'1 / -1',display:'flex',alignItems:'center',gap:14,borderRadius:20,border:'1px solid rgba(167,139,250,0.24)',background:'linear-gradient(135deg,rgba(255,255,255,0.075),rgba(255,255,255,0.025))',padding:16,color:'#fff',fontFamily:"'Plus Jakarta Sans',sans-serif",cursor:'pointer',textAlign:'left'}}>
+              <div style={{width:48,height:48,borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(119,11,255,0.16)',fontSize:24}}>{isDayMode ? '☀️' : '🌙'}</div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:16,fontWeight:900}}>{isDayMode ? 'Day Mode' : 'Night Mode'}</div>
+                <div style={{fontSize:12,color:'rgba(232,229,255,0.48)',marginTop:3}}>Tap to switch the theme</div>
+              </div>
+              <div style={{fontSize:22,color:'rgba(232,229,255,0.38)'}}>›</div>
+            </button>
+
+            {[
+              { label:'Birthdays', icon:'🎂', hint:birthdayUnread ? 'New birthday note' : 'This week', badge:birthdayUnread ? '1' : '', onClick:onBirthday },
+              { label:'Team Notes', icon:'🗓️', hint:'Week updates', badge:weeklyUnreadCount || '', onClick:onWeekly },
+              { label:'Mind Huddle', icon:'🪐', hint:'Daily tip', badge:'', onClick:onHuddle },
+              { label:'Sign Out', icon:getInitials(accountName || meStaff?.name || 'Me'), hint:accountName || 'Account', badge:'', onClick:onLogout },
+            ].map(action => (
+              <button key={action.label} onClick={action.onClick} style={{minHeight:132,borderRadius:20,border:'1px solid rgba(167,139,250,0.2)',background:'linear-gradient(135deg,rgba(255,255,255,0.068),rgba(255,255,255,0.02))',color:'#fff',fontFamily:"'Plus Jakarta Sans',sans-serif",padding:14,cursor:'pointer',textAlign:'left',position:'relative',overflow:'hidden'}}>
+                {action.badge !== '' && (
+                  <div style={{position:'absolute',top:10,right:10,minWidth:20,height:20,borderRadius:10,background:'linear-gradient(135deg,#009bff,#770bff)',fontSize:10,fontWeight:900,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 5px'}}>
+                    {action.badge}
+                  </div>
+                )}
+                <div style={{width:46,height:46,borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(15,10,40,0.72)',border:'1px solid rgba(167,139,250,0.18)',fontSize:action.label === 'Sign Out' ? 15 : 24,fontWeight:900,marginBottom:18}}>
+                  {action.icon}
+                </div>
+                <div style={{fontSize:15,fontWeight:900,letterSpacing:'-0.01em'}}>{action.label}</div>
+                <div style={{fontSize:11,color:'rgba(232,229,255,0.45)',marginTop:4,lineHeight:1.35}}>{action.hint}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {detailGroup && (
+        <div
+          onClick={() => setDetailGroup(null)}
+          style={{
+            position:'fixed',inset:0,zIndex:880,
+            background:'rgba(7,12,30,0.55)',backdropFilter:'blur(8px)',
+            animation:'mvFadeIn 0.18s ease',
+            display:'flex',alignItems:'flex-end',
+          }}
+        >
+          <div
+            onClick={e=>e.stopPropagation()}
+            style={{
+              width:'100%',maxHeight:'78vh',overflowY:'auto',
+              background:'linear-gradient(180deg,rgba(20,16,48,0.98),rgba(11,18,40,0.98))',
+              borderRadius:'24px 24px 0 0',
+              border:'1px solid rgba(167,139,250,0.25)',
+              borderBottom:'none',
+              padding:'12px 16px 30px',
+              boxShadow:'0 -16px 48px rgba(0,0,0,0.5)',
+              animation:'mvSheetUp 0.28s cubic-bezier(0.25,0.46,0.45,0.94)',
+            }}
+          >
+            <div style={{width:40,height:4,borderRadius:2,background:'rgba(167,139,250,0.3)',margin:'0 auto 14px'}}/>
+            <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:14}}>
+              <div style={{
+                width:44,height:44,borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',
+                background:detailGroup.cfg.bg,border:`1px solid ${detailGroup.cfg.border || detailGroup.cfg.color}`,
+                fontSize:23,flexShrink:0,
+              }}>
+                {detailGroup.cfg.icon}
+              </div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:17,fontWeight:900,color:'#fff'}}>{detailGroup.cfg.label}</div>
+                <div style={{fontSize:12,color:'rgba(232,229,255,0.48)',marginTop:2}}>
+                  {selectedDay?.dayName} {selectedDay?.num} · {detailPeople.length} people
                 </div>
               </div>
-            ))}
+              <button onClick={() => setDetailGroup(null)} style={{width:32,height:32,borderRadius:12,border:'1px solid rgba(167,139,250,0.18)',background:'rgba(255,255,255,0.06)',color:'rgba(232,229,255,0.78)',fontSize:17,cursor:'pointer'}}>×</button>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:8}}>
+              {detailPeople.map(person => (
+                <div key={person.id} style={{
+                  display:'flex',alignItems:'center',gap:12,
+                  padding:'10px 8px',borderRadius:14,
+                  background:'rgba(255,255,255,0.04)',
+                  border:'1px solid rgba(167,139,250,0.1)',
+                }}>
+                  <Avatar name={person.name} photoUrl={staffPhotos[person.id]} size={34}/>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:14,fontWeight:800,color:'#fff',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{person.name}</div>
+                  </div>
+                  <div style={{display:'flex',gap:5}}>
+                    {person.shifts.map(shift => (
+                      <span key={shift} style={{
+                        padding:'4px 8px',borderRadius:9,
+                        background:detailGroup.cfg.bg,
+                        border:`1px solid ${detailGroup.cfg.border || detailGroup.cfg.color}`,
+                        color:'#fff',fontSize:10,fontWeight:900,
+                      }}>{shift}</span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

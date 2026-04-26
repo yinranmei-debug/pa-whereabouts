@@ -1499,6 +1499,29 @@ const handleCelebrate = (person) => {
          <MobileView
             onSwipeWeek={(dir) => navigateWeek(dir === 'next' ? 7 : -7)}
             onToday={(ds) => navigateWeek(0, new Date(`${ds}T00:00:00`))}
+            isDayMode={isDayMode}
+            onToggleTheme={toggleTheme}
+            onBirthday={()=>{
+              setShowBdayPanel(p=>!p);
+              if (hasBirthdayToday && !bdayNotifRead) {
+                setBdayNotifRead(true);
+                localStorage.setItem(`bday-notif-read-${new Date().toDateString()}`, '1');
+              }
+            }}
+            onWeekly={()=>{
+              setShowWeeklyPanel(p => {
+                if (!p && weeklyReadKey) {
+                  localStorage.setItem(weeklyReadKey, String(weeklyUpdatesCount));
+                  setWeeklyReadCount(weeklyUpdatesCount);
+                }
+                return !p;
+              });
+            }}
+            onHuddle={()=>{ setTipIdx(0); setShowTips(true); }}
+            onLogout={logout}
+            accountName={account.name}
+            weeklyUnreadCount={Math.max(weeklyUpdatesCount - weeklyReadCount, 0)}
+            birthdayUnread={hasBirthdayToday && !bdayNotifRead}
             staffList={staffList}
             week={week}
             records={records}
