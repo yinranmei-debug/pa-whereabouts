@@ -1044,7 +1044,6 @@ const handleCelebrate = (person) => {
         {showCakeHistory && cakeThrowHistory.length > 0 && meStaff && hasBirthdayToday && (() => {
           const bdayPerson = RAW_STAFF_LIST.find(s => s.birthday === todayMMDD);
           if (bdayPerson?.id !== meStaff.id) return null;
-          const { year } = currentYearRange();
           const CakeMiniIcon = ({ size = 18 }) => (
             <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
               <rect x="4" y="13" width="16" height="8" rx="2" fill="rgba(255,143,176,0.9)" stroke="rgba(255,183,0,0.7)" strokeWidth="1"/>
@@ -1079,9 +1078,6 @@ const handleCelebrate = (person) => {
                       </div>
                     </div>
                   ))}
-                </div>
-                <div style={{padding:'8px 16px 12px',borderTop:'1px solid rgba(255,183,0,0.08)',textAlign:'center'}}>
-                  <span style={{fontSize:11,color:'rgba(255,220,100,0.6)',fontWeight:600}}>Celebration history for {year}</span>
                 </div>
               </div>
             </div>
