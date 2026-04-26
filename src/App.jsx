@@ -57,6 +57,11 @@ const fmt = date => {
   return `${y}-${m}-${d}`;
 };
 
+const currentYearRange = () => {
+  const y = new Date().getFullYear();
+  return { start: `${y}-01-01`, end: `${y}-12-31`, year: y };
+};
+
 const getDailyTips = () => {
   const today = new Date();
   // 用今天是今年第几天做 seed，确保每天不同
@@ -368,10 +373,13 @@ export default function App() {
     if (!realMe) return;
     const bdayPerson = RAW_STAFF_LIST.find(s => s.birthday === todayMMDD_hook);
     if (bdayPerson?.id !== realMe.id) return;
-    const todayStr = fmt(new Date());
+    const { start, end } = currentYearRange();
     supabase.from('cake_throws')
-      .select('*').eq('birthday_id', realMe.id).eq('birthday_date', todayStr)
-      .order('created_at', { ascending: true })
+      .select('*')
+      .eq('birthday_id', realMe.id)
+      .gte('birthday_date', start)
+      .lte('birthday_date', end)
+      .order('created_at', { ascending: false })
       .then(({ data }) => { if (data?.length) { setCakeThrowHistory(data); setShowCakeHistory(true); } });
     const ch = supabase.channel('cake-throws-changes')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cake_throws' }, payload => {
@@ -904,9 +912,13 @@ const handleCelebrate = (person) => {
     });
     // Refresh local list if I am the birthday person
     if (person.id === meStaff?.id) {
+      const { start, end } = currentYearRange();
       const { data } = await supabase.from('cake_throws')
-        .select('*').eq('birthday_id', person.id).eq('birthday_date', fmt(new Date()))
-        .order('created_at', { ascending: true });
+        .select('*')
+        .eq('birthday_id', person.id)
+        .gte('birthday_date', start)
+        .lte('birthday_date', end)
+        .order('created_at', { ascending: false });
       if (data) setCakeThrowHistory(data);
     }
   };
@@ -1032,38 +1044,44 @@ const handleCelebrate = (person) => {
         {showCakeHistory && cakeThrowHistory.length > 0 && meStaff && hasBirthdayToday && (() => {
           const bdayPerson = RAW_STAFF_LIST.find(s => s.birthday === todayMMDD);
           if (bdayPerson?.id !== meStaff.id) return null;
+          const { year } = currentYearRange();
+          const CakeMiniIcon = ({ size = 18 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+              <rect x="4" y="13" width="16" height="8" rx="2" fill="rgba(255,143,176,0.9)" stroke="rgba(255,183,0,0.7)" strokeWidth="1"/>
+              <rect x="6" y="10" width="12" height="5" rx="1.5" fill="rgba(255,183,0,0.8)"/>
+              <rect x="8" y="5" width="2" height="5" rx="1" fill="rgba(167,139,250,1)"/>
+              <rect x="14" y="5" width="2" height="5" rx="1" fill="rgba(106,199,255,1)"/>
+              <ellipse cx="9" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,220,50,1)"/>
+              <ellipse cx="15" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,160,50,1)"/>
+            </svg>
+          );
           return (
-            <div style={{position:'fixed',right:20,top:NAV_H+16,zIndex:12100,width:280,fontFamily:"'Plus Jakarta Sans',sans-serif",animation:'dropIn 0.3s ease'}}>
+            <div style={{position:'fixed',right:20,top:NAV_H+16,zIndex:12100,width:330,fontFamily:"'Plus Jakarta Sans',sans-serif",animation:'dropIn 0.3s ease'}}>
               <div style={{background:'linear-gradient(135deg,rgba(13,8,40,0.97),rgba(20,10,55,0.97))',border:'1.5px solid rgba(255,183,0,0.3)',borderRadius:18,overflow:'hidden',boxShadow:'0 16px 48px rgba(0,0,0,0.5)'}}>
                 <div style={{padding:'12px 16px 10px',borderBottom:'1px solid rgba(255,183,0,0.12)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                   <div style={{display:'flex',alignItems:'center',gap:8}}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <rect x="4" y="13" width="16" height="8" rx="2" fill="rgba(255,143,176,0.9)" stroke="rgba(255,183,0,0.7)" strokeWidth="1"/>
-                      <rect x="6" y="10" width="12" height="5" rx="1.5" fill="rgba(255,183,0,0.8)"/>
-                      <rect x="8" y="5" width="2" height="5" rx="1" fill="rgba(167,139,250,1)"/>
-                      <rect x="14" y="5" width="2" height="5" rx="1" fill="rgba(106,199,255,1)"/>
-                      <ellipse cx="9" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,220,50,1)"/>
-                      <ellipse cx="15" cy="4.5" rx="1.2" ry="1.8" fill="rgba(255,160,50,1)"/>
-                    </svg>
-                    <span style={{fontSize:12,fontWeight:700,color:'rgba(255,220,100,0.95)'}}>Cakes thrown at you 🎂</span>
+                    <CakeMiniIcon size={19}/>
+                    <span style={{fontSize:13,fontWeight:800,color:'rgba(255,220,100,0.95)'}}>Your Birthday Celebration</span>
                   </div>
                   <button onClick={()=>setShowCakeHistory(false)} style={{background:'none',border:'none',color:'rgba(255,255,255,0.35)',cursor:'pointer',fontSize:13,padding:'0 2px',lineHeight:1}}>✕</button>
                 </div>
                 <div style={{maxHeight:280,overflowY:'auto',padding:'8px 10px 10px'}}>
                   {cakeThrowHistory.map((row, i) => (
-                    <div key={row.id||i} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 8px',borderRadius:10,background:i%2===0?'rgba(255,255,255,0.03)':'transparent',marginBottom:2}}>
-                      <div style={{width:32,height:32,borderRadius:10,background:'linear-gradient(135deg,rgba(255,143,176,0.2),rgba(255,183,0,0.2))',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:16}}>🎂</div>
-                      <div>
-                        <div style={{fontSize:12,fontWeight:700,color:'#fff',lineHeight:1.3}}>{row.thrower_name}</div>
+                    <div key={row.id||i} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 10px',borderRadius:12,background:i%2===0?'rgba(255,255,255,0.04)':'transparent',marginBottom:2}}>
+                      <div style={{width:36,height:36,borderRadius:11,background:'linear-gradient(135deg,rgba(255,143,176,0.2),rgba(255,183,0,0.2))',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                        <CakeMiniIcon size={21}/>
+                      </div>
+                      <div style={{minWidth:0}}>
+                        <div style={{fontSize:12,fontWeight:800,color:'#fff',lineHeight:1.35,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{row.thrower_name} threw a cake at you</div>
                         <div style={{fontSize:10,color:'rgba(255,255,255,0.35)',marginTop:2}}>
-                          {new Date(row.created_at).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}
+                          {new Date(row.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric'})} · {new Date(row.created_at).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
                 <div style={{padding:'8px 16px 12px',borderTop:'1px solid rgba(255,183,0,0.08)',textAlign:'center'}}>
-                  <span style={{fontSize:11,color:'rgba(255,220,100,0.6)',fontWeight:600}}>{cakeThrowHistory.length} cake{cakeThrowHistory.length!==1?'s':''} thrown today!</span>
+                  <span style={{fontSize:11,color:'rgba(255,220,100,0.6)',fontWeight:600}}>Celebration history for {year}</span>
                 </div>
               </div>
             </div>
