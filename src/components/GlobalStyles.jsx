@@ -354,6 +354,23 @@ const GlobalStyles = () => (
     .n-av-wrap.is-other{border-radius:50%;transition:box-shadow 0.3s ease,transform 0.2s ease;}
     .n-av-wrap.is-other:hover{transform:scale(1.08) !important;box-shadow:0 0 0 2px rgba(167,139,250,0.5),0 0 10px 3px rgba(119,11,255,0.2),0 0 20px 6px rgba(0,155,255,0.1);}
     .n-av-wrap.is-other:active{transform:scale(0.95);}
+    .bday-avatar-glow{
+      position:relative;border-radius:50%;
+      box-shadow:
+        0 0 0 3px rgba(255,143,176,0.68),
+        0 0 18px 7px rgba(244,114,182,0.42),
+        0 0 34px 12px rgba(255,0,120,0.18) !important;
+      filter:drop-shadow(0 8px 18px rgba(244,114,182,0.22));
+    }
+    .bday-avatar-glow::after{
+      content:'';position:absolute;inset:-8px;border-radius:50%;pointer-events:none;z-index:-1;
+      background:radial-gradient(circle,rgba(244,114,182,0.32) 0%,rgba(255,143,176,0.16) 45%,transparent 72%);
+      animation:bdayAvatarPulse 2.4s ease-in-out infinite;
+    }
+    @keyframes bdayAvatarPulse{
+      0%,100%{opacity:0.72;transform:scale(0.96);}
+      50%{opacity:1;transform:scale(1.05);}
+    }
     @keyframes avatarRingSpin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
 
     .n-name{font-size:14px;font-weight:600;color:rgba(232,229,255,0.9);transition:color 0.15s;}

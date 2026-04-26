@@ -452,7 +452,9 @@ const MobileView = ({
                   border: b.isToday ? '1px solid rgba(255,183,0,0.4)' : 'none',
                   borderRadius: b.isToday ? 12 : 0,
                 }}>
-                  <Avatar name={t.name} photoUrl={staffPhotos[t.id]} size={b.isToday?36:26}/>
+                  <div className={b.isToday ? 'bday-avatar-glow' : ''} style={{borderRadius:'50%',flexShrink:0}}>
+                    <Avatar name={t.name} photoUrl={staffPhotos[t.id]} size={b.isToday?36:26}/>
+                  </div>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontSize:b.isToday?14:13,fontWeight:b.isToday?700:600,color:b.isToday?'#fff':'rgba(232,229,255,0.85)'}}>
                       {t.name}
@@ -670,7 +672,9 @@ const MobileView = ({
                       background:b.isToday ? 'linear-gradient(90deg,rgba(255,183,0,0.17),rgba(244,114,182,0.12))' : 'rgba(255,255,255,0.04)',
                       border:b.isToday ? '1px solid rgba(255,183,0,0.38)' : '1px solid rgba(255,183,0,0.12)',
                     }}>
-                      <Avatar name={person.name} photoUrl={staffPhotos[person.id]} size={36}/>
+                      <div className={b.isToday ? 'bday-avatar-glow' : ''} style={{borderRadius:'50%',flexShrink:0}}>
+                        <Avatar name={person.name} photoUrl={staffPhotos[person.id]} size={36}/>
+                      </div>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{fontSize:14,fontWeight:900,color:'#fff',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{person.name}</div>
                         <div style={{fontSize:11,color:b.isToday ? '#fde68a' : 'rgba(232,229,255,0.46)',marginTop:2}}>

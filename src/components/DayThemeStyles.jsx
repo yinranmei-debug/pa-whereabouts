@@ -247,6 +247,16 @@ const DayThemeStyles = () => (
         0 0 0 2px rgba(0,155,255,0.35),
         0 0 10px 3px rgba(119,11,255,0.1) !important;
     }
+    body.day-mode .bday-avatar-glow {
+      box-shadow:
+        0 0 0 3px rgba(255,143,176,0.76),
+        0 0 18px 7px rgba(244,114,182,0.34),
+        0 0 34px 12px rgba(255,0,120,0.12) !important;
+      filter: drop-shadow(0 8px 18px rgba(244,114,182,0.16)) !important;
+    }
+    body.day-mode .bday-avatar-glow::after {
+      background: radial-gradient(circle, rgba(244,114,182,0.24) 0%, rgba(255,143,176,0.13) 45%, transparent 72%) !important;
+    }
 body.day-mode .sh.mine {
       background: linear-gradient(135deg, rgba(0,155,255,0.08), rgba(119,11,255,0.06)) !important;
       border: 1.5px solid rgba(119,11,255,0.18) !important;

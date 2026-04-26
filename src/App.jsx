@@ -1649,7 +1649,7 @@ const handleCelebrate = (person) => {
                                 <div
                                   ref={isMe?myAvatarRef:null}
                                   id={`av-${m.id}`}
-                                  className={`n-av-wrap${isMe?' is-me':' is-other'}`}
+                                  className={`n-av-wrap${isMe?' is-me':' is-other'}${m.birthday === todayMMDD ? ' bday-avatar-glow' : ''}`}
                                   style={{position:'relative'}}
                                   onMouseEnter={e=>{ if (!isMe) e.currentTarget.style.transform='scale(1.1)'; }}
                                   onMouseLeave={e=>{ if (!isMe) e.currentTarget.style.transform='scale(1)'; }}
