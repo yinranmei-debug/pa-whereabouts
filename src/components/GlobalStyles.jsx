@@ -366,7 +366,8 @@ const GlobalStyles = () => (
     tr:hover .n-name{background:linear-gradient(90deg,#009bff,#770bff);-webkit-background-clip:text;background-clip:text;color:transparent;}
    .n-you{font-size:9px;font-weight:700;background:linear-gradient(90deg,#009bff,#770bff);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:0.06em;margin-top:2px;display:inline-block;}
     .n-title{font-size:10px;color:rgba(167,139,250,0.6);font-weight:500;margin-top:2px;letter-spacing:0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;}
-    .emo-tag{position:absolute;bottom:-6px;right:-6px;background:#fff;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 2px 8px rgba(0,0,0,0.15);border:2px solid #fff;}
+    @keyframes emoPulse{0%,100%{box-shadow:0 0 0 0 var(--emo-glow,rgba(167,139,250,0.5)),0 2px 12px rgba(0,0,0,0.4)}60%{box-shadow:0 0 0 5px var(--emo-glow-fade,rgba(167,139,250,0)),0 2px 12px rgba(0,0,0,0.4)}}
+    .emo-tag{position:absolute;bottom:-7px;right:-7px;background:rgba(13,10,35,0.88);backdrop-filter:blur(8px);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:17px;border:1.5px solid var(--emo-color,rgba(167,139,250,0.6));box-shadow:0 0 8px var(--emo-glow,rgba(167,139,250,0.35)),0 2px 10px rgba(0,0,0,0.5);animation:emoPulse 2.4s ease-in-out infinite;}
     .emo-picker{
       position:absolute;left:54px;top:4px;z-index:10050;
       background:rgba(15,10,35,0.95);
