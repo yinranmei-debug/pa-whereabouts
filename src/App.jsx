@@ -1784,18 +1784,20 @@ const handleCelebrate = (person) => {
                           {d.num}
                         </div>
                       </div>
-                      <div style={{height:18,display:'flex',justifyContent:'center',alignItems:'center',gap:4,marginTop:3}}>
-                        {jpHolidays[d.ds] && (
-                          <div className="hol-pip hol-pip-jp">
-                            🇯🇵<div className="hol-pip-tip">{new Date(d.ds+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})} · {jpHolidays[d.ds]}</div>
-                          </div>
-                        )}
-                        {krHolidays[d.ds] && (
-                          <div className="hol-pip hol-pip-kr">
-                            🇰🇷<div className="hol-pip-tip">{new Date(d.ds+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})} · {krHolidays[d.ds]}</div>
-                          </div>
-                        )}
-                      </div>
+                      {(jpHolidays[d.ds] || krHolidays[d.ds]) && (
+                        <div style={{position:'absolute',top:bdayPeople.length>0?34:2,right:2,zIndex:20,display:'flex',flexDirection:'column',gap:3}}>
+                          {jpHolidays[d.ds] && (
+                            <div className="hol-pip hol-pip-jp">
+                              🇯🇵<div className="hol-pip-tip">{new Date(d.ds+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})} · {jpHolidays[d.ds]}</div>
+                            </div>
+                          )}
+                          {krHolidays[d.ds] && (
+                            <div className="hol-pip hol-pip-kr">
+                              🇰🇷<div className="hol-pip-tip">{new Date(d.ds+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})} · {krHolidays[d.ds]}</div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                     );
                   })}

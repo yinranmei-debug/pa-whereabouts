@@ -276,7 +276,7 @@ const GlobalStyles = () => (
     .bday-hdr-tip-arrow{ display:none; }
 
     /* ── JP / KR holiday pips in thead ── */
-    .hol-pip{position:relative;font-size:12px;line-height:1;cursor:default;transition:transform 0.15s cubic-bezier(0.34,1.56,0.64,1);display:inline-flex;}
+    .hol-pip{position:relative;font-size:20px;line-height:1;cursor:default;transition:transform 0.15s cubic-bezier(0.34,1.56,0.64,1);display:inline-flex;}
     .hol-pip:hover{transform:scale(1.3);}
     .hol-pip-jp{filter:drop-shadow(0 0 4px rgba(200,40,60,0.65));}
     .hol-pip-kr{filter:drop-shadow(0 0 4px rgba(30,100,220,0.65));}
