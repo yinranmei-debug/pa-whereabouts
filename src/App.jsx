@@ -442,17 +442,25 @@ export default function App() {
   useEffect(() => {
     if (!account) return;
     (async () => {
+      // Use the same scopes as login to ensure the cached token covers photo access
+      const scopes = ['User.Read', 'User.ReadBasic.All', 'profile', 'openid'];
       let token;
-      try { const r = await msalInstance.acquireTokenSilent({scopes:['User.ReadBasic.All'],account}); token=r.accessToken; }
-      catch { try { const r = await msalInstance.acquireTokenPopup({scopes:['User.ReadBasic.All'],account}); token=r.accessToken; } catch(e){return;} }
+      try { const r = await msalInstance.acquireTokenSilent({scopes, account}); token=r.accessToken; }
+      catch { try { const r = await msalInstance.acquireTokenPopup({scopes, account}); token=r.accessToken; } catch(e){return;} }
+      const headers = {Authorization:`Bearer ${token}`};
       const photos={}, titles={};
       await Promise.all(RAW_STAFF_LIST.map(async s => {
         try {
-          const [photoRes, profileRes] = await Promise.all([
-            fetch(`https://graph.microsoft.com/v1.0/users/${s.email}/photo/$value`,{headers:{Authorization:`Bearer ${token}`}}),
-            fetch(`https://graph.microsoft.com/v1.0/users/${s.email}?$select=jobTitle`,{headers:{Authorization:`Bearer ${token}`}}),
-          ]);
-          if (photoRes.ok) photos[s.id]=URL.createObjectURL(await photoRes.blob());
+          // Try 240x240 first (more reliable), fall back to generic photo endpoint
+          let photoRes = await fetch(`https://graph.microsoft.com/v1.0/users/${s.email}/photos/240x240/$value`,{headers});
+          if (!photoRes.ok) photoRes = await fetch(`https://graph.microsoft.com/v1.0/users/${s.email}/photo/$value`,{headers});
+          if (photoRes.ok) {
+            const blob = await photoRes.blob();
+            if (blob.size > 0) photos[s.id] = URL.createObjectURL(blob);
+          }
+        } catch {}
+        try {
+          const profileRes = await fetch(`https://graph.microsoft.com/v1.0/users/${s.email}?$select=jobTitle`,{headers});
           if (profileRes.ok){ const d=await profileRes.json(); if(d.jobTitle) titles[s.id]=d.jobTitle; }
         } catch {}
       }));
@@ -1567,32 +1575,21 @@ const handleCelebrate = (person) => {
               onClick={() => setShowTeamToday(p => !p)}
               title="Team Today"
             >
-              <svg width="16" height="16" viewBox="0 0 22 20" fill="none">
-                {/* left person — head + body + arms */}
-                <circle className="mh-star-1" cx="5" cy="5" r="2.2" fill="rgba(106,199,255,0.6)" stroke="rgba(167,139,250,0.55)" strokeWidth="0.9"/>
-                <line x1="5" y1="7.2" x2="5" y2="12.5" stroke="rgba(106,199,255,0.55)" strokeWidth="1.3" strokeLinecap="round"/>
-                <line x1="2.5" y1="9.5" x2="7.5" y2="9.5" stroke="rgba(106,199,255,0.45)" strokeWidth="1.1" strokeLinecap="round"/>
-                <line x1="5" y1="12.5" x2="3.2" y2="15.5" stroke="rgba(106,199,255,0.45)" strokeWidth="1.1" strokeLinecap="round"/>
-                <line x1="5" y1="12.5" x2="6.8" y2="15.5" stroke="rgba(106,199,255,0.45)" strokeWidth="1.1" strokeLinecap="round"/>
+              <svg width="17" height="15" viewBox="0 0 24 21" fill="none">
+                {/* left person: head circle + shoulder arc */}
+                <circle className="mh-star-1" cx="6.5" cy="6" r="3" fill="none" stroke="rgba(106,199,255,0.75)" strokeWidth="1.4"/>
+                <path className="mh-star-1" d="M1 20 Q1 13.5 6.5 13.5 Q9 13.5 10.5 15.5" fill="none" stroke="rgba(106,199,255,0.65)" strokeWidth="1.4" strokeLinecap="round"/>
 
-                {/* right person — head + body + arms */}
-                <circle className="mh-star-3" cx="17" cy="5" r="2.2" fill="rgba(106,199,255,0.6)" stroke="rgba(167,139,250,0.55)" strokeWidth="0.9"/>
-                <line x1="17" y1="7.2" x2="17" y2="12.5" stroke="rgba(106,199,255,0.55)" strokeWidth="1.3" strokeLinecap="round"/>
-                <line x1="14.5" y1="9.5" x2="19.5" y2="9.5" stroke="rgba(106,199,255,0.45)" strokeWidth="1.1" strokeLinecap="round"/>
-                <line x1="17" y1="12.5" x2="15.2" y2="15.5" stroke="rgba(106,199,255,0.45)" strokeWidth="1.1" strokeLinecap="round"/>
-                <line x1="17" y1="12.5" x2="18.8" y2="15.5" stroke="rgba(106,199,255,0.45)" strokeWidth="1.1" strokeLinecap="round"/>
+                {/* right person: head circle + shoulder arc */}
+                <circle className="mh-star-3" cx="17.5" cy="6" r="3" fill="none" stroke="rgba(106,199,255,0.75)" strokeWidth="1.4"/>
+                <path className="mh-star-3" d="M23 20 Q23 13.5 17.5 13.5 Q15 13.5 13.5 15.5" fill="none" stroke="rgba(106,199,255,0.65)" strokeWidth="1.4" strokeLinecap="round"/>
 
-                {/* center person — slightly larger, brighter */}
-                <circle className="mh-star-2" cx="11" cy="4" r="2.6" fill="rgba(167,139,250,0.9)" stroke="rgba(196,181,253,0.85)" strokeWidth="1"/>
-                <line x1="11" y1="6.6" x2="11" y2="12.5" stroke="rgba(167,139,250,0.75)" strokeWidth="1.5" strokeLinecap="round"/>
-                <line x1="8" y1="9" x2="14" y2="9" stroke="rgba(167,139,250,0.6)" strokeWidth="1.3" strokeLinecap="round"/>
-                <line x1="11" y1="12.5" x2="9" y2="15.8" stroke="rgba(167,139,250,0.6)" strokeWidth="1.3" strokeLinecap="round"/>
-                <line x1="11" y1="12.5" x2="13" y2="15.8" stroke="rgba(167,139,250,0.6)" strokeWidth="1.3" strokeLinecap="round"/>
+                {/* center person: larger head + full shoulder arc — front layer */}
+                <circle className="mh-star-2" cx="12" cy="5" r="3.6" fill="none" stroke="rgba(196,181,253,0.92)" strokeWidth="1.6"/>
+                <path className="mh-today-arc" d="M4.5 20.5 Q4.5 12.5 12 12.5 Q19.5 12.5 19.5 20.5" fill="none" stroke="rgba(167,139,250,0.82)" strokeWidth="1.6" strokeLinecap="round"/>
 
-                {/* ground connection line */}
-                <path className="mh-today-arc" d="M2 18 Q11 15.5 20 18" stroke="rgba(167,139,250,0.4)" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
                 {/* today pulse dot */}
-                <circle className="mh-today-dot" cx="11" cy="18" r="1.4" fill="rgba(0,155,255,0.95)"/>
+                <circle className="mh-today-dot" cx="12" cy="20.5" r="1.5" fill="rgba(0,155,255,0.95)"/>
               </svg>
               <span style={{fontSize:11,fontWeight:700,letterSpacing:'0.03em'}}>Today</span>
             </button>
