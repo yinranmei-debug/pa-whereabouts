@@ -385,14 +385,6 @@ body.day-mode .we .pill-card {
       box-shadow: 0 8px 28px rgba(0,155,255,0.1) !important;
     }
 
-    /* ── Emoji mood tag — day ── */
-    body.day-mode .emo-tag {
-      background: rgba(255,255,255,0.94) !important;
-      backdrop-filter: blur(8px) !important;
-      border: 1.5px solid var(--emo-color, rgba(0,155,255,0.5)) !important;
-      box-shadow: 0 0 7px var(--emo-glow, rgba(0,155,255,0.3)), 0 2px 8px rgba(0,0,0,0.1) !important;
-    }
-
     /* ── Bday toast ── */
     body.day-mode .bday-toast {
       background: linear-gradient(135deg, rgba(255,255,255,0.97), rgba(248,249,254,0.97)) !important;

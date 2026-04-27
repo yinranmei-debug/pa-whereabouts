@@ -44,9 +44,6 @@ const hasFreshAuthSession = email => {
   return saved > 0 && Date.now() - saved < AUTH_SESSION_MS;
 };
 
-const EMO_GLOW = {'🧘':'#a78bfa','⚡':'#ffd000','☕':'#ff8c42','🎯':'#ff4757','🚀':'#3bb8ff','💪':'#ff6b35','🌱':'#00e5a8'};
-const emoStyle = emo => { const c = EMO_GLOW[emo] || '#a78bfa'; return {'--emo-color':c,'--emo-glow':`${c}66`,'--emo-glow-fade':`${c}00`}; };
-
 const ROW_H  = 140;
 const NAV_H  = 80;
 const TB_H   = 48;
@@ -1695,7 +1692,7 @@ const handleCelebrate = (person) => {
                                   onClick={e=>{ if (isMe) return; if (celebrateTarget?.id===m.id && celebratePrompt){e.stopPropagation();handleBirthdayAvatarClick(m);} }}
                                 >
                                   <Avatar name={m.name} photoUrl={staffPhotos[m.id]} size={60} isMe={isMe}/>
-                                  {emotions[m.id]&&<div className="emo-tag" style={emoStyle(emotions[m.id])}>{emotions[m.id]}</div>}
+                                  {emotions[m.id]&&<div className="emo-tag">{emotions[m.id]}</div>}
                                   {bdayHatId===m.id&&(
                                     <div style={{position:'absolute',top:-26,left:'50%',transform:'translateX(-50%)',pointerEvents:'none',zIndex:202,filter:'drop-shadow(0 2px 6px rgba(255,183,0,0.5))'}}>
                                       <BdayHatSVG size={40}/>
