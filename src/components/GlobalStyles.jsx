@@ -258,8 +258,8 @@ const GlobalStyles = () => (
     .bday-hdr-tip{
       position:absolute;top:calc(100% + 6px);left:50%;
       transform:translateX(-50%) translateY(3px);
-      background:linear-gradient(90deg,rgba(255,183,0,0.15),rgba(255,100,150,0.12));
-      border:1px solid rgba(255,183,0,0.5);
+      background:linear-gradient(90deg,#2a1a0e,#1e1030);
+      border:1px solid rgba(255,183,0,0.55);
       border-radius:6px;padding:4px 10px;
       font-size:10px;font-weight:700;color:#fff;
       white-space:nowrap;
@@ -267,8 +267,9 @@ const GlobalStyles = () => (
       opacity:0;
       transition:opacity 0.15s ease,transform 0.15s ease;
       font-family:'Plus Jakarta Sans',sans-serif;
-      z-index:999;
+      z-index:1000;
       letter-spacing:0.03em;
+      box-shadow:0 4px 12px rgba(0,0,0,0.5);
     }
     .bday-hdr-cake:hover .bday-hdr-tip{
       opacity:1;transform:translateX(-50%) translateY(0);
@@ -283,14 +284,15 @@ const GlobalStyles = () => (
     .hol-pip-tip{
       position:absolute;top:calc(100% + 6px);left:50%;
       transform:translateX(-50%) translateY(3px);
-      background:linear-gradient(90deg,rgba(255,183,0,0.15),rgba(255,100,150,0.12));
-      border:1px solid rgba(255,183,0,0.5);
+      background:linear-gradient(90deg,#2a1a0e,#1e1030);
+      border:1px solid rgba(255,183,0,0.55);
       border-radius:6px;padding:4px 10px;
       font-size:10px;font-weight:700;color:#fff;
       white-space:nowrap;pointer-events:none;
       opacity:0;transition:opacity 0.15s ease,transform 0.15s ease;
       font-family:'Plus Jakarta Sans',sans-serif;
-      z-index:999;letter-spacing:0.03em;
+      z-index:1000;letter-spacing:0.03em;
+      box-shadow:0 4px 12px rgba(0,0,0,0.5);
     }
     .hol-pip:hover .hol-pip-tip{opacity:1;transform:translateX(-50%) translateY(0);}
 
