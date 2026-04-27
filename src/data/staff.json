@@ -8,7 +8,7 @@
   { "id": "james_l",   "name": "James Lin",         "region": "Hong Kong", "email": "james.lin@patternasia.com",        "birthday": "10-13" },
   { "id": "jason",     "name": "Jason Chen",        "region": "Hong Kong", "email": "jason.chen@patternasia.com",       "birthday": "09-19" },
   { "id": "jennifer",  "name": "Jennifer Chow",     "region": "Hong Kong", "email": "jennifer.chow@patternasia.com",    "birthday": "09-11" },
-  { "id": "mio",       "name": "Mio Jia",           "region": "Hong Kong", "email": "mio.jia@patternasia.com" },
+  { "id": "mio",       "name": "Mio Jia",           "region": "Hong Kong", "email": "mio.jia@patternasia.com",          "birthday": "06-23" },
   { "id": "mony",      "name": "Mony Kwong",        "region": "Hong Kong", "email": "mony.kwong@patternasia.com",       "birthday": "05-09" },
   { "id": "heidi",     "name": "Heidi Tam",         "region": "Hong Kong", "email": "heidi.tam@patternasia.com",        "birthday": "01-20" },
   { "id": "nic",       "name": "Nic Cheung",        "region": "Hong Kong", "email": "nic.cheung@patternasia.com",       "birthday": "06-30" },
@@ -18,7 +18,7 @@
   { "id": "grace",     "name": "Grace Wong",        "region": "Hong Kong", "email": "grace.wong@patternasia.com",       "birthday": "12-21" },
   { "id": "jean",      "name": "Jean Zhu",          "region": "Hong Kong", "email": "Jean.Zhu@patternasia.com",         "birthday": "07-23" },
   { "id": "yinran",    "name": "Yinran Mei",        "region": "Hong Kong", "email": "yinran.mei@patternasia.com",       "birthday": "04-16" },
-  { "id": "robert",    "name": "Robert Wang",       "region": "Hong Kong", "email": "robert.wang@patternasia.com" },
+  { "id": "robert",    "name": "Robert Wang",       "region": "Hong Kong", "email": "robert.wang@patternasia.com",      "birthday": "02-21" },
   { "id": "casey",     "name": "Casey Li",          "region": "China",     "email": "Casey.Li@patternasia.com" },
   { "id": "elinor",    "name": "Elinor Li",         "region": "China",     "email": "elinor.li@patternasia.com" },
   { "id": "yanny",     "name": "Yanny Li",          "region": "China",     "email": "yanny.li@patternasia.com" },
@@ -26,5 +26,7 @@
   { "id": "keane",     "name": "Keane Zou",         "region": "China",     "email": "keane.zou@patternasia.com" },
   { "id": "ailing",    "name": "Ai-ling Xu",        "region": "China",     "email": "Ai-ling.Xu@patternasia.com" },
   { "id": "james_t",   "name": "James Tan",         "region": "China",     "email": "James.Tan@patternasia.com" },
-  { "id": "jessica",   "name": "Jessica Rao",       "region": "China",     "email": "jessica.rao@patternasia.com" }
+  { "id": "jessica",   "name": "Jessica Rao",       "region": "China",     "email": "jessica.rao@patternasia.com" },
+  { "id": "desiree",  "name": "Desiree Wong",      "region": "Hong Kong", "email": "desiree@patternasia.com",          "birthday": "02-24" },
+  { "id": "tina",     "name": "Tina Wang",          "region": "Hong Kong", "email": "tina.wang@patternasia.com" }
 ]
