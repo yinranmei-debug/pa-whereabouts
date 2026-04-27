@@ -1772,20 +1772,6 @@ const handleCelebrate = (person) => {
                           </div>
                         </div>
                       )}
-                      {(jpHolidays[d.ds] || krHolidays[d.ds]) && (
-                        <div style={{position:'absolute',top:bdayPeople.length>0?22:2,right:2,zIndex:20,display:'flex',gap:2}}>
-                          {jpHolidays[d.ds] && (
-                            <div className="hol-flag-icon">
-                              🇯🇵<div className="hol-flag-tip">{new Date(d.ds+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})} · {jpHolidays[d.ds]}</div>
-                            </div>
-                          )}
-                          {krHolidays[d.ds] && (
-                            <div className="hol-flag-icon">
-                              🇰🇷<div className="hol-flag-tip">{new Date(d.ds+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})} · {krHolidays[d.ds]}</div>
-                            </div>
-                          )}
-                        </div>
-                      )}
                       <div style={{fontSize:'11px',fontWeight:'700',letterSpacing:'0.06em',marginBottom:'6px',color:d.isToday?'#770bff':'#9ca3af'}}>{d.dayName.toUpperCase()}</div>
                       <div style={{position:'relative',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto',width:'34px',height:'34px'}}>
                         {d.isToday && todaySonar && (
@@ -1798,6 +1784,20 @@ const handleCelebrate = (person) => {
                           {d.num}
                         </div>
                       </div>
+                      {(jpHolidays[d.ds] || krHolidays[d.ds]) && (
+                        <div style={{display:'flex',justifyContent:'center',gap:4,marginTop:4}}>
+                          {jpHolidays[d.ds] && (
+                            <div className="hol-pip hol-pip-jp">
+                              🇯🇵<div className="hol-pip-tip">{new Date(d.ds+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})} · {jpHolidays[d.ds]}</div>
+                            </div>
+                          )}
+                          {krHolidays[d.ds] && (
+                            <div className="hol-pip hol-pip-kr">
+                              🇰🇷<div className="hol-pip-tip">{new Date(d.ds+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})} · {krHolidays[d.ds]}</div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                     );
                   })}

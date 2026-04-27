@@ -275,22 +275,24 @@ const GlobalStyles = () => (
     }
     .bday-hdr-tip-arrow{ display:none; }
 
-    /* ── JP / KR holiday flag icons in thead ── */
-    .hol-flag-icon{cursor:default;position:relative;font-size:14px;line-height:1;transition:transform 0.15s cubic-bezier(0.34,1.56,0.64,1);}
-    .hol-flag-icon:hover{transform:scale(1.3);}
-    .hol-flag-tip{
-      position:absolute;top:calc(100% + 6px);left:50%;
+    /* ── JP / KR holiday pips in thead ── */
+    .hol-pip{position:relative;font-size:12px;line-height:1;cursor:default;transition:transform 0.15s cubic-bezier(0.34,1.56,0.64,1);display:inline-flex;}
+    .hol-pip:hover{transform:scale(1.3);}
+    .hol-pip-jp{filter:drop-shadow(0 0 4px rgba(200,40,60,0.65));}
+    .hol-pip-kr{filter:drop-shadow(0 0 4px rgba(30,100,220,0.65));}
+    .hol-pip-tip{
+      position:absolute;top:calc(100% + 5px);left:50%;
       transform:translateX(-50%) translateY(3px);
       background:rgba(10,15,40,0.95);
       border:1px solid rgba(167,139,250,0.35);
       border-radius:6px;padding:4px 10px;
       font-size:10px;font-weight:700;color:#fff;
       white-space:nowrap;pointer-events:none;
-      opacity:0;transition:opacity 0.15s ease,transform 0.15s ease;
+      opacity:0;transition:opacity 0.15s,transform 0.15s;
       font-family:'Plus Jakarta Sans',sans-serif;
       z-index:999;letter-spacing:0.03em;
     }
-    .hol-flag-icon:hover .hol-flag-tip{opacity:1;transform:translateX(-50%) translateY(0);}
+    .hol-pip:hover .hol-pip-tip{opacity:1;transform:translateX(-50%) translateY(0);}
 
     /* ── Table ── */
     .tbl-outer{
