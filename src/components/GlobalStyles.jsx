@@ -276,6 +276,18 @@ const GlobalStyles = () => (
     }
     .bday-hdr-tip-arrow{ display:none; }
 
+    /* ── APAC holiday button animations ── */
+    .apac-arc{transition:stroke 0.2s;}
+    .apac-dot-jp,.apac-dot-kr,.apac-center{transition:filter 0.2s;}
+    @keyframes apacDotPulseJp{0%,100%{r:2.4;opacity:0.9;}50%{r:3.2;opacity:1;}}
+    @keyframes apacDotPulseKr{0%,100%{r:2.4;opacity:0.9;}50%{r:3.2;opacity:1;}}
+    @keyframes apacArcGlow{0%,100%{opacity:0.7;}50%{opacity:1;}}
+    @keyframes apacCenterPulse{0%,100%{opacity:0.8;transform:scale(1);}50%{opacity:1;transform:scale(1.4);}}
+    button:hover .apac-dot-jp{animation:apacDotPulseJp 1.2s ease-in-out infinite;filter:drop-shadow(0 0 3px rgba(220,50,70,0.9));}
+    button:hover .apac-dot-kr{animation:apacDotPulseKr 1.2s ease-in-out 0.4s infinite;filter:drop-shadow(0 0 3px rgba(40,100,220,0.9));}
+    button:hover .apac-arc{animation:apacArcGlow 2s ease-in-out infinite;}
+    button:hover .apac-center{animation:apacCenterPulse 1.6s ease-in-out infinite;transform-box:fill-box;transform-origin:center;}
+
     /* ── JP / KR holiday pips in thead ── */
     .hol-pip{position:relative;font-size:20px;line-height:1;cursor:default;transition:transform 0.15s cubic-bezier(0.34,1.56,0.64,1);display:inline-flex;}
     .hol-pip:hover{transform:scale(1.3);}
