@@ -1773,15 +1773,15 @@ const handleCelebrate = (person) => {
                         </div>
                       )}
                       {(jpHolidays[d.ds] || krHolidays[d.ds]) && (
-                        <div style={{position:'absolute',top:2,left:2,zIndex:20,display:'flex',gap:2}}>
+                        <div style={{position:'absolute',top:bdayPeople.length>0?22:2,right:2,zIndex:20,display:'flex',gap:2}}>
                           {jpHolidays[d.ds] && (
                             <div className="hol-flag-icon">
-                              🇯🇵<div className="hol-flag-tip">{jpHolidays[d.ds]}</div>
+                              🇯🇵<div className="hol-flag-tip">{new Date(d.ds+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})} · {jpHolidays[d.ds]}</div>
                             </div>
                           )}
                           {krHolidays[d.ds] && (
                             <div className="hol-flag-icon">
-                              🇰🇷<div className="hol-flag-tip">{krHolidays[d.ds]}</div>
+                              🇰🇷<div className="hol-flag-tip">{new Date(d.ds+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})} · {krHolidays[d.ds]}</div>
                             </div>
                           )}
                         </div>
