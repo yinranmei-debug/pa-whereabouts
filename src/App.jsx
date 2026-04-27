@@ -1567,17 +1567,32 @@ const handleCelebrate = (person) => {
               onClick={() => setShowTeamToday(p => !p)}
               title="Team Today"
             >
-              <svg width="15" height="15" viewBox="0 0 18 18" fill="none">
-                {/* back-left person */}
-                <circle className="mh-star-1" cx="5.5" cy="6.5" r="2.2" fill="rgba(106,199,255,0.55)" stroke="rgba(167,139,250,0.5)" strokeWidth="0.8"/>
-                {/* back-right person */}
-                <circle className="mh-star-3" cx="12.5" cy="6.5" r="2.2" fill="rgba(106,199,255,0.55)" stroke="rgba(167,139,250,0.5)" strokeWidth="0.8"/>
-                {/* front-center person */}
-                <circle className="mh-star-2" cx="9" cy="5.5" r="2.6" fill="rgba(167,139,250,0.85)" stroke="rgba(196,181,253,0.8)" strokeWidth="1"/>
-                {/* shoulder arc */}
-                <path className="mh-today-arc" d="M1.5 16 Q9 11.5 16.5 16" stroke="rgba(167,139,250,0.55)" strokeWidth="1.4" fill="none" strokeLinecap="round"/>
+              <svg width="16" height="16" viewBox="0 0 22 20" fill="none">
+                {/* left person — head + body + arms */}
+                <circle className="mh-star-1" cx="5" cy="5" r="2.2" fill="rgba(106,199,255,0.6)" stroke="rgba(167,139,250,0.55)" strokeWidth="0.9"/>
+                <line x1="5" y1="7.2" x2="5" y2="12.5" stroke="rgba(106,199,255,0.55)" strokeWidth="1.3" strokeLinecap="round"/>
+                <line x1="2.5" y1="9.5" x2="7.5" y2="9.5" stroke="rgba(106,199,255,0.45)" strokeWidth="1.1" strokeLinecap="round"/>
+                <line x1="5" y1="12.5" x2="3.2" y2="15.5" stroke="rgba(106,199,255,0.45)" strokeWidth="1.1" strokeLinecap="round"/>
+                <line x1="5" y1="12.5" x2="6.8" y2="15.5" stroke="rgba(106,199,255,0.45)" strokeWidth="1.1" strokeLinecap="round"/>
+
+                {/* right person — head + body + arms */}
+                <circle className="mh-star-3" cx="17" cy="5" r="2.2" fill="rgba(106,199,255,0.6)" stroke="rgba(167,139,250,0.55)" strokeWidth="0.9"/>
+                <line x1="17" y1="7.2" x2="17" y2="12.5" stroke="rgba(106,199,255,0.55)" strokeWidth="1.3" strokeLinecap="round"/>
+                <line x1="14.5" y1="9.5" x2="19.5" y2="9.5" stroke="rgba(106,199,255,0.45)" strokeWidth="1.1" strokeLinecap="round"/>
+                <line x1="17" y1="12.5" x2="15.2" y2="15.5" stroke="rgba(106,199,255,0.45)" strokeWidth="1.1" strokeLinecap="round"/>
+                <line x1="17" y1="12.5" x2="18.8" y2="15.5" stroke="rgba(106,199,255,0.45)" strokeWidth="1.1" strokeLinecap="round"/>
+
+                {/* center person — slightly larger, brighter */}
+                <circle className="mh-star-2" cx="11" cy="4" r="2.6" fill="rgba(167,139,250,0.9)" stroke="rgba(196,181,253,0.85)" strokeWidth="1"/>
+                <line x1="11" y1="6.6" x2="11" y2="12.5" stroke="rgba(167,139,250,0.75)" strokeWidth="1.5" strokeLinecap="round"/>
+                <line x1="8" y1="9" x2="14" y2="9" stroke="rgba(167,139,250,0.6)" strokeWidth="1.3" strokeLinecap="round"/>
+                <line x1="11" y1="12.5" x2="9" y2="15.8" stroke="rgba(167,139,250,0.6)" strokeWidth="1.3" strokeLinecap="round"/>
+                <line x1="11" y1="12.5" x2="13" y2="15.8" stroke="rgba(167,139,250,0.6)" strokeWidth="1.3" strokeLinecap="round"/>
+
+                {/* ground connection line */}
+                <path className="mh-today-arc" d="M2 18 Q11 15.5 20 18" stroke="rgba(167,139,250,0.4)" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
                 {/* today pulse dot */}
-                <circle className="mh-today-dot" cx="9" cy="16" r="1.3" fill="rgba(0,155,255,0.9)"/>
+                <circle className="mh-today-dot" cx="11" cy="18" r="1.4" fill="rgba(0,155,255,0.95)"/>
               </svg>
               <span style={{fontSize:11,fontWeight:700,letterSpacing:'0.03em'}}>Today</span>
             </button>
