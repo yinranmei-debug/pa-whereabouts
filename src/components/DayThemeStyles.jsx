@@ -378,6 +378,18 @@ body.day-mode .we .pill-card {
     body.day-mode .plan-date { color: rgba(232,229,255,0.85) !important; }
     body.day-mode .plan-name { color: rgba(232,229,255,0.45) !important; }
 
+    /* ── Team Today button — day ── */
+    body.day-mode .team-today-btn {
+      background: rgba(255,255,255,0.85) !important;
+      border-color: rgba(0,155,255,0.2) !important;
+      color: rgba(26,24,48,0.65) !important;
+    }
+    body.day-mode .team-today-btn:hover {
+      background: rgba(0,155,255,0.07) !important;
+      border-color: rgba(0,155,255,0.35) !important;
+      color: #009bff !important;
+    }
+
     /* ── Emoji picker ── */
     body.day-mode .emo-picker {
       background: rgba(255,255,255,0.97) !important;

@@ -21,6 +21,7 @@ import { useDimensionalBreach }   from './hooks/useDimensionalBreach';
 import DimensionalBreachOverlay   from './components/DimensionalBreachOverlay';
 import BananaEasterEgg from './components/BananaEasterEgg';
 import CakeThrow, { BdayHatSVG } from './components/CakeThrow';
+import TeamTodayPanel from './components/TeamTodayPanel';
 
 const supabase = createClient(
   'https://vzdrpydtxlamoqtukgld.supabase.co',
@@ -271,6 +272,7 @@ export default function App() {
 
   const [showWeeklyPanel,   setShowWeeklyPanel]   = useState(false);
   const [showBdayPanel,     setShowBdayPanel]      = useState(false);
+  const [showTeamToday,     setShowTeamToday]      = useState(false);
   const [weeklyUpdates,     setWeeklyUpdates]      = useState([]);
  const [weeklyUpdatesCount, setWeeklyUpdatesCount] = useState(0);
   const [weeklyReadCount,    setWeeklyReadCount]    = useState(0);
@@ -1124,6 +1126,17 @@ const handleCelebrate = (person) => {
           readySignal={!showTour && !showWelcome && !showTips && (!hasBirthdayToday_hook || birthdayDone)}
         />
 
+        <TeamTodayPanel
+          open={showTeamToday}
+          onClose={() => setShowTeamToday(false)}
+          staffList={STAFF_LIST}
+          records={records}
+          STATUS_CONFIG={STATUS_CONFIG}
+          emotions={emotions}
+          staffPhotos={staffPhotos}
+          isDayMode={isDayMode}
+        />
+
         {flight && (
           <EmojiFlyLayer
             key={`${flight.start.x}-${flight.start.y}-${Date.now()}`}
@@ -1547,6 +1560,17 @@ const handleCelebrate = (person) => {
               <span>TEAM: {inOffice.n} / {inOffice.total} IN OFFICE</span>
             </div>
           )}
+          {!isMobile && (
+            <button
+              className="tb-btn team-today-btn"
+              style={{ marginLeft: isSuperUser(me) ? 8 : 'auto', display:'flex', alignItems:'center', gap:5 }}
+              onClick={() => setShowTeamToday(p => !p)}
+              title="Team Today"
+            >
+              <span style={{fontSize:13}}>👥</span>
+              <span style={{fontSize:11,fontWeight:700,letterSpacing:'0.03em'}}>Today</span>
+            </button>
+          )}
         </div>
 
        
@@ -1715,7 +1739,7 @@ const handleCelebrate = (person) => {
                                         title="Clear mood"
                                       >✕</div>
                                     )}
-                                    {['🧘','⚡','☕','🎯','🚀','💪','🌱'].map(emo=>(
+                                    {['🧘','⚡','☕','🎯','🚀','💪','🌱','🦥','🔥','🧠','🌊','🐝'].map(emo=>(
                                       <div key={emo} onClick={e=>{ e.stopPropagation(); triggerMoodFly(emo, e.currentTarget); }}
                                         style={{fontSize:'18px',cursor:'pointer',padding:'4px 6px',borderRadius:'6px',transition:'all 0.15s'}}
                                       onMouseOver={e=>{e.currentTarget.style.background='rgba(167,139,250,0.15)';e.currentTarget.style.transform='scale(1.25)';}}
