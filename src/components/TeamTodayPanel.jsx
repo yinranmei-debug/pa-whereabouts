@@ -156,17 +156,16 @@ export default function TeamTodayPanel({ open, onClose, staffList, records, STAT
                       <div style={{ fontSize:11, fontWeight:700, color:nameC, marginBottom:4, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
                         {p.name}
                       </div>
-                      <div style={{ display:'flex', gap:6, alignItems:'center', flexWrap:'wrap' }}>
-                        <span style={{ fontSize:9, color:subC, fontWeight:700 }}>AM</span>
-                        {amCfg
-                          ? <span style={{ fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:4, background:amCfg.bg, border:`1px solid ${amCfg.border}`, color:amCfg.color, whiteSpace:'nowrap' }}>{amCfg.icon} {amCfg.label}</span>
-                          : <span style={{ fontSize:9, color:subC }}>—</span>
-                        }
-                        <span style={{ fontSize:9, color:subC, fontWeight:700, marginLeft:2 }}>PM</span>
-                        {pmCfg
-                          ? <span style={{ fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:4, background:pmCfg.bg, border:`1px solid ${pmCfg.border}`, color:pmCfg.color, whiteSpace:'nowrap' }}>{pmCfg.icon} {pmCfg.label}</span>
-                          : <span style={{ fontSize:9, color:subC }}>—</span>
-                        }
+                      <div style={{ display:'flex', flexDirection:'column', gap:3 }}>
+                        {[{label:'AM', cfg:amCfg}, {label:'PM', cfg:pmCfg}].map(({label, cfg}) => (
+                          <div key={label} style={{ display:'flex', alignItems:'center', gap:5 }}>
+                            <span style={{ fontSize:9, color:subC, fontWeight:700, width:16, flexShrink:0 }}>{label}</span>
+                            {cfg
+                              ? <span style={{ fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:4, background:cfg.bg, border:`1px solid ${cfg.border}`, color:cfg.color, whiteSpace:'nowrap' }}>{cfg.icon} {cfg.label}</span>
+                              : <span style={{ fontSize:9, color:subC }}>—</span>
+                            }
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
