@@ -3,7 +3,7 @@ import ThemeToggle from './components/ThemeToggle';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { PublicClientApplication } from "@azure/msal-browser";
 import { msalConfig, loginRequest } from "./authConfig";
-import HOLIDAYS_DATA from './data/holidays.json';
+import HOLIDAYS_FALLBACK from './data/holidays.json';
 import RAW_STAFF_LIST from './data/staff.json';
 import STATUS_CONFIG from './data/status.json';
 import TIPS_DATA from './data/tips.json';
@@ -31,10 +31,8 @@ const supabase = createClient(
 const msalInstance = new PublicClientApplication(msalConfig);
 const STAFF_LIST = RAW_STAFF_LIST.filter(p => p.id !== 'arthur');
 const SUPER_USERS = ['arthur.cheung@patternasia.com', 'brenda.lee@patternasia.com', 'yinran.mei@patternasia.com'];
-const CHINA_EXTRA = ['jessica.rao@patternasia.com'];
 
 const isSuperUser  = em => SUPER_USERS.includes(em.toLowerCase());
-const isChinaExtra = em => CHINA_EXTRA.includes(em.toLowerCase());
 const getStaffEntry = em => RAW_STAFF_LIST.find(s => s.email.toLowerCase() === em.toLowerCase());
 const AUTH_SESSION_MS = 14 * 24 * 60 * 60 * 1000;
 const authSessionKey = email => `whereabouts-auth-session-${email.toLowerCase()}`;
@@ -198,6 +196,7 @@ export default function App() {
   const [activeTab,       setActiveTab]       = useState('calendar');
   const [viewDate,        setViewDate]        = useState(new Date());
   const [region]                              = useState('Hong Kong');
+  const [holidaysData, setHolidaysData]       = useState(HOLIDAYS_FALLBACK);
   const [records,         setRecords]         = useState({});
   const [activeMenu,      setActiveMenu]      = useState(null);
   const [socialMenu,      setSocialMenu]      = useState(null);
@@ -365,7 +364,7 @@ export default function App() {
       try {
         await msalInstance.initialize(); setIsInit(true);
         const res = await msalInstance.handleRedirectPromise();
-        const isAllowed = em => isSuperUser(em)||isChinaExtra(em)||!!getStaffEntry(em);
+        const isAllowed = em => isSuperUser(em)||!!getStaffEntry(em);
         if (res) {
           const em = res.account.username.toLowerCase();
           if (!isAllowed(em)) { setDenied(true); return; }
@@ -468,6 +467,58 @@ export default function App() {
       setStaffTitles(titles);
     })();
   }, [account]);
+
+  // Auto-fetch HK public holidays from Nager.Date for current + next year
+  useEffect(() => {
+    const HK_EMOJI = n => {
+      const s = n.toLowerCase();
+      if (s.includes('new year') && !s.includes('lunar') && !s.includes('chinese')) return '🎍 NEW YEAR';
+      if (s.includes('lunar') || s.includes('chinese new year'))                    return '🧧 LUNAR NEW YEAR';
+      if (s.includes('good friday'))                                                 return '✝️ GOOD FRIDAY';
+      if (s.includes('ching ming'))                                                  return '🍂 CHING MING';
+      if (s.includes('easter') || s.includes('holy saturday'))                      return '🐣 EASTER';
+      if (s.includes('labour') || s.includes('labor'))                              return '👷 LABOUR DAY';
+      if (s.includes('buddha'))                                                      return '🧘 BUDDHA\'S BIRTHDAY';
+      if (s.includes('tuen ng') || s.includes('dragon boat'))                       return '🚣 TUEN NG';
+      if (s.includes('establishment') || s.includes('sar'))                         return '🇭🇰 HK SAR DAY';
+      if (s.includes('mid-autumn') || s.includes('mid autumn'))                     return '🌕 MID-AUTUMN';
+      if (s.includes('national day') || s.includes('national holiday'))             return '🇨🇳 NATIONAL DAY';
+      if (s.includes('chung yeung') || s.includes('double ninth'))                  return '⛰️ CHUNG YEUNG';
+      if (s.includes('christmas day'))                                               return '🎄 CHRISTMAS';
+      if (s.includes('boxing') || s.includes('christmas holiday') || s.includes('day following christmas')) return '🎁 BOXING DAY';
+      return '📅 ' + n.toUpperCase();
+    };
+
+    const CACHE_KEY = 'hk-holidays-cache';
+    const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 1 week
+
+    const buildHolidays = days => {
+      const holidays = {};
+      days.forEach(({ date, name }) => { holidays[date] = HK_EMOJI(name); });
+      return holidays;
+    };
+
+    (async () => {
+      try {
+        const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+        if (cached && Date.now() - cached.ts < CACHE_TTL) {
+          setHolidaysData({ 'Hong Kong': { holidays: cached.holidays, adjusted_workdays: [] } });
+          return;
+        }
+        const years = [new Date().getFullYear(), new Date().getFullYear() + 1];
+        const results = await Promise.all(
+          years.map(y => fetch(`https://date.nager.at/api/v3/PublicHolidays/${y}/HK`).then(r => r.ok ? r.json() : []))
+        );
+        const holidays = buildHolidays(results.flat());
+        if (Object.keys(holidays).length > 0) {
+          localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), holidays }));
+          setHolidaysData({ 'Hong Kong': { holidays, adjusted_workdays: [] } });
+        }
+      } catch {
+        // silently keep fallback JSON on network failure
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     if (!account) return;
@@ -964,7 +1015,7 @@ const handleCelebrate = (person) => {
     return Array.from({length:7}).map((_,i)=>{
       const t=new Date(mon); t.setDate(mon.getDate()+i);
       const ds=fmt(t);
-      const rd=HOLIDAYS_DATA[region];
+      const rd=holidaysData[region];
       const hol=rd?.holidays?.[ds];
       const isAdj=rd?.adjusted_workdays?.includes(ds);
       const isWE=(t.getDay()===0||t.getDay()===6)&&!isAdj;
@@ -973,7 +1024,7 @@ const handleCelebrate = (person) => {
   })();
 
   const plannerList=()=>{
-    const h=HOLIDAYS_DATA[region]?.holidays; if (!h) return [];
+    const h=holidaysData[region]?.holidays; if (!h) return [];
     return Object.entries(h).sort((a,b)=>a[0].localeCompare(b[0])).map(([date,name])=>{
       const d=new Date(date);
       return {date,name,isWE:d.getDay()===0||d.getDay()===6,day:d.toLocaleDateString('en-US',{weekday:'short'})};
@@ -1361,7 +1412,7 @@ const handleCelebrate = (person) => {
             <div className={`nav-tab${activeTab==='planner'?' active':''}`} onClick={()=>setActiveTab(activeTab==='planner'?'calendar':'planner')}>Holiday Planner</div>
             {activeTab==='planner'&&(
               <div className="dsz" style={{position:'absolute',top:'calc(100% + 4px)',left:0,zIndex:10020,background:'rgba(13,10,35,0.96)',backdropFilter:'blur(20px)',borderRadius:16,width:320,padding:16,boxShadow:'0 16px 48px rgba(0,0,0,0.5)',border:'1px solid rgba(167,139,250,0.2)',animation:'dropIn 0.18s ease'}} onClick={e=>e.stopPropagation()}>
-                <div style={{fontSize:'10px',fontWeight:'700',color:'rgba(232,229,255,0.45)',letterSpacing:'0.1em',marginBottom:'10px',padding:'0 4px'}}>{region.toUpperCase()} PUBLIC HOLIDAYS 2026</div>
+                <div style={{fontSize:'10px',fontWeight:'700',color:'rgba(232,229,255,0.45)',letterSpacing:'0.1em',marginBottom:'10px',padding:'0 4px'}}>{region.toUpperCase()} PUBLIC HOLIDAYS {viewDate.getFullYear()}</div>
                 <div style={{maxHeight:'360px',overflowY:'auto',display:'flex',flexDirection:'column',gap:'2px'}}>
                   {plannerList().map(h=>(
                    <div key={h.date} className="plan-row" onClick={()=>jumpToDate(h.date)}>
