@@ -28,5 +28,5 @@
   { "id": "james_t",   "name": "James Tan",         "region": "China",     "email": "James.Tan@patternasia.com" },
   { "id": "jessica",   "name": "Jessica Rao",       "region": "China",     "email": "jessica.rao@patternasia.com" },
   { "id": "desiree",  "name": "Desiree Wong",      "region": "Hong Kong", "email": "desiree@patternasia.com",          "birthday": "02-24" },
-  { "id": "tina",     "name": "Tina Wang",          "region": "Hong Kong", "email": "tina.wang@patternasia.com" }
+  { "id": "tina",     "name": "Tina Wang",          "region": "Hong Kong", "email": "tina.wang@patternasia.com",        "birthday": "08-11" }
 ]
