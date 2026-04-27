@@ -281,14 +281,14 @@ const GlobalStyles = () => (
     .hol-pip-jp{filter:drop-shadow(0 0 4px rgba(200,40,60,0.65));}
     .hol-pip-kr{filter:drop-shadow(0 0 4px rgba(30,100,220,0.65));}
     .hol-pip-tip{
-      position:absolute;top:calc(100% + 5px);left:50%;
+      position:absolute;top:calc(100% + 6px);left:50%;
       transform:translateX(-50%) translateY(3px);
-      background:rgba(10,15,40,0.95);
-      border:1px solid rgba(167,139,250,0.35);
+      background:linear-gradient(90deg,rgba(255,183,0,0.15),rgba(255,100,150,0.12));
+      border:1px solid rgba(255,183,0,0.5);
       border-radius:6px;padding:4px 10px;
       font-size:10px;font-weight:700;color:#fff;
       white-space:nowrap;pointer-events:none;
-      opacity:0;transition:opacity 0.15s,transform 0.15s;
+      opacity:0;transition:opacity 0.15s ease,transform 0.15s ease;
       font-family:'Plus Jakarta Sans',sans-serif;
       z-index:999;letter-spacing:0.03em;
     }
