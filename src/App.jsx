@@ -1567,7 +1567,18 @@ const handleCelebrate = (person) => {
               onClick={() => setShowTeamToday(p => !p)}
               title="Team Today"
             >
-              <span style={{fontSize:13}}>👥</span>
+              <svg width="15" height="15" viewBox="0 0 18 18" fill="none">
+                {/* back-left person */}
+                <circle className="mh-star-1" cx="5.5" cy="6.5" r="2.2" fill="rgba(106,199,255,0.55)" stroke="rgba(167,139,250,0.5)" strokeWidth="0.8"/>
+                {/* back-right person */}
+                <circle className="mh-star-3" cx="12.5" cy="6.5" r="2.2" fill="rgba(106,199,255,0.55)" stroke="rgba(167,139,250,0.5)" strokeWidth="0.8"/>
+                {/* front-center person */}
+                <circle className="mh-star-2" cx="9" cy="5.5" r="2.6" fill="rgba(167,139,250,0.85)" stroke="rgba(196,181,253,0.8)" strokeWidth="1"/>
+                {/* shoulder arc */}
+                <path className="mh-today-arc" d="M1.5 16 Q9 11.5 16.5 16" stroke="rgba(167,139,250,0.55)" strokeWidth="1.4" fill="none" strokeLinecap="round"/>
+                {/* today pulse dot */}
+                <circle className="mh-today-dot" cx="9" cy="16" r="1.3" fill="rgba(0,155,255,0.9)"/>
+              </svg>
               <span style={{fontSize:11,fontWeight:700,letterSpacing:'0.03em'}}>Today</span>
             </button>
           )}

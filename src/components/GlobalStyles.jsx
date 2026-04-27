@@ -648,6 +648,8 @@ const GlobalStyles = () => (
     .mh-flame{animation:none;transform-origin:bottom center;}
     .mh-planet-body{animation:none;}
     .mh-ring{animation:none;}
+    .mh-today-dot{animation:none;transform-box:fill-box;transform-origin:center;}
+    .mh-today-arc{animation:none;transform-box:fill-box;transform-origin:center;}
 
     button:hover .mh-star-1{animation:twinkleStar 1.4s ease-in-out infinite;}
     button:hover .mh-star-2{animation:twinkleStar 1.4s ease-in-out 0.3s infinite;}
@@ -655,6 +657,16 @@ const GlobalStyles = () => (
     button:hover .mh-flame{animation:candleFlame 0.6s ease-in-out infinite;}
     button:hover .mh-planet-body{animation:planetFloat 2.5s ease-in-out infinite;}
    button:hover .mh-ring{animation:ringOrbit3D 2s linear infinite;}
+    button:hover .mh-today-dot{animation:todayPulse 1.6s ease-in-out infinite;}
+    button:hover .mh-today-arc{animation:todayArcFloat 2s ease-in-out infinite;}
+    @keyframes todayPulse{
+      0%,100%{opacity:0.85;transform:scale(1);}
+      50%{opacity:1;transform:scale(1.3);}
+    }
+    @keyframes todayArcFloat{
+      0%,100%{transform:translateY(0);}
+      50%{transform:translateY(-1.5px);}
+    }
     .mh-ring{transform-box:fill-box;transform-origin:center;transform:rotateX(72deg);}
     @keyframes ringOrbit3D{
       0%{transform:rotateY(0deg) rotateX(72deg);}
