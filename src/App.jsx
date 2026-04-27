@@ -197,6 +197,8 @@ export default function App() {
   const [viewDate,        setViewDate]        = useState(new Date());
   const [region]                              = useState('Hong Kong');
   const [holidaysData, setHolidaysData]       = useState(HOLIDAYS_FALLBACK);
+  const [jpHolidays,   setJpHolidays]         = useState({});
+  const [krHolidays,   setKrHolidays]         = useState({});
   const [records,         setRecords]         = useState({});
   const [activeMenu,      setActiveMenu]      = useState(null);
   const [socialMenu,      setSocialMenu]      = useState(null);
@@ -518,6 +520,29 @@ export default function App() {
         // silently keep fallback JSON on network failure
       }
     })();
+  }, []);
+
+  // Auto-fetch JP and KR public holidays from Nager.Date
+  useEffect(() => {
+    const CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
+    const fetchCountry = async (code, cacheKey, setter) => {
+      try {
+        const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+        if (cached && Date.now() - cached.ts < CACHE_TTL) { setter(cached.holidays); return; }
+        const years = [new Date().getFullYear(), new Date().getFullYear() + 1];
+        const results = await Promise.all(
+          years.map(y => fetch(`https://date.nager.at/api/v3/PublicHolidays/${y}/${code}`).then(r => r.ok ? r.json() : []))
+        );
+        const holidays = {};
+        results.flat().forEach(({ date, name }) => { holidays[date] = name; });
+        if (Object.keys(holidays).length > 0) {
+          localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), holidays }));
+          setter(holidays);
+        }
+      } catch {}
+    };
+    fetchCountry('JP', 'jp-holidays-cache', setJpHolidays);
+    fetchCountry('KR', 'kr-holidays-cache', setKrHolidays);
   }, []);
 
   useEffect(() => {
@@ -1745,6 +1770,20 @@ const handleCelebrate = (person) => {
                             🎂 {bdayPeople.map(p => p.name.split(' ')[0]).join(' & ')}'s birthday!
                             <div className="bday-hdr-tip-arrow"/>
                           </div>
+                        </div>
+                      )}
+                      {(jpHolidays[d.ds] || krHolidays[d.ds]) && (
+                        <div style={{position:'absolute',top:2,left:2,zIndex:20,display:'flex',gap:2}}>
+                          {jpHolidays[d.ds] && (
+                            <div className="hol-flag-icon">
+                              🇯🇵<div className="hol-flag-tip">{jpHolidays[d.ds]}</div>
+                            </div>
+                          )}
+                          {krHolidays[d.ds] && (
+                            <div className="hol-flag-icon">
+                              🇰🇷<div className="hol-flag-tip">{krHolidays[d.ds]}</div>
+                            </div>
+                          )}
                         </div>
                       )}
                       <div style={{fontSize:'11px',fontWeight:'700',letterSpacing:'0.06em',marginBottom:'6px',color:d.isToday?'#770bff':'#9ca3af'}}>{d.dayName.toUpperCase()}</div>

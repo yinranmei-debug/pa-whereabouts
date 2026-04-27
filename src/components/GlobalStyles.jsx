@@ -275,6 +275,23 @@ const GlobalStyles = () => (
     }
     .bday-hdr-tip-arrow{ display:none; }
 
+    /* ── JP / KR holiday flag icons in thead ── */
+    .hol-flag-icon{cursor:default;position:relative;font-size:14px;line-height:1;transition:transform 0.15s cubic-bezier(0.34,1.56,0.64,1);}
+    .hol-flag-icon:hover{transform:scale(1.3);}
+    .hol-flag-tip{
+      position:absolute;top:calc(100% + 6px);left:50%;
+      transform:translateX(-50%) translateY(3px);
+      background:rgba(10,15,40,0.95);
+      border:1px solid rgba(167,139,250,0.35);
+      border-radius:6px;padding:4px 10px;
+      font-size:10px;font-weight:700;color:#fff;
+      white-space:nowrap;pointer-events:none;
+      opacity:0;transition:opacity 0.15s ease,transform 0.15s ease;
+      font-family:'Plus Jakarta Sans',sans-serif;
+      z-index:999;letter-spacing:0.03em;
+    }
+    .hol-flag-icon:hover .hol-flag-tip{opacity:1;transform:translateX(-50%) translateY(0);}
+
     /* ── Table ── */
     .tbl-outer{
       background:transparent;
