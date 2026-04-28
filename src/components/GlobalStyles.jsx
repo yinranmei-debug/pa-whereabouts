@@ -185,6 +185,7 @@ const GlobalStyles = () => (
       backdrop-filter:blur(8px);
     }
     .user-name{font-size:13px;font-weight:600;color:rgba(232,229,255,0.85);}
+    .user-chip-caret{color:rgba(255,255,255,0.45);}
     .signout-btn{height:28px;padding:0 12px;border-radius:100px;border:none;background:rgba(255,255,255,0.1);color:rgba(232,229,255,0.6);font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;}
     .signout-btn:hover{background:rgba(255,255,255,0.2);color:#fff;}
     .save-txt{font-size:12px;color:rgba(232,229,255,0.45);animation:pulse 1.2s infinite;}

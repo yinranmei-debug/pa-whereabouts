@@ -1625,7 +1625,7 @@ const handleCelebrate = (person) => {
                     </div>
                   );
                 })()}
-                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginLeft: 2 }}>▾</span>
+                <span className="user-chip-caret" style={{ fontSize: 13, marginLeft: 2 }}>▾</span>
               </div>
               {showStreakDropdown && (
                 <StreakDropdown

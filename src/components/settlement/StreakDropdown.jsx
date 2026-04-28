@@ -242,7 +242,7 @@ export default function StreakDropdown({ staffId, records, onClose, onLogout }) 
 
         {/* ── sign out ── */}
         <div style={{ borderTop: '1px solid rgba(167,139,250,0.1)', padding: '8px 14px' }}>
-          <button onClick={onLogout} style={{
+          <button className="streak-signout" onClick={onLogout} style={{
             width: '100%', padding: '7px 0', fontSize: 11, fontWeight: 600,
             color: 'rgba(232,229,255,0.5)', background: 'none', border: 'none',
             cursor: 'pointer', borderRadius: 8, letterSpacing: '0.05em',

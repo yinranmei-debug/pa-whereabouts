@@ -108,9 +108,17 @@ const DayThemeStyles = () => (
       color: rgba(26,24,48,0.45) !important;
     }
     body.day-mode .user-chip {
-      background: rgba(255,255,255,0.8) !important;
-      border-color: rgba(0,155,255,0.15) !important;
+      background: rgba(237,232,255,0.92) !important;
+      border: 1.5px solid rgba(119,11,255,0.28) !important;
+      box-shadow: 0 1px 8px rgba(119,11,255,0.12), 0 1px 3px rgba(0,0,0,0.07) !important;
     }
+    body.day-mode .user-chip:hover {
+      background: rgba(228,220,255,0.98) !important;
+      border-color: rgba(119,11,255,0.45) !important;
+      box-shadow: 0 2px 14px rgba(119,11,255,0.18), 0 2px 5px rgba(0,0,0,0.08) !important;
+    }
+    /* caret ▾ */
+    body.day-mode .user-chip-caret { color: rgba(26,24,48,0.45) !important; }
     body.day-mode .user-name { color: #1A1830 !important; }
     body.day-mode .signout-btn {
       background: rgba(0,155,255,0.08) !important;
@@ -119,6 +127,14 @@ const DayThemeStyles = () => (
     body.day-mode .signout-btn:hover {
       background: linear-gradient(135deg, rgba(0,155,255,0.15), rgba(119,11,255,0.12)) !important;
       color: #1A1830 !important;
+    }
+    /* StreakDropdown sign-out button in day mode */
+    body.day-mode .streak-signout {
+      color: rgba(26,24,48,0.5) !important;
+    }
+    body.day-mode .streak-signout:hover {
+      color: rgba(26,24,48,0.85) !important;
+      background: rgba(119,11,255,0.07) !important;
     }
 
     /* ── Toolbar ── */
