@@ -7,7 +7,7 @@ import LevelUpModal from './LevelUpModal';
 // Active day = any AM or PM status set (non-"none") on a weekday.
 // Qualifying week = Mon-Fri with ≥2 active days.
 // Streak = consecutive qualifying weeks going back from current week.
-// Level requires 2 qualifying weeks per tier (8 weeks max = Metropolis).
+// Tier thresholds (cumulative): T1=1wk, T2=3wks, T3=6wks, T4=10wks
 export function computeStreak(staffId, records) {
   if (!staffId || !records) return 0;
 
@@ -29,7 +29,7 @@ export function computeStreak(staffId, records) {
   thisMonday.setHours(0, 0, 0, 0);
 
   let streak = 0;
-  for (let w = 0; w < 8; w++) {
+  for (let w = 0; w < 10; w++) {
     const weekStart = new Date(thisMonday);
     weekStart.setDate(thisMonday.getDate() - w * 7);
     let count = 0;
@@ -42,13 +42,17 @@ export function computeStreak(staffId, records) {
     if (count >= 2) streak++;
     else break;
   }
-  return streak; // 0-8
+  return streak; // 0-10
 }
 
-// streak (0-8) → LEVELS index (0-4)
-// 0-1 = Day Zero, 2-3 = First Camp, 4-5 = Foundation, 6-7 = Settlement, 8 = Metropolis
+// streak (0-10) → LEVELS index (0-4)
+// 0 = Day Zero, 1-2 = Tier 1, 3-5 = Tier 2, 6-9 = Tier 3, 10 = Tier 4
 export function streakToLevelIdx(streak) {
-  return Math.min(Math.floor(streak / 2), 4);
+  if (streak >= 10) return 4;
+  if (streak >= 6)  return 3;
+  if (streak >= 3)  return 2;
+  if (streak >= 1)  return 1;
+  return 0;
 }
 
 // ─── sub-components ───────────────────────────────────────────────
@@ -87,31 +91,30 @@ function SceneCircle({ Scene, frame, from, to, size = 100, blurred = false }) {
   );
 }
 
-// 8 pips total, grouped 2-per-level with a thin divider between levels
+// 10 pips grouped 1 | 2 | 3 | 4 matching tier costs T1=1, T2=2, T3=3, T4=4
 function WeekPips({ streak, from, to }) {
+  const groupEnds = new Set([1, 3, 6]); // divider after pip 1, 3, 6
   return (
-    <div style={{ display: 'flex', gap: 3, alignItems: 'center', marginTop: 7, flexWrap: 'nowrap' }}>
-      {[1,2,3,4,5,6,7,8].map(w => {
+    <div style={{ display: 'flex', gap: 2, alignItems: 'center', marginTop: 7, flexWrap: 'nowrap' }}>
+      {[1,2,3,4,5,6,7,8,9,10].map(w => {
         const done = streak >= w;
         const active = w === streak + 1;
-        // small gap between each pair of 2
-        const isGroupEnd = w % 2 === 0 && w < 8;
         return (
-          <div key={w} style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+          <div key={w} style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
             <div style={{
-              width: 18, height: 5, borderRadius: 3,
+              width: 15, height: 5, borderRadius: 3,
               background: done
                 ? `linear-gradient(90deg, ${from}, ${to})`
                 : active ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.07)',
               boxShadow: done ? `0 0 5px ${to}77` : 'none',
               transition: 'background 0.3s',
             }} />
-            {isGroupEnd && <div style={{ width: 1, height: 8, background: 'rgba(255,255,255,0.1)', flexShrink: 0 }} />}
+            {groupEnds.has(w) && <div style={{ width: 1, height: 8, background: 'rgba(255,255,255,0.1)', flexShrink: 0, marginLeft: 1 }} />}
           </div>
         );
       })}
       <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', fontWeight: 600, letterSpacing: '0.06em', marginLeft: 3 }}>
-        {streak}/8
+        {streak}/10
       </span>
     </div>
   );
@@ -197,7 +200,7 @@ export default function StreakDropdown({ staffId, records, onClose, onLogout }) 
             <div style={{ fontSize: 12, color: nameC, fontWeight: 600, lineHeight: 1.55 }}>{currentLevel.vibe}</div>
             {levelIdx === 0 ? (
               <div style={{ marginTop: 6, fontSize: 10, color: subC, lineHeight: 1.6 }}>
-                Update your status 2 days a week. Do it two weeks running — a new scene unlocks.
+                Update your status 2 days this week — a new scene unlocks.
               </div>
             ) : nextLevel && weeksToNext > 0 ? (
               <div style={{ marginTop: 6, fontSize: 10, color: subC }}>
