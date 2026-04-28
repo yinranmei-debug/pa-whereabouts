@@ -55,14 +55,14 @@ export default function LevelUpModal({ lvl, onClose, onClaim }) {
         background: `radial-gradient(ellipse at 50% 60%, ${lvl.ringFrom}44 0%, rgba(4,2,14,0.92) 70%)`,
         backdropFilter: 'blur(12px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
+        overflowY: 'auto',
+        padding: '4vh 20px',
         animation: leaving ? 'lum-out 0.5s ease forwards' : undefined,
       }}>
 
         <div style={{
           width: 'clamp(480px, 66vw, 860px)',
-          maxHeight: '92vh',
-          overflowY: 'auto',
-          overflowX: 'hidden',
+          flexShrink: 0,
           borderRadius: 40,
           background: 'linear-gradient(160deg, rgba(10,6,28,0.99) 0%, rgba(16,8,40,0.99) 55%, rgba(12,6,34,0.99) 100%)',
           border: `1.5px solid ${lvl.ringFrom}44`,
