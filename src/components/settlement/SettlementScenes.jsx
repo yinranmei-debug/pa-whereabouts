@@ -257,3 +257,107 @@ export function SceneL4({ frame }) {
     </svg>
   );
 }
+
+export function SceneL0({ frame }) {
+  const T = frame % 220;
+  const phase = T < 44 ? 0 : T < 58 ? 1 : T < 110 ? 2 : T < 160 ? 3 : 4;
+  const standX = 110, groundY = 130;
+  const fallT = phase === 0 ? T / 44 : 1;
+  const fallY = phase === 0 ? -40 + (fallT * fallT) * (groundY + 10) : groundY;
+  const sqT = phase === 1 ? (T - 44) / 14 : 0;
+  const squash = phase === 1 ? Math.sin(sqT * Math.PI) * 0.28 : 0;
+  const charScaleY = 1 - squash, charScaleX = 1 + squash * 0.5;
+  const sitOffsetY = phase >= 2 ? 6 : 0;
+  const sitLean = phase >= 2 ? 4 : 0;
+  const charY = phase === 0 ? fallY : (phase === 1 ? groundY : groundY + sitOffsetY);
+  let eyeShape = 'wide', mouth = 'ohh';
+  if (phase === 0) { eyeShape = 'wide'; mouth = 'ohh'; }
+  else if (phase === 1) { eyeShape = 'closed'; mouth = 'determined'; }
+  else if (phase === 2) { eyeShape = 'sleepy'; mouth = 'soft'; }
+  else if (phase === 3) { eyeShape = (frame % 26) < 3 ? 'closed' : 'open'; mouth = 'soft'; }
+  else { eyeShape = (frame % 50) < 3 ? 'closed' : 'happy'; mouth = 'bigGrin'; }
+  const waveT = phase === 4 ? (T - 160) / 60 : 0;
+  const waveAngle = phase === 4 ? Math.sin(waveT * Math.PI * 4) * 22 : 0;
+  const scratchUp = phase === 3;
+  const stars = phase === 2 ? Array.from({ length: 5 }, (_, i) => {
+    const ang = frame * 0.12 + (i / 5) * Math.PI * 2;
+    return <rect key={'s' + i} x={standX + Math.cos(ang) * 9} y={(charY - 12) + Math.sin(ang) * 3.5} width="2" height="2" fill="#ffd060" />;
+  }) : [];
+  const dustPhase = phase === 1 ? (T - 44) / 14 : (phase === 2 && T < 74 ? (T - 58) / 16 : -1);
+  const dust = dustPhase >= 0 && dustPhase <= 1 ? [-1, 1].flatMap((dir, k) =>
+    Array.from({ length: 4 }, (_, i) => <rect key={'d' + k + i} x={standX + dir * (4 + i * 3 + dustPhase * 14)} y={groundY + 12 - i - dustPhase * 2} width={2 + i} height="1" fill="#3a2a48" opacity={(1 - dustPhase) * 0.7} />)
+  ) : [];
+  const speedLines = phase === 0 && fallT > 0.3 ? Array.from({ length: 5 }, (_, i) =>
+    <rect key={'sl' + i} x={90 + i * 8 + (i % 2) * 4} y={(frame * 4 + i * 30) % 120} width="1" height="6" fill="#4a3060" opacity={0.55} />
+  ) : [];
+  const sweatVisible = phase === 3 && ((T - 110) / 50) > 0.15;
+  const showBubble = phase === 4 && waveT > 0.2;
+  return (
+    <svg viewBox="0 0 200 200">
+      <defs>
+        <radialGradient id="bg-l0" cx="50%" cy="65%">
+          <stop offset="0%" stopColor="#3a2a48" /><stop offset="60%" stopColor="#1a1426" /><stop offset="100%" stopColor="#0a0612" />
+        </radialGradient>
+      </defs>
+      <rect x="0" y="0" width="200" height="200" fill="url(#bg-l0)" />
+      <g>{[[30,30],[60,18],[160,40],[180,70],[150,15],[40,55]].map(([x,y],i)=>{
+        const tw=(frame+i*7)%60;
+        return <rect key={'s'+i} x={x} y={y} width="1" height="1" fill="#ffd9f0" opacity={tw<10?0.4:0.85}/>;
+      })}</g>
+      <ellipse cx="40" cy="170" rx="60" ry="22" fill="#1a2238" />
+      <ellipse cx="160" cy="175" rx="70" ry="20" fill="#1a2238" />
+      <ellipse cx="100" cy="190" rx="120" ry="28" fill="#241830" />
+      {speedLines}{dust}
+      <g style={{ transform: `scale(${charScaleX}, ${charScaleY})`, transformOrigin: `${standX}px ${groundY + 8}px` }}>
+        <LogoChar cx={standX} cy={charY} pose={{
+          legPhase: 0,
+          armL: phase===0?60:(phase===1?40:(phase===2?-10:(phase===3?-20:30))),
+          armR: phase===0?-60:(phase===1?-40:(phase===2?10:(phase===3?-50:(-30-waveAngle)))),
+          armUp: phase===4||scratchUp, bodyLean: sitLean+(phase===0?Math.sin(frame*0.4)*3:0),
+          eyeShape, mouth,
+        }} hideLegs={phase >= 2} />
+      </g>
+      {phase >= 2 && <g>
+        <rect x={standX-8} y={groundY+12} width="6" height="3" fill="#0a72c4"/>
+        <rect x={standX-8} y={groundY+12} width="6" height="1" fill="#08324d"/>
+        <rect x={standX-8} y={groundY+15} width="6" height="1" fill="#08324d"/>
+        <rect x={standX-14} y={groundY+11} width="6" height="4" fill="#08538a"/>
+        <rect x={standX-14} y={groundY+11} width="6" height="1" fill="#08324d"/>
+        <rect x={standX-14} y={groundY+14} width="6" height="1" fill="#08324d"/>
+        <rect x={standX+2} y={groundY+12} width="6" height="3" fill="#0a72c4"/>
+        <rect x={standX+2} y={groundY+12} width="6" height="1" fill="#08324d"/>
+        <rect x={standX+2} y={groundY+15} width="6" height="1" fill="#08324d"/>
+        <rect x={standX+8} y={groundY+11} width="6" height="4" fill="#08538a"/>
+        <rect x={standX+8} y={groundY+11} width="6" height="1" fill="#08324d"/>
+        <rect x={standX+8} y={groundY+14} width="6" height="1" fill="#08324d"/>
+      </g>}
+      {stars}
+      {sweatVisible && <g><rect x={standX+11} y={(charY-12)+((T-110)/50*4)%8} width="2" height="3" fill="#60d0ff"/><rect x={standX+11} y={(charY-12)+((T-110)/50*4)%8-1} width="2" height="1" fill="#aef0ff"/></g>}
+      {showBubble && <g>
+        <rect x={standX+18} y={charY-18} width="32" height="14" fill="#ffffff"/>
+        <rect x={standX+18} y={charY-18} width="32" height="1" fill="#08324d"/>
+        <rect x={standX+18} y={charY-5} width="32" height="1" fill="#08324d"/>
+        <rect x={standX+18} y={charY-18} width="1" height="14" fill="#08324d"/>
+        <rect x={standX+49} y={charY-18} width="1" height="14" fill="#08324d"/>
+        <rect x={standX+16} y={charY-8} width="3" height="1" fill="#ffffff"/>
+        <rect x={standX+14} y={charY-7} width="5" height="1" fill="#ffffff"/>
+        <rect x={standX+16} y={charY-8} width="1" height="1" fill="#08324d"/>
+        <rect x={standX+14} y={charY-7} width="1" height="1" fill="#08324d"/>
+        <rect x={standX+14} y={charY-6} width="5" height="1" fill="#08324d"/>
+        <rect x={standX+23} y={charY-14} width="1" height="6" fill="#08324d"/>
+        <rect x={standX+27} y={charY-14} width="1" height="6" fill="#08324d"/>
+        <rect x={standX+23} y={charY-11} width="5" height="1" fill="#08324d"/>
+        <rect x={standX+31} y={charY-14} width="3" height="1" fill="#08324d"/>
+        <rect x={standX+31} y={charY-9} width="3" height="1" fill="#08324d"/>
+        <rect x={standX+32} y={charY-14} width="1" height="6" fill="#08324d"/>
+        <rect x={standX+38} y={charY-14} width="1" height="4" fill="#08324d"/>
+        <rect x={standX+38} y={charY-9} width="1" height="1" fill="#08324d"/>
+        <rect x={standX+43} y={charY-13} width="1" height="1" fill="#ff60c0"/>
+        <rect x={standX+45} y={charY-13} width="1" height="1" fill="#ff60c0"/>
+        <rect x={standX+42} y={charY-12} width="5" height="1" fill="#ff60c0"/>
+        <rect x={standX+43} y={charY-11} width="3" height="1" fill="#ff60c0"/>
+        <rect x={standX+44} y={charY-10} width="1" height="1" fill="#ff60c0"/>
+      </g>}
+    </svg>
+  );
+}

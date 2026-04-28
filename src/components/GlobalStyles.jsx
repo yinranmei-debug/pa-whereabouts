@@ -234,6 +234,8 @@ const GlobalStyles = () => (
     }
     .team-summary-dot{width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg,#009bff,#770bff);flex-shrink:0;animation:pulseDot 2s ease-in-out infinite;}
 
+    @keyframes ss-ringspin { to { transform: rotate(360deg); } }
+
     .apac-hol-btn.apac-active{
       background:rgba(106,199,255,0.12) !important;
       border-color:rgba(106,199,255,0.55) !important;

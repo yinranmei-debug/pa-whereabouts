@@ -24,6 +24,8 @@ import CakeThrow, { BdayHatSVG } from './components/CakeThrow';
 import TeamTodayPanel from './components/TeamTodayPanel';
 import ApacHolidayPanel from './components/ApacHolidayPanel';
 import StreakDropdown from './components/settlement/StreakDropdown';
+import DayZeroWelcome from './components/settlement/DayZeroWelcome';
+import { LEVELS } from './components/settlement/SettlementLevels';
 
 const supabase = createClient(
   'https://vzdrpydtxlamoqtukgld.supabase.co',
@@ -1604,7 +1606,48 @@ const handleCelebrate = (person) => {
             <div style={{ position: 'relative' }}>
               <div className="user-chip" style={{ cursor: 'pointer' }} onClick={() => setShowStreakDropdown(v => !v)}>
                 {!isMobile && <span className="user-name">{account.name}</span>}
-                <Avatar name={meStaff?.name||account.name} photoUrl={staffPhotos[meStaff?.id]} size={28}/>
+                {(() => {
+                  // compute streak for ring color
+                  const activeDates = new Set();
+                  Object.keys(records).forEach(key => {
+                    if (!meStaff?.id || !key.startsWith(meStaff.id + '-')) return;
+                    const parts = key.split('-');
+                    const shift = parts[parts.length - 1];
+                    if (shift !== 'AM' && shift !== 'PM') return;
+                    const date = parts.slice(1, parts.length - 1).join('-');
+                    if (records[key] && records[key] !== 'none') activeDates.add(date);
+                  });
+                  let streak = 0;
+                  const today = new Date();
+                  const daysToMon = today.getDay() === 0 ? 6 : today.getDay() - 1;
+                  const thisMonday = new Date(today);
+                  thisMonday.setDate(today.getDate() - daysToMon);
+                  thisMonday.setHours(0,0,0,0);
+                  for (let w = 0; w < 5; w++) {
+                    const wStart = new Date(thisMonday); wStart.setDate(thisMonday.getDate() - w * 7);
+                    let count = 0;
+                    for (let d = 0; d < 5; d++) {
+                      const day = new Date(wStart); day.setDate(wStart.getDate() + d);
+                      const ds = `${day.getFullYear()}-${String(day.getMonth()+1).padStart(2,'0')}-${String(day.getDate()).padStart(2,'0')}`;
+                      if (activeDates.has(ds)) count++;
+                    }
+                    if (count >= 2) streak++; else break;
+                  }
+                  const lvl = LEVELS[Math.min(streak, 4)];
+                  return (
+                    <div style={{ position: 'relative', width: 32, height: 32, flexShrink: 0 }}>
+                      <div style={{
+                        position: 'absolute', inset: '-2px', borderRadius: '50%',
+                        background: `conic-gradient(from 0deg, ${lvl.ringFrom}, ${lvl.ringTo}, ${lvl.ringFrom})`,
+                        filter: 'blur(3px)', opacity: 0.75,
+                        animation: 'ss-ringspin 6s linear infinite',
+                      }}/>
+                      <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', overflow: 'hidden' }}>
+                        <Avatar name={meStaff?.name||account.name} photoUrl={staffPhotos[meStaff?.id]} size={32}/>
+                      </div>
+                    </div>
+                  );
+                })()}
                 <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginLeft: 2 }}>▾</span>
               </div>
               {showStreakDropdown && (
@@ -2062,7 +2105,12 @@ const handleCelebrate = (person) => {
           }}
         />
       )}
-      {showWelcome && <WelcomeConfetti />}
+      {showWelcome && (
+        <DayZeroWelcome
+          name={account?.name}
+          onDone={() => setShowWelcome(false)}
+        />
+      )}
       {showMobileOnboarding && (
         <MobileOnboarding
           onDone={() => {

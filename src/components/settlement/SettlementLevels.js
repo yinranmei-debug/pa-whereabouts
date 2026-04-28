@@ -1,6 +1,16 @@
-import { SceneL1, SceneL2, SceneL3, SceneL4 } from './SettlementScenes';
+import { SceneL0, SceneL1, SceneL2, SceneL3, SceneL4 } from './SettlementScenes';
 
 export const LEVELS = [
+  {
+    id: 'dayzero',
+    week: 0,
+    title: 'Day Zero',
+    vibe: 'You drop out of the sky onto a brand-new world. Awkward landing.',
+    rule: 'Just show up. (You\'re here. That\'s enough.)',
+    Scene: SceneL0,
+    ringFrom: '#7a6a9a', ringTo: '#c060ff',
+    tagBg: 'rgba(150,120,200,0.18)', tagFg: '#d0b0ff',
+  },
   {
     id: 'arrival',
     week: 1,

@@ -88,12 +88,12 @@ function SceneCircle({ Scene, frame, from, to, size = 100, blurred = false }) {
 }
 
 // ─── week pip row ─────────────────────────────────────────────────
-function WeekPips({ streak, current, from, to }) {
+function WeekPips({ streak, from, to }) {
   return (
     <div style={{ display: 'flex', gap: 5, alignItems: 'center', marginTop: 6 }}>
       {[1, 2, 3, 4].map(w => {
         const done = streak >= w;
-        const active = w === current + 1 && !done;
+        const active = w === streak + 1;
         return (
           <div key={w} style={{
             width: 28, height: 6, borderRadius: 3,
@@ -122,9 +122,9 @@ export default function StreakDropdown({ staffId, records, onClose, onLogout }) 
   const [justClaimed, setJustClaimed] = useState(false);
 
   const streak = useMemo(() => computeStreak(staffId, records), [staffId, records]);
-  const currentLevelIdx = streak - 1; // -1 = none
-  const currentLevel = currentLevelIdx >= 0 ? LEVELS[currentLevelIdx] : null;
-  const nextLevel = streak < 4 ? LEVELS[streak] : null;
+  // LEVELS[0]=DayZero, LEVELS[1-4]=weeks 1-4
+  const currentLevel = LEVELS[streak] ?? LEVELS[0];
+  const nextLevel = streak < 4 ? LEVELS[streak + 1] : null;
 
   const claimKey = staffId ? `settlement-claimed-${staffId}` : null;
   const [claimedWeeks, setClaimedWeeks] = useState(() => {
@@ -176,58 +176,43 @@ export default function StreakDropdown({ staffId, records, onClose, onLogout }) 
           <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.16em', color: 'rgba(167,139,250,0.6)', textTransform: 'uppercase', marginBottom: 3 }}>
             Settlement Saga
           </div>
-          {streak === 0 ? (
-            <div style={{ fontSize: 12, color: subC, fontWeight: 500 }}>
-              Set your status 2+ days this week to start your journey.
-            </div>
-          ) : (
-            <div style={{ fontSize: 13, fontWeight: 700, color: nameC }}>
-              {currentLevel?.title}
-              <span style={{ fontSize: 10, fontWeight: 600, marginLeft: 8, color: currentLevel ? currentLevel.tagFg : subC, background: currentLevel ? currentLevel.tagBg : 'transparent', padding: '1px 7px', borderRadius: 5 }}>
-                WK {streak}
-              </span>
-            </div>
-          )}
-          {streak > 0 && (
-            <WeekPips streak={streak} current={currentLevelIdx} from={currentLevel?.ringFrom ?? '#888'} to={currentLevel?.ringTo ?? '#aaa'} />
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: nameC }}>{currentLevel.title}</div>
+            <span style={{ fontSize: 9, fontWeight: 700, color: currentLevel.tagFg, background: currentLevel.tagBg, padding: '1px 7px', borderRadius: 5, letterSpacing: '0.06em' }}>
+              {streak === 0 ? 'DAY 0' : `WK ${streak}`}
+            </span>
+          </div>
+          <WeekPips streak={streak} from={currentLevel.ringFrom} to={currentLevel.ringTo} />
         </div>
 
         {/* ── current level scene ── */}
-        {currentLevel ? (
-          <div style={{ padding: '14px 14px 10px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-            <SceneCircle Scene={currentLevel.Scene} frame={frame} from={currentLevel.ringFrom} to={currentLevel.ringTo} size={80} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 11, color: nameC, fontWeight: 600, lineHeight: 1.4 }}>{currentLevel.vibe}</div>
-              {canClaim && (
-                <button
-                  onClick={handleClaim}
-                  style={{
-                    marginTop: 8, padding: '5px 14px', fontSize: 10, fontWeight: 800,
-                    letterSpacing: '0.1em', borderRadius: 8, border: 'none', cursor: 'pointer',
-                    background: `linear-gradient(135deg, ${currentLevel.ringFrom}, ${currentLevel.ringTo})`,
-                    color: '#0a0612', textTransform: 'uppercase',
-                    boxShadow: `0 0 12px ${currentLevel.ringTo}88`,
-                    transition: 'transform 0.15s, box-shadow 0.15s',
-                  }}
-                  onMouseOver={e => e.currentTarget.style.transform = 'scale(1.05)'}
-                  onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
-                >
-                  ✦ Claim
-                </button>
-              )}
-              {justClaimed && !canClaim && (
-                <div style={{ marginTop: 6, fontSize: 10, color: currentLevel.tagFg, fontWeight: 700 }}>✓ Claimed!</div>
-              )}
-            </div>
+        <div style={{ padding: '14px 14px 10px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+          <SceneCircle Scene={currentLevel.Scene} frame={frame} from={currentLevel.ringFrom} to={currentLevel.ringTo} size={80} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 11, color: nameC, fontWeight: 600, lineHeight: 1.5 }}>{currentLevel.vibe}</div>
+            {streak === 0 && (
+              <div style={{ marginTop: 5, fontSize: 9, color: subC, lineHeight: 1.4 }}>
+                Set your status 2+ days<br />this week to reach Week 1
+              </div>
+            )}
+            {canClaim && streak > 0 && (
+              <button onClick={handleClaim} style={{
+                marginTop: 8, padding: '5px 14px', fontSize: 10, fontWeight: 800,
+                letterSpacing: '0.1em', borderRadius: 8, border: 'none', cursor: 'pointer',
+                background: `linear-gradient(135deg, ${currentLevel.ringFrom}, ${currentLevel.ringTo})`,
+                color: '#0a0612', textTransform: 'uppercase',
+                boxShadow: `0 0 12px ${currentLevel.ringTo}88`,
+                transition: 'transform 0.15s',
+              }}
+                onMouseOver={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+              >✦ Claim</button>
+            )}
+            {justClaimed && !canClaim && streak > 0 && (
+              <div style={{ marginTop: 6, fontSize: 10, color: currentLevel.tagFg, fontWeight: 700 }}>✓ Claimed!</div>
+            )}
           </div>
-        ) : (
-          <div style={{ padding: '14px 14px 8px', display: 'flex', justifyContent: 'center' }}>
-            <div style={{ fontSize: 11, color: subC, textAlign: 'center', lineHeight: 1.5 }}>
-              Your journey begins when you<br />set your status this week.
-            </div>
-          </div>
-        )}
+        </div>
 
         {/* ── next level (blurred preview) ── */}
         {nextLevel && (
