@@ -1,28 +1,28 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useFrame } from './SettlementChar';
 import { LEVELS } from './SettlementLevels';
-import PatternBurst from './PatternBurst';
+import LevelUpModal from './LevelUpModal';
 
 // ─── streak computation ───────────────────────────────────────────
-// records: { "${staffId}-${date}-AM": statusId, ... }
-// returns number of consecutive qualifying weeks (Mon-Fri, ≥2 active days/week)
-function computeStreak(staffId, records) {
+// Active day = any AM or PM status set (non-"none") on a weekday.
+// Qualifying week = Mon-Fri with ≥2 active days.
+// Streak = consecutive qualifying weeks going back from current week.
+// Level requires 2 qualifying weeks per tier (8 weeks max = Metropolis).
+export function computeStreak(staffId, records) {
   if (!staffId || !records) return 0;
 
   const activeDates = new Set();
   Object.keys(records).forEach(key => {
     if (!key.startsWith(staffId + '-')) return;
     const parts = key.split('-');
-    // key format: staffId-YYYY-MM-DD-SHIFT → date is parts[1]-parts[2]-parts[3]
     const shift = parts[parts.length - 1];
     if (shift !== 'AM' && shift !== 'PM') return;
     const date = parts.slice(1, parts.length - 1).join('-');
     if (records[key] && records[key] !== 'none') activeDates.add(date);
   });
 
-  // Walk backwards week by week from the most recent Mon
   const today = new Date();
-  const dow = today.getDay(); // 0=Sun
+  const dow = today.getDay();
   const daysToMon = dow === 0 ? 6 : dow - 1;
   const thisMonday = new Date(today);
   thisMonday.setDate(today.getDate() - daysToMon);
@@ -32,36 +32,38 @@ function computeStreak(staffId, records) {
   for (let w = 0; w < 8; w++) {
     const weekStart = new Date(thisMonday);
     weekStart.setDate(thisMonday.getDate() - w * 7);
-    let activeDaysThisWeek = 0;
+    let count = 0;
     for (let d = 0; d < 5; d++) {
       const day = new Date(weekStart);
       day.setDate(weekStart.getDate() + d);
       const ds = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
-      if (activeDates.has(ds)) activeDaysThisWeek++;
+      if (activeDates.has(ds)) count++;
     }
-    if (activeDaysThisWeek >= 2) {
-      streak++;
-    } else {
-      break;
-    }
+    if (count >= 2) streak++;
+    else break;
   }
-  return Math.min(streak, 4);
+  return streak; // 0-8
 }
 
-// ─── ring glow ────────────────────────────────────────────────────
-function RingGlow({ from, to, blur = 5, opacity = 0.65, duration = '8s' }) {
+// streak (0-8) → LEVELS index (0-4)
+// 0-1 = Day Zero, 2-3 = First Camp, 4-5 = Foundation, 6-7 = Settlement, 8 = Metropolis
+export function streakToLevelIdx(streak) {
+  return Math.min(Math.floor(streak / 2), 4);
+}
+
+// ─── sub-components ───────────────────────────────────────────────
+function RingGlow({ from, to }) {
   return (
     <div style={{
       position: 'absolute', inset: '-3px', borderRadius: '50%',
       background: `conic-gradient(from 0deg, ${from}, ${to}, ${from})`,
-      filter: `blur(${blur}px)`, opacity,
-      animation: `ss-ringspin ${duration} linear infinite`,
+      filter: 'blur(5px)', opacity: 0.65,
+      animation: 'ss-ringspin 8s linear infinite',
       pointerEvents: 'none',
     }} />
   );
 }
 
-// ─── scene circle ─────────────────────────────────────────────────
 function SceneCircle({ Scene, frame, from, to, size = 100, blurred = false }) {
   return (
     <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
@@ -69,8 +71,7 @@ function SceneCircle({ Scene, frame, from, to, size = 100, blurred = false }) {
       <div style={{
         position: 'absolute', inset: 0, borderRadius: '50%', overflow: 'hidden',
         boxShadow: `0 0 0 2px ${from}44, 0 0 18px ${to}55`,
-        filter: blurred ? 'blur(7px) brightness(0.25) saturate(0.4)' : 'none',
-        transition: 'filter 0.3s',
+        filter: blurred ? 'blur(7px) brightness(0.22) saturate(0.3)' : 'none',
       }}>
         <Scene frame={frame} />
       </div>
@@ -78,37 +79,39 @@ function SceneCircle({ Scene, frame, from, to, size = 100, blurred = false }) {
         <div style={{
           position: 'absolute', inset: 0, borderRadius: '50%',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 2,
         }}>
-          <div style={{ fontSize: 22, filter: 'drop-shadow(0 0 6px #000)' }}>🔒</div>
+          <div style={{ fontSize: 20, filter: 'drop-shadow(0 0 6px #000)' }}>🔒</div>
         </div>
       )}
     </div>
   );
 }
 
-// ─── week pip row ─────────────────────────────────────────────────
+// 8 pips total, grouped 2-per-level with a thin divider between levels
 function WeekPips({ streak, from, to }) {
   return (
-    <div style={{ display: 'flex', gap: 5, alignItems: 'center', marginTop: 6 }}>
-      {[1, 2, 3, 4].map(w => {
+    <div style={{ display: 'flex', gap: 3, alignItems: 'center', marginTop: 7, flexWrap: 'nowrap' }}>
+      {[1,2,3,4,5,6,7,8].map(w => {
         const done = streak >= w;
         const active = w === streak + 1;
+        // small gap between each pair of 2
+        const isGroupEnd = w % 2 === 0 && w < 8;
         return (
-          <div key={w} style={{
-            width: 28, height: 6, borderRadius: 3,
-            background: done
-              ? `linear-gradient(90deg, ${from}, ${to})`
-              : active
-                ? 'rgba(255,255,255,0.18)'
-                : 'rgba(255,255,255,0.08)',
-            boxShadow: done ? `0 0 6px ${to}88` : 'none',
-            transition: 'background 0.3s, box-shadow 0.3s',
-          }} />
+          <div key={w} style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+            <div style={{
+              width: 18, height: 5, borderRadius: 3,
+              background: done
+                ? `linear-gradient(90deg, ${from}, ${to})`
+                : active ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.07)',
+              boxShadow: done ? `0 0 5px ${to}77` : 'none',
+              transition: 'background 0.3s',
+            }} />
+            {isGroupEnd && <div style={{ width: 1, height: 8, background: 'rgba(255,255,255,0.1)', flexShrink: 0 }} />}
+          </div>
         );
       })}
-      <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', fontWeight: 600, letterSpacing: '0.06em', marginLeft: 2 }}>
-        {streak}/4 WKS
+      <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', fontWeight: 600, letterSpacing: '0.06em', marginLeft: 3 }}>
+        {streak}/8
       </span>
     </div>
   );
@@ -118,52 +121,50 @@ function WeekPips({ streak, from, to }) {
 export default function StreakDropdown({ staffId, records, onClose, onLogout }) {
   const ref = useRef();
   const frame = useFrame(true, 18);
-  const [burst, setBurst] = useState(null);
-  const [justClaimed, setJustClaimed] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const streak = useMemo(() => computeStreak(staffId, records), [staffId, records]);
-  // LEVELS[0]=DayZero, LEVELS[1-4]=weeks 1-4
-  const currentLevel = LEVELS[streak] ?? LEVELS[0];
-  const nextLevel = streak < 4 ? LEVELS[streak + 1] : null;
+  const levelIdx = streakToLevelIdx(streak);
+  const currentLevel = LEVELS[levelIdx];
+  const nextLevel = levelIdx < 4 ? LEVELS[levelIdx + 1] : null;
 
   const claimKey = staffId ? `settlement-claimed-${staffId}` : null;
-  const [claimedWeeks, setClaimedWeeks] = useState(() => {
+  const [claimedLevels, setClaimedLevels] = useState(() => {
     if (!claimKey) return [];
     try { return JSON.parse(localStorage.getItem(claimKey) || '[]'); } catch { return []; }
   });
 
-  const canClaim = currentLevel && !claimedWeeks.includes(currentLevel.id);
+  // Can claim if at a real level (not Day Zero) and haven't claimed yet
+  const canClaim = levelIdx > 0 && !claimedLevels.includes(currentLevel.id);
 
-  const handleClaim = (e) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    setBurst({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
-    const updated = [...claimedWeeks, currentLevel.id];
-    setClaimedWeeks(updated);
+  const handleClaimDone = () => {
+    const updated = [...claimedLevels, currentLevel.id];
+    setClaimedLevels(updated);
     if (claimKey) localStorage.setItem(claimKey, JSON.stringify(updated));
-    setJustClaimed(true);
+    setShowModal(false);
   };
 
   useEffect(() => {
     const handler = e => {
-      if (ref.current && !ref.current.contains(e.target)) onClose();
+      if (ref.current && !ref.current.contains(e.target) && !showModal) onClose();
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [onClose]);
+  }, [onClose, showModal]);
 
-  const night = true; // always night-style inside dropdown
-  const bg     = 'rgba(10,8,28,0.97)';
-  const border = 'rgba(167,139,250,0.2)';
-  const subC   = 'rgba(220,215,255,0.45)';
-  const nameC  = 'rgba(232,229,255,0.92)';
+  const subC  = 'rgba(220,215,255,0.45)';
+  const nameC = 'rgba(232,229,255,0.92)';
+
+  // weeks needed to reach next level
+  const weeksToNext = nextLevel ? nextLevel.weeksRequired - streak : 0;
 
   return (
     <>
       <div ref={ref} style={{
         position: 'absolute', top: 'calc(100% + 8px)', right: 0,
-        width: 260, zIndex: 14000,
-        background: bg,
-        border: `1px solid ${border}`,
+        width: 268, zIndex: 14000,
+        background: 'rgba(10,8,28,0.97)',
+        border: '1px solid rgba(167,139,250,0.2)',
         borderRadius: 16,
         boxShadow: '0 20px 56px rgba(0,0,0,0.6), 0 4px 16px rgba(119,11,255,0.18)',
         backdropFilter: 'blur(24px)',
@@ -173,13 +174,17 @@ export default function StreakDropdown({ staffId, records, onClose, onLogout }) 
 
         {/* ── header ── */}
         <div style={{ padding: '12px 14px 10px', borderBottom: '1px solid rgba(167,139,250,0.1)' }}>
-          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.16em', color: 'rgba(167,139,250,0.6)', textTransform: 'uppercase', marginBottom: 3 }}>
+          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.16em', color: 'rgba(167,139,250,0.55)', textTransform: 'uppercase', marginBottom: 4 }}>
             Settlement Saga
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: nameC }}>{currentLevel.title}</div>
-            <span style={{ fontSize: 9, fontWeight: 700, color: currentLevel.tagFg, background: currentLevel.tagBg, padding: '1px 7px', borderRadius: 5, letterSpacing: '0.06em' }}>
-              {streak === 0 ? 'DAY 0' : `WK ${streak}`}
+            <span style={{
+              fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
+              color: currentLevel.tagFg, background: currentLevel.tagBg,
+              padding: '1px 7px', borderRadius: 5,
+            }}>
+              {levelIdx === 0 ? 'DAY 0' : `TIER ${levelIdx}`}
             </span>
           </div>
           <WeekPips streak={streak} from={currentLevel.ringFrom} to={currentLevel.ringTo} />
@@ -190,13 +195,17 @@ export default function StreakDropdown({ staffId, records, onClose, onLogout }) 
           <SceneCircle Scene={currentLevel.Scene} frame={frame} from={currentLevel.ringFrom} to={currentLevel.ringTo} size={80} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 11, color: nameC, fontWeight: 600, lineHeight: 1.5 }}>{currentLevel.vibe}</div>
-            {streak === 0 && (
-              <div style={{ marginTop: 5, fontSize: 9, color: subC, lineHeight: 1.4 }}>
-                Set your status 2+ days<br />this week to reach Week 1
+            {levelIdx === 0 ? (
+              <div style={{ marginTop: 6, fontSize: 9, color: subC, lineHeight: 1.5 }}>
+                Update your status 2+ days<br />per week for 2 weeks → Tier 1
               </div>
-            )}
-            {canClaim && streak > 0 && (
-              <button onClick={handleClaim} style={{
+            ) : nextLevel && weeksToNext > 0 ? (
+              <div style={{ marginTop: 6, fontSize: 9, color: subC }}>
+                {weeksToNext} week{weeksToNext > 1 ? 's' : ''} to Tier {levelIdx + 1}
+              </div>
+            ) : null}
+            {canClaim && (
+              <button onClick={() => setShowModal(true)} style={{
                 marginTop: 8, padding: '5px 14px', fontSize: 10, fontWeight: 800,
                 letterSpacing: '0.1em', borderRadius: 8, border: 'none', cursor: 'pointer',
                 background: `linear-gradient(135deg, ${currentLevel.ringFrom}, ${currentLevel.ringTo})`,
@@ -208,24 +217,22 @@ export default function StreakDropdown({ staffId, records, onClose, onLogout }) 
                 onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
               >✦ Claim</button>
             )}
-            {justClaimed && !canClaim && streak > 0 && (
-              <div style={{ marginTop: 6, fontSize: 10, color: currentLevel.tagFg, fontWeight: 700 }}>✓ Claimed!</div>
+            {!canClaim && levelIdx > 0 && (
+              <div style={{ marginTop: 6, fontSize: 9, color: currentLevel.tagFg, fontWeight: 700, opacity: 0.7 }}>✓ Claimed</div>
             )}
           </div>
         </div>
 
-        {/* ── next level (blurred preview) ── */}
+        {/* ── next level blurred preview ── */}
         {nextLevel && (
           <div style={{ padding: '10px 14px 12px', borderTop: '1px solid rgba(167,139,250,0.08)', display: 'flex', gap: 10, alignItems: 'center' }}>
-            <SceneCircle Scene={nextLevel.Scene} frame={frame} from={nextLevel.ringFrom} to={nextLevel.ringTo} size={52} blurred />
+            <SceneCircle Scene={nextLevel.Scene} frame={frame} from={nextLevel.ringFrom} to={nextLevel.ringTo} size={50} blurred />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(167,139,250,0.5)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 3 }}>
-                Next · Week {nextLevel.week}
+              <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(167,139,250,0.45)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 3 }}>
+                Next · {nextLevel.weeksRequired} wks
               </div>
-              <div style={{ fontSize: 11, color: 'rgba(220,215,255,0.35)', fontStyle: 'italic' }}>
-                ???
-              </div>
-              <div style={{ fontSize: 9, color: 'rgba(167,139,250,0.35)', marginTop: 3 }}>
+              <div style={{ fontSize: 11, color: 'rgba(220,215,255,0.28)', fontStyle: 'italic' }}>???</div>
+              <div style={{ fontSize: 9, color: 'rgba(167,139,250,0.3)', marginTop: 3 }}>
                 {nextLevel.rule}
               </div>
             </div>
@@ -234,14 +241,12 @@ export default function StreakDropdown({ staffId, records, onClose, onLogout }) 
 
         {/* ── sign out ── */}
         <div style={{ borderTop: '1px solid rgba(167,139,250,0.1)', padding: '8px 14px' }}>
-          <button
-            onClick={onLogout}
-            style={{
-              width: '100%', padding: '7px 0', fontSize: 11, fontWeight: 600,
-              color: 'rgba(232,229,255,0.5)', background: 'none', border: 'none',
-              cursor: 'pointer', borderRadius: 8, letterSpacing: '0.05em',
-              transition: 'color 0.15s, background 0.15s',
-            }}
+          <button onClick={onLogout} style={{
+            width: '100%', padding: '7px 0', fontSize: 11, fontWeight: 600,
+            color: 'rgba(232,229,255,0.5)', background: 'none', border: 'none',
+            cursor: 'pointer', borderRadius: 8, letterSpacing: '0.05em',
+            transition: 'color 0.15s, background 0.15s',
+          }}
             onMouseOver={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
             onMouseOut={e => { e.currentTarget.style.color = 'rgba(232,229,255,0.5)'; e.currentTarget.style.background = 'none'; }}
           >
@@ -250,11 +255,12 @@ export default function StreakDropdown({ staffId, records, onClose, onLogout }) 
         </div>
       </div>
 
-      {burst && (
-        <PatternBurst
-          origin={burst}
-          palette={currentLevel ? [currentLevel.ringFrom, currentLevel.ringTo, '#ffd060', '#aef060', '#fff'] : undefined}
-          onDone={() => setBurst(null)}
+      {/* Level-up claim modal — renders outside dropdown, fullscreen */}
+      {showModal && (
+        <LevelUpModal
+          lvl={currentLevel}
+          onClose={() => setShowModal(false)}
+          onClaim={handleClaimDone}
         />
       )}
 
