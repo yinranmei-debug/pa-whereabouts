@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useFrame } from './SettlementChar';
 import PatternBurst from './PatternBurst';
 
-export default function LevelUpModal({ lvl, onClose, onClaim }) {
+export default function LevelUpModal({ lvl, nextLevel, streak, onClose, onClaim }) {
   const frame = useFrame(true, 18);
   const [burst, setBurst] = useState(null);
   const [leaving, setLeaving] = useState(false);
@@ -133,6 +133,25 @@ export default function LevelUpModal({ lvl, onClose, onClaim }) {
                 {lvl.rule}
               </span>
             </div>
+
+            {/* next tier nudge */}
+            {nextLevel && (
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                background: `rgba(255,255,255,0.05)`,
+                border: `1px solid ${nextLevel.ringFrom}33`,
+                borderRadius: 100, padding: '8px 20px',
+                marginBottom: 28,
+                animation: 'lum-fadein 0.45s 0.54s ease both',
+              }}>
+                <span style={{ fontSize: 14, color: nextLevel.ringFrom, fontWeight: 700 }}>→</span>
+                <span style={{ fontSize: 13, color: 'rgba(220,215,255,0.6)', fontWeight: 500 }}>
+                  {nextLevel.weeksRequired - streak === 1
+                    ? `1 more qualifying week unlocks ${nextLevel.title}`
+                    : `${nextLevel.weeksRequired - streak} more qualifying weeks to unlock ${nextLevel.title}`}
+                </span>
+              </div>
+            )}
 
             {/* CTA */}
             <button className="lum-btn" onClick={handleClaim} style={{

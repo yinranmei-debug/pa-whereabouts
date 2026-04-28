@@ -263,6 +263,8 @@ export default function StreakDropdown({ staffId, records, onClose, onLogout }) 
       {showModal && (
         <LevelUpModal
           lvl={currentLevel}
+          nextLevel={nextLevel}
+          streak={streak}
           onClose={() => setShowModal(false)}
           onClaim={handleClaimDone}
         />
