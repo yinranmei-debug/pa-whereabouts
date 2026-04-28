@@ -56,8 +56,9 @@ export default function DayZeroWelcome({ name, onDone }) {
 
         <div style={{
           width: 'clamp(480px, 66vw, 860px)',
-          maxHeight: '90vh',
+          maxHeight: '92vh',
           overflowY: 'auto',
+          overflowX: 'hidden',
           borderRadius: 40,
           background: 'linear-gradient(160deg, rgba(14,7,40,0.99) 0%, rgba(22,9,58,0.99) 55%, rgba(18,6,48,0.99) 100%)',
           border: '1.5px solid rgba(192,96,255,0.3)',
@@ -74,7 +75,7 @@ export default function DayZeroWelcome({ name, onDone }) {
             background: 'linear-gradient(90deg, transparent, #7a6a9a 20%, #c060ff 50%, #7a6a9a 80%, transparent)',
           }} />
 
-          <div style={{ padding: '52px 72px 56px' }}>
+          <div style={{ padding: '52px 72px 72px' }}>
 
             {/* Large scene circle */}
             <div style={{ position: 'relative', width: 'min(320px, 42vw)', height: 'min(320px, 42vw)', margin: '0 auto 44px' }}>
@@ -115,9 +116,9 @@ export default function DayZeroWelcome({ name, onDone }) {
               animation: 'dz-fadein 0.5s 0.32s ease both',
             }}>
               {firstName ? (
-                <>{firstName}<span style={{ color: 'rgba(192,96,255,0.9)' }}>,</span> you're here.</>
+                <>Welcome<span style={{ color: 'rgba(192,96,255,0.9)' }}>,</span> {firstName}<span style={{ color: 'rgba(192,96,255,0.9)' }}>!</span></>
               ) : (
-                <>You're here.</>
+                <>Welcome<span style={{ color: 'rgba(192,96,255,0.9)' }}>!</span></>
               )}
             </div>
 
