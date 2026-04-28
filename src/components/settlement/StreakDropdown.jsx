@@ -152,7 +152,7 @@ export default function StreakDropdown({ staffId, records, onClose, onLogout }) 
     return () => document.removeEventListener('mousedown', handler);
   }, [onClose, showModal]);
 
-  const subC  = 'rgba(220,215,255,0.45)';
+  const subC  = 'rgba(220,215,255,0.72)';
   const nameC = 'rgba(232,229,255,0.92)';
 
   // weeks needed to reach next level
@@ -197,7 +197,7 @@ export default function StreakDropdown({ staffId, records, onClose, onLogout }) 
             <div style={{ fontSize: 12, color: nameC, fontWeight: 600, lineHeight: 1.55 }}>{currentLevel.vibe}</div>
             {levelIdx === 0 ? (
               <div style={{ marginTop: 6, fontSize: 10, color: subC, lineHeight: 1.6 }}>
-                Update your status 2 days a week. Do it two weeks running — camp unlocked.
+                Update your status 2 days a week. Do it two weeks running — a new scene unlocks.
               </div>
             ) : nextLevel && weeksToNext > 0 ? (
               <div style={{ marginTop: 6, fontSize: 10, color: subC }}>

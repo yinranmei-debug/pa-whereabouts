@@ -26,6 +26,7 @@ import ApacHolidayPanel from './components/ApacHolidayPanel';
 import StreakDropdown, { computeStreak, streakToLevelIdx } from './components/settlement/StreakDropdown';
 import DayZeroWelcome from './components/settlement/DayZeroWelcome';
 import { LEVELS } from './components/settlement/SettlementLevels';
+import AvatarNudge from './components/AvatarNudge';
 
 const supabase = createClient(
   'https://vzdrpydtxlamoqtukgld.supabase.co',
@@ -227,6 +228,7 @@ export default function App() {
   const [showTour,        setShowTour]        = useState(false);
   const [showMobileOnboarding, setShowMobileOnboarding] = useState(false);
   const [showWelcome,     setShowWelcome]     = useState(false);
+  const [showAvatarNudge, setShowAvatarNudge] = useState(false);
   const [isMobile,        setIsMobile]        = useState(() => window.matchMedia('(max-width: 768px)').matches);
   const [hoveredPill,     setHoveredPill]     = useState(null);
   const [birthdayDone, setBirthdayDone] = useState(() => {
@@ -1116,7 +1118,7 @@ const handleCelebrate = (person) => {
         />
        <BirthdayOverlay
           currentUserEmail={account?.username}
-          isBusy={showTour || showWelcome || showTips}
+          isBusy={showTour || showWelcome || showAvatarNudge || showTips}
          onClose={() => {
             setBirthdayDone(true);
             localStorage.setItem(`bday-done-${new Date().toDateString()}`, '1');
@@ -1213,7 +1215,7 @@ const handleCelebrate = (person) => {
           </div>
         )}
         <BananaEasterEgg
-          readySignal={!showTour && !showWelcome && !showTips && (!hasBirthdayToday_hook || birthdayDone)}
+          readySignal={!showTour && !showWelcome && !showAvatarNudge && !showTips && (!hasBirthdayToday_hook || birthdayDone)}
         />
 
         <TeamTodayPanel
@@ -2073,16 +2075,22 @@ const handleCelebrate = (person) => {
           name={account?.name}
           onDone={() => {
             setShowWelcome(false);
-            const todayStr = new Date().toDateString();
-            const tipKey = `tips-shown-${account.username}-${todayStr}`;
-            if (!localStorage.getItem(tipKey)) {
-              setTimeout(() => {
-                setShowTips(true);
-                localStorage.setItem(tipKey, '1');
-              }, 600);
-            }
+            setTimeout(() => setShowAvatarNudge(true), 400);
           }}
         />
+      )}
+      {showAvatarNudge && (
+        <AvatarNudge onDone={() => {
+          setShowAvatarNudge(false);
+          const todayStr = new Date().toDateString();
+          const tipKey = `tips-shown-${account.username}-${todayStr}`;
+          if (!localStorage.getItem(tipKey)) {
+            setTimeout(() => {
+              setShowTips(true);
+              localStorage.setItem(tipKey, '1');
+            }, 500);
+          }
+        }} />
       )}
       {showMobileOnboarding && (
         <MobileOnboarding
