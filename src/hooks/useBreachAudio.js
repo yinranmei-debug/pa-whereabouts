@@ -1,9 +1,11 @@
 import { useRef, useCallback } from 'react';
 
-// Plays /public/breach.mp3 for the dimensional breach easter egg.
-// At progress 75%+: audio starts at low volume and rises with the charge bar.
-// On EXPLODING: volume jumps to full.
+// Plays the last 3 seconds of /public/breach.mp3 (the "Whereabouts!" finale).
+// At progress 75%+: seeks to 27.77s, starts quietly and rises with the charge bar.
+// On EXPLODING: volume jumps to full so the shout lands with the explosion.
 // On reset: audio stops and rewinds.
+
+const CLIP_START = 27.77; // seconds — start of the "Whereabouts!" finale
 
 export function useBreachAudio() {
   const audioRef    = useRef(null);
@@ -15,6 +17,7 @@ export function useBreachAudio() {
       const a = new Audio('/breach.mp3');
       a.loop = false;
       a.volume = 0;
+      a.preload = 'auto';
       audioRef.current = a;
     }
     return audioRef.current;
@@ -43,9 +46,9 @@ export function useBreachAudio() {
 
     if (!startedRef.current) {
       startedRef.current = true;
-      a.currentTime = 0;
+      a.currentTime = CLIP_START;
       a.volume = 0.08;
-      a.play().catch(() => {}); // browser may block until gesture — safe to ignore
+      a.play().catch(() => {});
     } else {
       a.volume = Math.min(targetVol, 1);
     }
@@ -58,7 +61,7 @@ export function useBreachAudio() {
 
     const a = getAudio();
     if (!startedRef.current) {
-      a.currentTime = 0;
+      a.currentTime = CLIP_START;
       a.play().catch(() => {});
     }
     // Ramp to full volume
