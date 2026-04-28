@@ -1,15 +1,14 @@
 import { useRef, useCallback, useEffect } from 'react';
 
-// Plays the last 3 seconds of /public/breach.mp3 (the "Whereabouts!" finale).
-// At progress 75%+: seeks to 27.77s, starts quietly and rises with the charge bar.
-// Listens directly to the 'rift-burst' DOM event (fired synchronously with the
-// breach overlay) so audio and visuals land at exactly the same frame.
+// Plays the last ~3 seconds of /public/breach.mp3 (the "Whereabouts!" finale).
+// Seeks to CLIP_START - 0.2 so the "Whereabouts!" word lands right as the
+// rift overlay fully opens. Triggered by 'rift-burst' DOM event.
 
-const CLIP_START = 27.77; // seconds — start of the "Whereabouts!" finale
+const CLIP_START = 27.77; // seconds — "Whereabouts!" word position
+const LEAD_IN   = 0.2;    // start 0.2s early so word lands on the visual burst
 
 export function useBreachAudio() {
   const audioRef    = useRef(null);
-  const startedRef  = useRef(false);
   const explodedRef = useRef(false);
 
   const getAudio = () => {
@@ -23,15 +22,16 @@ export function useBreachAudio() {
     return audioRef.current;
   };
 
-  // Wire directly to the rift-burst event — fires at the same tick as the overlay
+  // Preload on mount so there's no delay when burst fires
+  useEffect(() => { getAudio(); }, []);
+
+  // Fire 0.2s before the visual so "Whereabouts!" word lands on the burst frame
   useEffect(() => {
     const onBurst = () => {
       if (explodedRef.current) return;
       explodedRef.current = true;
       const a = getAudio();
-      if (!startedRef.current) {
-        a.currentTime = CLIP_START;
-      }
+      a.currentTime = CLIP_START - LEAD_IN;
       a.volume = 1;
       a.play().catch(() => {});
     };
@@ -39,35 +39,8 @@ export function useBreachAudio() {
     return () => window.removeEventListener('rift-burst', onBurst);
   }, []);
 
-  // Called every frame while charging (progress 0–100)
-  const updateProgress = useCallback((progress) => {
-    if (explodedRef.current) return;
-
-    if (progress < 75) {
-      if (startedRef.current && audioRef.current) {
-        audioRef.current.volume = Math.max(0, audioRef.current.volume - 0.02);
-        if (audioRef.current.volume <= 0) {
-          audioRef.current.pause();
-          audioRef.current.currentTime = 0;
-          startedRef.current = false;
-        }
-      }
-      return;
-    }
-
-    const a = getAudio();
-    const t = (progress - 75) / 25; // 0 at 75%, 1 at 100%
-    const targetVol = 0.08 + t * 0.22; // 0.08 → 0.30
-
-    if (!startedRef.current) {
-      startedRef.current = true;
-      a.currentTime = CLIP_START;
-      a.volume = 0.08;
-      a.play().catch(() => {});
-    } else {
-      a.volume = Math.min(targetVol, 1);
-    }
-  }, []);
+  // No-op — charge bar no longer drives audio
+  const updateProgress = useCallback((_progress) => {}, []);
 
   // Called when overlay resets
   const reset = useCallback(() => {
@@ -76,7 +49,6 @@ export function useBreachAudio() {
       audioRef.current.currentTime = 0;
       audioRef.current.volume = 0;
     }
-    startedRef.current  = false;
     explodedRef.current = false;
   }, []);
 
