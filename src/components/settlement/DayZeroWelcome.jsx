@@ -128,10 +128,9 @@ export default function DayZeroWelcome({ name, onDone }) {
               maxWidth: 520, margin: '0 auto 44px',
               animation: 'dz-fadein 0.5s 0.46s ease both',
             }}>
-              Your world just materialized out of nothing —
-              no roads, no neighbors, just open ground and a horizon full of possibility.{' '}
+              No roads. No neighbors. Just you and a planet that needs building.{' '}
               <span style={{ color: 'rgba(218,205,255,0.95)', fontWeight: 600 }}>
-                Every week you show up, this place grows a little more alive.
+                Show up, and watch this place come alive.
               </span>
             </div>
 
@@ -154,7 +153,7 @@ export default function DayZeroWelcome({ name, onDone }) {
               letterSpacing: '0.05em',
               animation: 'dz-fadein 0.45s 0.8s ease both',
             }}>
-              Let your team know where you are a couple days a week · your world grows from there
+              2 days a week · your world takes shape
             </div>
           </div>
         </div>
