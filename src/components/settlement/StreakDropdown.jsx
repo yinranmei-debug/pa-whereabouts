@@ -162,10 +162,10 @@ export default function StreakDropdown({ staffId, records, onClose, onLogout }) 
     <>
       <div ref={ref} style={{
         position: 'absolute', top: 'calc(100% + 8px)', right: 0,
-        width: 268, zIndex: 14000,
+        width: 300, zIndex: 14000,
         background: 'rgba(10,8,28,0.97)',
         border: '1px solid rgba(167,139,250,0.2)',
-        borderRadius: 16,
+        borderRadius: 20,
         boxShadow: '0 20px 56px rgba(0,0,0,0.6), 0 4px 16px rgba(119,11,255,0.18)',
         backdropFilter: 'blur(24px)',
         overflow: 'hidden',
@@ -173,16 +173,16 @@ export default function StreakDropdown({ staffId, records, onClose, onLogout }) 
       }}>
 
         {/* ── header ── */}
-        <div style={{ padding: '12px 14px 10px', borderBottom: '1px solid rgba(167,139,250,0.1)' }}>
+        <div style={{ padding: '12px 16px 10px', borderBottom: '1px solid rgba(167,139,250,0.1)' }}>
           <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.16em', color: 'rgba(167,139,250,0.55)', textTransform: 'uppercase', marginBottom: 4 }}>
             Settlement Saga
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: nameC }}>{currentLevel.title}</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: nameC }}>{currentLevel.title}</div>
             <span style={{
               fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
               color: currentLevel.tagFg, background: currentLevel.tagBg,
-              padding: '1px 7px', borderRadius: 5,
+              padding: '2px 8px', borderRadius: 5,
             }}>
               {levelIdx === 0 ? 'DAY 0' : `TIER ${levelIdx}`}
             </span>
@@ -190,48 +190,49 @@ export default function StreakDropdown({ staffId, records, onClose, onLogout }) 
           <WeekPips streak={streak} from={currentLevel.ringFrom} to={currentLevel.ringTo} />
         </div>
 
-        {/* ── current level scene ── */}
-        <div style={{ padding: '14px 14px 10px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-          <SceneCircle Scene={currentLevel.Scene} frame={frame} from={currentLevel.ringFrom} to={currentLevel.ringTo} size={80} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 11, color: nameC, fontWeight: 600, lineHeight: 1.5 }}>{currentLevel.vibe}</div>
+        {/* ── current level scene — big centered circle ── */}
+        <div style={{ padding: '18px 16px 14px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+          <SceneCircle Scene={currentLevel.Scene} frame={frame} from={currentLevel.ringFrom} to={currentLevel.ringTo} size={120} />
+          <div style={{ textAlign: 'center', width: '100%' }}>
+            <div style={{ fontSize: 12, color: nameC, fontWeight: 600, lineHeight: 1.55 }}>{currentLevel.vibe}</div>
             {levelIdx === 0 ? (
-              <div style={{ marginTop: 6, fontSize: 9, color: subC, lineHeight: 1.5 }}>
-                Update your status 2+ days<br />per week for 2 weeks → Tier 1
+              <div style={{ marginTop: 6, fontSize: 10, color: subC, lineHeight: 1.5 }}>
+                Check in 2+ days a week for 2 weeks to reach Tier 1
               </div>
             ) : nextLevel && weeksToNext > 0 ? (
-              <div style={{ marginTop: 6, fontSize: 9, color: subC }}>
-                {weeksToNext} week{weeksToNext > 1 ? 's' : ''} to Tier {levelIdx + 1}
+              <div style={{ marginTop: 6, fontSize: 10, color: subC }}>
+                {weeksToNext} more week{weeksToNext > 1 ? 's' : ''} to unlock Tier {levelIdx + 1}
               </div>
             ) : null}
             {canClaim && (
               <button onClick={() => setShowModal(true)} style={{
-                marginTop: 8, padding: '5px 14px', fontSize: 10, fontWeight: 800,
-                letterSpacing: '0.1em', borderRadius: 8, border: 'none', cursor: 'pointer',
+                marginTop: 12, padding: '9px 28px', fontSize: 11, fontWeight: 800,
+                letterSpacing: '0.12em', borderRadius: 100, border: 'none', cursor: 'pointer',
                 background: `linear-gradient(135deg, ${currentLevel.ringFrom}, ${currentLevel.ringTo})`,
                 color: '#0a0612', textTransform: 'uppercase',
-                boxShadow: `0 0 12px ${currentLevel.ringTo}88`,
-                transition: 'transform 0.15s',
+                boxShadow: `0 0 18px ${currentLevel.ringTo}88, 0 0 6px ${currentLevel.ringFrom}66`,
+                transition: 'transform 0.15s, box-shadow 0.15s',
+                animation: 'ss-claimpulse 2s ease-in-out infinite',
               }}
-                onMouseOver={e => e.currentTarget.style.transform = 'scale(1.05)'}
-                onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
-              >✦ Claim</button>
+                onMouseOver={e => { e.currentTarget.style.transform = 'scale(1.06)'; e.currentTarget.style.boxShadow = `0 0 28px ${currentLevel.ringTo}cc`; }}
+                onMouseOut={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = `0 0 18px ${currentLevel.ringTo}88, 0 0 6px ${currentLevel.ringFrom}66`; }}
+              >✦ Claim Reward</button>
             )}
             {!canClaim && levelIdx > 0 && (
-              <div style={{ marginTop: 6, fontSize: 9, color: currentLevel.tagFg, fontWeight: 700, opacity: 0.7 }}>✓ Claimed</div>
+              <div style={{ marginTop: 8, fontSize: 10, color: currentLevel.tagFg, fontWeight: 700, opacity: 0.65 }}>✓ Reward claimed</div>
             )}
           </div>
         </div>
 
         {/* ── next level blurred preview ── */}
         {nextLevel && (
-          <div style={{ padding: '10px 14px 12px', borderTop: '1px solid rgba(167,139,250,0.08)', display: 'flex', gap: 10, alignItems: 'center' }}>
-            <SceneCircle Scene={nextLevel.Scene} frame={frame} from={nextLevel.ringFrom} to={nextLevel.ringTo} size={50} blurred />
+          <div style={{ padding: '10px 16px 12px', borderTop: '1px solid rgba(167,139,250,0.08)', display: 'flex', gap: 12, alignItems: 'center' }}>
+            <SceneCircle Scene={nextLevel.Scene} frame={frame} from={nextLevel.ringFrom} to={nextLevel.ringTo} size={60} blurred />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(167,139,250,0.45)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 3 }}>
-                Next · {nextLevel.weeksRequired} wks
+                Next unlock · {nextLevel.weeksRequired} wks
               </div>
-              <div style={{ fontSize: 11, color: 'rgba(220,215,255,0.28)', fontStyle: 'italic' }}>???</div>
+              <div style={{ fontSize: 12, color: 'rgba(220,215,255,0.28)', fontStyle: 'italic' }}>???</div>
               <div style={{ fontSize: 9, color: 'rgba(167,139,250,0.3)', marginTop: 3 }}>
                 {nextLevel.rule}
               </div>
@@ -269,6 +270,10 @@ export default function StreakDropdown({ staffId, records, onClose, onLogout }) 
         @keyframes ss-dropin {
           from { opacity: 0; transform: translateY(-6px) scale(0.97); }
           to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes ss-claimpulse {
+          0%, 100% { box-shadow: 0 0 18px var(--ct,rgba(200,100,255,0.5)), 0 0 6px rgba(200,100,255,0.4); }
+          50%       { box-shadow: 0 0 32px var(--ct,rgba(200,100,255,0.8)), 0 0 12px rgba(200,100,255,0.6); }
         }
       `}</style>
     </>
