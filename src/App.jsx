@@ -2064,26 +2064,24 @@ const handleCelebrate = (person) => {
             localStorage.setItem(`tour-done-${account.username}`, '1');
             setShowTour(false);
             setShowWelcome(true);
-            setTimeout(() => {
-              setShowWelcome(false);
-              finishingTourRef.current = false;
-              // After welcome fades, fire tips (if not shown today)
-              const todayStr = new Date().toDateString();
-              const tipKey = `tips-shown-${account.username}-${todayStr}`;
-              if (!localStorage.getItem(tipKey)) {
-                setTimeout(() => {
-                  setShowTips(true);
-                  localStorage.setItem(tipKey, '1');
-                }, 600);
-              }
-            }, 3500);
+            finishingTourRef.current = false;
           }}
         />
       )}
       {showWelcome && (
         <DayZeroWelcome
           name={account?.name}
-          onDone={() => setShowWelcome(false)}
+          onDone={() => {
+            setShowWelcome(false);
+            const todayStr = new Date().toDateString();
+            const tipKey = `tips-shown-${account.username}-${todayStr}`;
+            if (!localStorage.getItem(tipKey)) {
+              setTimeout(() => {
+                setShowTips(true);
+                localStorage.setItem(tipKey, '1');
+              }, 600);
+            }
+          }}
         />
       )}
       {showMobileOnboarding && (

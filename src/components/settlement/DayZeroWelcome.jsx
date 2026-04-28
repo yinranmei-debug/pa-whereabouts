@@ -55,11 +55,13 @@ export default function DayZeroWelcome({ name, onDone }) {
       }}>
 
         <div style={{
-          width: 'min(90vw, 580px)',
-          borderRadius: 36,
+          width: 'clamp(480px, 66vw, 860px)',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          borderRadius: 40,
           background: 'linear-gradient(160deg, rgba(14,7,40,0.99) 0%, rgba(22,9,58,0.99) 55%, rgba(18,6,48,0.99) 100%)',
           border: '1.5px solid rgba(192,96,255,0.3)',
-          boxShadow: '0 0 120px rgba(140,60,255,0.22), 0 40px 100px rgba(0,0,0,0.75)',
+          boxShadow: '0 0 140px rgba(140,60,255,0.25), 0 48px 120px rgba(0,0,0,0.8)',
           overflow: 'hidden',
           animation: leaving ? 'dz-out 0.5s ease forwards' : 'dz-pop 0.65s cubic-bezier(0.34,1.56,0.64,1) both',
           textAlign: 'center',
@@ -72,10 +74,10 @@ export default function DayZeroWelcome({ name, onDone }) {
             background: 'linear-gradient(90deg, transparent, #7a6a9a 20%, #c060ff 50%, #7a6a9a 80%, transparent)',
           }} />
 
-          <div style={{ padding: '40px 52px 44px' }}>
+          <div style={{ padding: '52px 72px 56px' }}>
 
             {/* Large scene circle */}
-            <div style={{ position: 'relative', width: 240, height: 240, margin: '0 auto 36px' }}>
+            <div style={{ position: 'relative', width: 'min(320px, 42vw)', height: 'min(320px, 42vw)', margin: '0 auto 44px' }}>
               {/* outer slow ring */}
               <div style={{
                 position: 'absolute', inset: '-10px', borderRadius: '50%',
@@ -99,8 +101,8 @@ export default function DayZeroWelcome({ name, onDone }) {
 
             {/* eyebrow */}
             <div style={{
-              fontSize: 11, fontWeight: 800, letterSpacing: '0.24em',
-              color: 'rgba(192,96,255,0.7)', textTransform: 'uppercase', marginBottom: 14,
+              fontSize: 12, fontWeight: 800, letterSpacing: '0.26em',
+              color: 'rgba(192,96,255,0.7)', textTransform: 'uppercase', marginBottom: 18,
               animation: 'dz-fadein 0.45s 0.2s ease both',
             }}>
               Day Zero · First Landing
@@ -108,7 +110,7 @@ export default function DayZeroWelcome({ name, onDone }) {
 
             {/* headline */}
             <div style={{
-              fontSize: 32, fontWeight: 800, color: '#fff', lineHeight: 1.15, marginBottom: 18,
+              fontSize: 40, fontWeight: 800, color: '#fff', lineHeight: 1.12, marginBottom: 22,
               letterSpacing: '-0.02em',
               animation: 'dz-fadein 0.5s 0.32s ease both',
             }}>
@@ -121,8 +123,8 @@ export default function DayZeroWelcome({ name, onDone }) {
 
             {/* narrative body */}
             <div style={{
-              fontSize: 16, color: 'rgba(210,195,255,0.68)', lineHeight: 1.7,
-              marginBottom: 36, maxWidth: 420, margin: '0 auto 36px',
+              fontSize: 18, color: 'rgba(210,195,255,0.68)', lineHeight: 1.7,
+              maxWidth: 520, margin: '0 auto 44px',
               animation: 'dz-fadein 0.5s 0.46s ease both',
             }}>
               Your world just materialized out of nothing —
@@ -138,16 +140,16 @@ export default function DayZeroWelcome({ name, onDone }) {
               setBurst({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
               handleDone();
             }} style={{
-              padding: '16px 56px', borderRadius: 100, border: 'none', cursor: 'pointer',
+              padding: '18px 68px', borderRadius: 100, border: 'none', cursor: 'pointer',
               background: 'linear-gradient(135deg, #7a6a9a 0%, #c060ff 60%, #9040e0 100%)',
-              color: '#fff', fontSize: 16, fontWeight: 800, letterSpacing: '0.08em',
+              color: '#fff', fontSize: 18, fontWeight: 800, letterSpacing: '0.08em',
               animation: 'dz-fadein 0.5s 0.6s ease both, dz-btnpulse 2.4s 1.2s ease-in-out infinite',
             }}>
               ✦ Start Building
             </button>
 
             <div style={{
-              marginTop: 18, fontSize: 11, color: 'rgba(255,255,255,0.2)',
+              marginTop: 20, fontSize: 12, color: 'rgba(255,255,255,0.2)',
               letterSpacing: '0.05em',
               animation: 'dz-fadein 0.45s 0.8s ease both',
             }}>
