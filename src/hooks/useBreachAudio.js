@@ -1,9 +1,9 @@
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 
 // Plays the last 3 seconds of /public/breach.mp3 (the "Whereabouts!" finale).
 // At progress 75%+: seeks to 27.77s, starts quietly and rises with the charge bar.
-// On EXPLODING: volume jumps to full so the shout lands with the explosion.
-// On reset: audio stops and rewinds.
+// Listens directly to the 'rift-burst' DOM event (fired synchronously with the
+// breach overlay) so audio and visuals land at exactly the same frame.
 
 const CLIP_START = 27.77; // seconds — start of the "Whereabouts!" finale
 
@@ -23,12 +23,27 @@ export function useBreachAudio() {
     return audioRef.current;
   };
 
+  // Wire directly to the rift-burst event — fires at the same tick as the overlay
+  useEffect(() => {
+    const onBurst = () => {
+      if (explodedRef.current) return;
+      explodedRef.current = true;
+      const a = getAudio();
+      if (!startedRef.current) {
+        a.currentTime = CLIP_START;
+      }
+      a.volume = 1;
+      a.play().catch(() => {});
+    };
+    window.addEventListener('rift-burst', onBurst);
+    return () => window.removeEventListener('rift-burst', onBurst);
+  }, []);
+
   // Called every frame while charging (progress 0–100)
   const updateProgress = useCallback((progress) => {
     if (explodedRef.current) return;
 
     if (progress < 75) {
-      // Below threshold — if we started, fade out
       if (startedRef.current && audioRef.current) {
         audioRef.current.volume = Math.max(0, audioRef.current.volume - 0.02);
         if (audioRef.current.volume <= 0) {
@@ -54,20 +69,6 @@ export function useBreachAudio() {
     }
   }, []);
 
-  // Called once when EXPLODING fires
-  const triggerExplosion = useCallback(() => {
-    if (explodedRef.current) return;
-    explodedRef.current = true;
-
-    const a = getAudio();
-    if (!startedRef.current) {
-      a.currentTime = CLIP_START;
-      a.play().catch(() => {});
-    }
-    // Ramp to full volume
-    a.volume = 1;
-  }, []);
-
   // Called when overlay resets
   const reset = useCallback(() => {
     if (audioRef.current) {
@@ -78,6 +79,9 @@ export function useBreachAudio() {
     startedRef.current  = false;
     explodedRef.current = false;
   }, []);
+
+  // triggerExplosion kept for API compatibility but rift-burst handles it now
+  const triggerExplosion = useCallback(() => {}, []);
 
   return { updateProgress, triggerExplosion, reset };
 }
