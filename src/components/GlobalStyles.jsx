@@ -234,6 +234,14 @@ const GlobalStyles = () => (
     }
     .team-summary-dot{width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg,#009bff,#770bff);flex-shrink:0;animation:pulseDot 2s ease-in-out infinite;}
 
+    .apac-hol-btn.apac-active{
+      background:rgba(106,199,255,0.12) !important;
+      border-color:rgba(106,199,255,0.55) !important;
+      color:rgba(106,199,255,1) !important;
+      box-shadow:0 0 10px rgba(106,199,255,0.2);
+    }
+    .apac-hol-btn.apac-active .apac-dot-jp,.apac-hol-btn.apac-active .apac-dot-kr{filter:saturate(1.8) brightness(1.2);}
+
     .tb-btn.today{
       position:relative;overflow:hidden;
       background:linear-gradient(90deg,#009bff,#770bff) !important;
@@ -331,7 +339,7 @@ const GlobalStyles = () => (
     }
     .tbl-hdr-sticky{
       position:sticky;top:${HEADER_STICKY_TOP}px;z-index:460;
-      background:rgba(8,12,35,0.97);
+      background:rgba(8,12,35,1);
       backdrop-filter:blur(20px) saturate(150%);
       border-bottom:1px solid rgba(167,139,250,0.2);
       border-radius:20px 20px 0 0;

@@ -23,6 +23,7 @@ import BananaEasterEgg from './components/BananaEasterEgg';
 import CakeThrow, { BdayHatSVG } from './components/CakeThrow';
 import TeamTodayPanel from './components/TeamTodayPanel';
 import ApacHolidayPanel from './components/ApacHolidayPanel';
+import StreakDropdown from './components/settlement/StreakDropdown';
 
 const supabase = createClient(
   'https://vzdrpydtxlamoqtukgld.supabase.co',
@@ -276,6 +277,7 @@ export default function App() {
   const [showBdayPanel,     setShowBdayPanel]      = useState(false);
   const [showTeamToday,     setShowTeamToday]      = useState(false);
   const [showApacHolidays,  setShowApacHolidays]   = useState(false);
+  const [showStreakDropdown, setShowStreakDropdown] = useState(false);
   const [weeklyUpdates,     setWeeklyUpdates]      = useState([]);
  const [weeklyUpdatesCount, setWeeklyUpdatesCount] = useState(0);
   const [weeklyReadCount,    setWeeklyReadCount]    = useState(0);
@@ -1598,10 +1600,20 @@ const handleCelebrate = (person) => {
                 <span className="online-live-count" style={{fontSize:11,color:'rgba(255,255,255,0.5)',fontWeight:500}}>{Math.max(onlineUsers.length,1)} online</span>
               </div>
             </div>}
-            <div className="user-chip">
-              {!isMobile && <span className="user-name">{account.name}</span>}
-              <Avatar name={meStaff?.name||account.name} photoUrl={staffPhotos[meStaff?.id]} size={28}/>
-              <button className="signout-btn" onClick={logout} title="Sign out">→</button>
+            <div style={{ position: 'relative' }}>
+              <div className="user-chip" style={{ cursor: 'pointer' }} onClick={() => setShowStreakDropdown(v => !v)}>
+                {!isMobile && <span className="user-name">{account.name}</span>}
+                <Avatar name={meStaff?.name||account.name} photoUrl={staffPhotos[meStaff?.id]} size={28}/>
+                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginLeft: 2 }}>▾</span>
+              </div>
+              {showStreakDropdown && (
+                <StreakDropdown
+                  staffId={meStaff?.id}
+                  records={records}
+                  onClose={() => setShowStreakDropdown(false)}
+                  onLogout={logout}
+                />
+              )}
             </div>
           </div>
         </nav>
@@ -1657,7 +1669,7 @@ const handleCelebrate = (person) => {
             <button
               className="tb-btn team-today-btn"
               style={{ marginLeft: isSuperUser(me) ? 8 : 'auto', display:'flex', alignItems:'center', gap:5 }}
-              onClick={() => { setShowTeamToday(p => !p); setShowApacHolidays(false); }}
+              onClick={() => setShowTeamToday(p => !p)}
               title="Team Today"
             >
               <svg width="17" height="15" viewBox="0 0 24 21" fill="none">
@@ -1681,10 +1693,10 @@ const handleCelebrate = (person) => {
           )}
           {!isMobile && (
             <button
-              className="tb-btn apac-hol-btn"
+              className={`tb-btn apac-hol-btn${showApacHolidays?' apac-active':''}`}
               style={{ marginLeft:6, display:'flex', alignItems:'center', gap:5 }}
-              onClick={() => { setShowApacHolidays(p => !p); setShowTeamToday(false); }}
-              title="APAC Holidays"
+              onClick={() => setShowApacHolidays(p => !p)}
+              title="APAC Holidays — toggle JP/KR flags"
             >
               <svg width="17" height="15" viewBox="0 0 24 22" fill="none">
                 {/* globe arc */}
@@ -1785,7 +1797,7 @@ const handleCelebrate = (person) => {
                     const bdayPeople = RAW_STAFF_LIST.filter(s => s.birthday === d.ds.slice(5));
                     return (
                     <div key={d.ds} data-hdr-ds={d.ds} className="tbl-hdr-daycol" style={{position:'relative'}}>
-                     {bdayPeople.length > 0 && (
+                     {!showApacHolidays && bdayPeople.length > 0 && (
                         <div className="bday-hdr-cake" style={{position:'absolute',top:2,right:2,zIndex:20}}>
                           <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
                             style={{display:'block',filter:'drop-shadow(0 2px 6px rgba(255,183,0,0.6))'}}>
@@ -1814,8 +1826,8 @@ const handleCelebrate = (person) => {
                           {d.num}
                         </div>
                       </div>
-                      {(jpHolidays[d.ds] || krHolidays[d.ds]) && (
-                        <div style={{position:'absolute',top:2,[bdayPeople.length>0?'left':'right']:2,zIndex:20,display:'flex',flexDirection:'column',gap:3}}>
+                      {showApacHolidays && (jpHolidays[d.ds] || krHolidays[d.ds]) && (
+                        <div style={{position:'absolute',top:2,right:2,zIndex:20,display:'flex',flexDirection:'column',gap:3}}>
                           {jpHolidays[d.ds] && (
                             <div className="hol-pip hol-pip-jp">
                               🇯🇵<div className="hol-pip-tip">{new Date(d.ds+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})} · {jpHolidays[d.ds]}</div>
