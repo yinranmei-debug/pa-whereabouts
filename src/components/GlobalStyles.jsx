@@ -344,6 +344,8 @@ const GlobalStyles = () => (
       border-bottom:1px solid rgba(167,139,250,0.2);
       border-radius:20px 20px 0 0;
       box-shadow:0 4px 24px rgba(0,0,0,0.5),0 1px 0 rgba(167,139,250,0.08);
+      transform:translateZ(0);
+      will-change:transform;
     }
     .tbl-hdr-row{display:grid;grid-template-columns:220px repeat(7,1fr);min-width:900px;padding:0 24px;}
     .tbl-hdr-namecol{background:transparent;}

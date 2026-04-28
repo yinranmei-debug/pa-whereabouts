@@ -1230,6 +1230,7 @@ const handleCelebrate = (person) => {
           jpHolidays={jpHolidays}
           krHolidays={krHolidays}
           isDayMode={isDayMode}
+          onDateClick={ds => navigateWeek(0, new Date(ds + 'T00:00:00'))}
         />
 
         {flight && (
@@ -1694,22 +1695,34 @@ const handleCelebrate = (person) => {
           {!isMobile && (
             <button
               className={`tb-btn apac-hol-btn${showApacHolidays?' apac-active':''}`}
-              style={{ marginLeft:6, display:'flex', alignItems:'center', gap:5 }}
+              style={{ marginLeft:6, display:'flex', alignItems:'center', gap:6 }}
               onClick={() => setShowApacHolidays(p => !p)}
               title="APAC Holidays — toggle JP/KR flags"
             >
               <svg width="17" height="15" viewBox="0 0 24 22" fill="none">
-                {/* globe arc */}
                 <path className="apac-arc" d="M3 15 Q12 3 21 15" fill="none" stroke="rgba(106,199,255,0.7)" strokeWidth="1.4" strokeLinecap="round"/>
                 <path className="apac-arc" d="M2 18 Q12 23 22 18" fill="none" stroke="rgba(106,199,255,0.45)" strokeWidth="1.1" strokeLinecap="round"/>
-                {/* JP dot — red */}
                 <circle className="apac-dot-jp" cx="15.5" cy="10" r="2.4" fill="rgba(220,50,70,0.9)"/>
-                {/* KR dot — blue */}
                 <circle className="apac-dot-kr" cx="9.5" cy="12" r="2.4" fill="rgba(40,100,220,0.9)"/>
-                {/* center glow dot */}
                 <circle className="apac-center" cx="12" cy="18.5" r="1.4" fill="rgba(167,139,250,0.9)"/>
               </svg>
               <span style={{fontSize:11,fontWeight:700,letterSpacing:'0.03em'}}>APAC</span>
+              {/* toggle pill */}
+              <div style={{
+                width:26, height:14, borderRadius:7,
+                background: showApacHolidays ? 'rgba(106,199,255,0.85)' : 'rgba(255,255,255,0.1)',
+                border: showApacHolidays ? '1px solid rgba(106,199,255,0.9)' : '1px solid rgba(255,255,255,0.2)',
+                position:'relative', transition:'background 0.2s, border-color 0.2s', flexShrink:0,
+              }}>
+                <div style={{
+                  width:10, height:10, borderRadius:'50%',
+                  background: showApacHolidays ? '#fff' : 'rgba(255,255,255,0.45)',
+                  position:'absolute', top:1,
+                  left: showApacHolidays ? 13 : 1,
+                  transition:'left 0.2s cubic-bezier(0.34,1.56,0.64,1), background 0.2s',
+                  boxShadow: showApacHolidays ? '0 0 4px rgba(106,199,255,0.8)' : 'none',
+                }}/>
+              </div>
             </button>
           )}
         </div>

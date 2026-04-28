@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function ApacHolidayPanel({ open, onClose, jpHolidays, krHolidays, isDayMode }) {
+export default function ApacHolidayPanel({ open, onClose, jpHolidays, krHolidays, isDayMode, onDateClick }) {
   if (!open) return null;
 
   const today = new Date().toISOString().slice(0, 10);
@@ -91,13 +91,19 @@ export default function ApacHolidayPanel({ open, onClose, jpHolidays, krHolidays
           const jpBg     = night ? 'rgba(190,0,30,0.14)'    : 'rgba(190,0,30,0.07)';
           const krBg     = night ? 'rgba(0,50,160,0.14)'    : 'rgba(0,50,160,0.07)';
           return (
-            <div key={`${h.date}-${h.country}`} style={{
-              display: 'flex', alignItems: 'center', gap: 9,
-              padding: '7px 13px',
-              background: isToday ? todayHl : i % 2 === 0 ? rowAlt : 'transparent',
-              borderBottom: `1px solid ${divider}`,
-              opacity: isPast ? 0.42 : 1,
-            }}>
+            <div key={`${h.date}-${h.country}`}
+              onClick={() => onDateClick && onDateClick(h.date)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 9,
+                padding: '7px 13px', cursor: 'pointer',
+                background: isToday ? todayHl : i % 2 === 0 ? rowAlt : 'transparent',
+                borderBottom: `1px solid ${divider}`,
+                opacity: isPast ? 0.42 : 1,
+                transition: 'background 0.12s',
+              }}
+              onMouseOver={e => e.currentTarget.style.background = night ? 'rgba(106,199,255,0.07)' : 'rgba(0,155,255,0.05)'}
+              onMouseOut={e => e.currentTarget.style.background = isToday ? todayHl : i % 2 === 0 ? rowAlt : 'transparent'}
+            >
               <div style={{
                 flexShrink: 0, fontSize: 9, fontWeight: 800, padding: '2px 5px',
                 borderRadius: 4, letterSpacing: '0.04em',
@@ -115,11 +121,10 @@ export default function ApacHolidayPanel({ open, onClose, jpHolidays, krHolidays
                   {fmtWeekday(h.date)}, {fmtDate(h.date)}
                 </div>
               </div>
-              {isToday && (
-                <div style={{ flexShrink: 0, fontSize: 8, fontWeight: 800, color: titleC, letterSpacing: '0.06em' }}>
-                  TODAY
-                </div>
-              )}
+              {isToday
+                ? <div style={{ flexShrink: 0, fontSize: 8, fontWeight: 800, color: titleC, letterSpacing: '0.06em' }}>TODAY</div>
+                : <div style={{ flexShrink: 0, fontSize: 10, color: subC, opacity: 0.5 }}>›</div>
+              }
             </div>
           );
         })}
