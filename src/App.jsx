@@ -18,6 +18,7 @@ import TourOverlay        from './components/TourOverlay';
 import MobileView         from './components/MobileView';
 import MobileOnboarding   from './components/MobileOnboarding';
 import { useDimensionalBreach }   from './hooks/useDimensionalBreach';
+import { useBreachAudio }         from './hooks/useBreachAudio';
 import DimensionalBreachOverlay   from './components/DimensionalBreachOverlay';
 import BananaEasterEgg from './components/BananaEasterEgg';
 import CakeThrow, { BdayHatSVG } from './components/CakeThrow';
@@ -289,6 +290,18 @@ export default function App() {
   const dailyTips = useRef(getDailyTips());
 
   const { activeBreach, chargingState, registerClick: registerBreachClick } = useDimensionalBreach();
+  const { updateProgress: breachAudioProgress, triggerExplosion: breachAudioExplode, reset: breachAudioReset } = useBreachAudio();
+
+  // Feed breach audio — progress swell and explosion trigger
+  useEffect(() => {
+    breachAudioProgress(chargingState?.progress || 0);
+  }, [chargingState?.progress]);
+
+  useEffect(() => {
+    if (activeBreach?.phase === 'EXPLODING') breachAudioExplode();
+    if (!activeBreach) breachAudioReset();
+  }, [activeBreach?.phase, activeBreach]);
+
   const slideTimerRef    = useRef(null);
   const presenceRef      = useRef(null);
   const partyTimerRef    = useRef(null);
