@@ -6,6 +6,7 @@ import { useRef, useCallback, useEffect } from 'react';
 
 const CLIP_START = 27.77; // seconds — "Whereabouts!" word position
 const LEAD_IN   = 0.2;    // start 0.2s early so word lands on the visual burst
+const MAX_VOL   = 0.45;   // cap so it's never jarring even at max speaker volume
 
 export function useBreachAudio() {
   const audioRef    = useRef(null);
@@ -32,7 +33,7 @@ export function useBreachAudio() {
       explodedRef.current = true;
       const a = getAudio();
       a.currentTime = CLIP_START - LEAD_IN;
-      a.volume = 1;
+      a.volume = MAX_VOL;
       a.play().catch(() => {});
     };
     window.addEventListener('rift-burst', onBurst);
