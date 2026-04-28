@@ -9,79 +9,89 @@ export default function DayZeroWelcome({ name, onDone }) {
   const [leaving, setLeaving] = useState(false);
   const firstName = name ? name.split(' ')[0] : null;
 
-  useEffect(() => {
-    setBurst({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
-    const t = setTimeout(() => handleDone(), 8000);
-    return () => clearTimeout(t);
-  }, []);
+  // No auto-dismiss — only the button closes it
 
   const handleDone = () => {
     setLeaving(true);
-    setTimeout(() => onDone && onDone(), 420);
+    setTimeout(() => onDone && onDone(), 500);
   };
 
   return (
     <>
       <style>{`
         @keyframes dz-pop {
-          0%   { opacity:0; transform:scale(0.75) translateY(28px); }
-          65%  { transform:scale(1.03) translateY(-3px); }
+          0%   { opacity:0; transform:scale(0.82) translateY(32px); }
+          65%  { transform:scale(1.02) translateY(-4px); }
           100% { opacity:1; transform:scale(1) translateY(0); }
         }
         @keyframes dz-out {
           from { opacity:1; transform:scale(1); }
-          to   { opacity:0; transform:scale(0.93) translateY(-14px); }
+          to   { opacity:0; transform:scale(0.92) translateY(-18px); }
         }
-        @keyframes dz-ringspin { to { transform:rotate(360deg); } }
+        @keyframes dz-ringspin  { to { transform:rotate(360deg); } }
+        @keyframes dz-ringspinr { to { transform:rotate(-360deg); } }
         @keyframes dz-fadein {
-          from { opacity:0; transform:translateY(12px); }
+          from { opacity:0; transform:translateY(16px); }
           to   { opacity:1; transform:translateY(0); }
         }
         @keyframes dz-btnpulse {
-          0%, 100% { box-shadow: 0 0 22px rgba(192,96,255,0.55), 0 4px 16px rgba(0,0,0,0.4); }
-          50%       { box-shadow: 0 0 40px rgba(192,96,255,0.85), 0 4px 20px rgba(0,0,0,0.4); }
+          0%, 100% { box-shadow: 0 0 28px rgba(192,96,255,0.55), 0 6px 24px rgba(0,0,0,0.45); }
+          50%       { box-shadow: 0 0 52px rgba(192,96,255,0.9),  0 6px 28px rgba(0,0,0,0.5); }
         }
-        .dz-btn:hover { transform: scale(1.06) !important; }
+        @keyframes dz-orbitspin {
+          to { transform: rotate(360deg); }
+        }
+        .dz-btn { transition: transform 0.2s !important; }
+        .dz-btn:hover { transform: scale(1.07) !important; }
       `}</style>
 
+      {/* Backdrop — intentionally NOT clickable to dismiss */}
       <div style={{
         position: 'fixed', inset: 0, zIndex: 12000,
-        background: 'rgba(4,2,14,0.85)',
-        backdropFilter: 'blur(10px)',
+        background: 'radial-gradient(ellipse at 50% 60%, rgba(80,20,140,0.35) 0%, rgba(4,2,14,0.92) 70%)',
+        backdropFilter: 'blur(12px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        animation: leaving ? 'dz-out 0.42s ease forwards' : undefined,
-      }} onClick={handleDone}>
+        animation: leaving ? 'dz-out 0.5s ease forwards' : undefined,
+      }}>
 
-        <div onClick={e => e.stopPropagation()} style={{
-          width: 380, borderRadius: 28,
-          background: 'linear-gradient(150deg,rgba(12,6,34,0.99) 0%,rgba(20,8,52,0.99) 100%)',
-          border: '1.5px solid rgba(192,96,255,0.28)',
-          boxShadow: '0 0 100px rgba(122,106,154,0.2), 0 32px 80px rgba(0,0,0,0.7)',
-          padding: '0 0 28px',
-          animation: leaving ? 'dz-out 0.42s ease forwards' : 'dz-pop 0.6s cubic-bezier(0.34,1.56,0.64,1) both',
+        <div style={{
+          width: 'min(90vw, 580px)',
+          borderRadius: 36,
+          background: 'linear-gradient(160deg, rgba(14,7,40,0.99) 0%, rgba(22,9,58,0.99) 55%, rgba(18,6,48,0.99) 100%)',
+          border: '1.5px solid rgba(192,96,255,0.3)',
+          boxShadow: '0 0 120px rgba(140,60,255,0.22), 0 40px 100px rgba(0,0,0,0.75)',
+          overflow: 'hidden',
+          animation: leaving ? 'dz-out 0.5s ease forwards' : 'dz-pop 0.65s cubic-bezier(0.34,1.56,0.64,1) both',
           textAlign: 'center',
           fontFamily: "'Plus Jakarta Sans', sans-serif",
-          overflow: 'hidden',
         }}>
 
-          {/* gradient top bar */}
+          {/* top gradient bar */}
           <div style={{
-            height: 3,
-            background: 'linear-gradient(90deg,transparent,#7a6a9a,#c060ff,#7a6a9a,transparent)',
+            height: 4,
+            background: 'linear-gradient(90deg, transparent, #7a6a9a 20%, #c060ff 50%, #7a6a9a 80%, transparent)',
           }} />
 
-          <div style={{ padding: '28px 32px 0' }}>
-            {/* Scene circle */}
-            <div style={{ position: 'relative', width: 148, height: 148, margin: '0 auto 24px' }}>
+          <div style={{ padding: '40px 52px 44px' }}>
+
+            {/* Large scene circle */}
+            <div style={{ position: 'relative', width: 240, height: 240, margin: '0 auto 36px' }}>
+              {/* outer slow ring */}
+              <div style={{
+                position: 'absolute', inset: '-10px', borderRadius: '50%',
+                background: 'conic-gradient(from 0deg, #7a6a9a 0%, #c060ff 35%, #9060e0 60%, #c060ff 80%, #7a6a9a 100%)',
+                filter: 'blur(14px)', opacity: 0.7,
+                animation: 'dz-ringspin 10s linear infinite',
+              }} />
+              {/* inner counter-ring */}
               <div style={{
                 position: 'absolute', inset: '-4px', borderRadius: '50%',
-                background: 'conic-gradient(from 0deg, #7a6a9a, #c060ff, #9060e0, #7a6a9a)',
-                filter: 'blur(8px)', opacity: 0.75,
-                animation: 'dz-ringspin 8s linear infinite',
+                background: 'conic-gradient(from 180deg, transparent 0%, rgba(192,96,255,0.6) 40%, transparent 70%)',
+                animation: 'dz-ringspinr 6s linear infinite',
               }} />
               <div style={{
                 position: 'absolute', inset: 0, borderRadius: '50%', overflow: 'hidden',
-                boxShadow: '0 0 0 2px rgba(192,96,255,0.4), 0 0 36px rgba(192,96,255,0.3)',
+                boxShadow: '0 0 0 2.5px rgba(192,96,255,0.45), 0 0 50px rgba(192,96,255,0.28)',
               }}>
                 <SceneL0 frame={frame} />
               </div>
@@ -89,20 +99,21 @@ export default function DayZeroWelcome({ name, onDone }) {
 
             {/* eyebrow */}
             <div style={{
-              fontSize: 10, fontWeight: 800, letterSpacing: '0.22em',
-              color: 'rgba(192,96,255,0.65)', textTransform: 'uppercase', marginBottom: 10,
-              animation: 'dz-fadein 0.4s 0.15s ease both',
+              fontSize: 11, fontWeight: 800, letterSpacing: '0.24em',
+              color: 'rgba(192,96,255,0.7)', textTransform: 'uppercase', marginBottom: 14,
+              animation: 'dz-fadein 0.45s 0.2s ease both',
             }}>
               Day Zero · First Landing
             </div>
 
-            {/* headline — name woven in */}
+            {/* headline */}
             <div style={{
-              fontSize: 23, fontWeight: 800, color: '#fff', lineHeight: 1.2, marginBottom: 14,
-              animation: 'dz-fadein 0.45s 0.28s ease both',
+              fontSize: 32, fontWeight: 800, color: '#fff', lineHeight: 1.15, marginBottom: 18,
+              letterSpacing: '-0.02em',
+              animation: 'dz-fadein 0.5s 0.32s ease both',
             }}>
               {firstName ? (
-                <>{firstName}<span style={{ color: 'rgba(192,96,255,0.85)' }}>,</span> you're here.</>
+                <>{firstName}<span style={{ color: 'rgba(192,96,255,0.9)' }}>,</span> you're here.</>
               ) : (
                 <>You're here.</>
               )}
@@ -110,36 +121,35 @@ export default function DayZeroWelcome({ name, onDone }) {
 
             {/* narrative body */}
             <div style={{
-              fontSize: 14, color: 'rgba(210,195,255,0.72)', lineHeight: 1.65,
-              marginBottom: 26,
-              animation: 'dz-fadein 0.45s 0.42s ease both',
+              fontSize: 16, color: 'rgba(210,195,255,0.68)', lineHeight: 1.7,
+              marginBottom: 36, maxWidth: 420, margin: '0 auto 36px',
+              animation: 'dz-fadein 0.5s 0.46s ease both',
             }}>
               Your world just materialized out of nothing —
-              no roads, no neighbors, just open ground.{' '}
-              <span style={{ color: 'rgba(210,195,255,0.95)', fontWeight: 500 }}>
+              no roads, no neighbors, just open ground and a horizon full of possibility.{' '}
+              <span style={{ color: 'rgba(218,205,255,0.95)', fontWeight: 600 }}>
                 Every week you show up, this place grows a little more alive.
               </span>
             </div>
 
-            {/* CTA button */}
+            {/* CTA */}
             <button className="dz-btn" onClick={e => {
               const r = e.currentTarget.getBoundingClientRect();
               setBurst({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
               handleDone();
             }} style={{
-              display: 'inline-block',
-              padding: '12px 40px', borderRadius: 100, border: 'none', cursor: 'pointer',
-              background: 'linear-gradient(135deg, #7a6a9a, #c060ff)',
-              color: '#fff', fontSize: 14, fontWeight: 800, letterSpacing: '0.08em',
-              animation: 'dz-fadein 0.45s 0.58s ease both, dz-btnpulse 2.2s 1s ease-in-out infinite',
-              transition: 'transform 0.18s',
+              padding: '16px 56px', borderRadius: 100, border: 'none', cursor: 'pointer',
+              background: 'linear-gradient(135deg, #7a6a9a 0%, #c060ff 60%, #9040e0 100%)',
+              color: '#fff', fontSize: 16, fontWeight: 800, letterSpacing: '0.08em',
+              animation: 'dz-fadein 0.5s 0.6s ease both, dz-btnpulse 2.4s 1.2s ease-in-out infinite',
             }}>
               ✦ Start Building
             </button>
 
             <div style={{
-              marginTop: 14, fontSize: 10, color: 'rgba(255,255,255,0.18)',
-              animation: 'dz-fadein 0.4s 0.75s ease both',
+              marginTop: 18, fontSize: 11, color: 'rgba(255,255,255,0.2)',
+              letterSpacing: '0.05em',
+              animation: 'dz-fadein 0.45s 0.8s ease both',
             }}>
               Check in 2+ days a week · watch your settlement grow
             </div>
@@ -151,8 +161,8 @@ export default function DayZeroWelcome({ name, onDone }) {
         <PatternBurst
           origin={burst}
           palette={['#c060ff', '#9060e0', '#e0a0ff', '#7a6a9a', '#ffffff']}
-          count={36}
-          duration={2400}
+          count={40}
+          duration={2600}
           onDone={() => setBurst(null)}
         />
       )}
