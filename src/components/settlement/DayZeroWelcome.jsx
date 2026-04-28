@@ -154,7 +154,7 @@ export default function DayZeroWelcome({ name, onDone }) {
               letterSpacing: '0.05em',
               animation: 'dz-fadein 0.45s 0.8s ease both',
             }}>
-              Check in 2+ days a week · watch your settlement grow
+              Let your team know where you are a couple days a week · your world grows from there
             </div>
           </div>
         </div>

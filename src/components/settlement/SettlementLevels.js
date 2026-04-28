@@ -5,7 +5,7 @@ export const LEVELS = [
     id: 'dayzero',
     week: 0,
     title: 'Day Zero',
-    vibe: 'You drop out of the sky onto a brand-new world. Awkward landing.',
+    vibe: 'You tumble out of the sky and land on the Whereabouts Planet — a bit sideways, slightly winded, but unmistakably here.',
     rule: 'Just show up. (You\'re here. That\'s enough.)',
     Scene: SceneL0,
     ringFrom: '#7a6a9a', ringTo: '#c060ff',

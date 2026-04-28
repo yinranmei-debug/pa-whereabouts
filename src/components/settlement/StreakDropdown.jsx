@@ -196,8 +196,8 @@ export default function StreakDropdown({ staffId, records, onClose, onLogout }) 
           <div style={{ textAlign: 'center', width: '100%' }}>
             <div style={{ fontSize: 12, color: nameC, fontWeight: 600, lineHeight: 1.55 }}>{currentLevel.vibe}</div>
             {levelIdx === 0 ? (
-              <div style={{ marginTop: 6, fontSize: 10, color: subC, lineHeight: 1.5 }}>
-                Check in 2+ days a week for 2 weeks to reach Tier 1
+              <div style={{ marginTop: 6, fontSize: 10, color: subC, lineHeight: 1.6 }}>
+                Let your team know where you are on a couple of days each week — do that two weeks in a row and your first camp appears.
               </div>
             ) : nextLevel && weeksToNext > 0 ? (
               <div style={{ marginTop: 6, fontSize: 10, color: subC }}>
