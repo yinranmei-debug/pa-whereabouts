@@ -30,6 +30,7 @@ import DayZeroWelcome from './components/settlement/DayZeroWelcome';
 import LevelUpModal from './components/settlement/LevelUpModal';
 import { LEVELS } from './components/settlement/SettlementLevels';
 import AvatarNudge from './components/AvatarNudge';
+import LeaveInvitePrompt from './components/LeaveInvitePrompt';
 
 const supabase = createClient(
   'https://vzdrpydtxlamoqtukgld.supabase.co',
@@ -288,6 +289,7 @@ export default function App() {
   const [showApacHolidays,  setShowApacHolidays]   = useState(false); // mode: show flags in header
   const [showApacPanel,    setShowApacPanel]       = useState(false); // panel: dropdown visible
   const [levelUpModal,     setLevelUpModal]        = useState(null);  // { lvl, nextLevel, streak }
+  const [leaveInvite,      setLeaveInvite]         = useState(null);  // { person, statusId, statusLabel, statusIcon, dates }
   const [showStreakDropdown, setShowStreakDropdown] = useState(false);
   const [weeklyUpdates,     setWeeklyUpdates]      = useState([]);
  const [weeklyUpdatesCount, setWeeklyUpdatesCount] = useState(0);
@@ -807,6 +809,37 @@ const me      = impersonatedId
     if (flightOnLandRef.current) { flightOnLandRef.current(); flightOnLandRef.current = null; }
   };
 
+  // Collect same-week leave dates already saved + newly set date, then show prompt
+  const triggerLeaveInvite = (staffId, newDate, statusId) => {
+    if (statusId === 'none' || !statusId) return;
+    const person = staffList.find(s => s.id === staffId);
+    if (!person || person.id !== meStaff?.id) return; // only for own status
+    const cfg = STATUS_CONFIG[statusId];
+    if (!cfg) return;
+
+    // Get monday of the week containing newDate
+    const d = new Date(newDate + 'T00:00:00');
+    const dow = d.getDay();
+    const monday = new Date(d);
+    monday.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1));
+
+    // Collect all same-status dates in that week from records + the new one
+    const weekDates = new Set([newDate]);
+    for (let i = 0; i < 5; i++) {
+      const day = new Date(monday);
+      day.setDate(monday.getDate() + i);
+      const ds = day.toISOString().slice(0, 10);
+      const amKey = `${staffId}-${ds}-AM`;
+      const pmKey = `${staffId}-${ds}-PM`;
+      if ((records[amKey] === statusId || records[pmKey] === statusId) && ds !== newDate) {
+        weekDates.add(ds);
+      }
+    }
+
+    const sortedDates = [...weekDates].sort();
+    setLeaveInvite({ person, statusId, statusLabel: cfg.label, statusIcon: cfg.icon, dates: sortedDates });
+  };
+
   const handleStatusSelect = (key, statusId, e) => {
     e.stopPropagation();
     const parts   = key.split('-');
@@ -821,6 +854,7 @@ const me      = impersonatedId
       setSaveStatus('saving');
       await supabase.from('statuses').upsert({ id:key, staff_id:staffId, date, shift, status:statusId });
       setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
+      triggerLeaveInvite(staffId, date, statusId);
     });
   };
 
@@ -2106,6 +2140,31 @@ const handleCelebrate = (person) => {
             setShowTour(false);
             setShowWelcome(true);
             finishingTourRef.current = false;
+          }}
+        />
+      )}
+      {leaveInvite && (
+        <LeaveInvitePrompt
+          person={leaveInvite.person}
+          statusId={leaveInvite.statusId}
+          statusLabel={leaveInvite.statusLabel}
+          statusIcon={leaveInvite.statusIcon}
+          dates={leaveInvite.dates}
+          isDayMode={isDayMode}
+          onSkip={() => setLeaveInvite(null)}
+          onSend={async (extraEmails) => {
+            await fetch('https://vzdrpydtxlamoqtukgld.supabase.co/functions/v1/send-leave-invite', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer sb_publishable_o1d0wmxwLrJCuTQ84uY38g__dqoj2dD' },
+              body: JSON.stringify({
+                personName:  leaveInvite.person.name,
+                personEmail: leaveInvite.person.email,
+                statusLabel: leaveInvite.statusLabel,
+                statusIcon:  leaveInvite.statusIcon,
+                dates:       leaveInvite.dates,
+                extraEmails,
+              }),
+            });
           }}
         />
       )}
