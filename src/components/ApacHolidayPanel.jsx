@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function ApacHolidayPanel({ open, onClose, jpHolidays, krHolidays, isDayMode, onDateClick }) {
+export default function ApacHolidayPanel({ open, onClose, jpHolidays, krHolidays, cnHolidays = {}, cnTiaoxiu = {}, isDayMode, onDateClick }) {
   if (!open) return null;
 
   const today = new Date().toISOString().slice(0, 10);
@@ -9,6 +9,8 @@ export default function ApacHolidayPanel({ open, onClose, jpHolidays, krHolidays
   const allHolidays = [
     ...Object.entries(jpHolidays).map(([date, name]) => ({ date, name, country: 'JP' })),
     ...Object.entries(krHolidays).map(([date, name]) => ({ date, name, country: 'KR' })),
+    ...Object.entries(cnHolidays).map(([date, name]) => ({ date, name, country: 'CN' })),
+    ...Object.entries(cnTiaoxiu).map(([date, name]) => ({ date, name, country: 'TX' })),
   ]
     .filter(h => h.date.slice(0, 4) === String(currentYear) || h.date.slice(0, 4) === String(currentYear + 1))
     .sort((a, b) => a.date.localeCompare(b.date));
@@ -32,6 +34,36 @@ export default function ApacHolidayPanel({ open, onClose, jpHolidays, krHolidays
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
   const fmtWeekday = ds => new Date(ds + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' });
+
+  const countryStyle = (country) => {
+    const styles = {
+      JP: {
+        color:  night ? 'rgba(255,120,130,0.9)' : 'rgba(190,30,50,0.85)',
+        bg:     night ? 'rgba(190,0,30,0.14)'   : 'rgba(190,0,30,0.07)',
+        border: 'rgba(200,40,60,0.35)',
+        label:  '🇯🇵 JP',
+      },
+      KR: {
+        color:  night ? 'rgba(100,160,255,0.9)' : 'rgba(20,80,200,0.85)',
+        bg:     night ? 'rgba(0,50,160,0.14)'   : 'rgba(0,50,160,0.07)',
+        border: 'rgba(30,100,220,0.35)',
+        label:  '🇰🇷 KR',
+      },
+      CN: {
+        color:  night ? 'rgba(255,190,60,0.95)' : 'rgba(180,50,20,0.9)',
+        bg:     night ? 'rgba(200,40,20,0.14)'  : 'rgba(200,40,20,0.07)',
+        border: 'rgba(220,50,20,0.35)',
+        label:  '🇨🇳 CN',
+      },
+      TX: {
+        color:  night ? 'rgba(200,200,200,0.7)' : 'rgba(80,80,100,0.65)',
+        bg:     night ? 'rgba(180,180,180,0.08)': 'rgba(80,80,100,0.06)',
+        border: 'rgba(150,150,160,0.25)',
+        label:  '🔄 补班',
+      },
+    };
+    return styles[country] || styles.JP;
+  };
 
   return (
     <div
@@ -57,11 +89,10 @@ export default function ApacHolidayPanel({ open, onClose, jpHolidays, krHolidays
             APAC Holidays
           </div>
           <div style={{ fontSize: 10, color: subC, fontWeight: 500, marginTop: 1 }}>
-            🇯🇵 Japan · 🇰🇷 Korea · {currentYear}
+            🇯🇵 Japan · 🇰🇷 Korea · 🇨🇳 China · {currentYear}
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {/* active indicator */}
           <div style={{
             fontSize: 8, fontWeight: 800, letterSpacing: '0.1em',
             color: titleC, background: night ? 'rgba(106,199,255,0.12)' : 'rgba(0,155,255,0.08)',
@@ -86,35 +117,33 @@ export default function ApacHolidayPanel({ open, onClose, jpHolidays, krHolidays
         {allHolidays.map((h, i) => {
           const isPast = h.date < today;
           const isToday = h.date === today;
-          const jpColor  = night ? 'rgba(255,120,130,0.9)'  : 'rgba(190,30,50,0.85)';
-          const krColor  = night ? 'rgba(100,160,255,0.9)'  : 'rgba(20,80,200,0.85)';
-          const jpBg     = night ? 'rgba(190,0,30,0.14)'    : 'rgba(190,0,30,0.07)';
-          const krBg     = night ? 'rgba(0,50,160,0.14)'    : 'rgba(0,50,160,0.07)';
+          const cs = countryStyle(h.country);
+          const isTiaoxiu = h.country === 'TX';
           return (
             <div key={`${h.date}-${h.country}`}
-              onClick={() => onDateClick && onDateClick(h.date)}
+              onClick={() => !isTiaoxiu && onDateClick && onDateClick(h.date)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 9,
-                padding: '7px 13px', cursor: 'pointer',
+                padding: '7px 13px', cursor: isTiaoxiu ? 'default' : 'pointer',
                 background: isToday ? todayHl : i % 2 === 0 ? rowAlt : 'transparent',
                 borderBottom: `1px solid ${divider}`,
                 opacity: isPast ? 0.42 : 1,
                 transition: 'background 0.12s',
               }}
-              onMouseOver={e => e.currentTarget.style.background = night ? 'rgba(106,199,255,0.07)' : 'rgba(0,155,255,0.05)'}
+              onMouseOver={e => { if (!isTiaoxiu) e.currentTarget.style.background = night ? 'rgba(106,199,255,0.07)' : 'rgba(0,155,255,0.05)'; }}
               onMouseOut={e => e.currentTarget.style.background = isToday ? todayHl : i % 2 === 0 ? rowAlt : 'transparent'}
             >
               <div style={{
                 flexShrink: 0, fontSize: 9, fontWeight: 800, padding: '2px 5px',
                 borderRadius: 4, letterSpacing: '0.04em',
-                background: h.country === 'JP' ? jpBg : krBg,
-                border: `1px solid ${h.country === 'JP' ? 'rgba(200,40,60,0.35)' : 'rgba(30,100,220,0.35)'}`,
-                color: h.country === 'JP' ? jpColor : krColor,
+                background: cs.bg,
+                border: `1px solid ${cs.border}`,
+                color: cs.color,
               }}>
-                {h.country === 'JP' ? '🇯🇵 JP' : '🇰🇷 KR'}
+                {cs.label}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: isPast ? pastC : nameC, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: isPast ? pastC : isTiaoxiu ? subC : nameC, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {h.name}
                 </div>
                 <div style={{ fontSize: 9, color: subC, fontWeight: 500, marginTop: 1 }}>
@@ -123,7 +152,9 @@ export default function ApacHolidayPanel({ open, onClose, jpHolidays, krHolidays
               </div>
               {isToday
                 ? <div style={{ flexShrink: 0, fontSize: 8, fontWeight: 800, color: titleC, letterSpacing: '0.06em' }}>TODAY</div>
-                : <div style={{ flexShrink: 0, fontSize: 10, color: subC, opacity: 0.5 }}>›</div>
+                : isTiaoxiu
+                  ? <div style={{ flexShrink: 0, fontSize: 9, color: subC, opacity: 0.5 }}>补班</div>
+                  : <div style={{ flexShrink: 0, fontSize: 10, color: subC, opacity: 0.5 }}>›</div>
               }
             </div>
           );
@@ -135,7 +166,7 @@ export default function ApacHolidayPanel({ open, onClose, jpHolidays, krHolidays
         padding: '7px 13px', borderTop: `1px solid ${divider}`,
         fontSize: 9, color: subC, textAlign: 'center', flexShrink: 0,
       }}>
-        Flags shown in calendar · Birthday cakes hidden while ON
+        🔄 补班 = makeup workday (调休) · Flags shown in calendar
       </div>
     </div>
   );

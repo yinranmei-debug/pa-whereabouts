@@ -437,6 +437,8 @@ body.day-mode .we .pill-card {
     body.day-mode .tbl-hdr-daycol { color: rgba(26,24,48,0.72) !important; }
     body.day-mode .tbl-hdr-daycol div { color: rgba(26,24,48,0.65) !important; }
     body.day-mode .tbl-hdr-daycol .bday-hdr-tip { color: #fff !important; }
+    body.day-mode .tbl-hdr-daycol .hol-pip-tip  { color: #fff !important; }
+    body.day-mode .hol-pip-tip { color: #fff !important; }
 
     /* ── APAC toggle pill — day mode ── */
     body.day-mode .apac-toggle-track {

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { PublicClientApplication } from "@azure/msal-browser";
 import { msalConfig, loginRequest } from "./authConfig";
 import HOLIDAYS_FALLBACK from './data/holidays.json';
+import { CN_HOLIDAYS_2026, CN_TIAOXIU_2026 } from './data/cnHolidays2026';
 import RAW_STAFF_LIST from './data/staff.json';
 import STATUS_CONFIG from './data/status.json';
 import TIPS_DATA from './data/tips.json';
@@ -206,6 +207,7 @@ export default function App() {
   const [jpHolidays,   setJpHolidays]         = useState({});
   const [krHolidays,   setKrHolidays]         = useState({});
   const [cnHolidays,   setCnHolidays]         = useState({});
+  const [cnTiaoxiu,    setCnTiaoxiu]          = useState({});
   const [records,         setRecords]         = useState({});
   const [activeMenu,      setActiveMenu]      = useState(null);
   const [socialMenu,      setSocialMenu]      = useState(null);
@@ -565,7 +567,13 @@ export default function App() {
     };
     fetchCountry('JP', 'jp-holidays-cache', setJpHolidays);
     fetchCountry('KR', 'kr-holidays-cache', setKrHolidays);
-    fetchCountry('CN', 'cn-holidays-cache', setCnHolidays);
+    // CN: use hardcoded 2026 data (Nager.Date doesn't include 调休)
+    // Merge with API data for other years
+    fetchCountry('CN', 'cn-holidays-cache', (apiData) => {
+      setCnHolidays({ ...apiData, ...CN_HOLIDAYS_2026 });
+    });
+    setCnHolidays(prev => ({ ...prev, ...CN_HOLIDAYS_2026 }));
+    setCnTiaoxiu(CN_TIAOXIU_2026);
   }, []);
 
   useEffect(() => {
@@ -1248,6 +1256,8 @@ const handleCelebrate = (person) => {
           onClose={() => setShowApacHolidays(false)}
           jpHolidays={jpHolidays}
           krHolidays={krHolidays}
+          cnHolidays={cnHolidays}
+          cnTiaoxiu={cnTiaoxiu}
           isDayMode={isDayMode}
           onDateClick={ds => navigateWeek(0, new Date(ds + 'T00:00:00'))}
         />
