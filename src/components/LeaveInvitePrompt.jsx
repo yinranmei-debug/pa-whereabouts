@@ -57,7 +57,8 @@ export default function LeaveInvitePrompt({ person, statusId, statusLabel, statu
         {sent ? (
           <div style={{ textAlign: 'center', padding: '8px 0' }}>
             <div style={{ fontSize: 22, marginBottom: 6 }}>📅</div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: nameC }}>Invite sent!</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: nameC }}>Done! The team has been notified.</div>
+            <div style={{ fontSize: 11, color: subC, marginTop: 4 }}>Calendar invite sent to the HK team.</div>
           </div>
         ) : (
           <>
@@ -65,14 +66,14 @@ export default function LeaveInvitePrompt({ person, statusId, statusLabel, statu
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', color: 'rgba(119,11,255,0.7)', textTransform: 'uppercase', marginBottom: 3 }}>
-                  Notify HK team?
+                  Let the team know?
                 </div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: nameC }}>
-                  {statusIcon} {person.name} – {statusLabel}
+                  {statusIcon} {person.name} is on {statusLabel}
                 </div>
                 <div style={{ fontSize: 11, color: subC, marginTop: 2 }}>{dateLabel}</div>
-                <div style={{ fontSize: 10, color: subC, marginTop: 3, opacity: 0.7 }}>
-                  Calendar invite → HK team colleagues
+                <div style={{ fontSize: 10, color: subC, marginTop: 4, lineHeight: 1.5 }}>
+                  Sends a calendar invite to everyone on the HK team so they can block it off.
                 </div>
               </div>
               <button onClick={onSkip} style={{ background: 'none', border: 'none', cursor: 'pointer', color: subC, fontSize: 14, padding: '0 0 0 8px', lineHeight: 1 }}>✕</button>
@@ -81,13 +82,13 @@ export default function LeaveInvitePrompt({ person, statusId, statusLabel, statu
             {/* extra emails */}
             <div style={{ marginBottom: 12 }}>
               <div style={{ fontSize: 10, color: subC, fontWeight: 600, marginBottom: 5 }}>
-                Add others (optional)
+                Add someone outside the team? (optional)
               </div>
               {extraEmails.map((val, i) => (
                 <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 5 }}>
                   <input
                     type="email"
-                    placeholder="email@patternasia.com"
+                    placeholder="colleague@company.com"
                     value={val}
                     onChange={e => updateEmail(i, e.target.value)}
                     style={{
@@ -110,7 +111,7 @@ export default function LeaveInvitePrompt({ person, statusId, statusLabel, statu
                 background: 'none', border: 'none', cursor: 'pointer',
                 fontSize: 11, color: 'rgba(119,11,255,0.7)', fontWeight: 600,
                 padding: 0, fontFamily: "'Plus Jakarta Sans', sans-serif",
-              }}>+ Add another</button>
+              }}>+ Add another person</button>
             </div>
 
             {/* actions */}
@@ -120,7 +121,7 @@ export default function LeaveInvitePrompt({ person, statusId, statusLabel, statu
                 background: 'transparent', border: `1px solid ${border}`,
                 color: subC, cursor: 'pointer',
               }}>
-                Skip
+                Not now
               </button>
               <button onClick={handleSend} disabled={sending} style={{
                 flex: 2, padding: '8px 0', borderRadius: 8, fontSize: 12, fontWeight: 700,
@@ -128,7 +129,7 @@ export default function LeaveInvitePrompt({ person, statusId, statusLabel, statu
                 border: 'none', color: '#fff', cursor: sending ? 'default' : 'pointer',
                 opacity: sending ? 0.7 : 1,
               }}>
-                {sending ? 'Sending…' : '📅 Send Invite'}
+                {sending ? 'Sending…' : '📅 Notify Team'}
               </button>
             </div>
           </>
