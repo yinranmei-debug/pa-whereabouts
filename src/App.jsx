@@ -1732,7 +1732,7 @@ const handleCelebrate = (person) => {
               className={`tb-btn apac-hol-btn${showApacHolidays?' apac-active':''}`}
               style={{ marginLeft:6, display:'flex', alignItems:'center', gap:6 }}
               onClick={() => setShowApacHolidays(p => !p)}
-              title="APAC Holidays — toggle JP/KR flags"
+              title="APAC Holidays — toggle JP/KR/CN flags"
             >
               <svg width="17" height="15" viewBox="0 0 24 22" fill="none">
                 <path className="apac-arc" d="M3 15 Q12 3 21 15" fill="none" stroke="rgba(106,199,255,0.7)" strokeWidth="1.4" strokeLinecap="round"/>
