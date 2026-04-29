@@ -112,8 +112,28 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
               <>
                 {/* customize header */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                  <div style={{ fontSize: 11, fontWeight: 800, color: subC, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                    HK Team — select recipients
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {/* select all checkbox */}
+                    <div onClick={() => {
+                      const allEmails = teamMembers.map(m => m.email);
+                      const allSelected = allEmails.every(e => selected.has(e));
+                      setSelected(allSelected ? new Set() : new Set(allEmails));
+                    }} style={{
+                      width: 16, height: 16, borderRadius: 4, flexShrink: 0, cursor: 'pointer',
+                      background: teamMembers.every(m => selected.has(m.email))
+                        ? 'linear-gradient(135deg, #770bff, #009bff)'
+                        : teamMembers.some(m => selected.has(m.email))
+                          ? 'rgba(119,11,255,0.35)'
+                          : 'transparent',
+                      border: teamMembers.every(m => selected.has(m.email)) ? 'none' : `1.5px solid ${subC}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 10, color: '#fff',
+                    }}>
+                      {teamMembers.every(m => selected.has(m.email)) ? '✓' : teamMembers.some(m => selected.has(m.email)) ? '–' : ''}
+                    </div>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: subC, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                      HK Team ({selected.size}/{teamMembers.length})
+                    </div>
                   </div>
                   <button onClick={() => setMode('simple')} style={{
                     background: 'none', border: 'none', cursor: 'pointer',
