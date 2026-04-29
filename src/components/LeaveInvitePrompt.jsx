@@ -101,7 +101,7 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
 
                 <button onClick={() => setMode('customize')} style={{
                   background: 'none', border: 'none', cursor: 'pointer',
-                  fontSize: 11, color: 'rgba(119,11,255,0.65)', fontWeight: 700,
+                  fontSize: 11, color: 'rgba(167,139,250,0.45)', fontWeight: 600,
                   padding: '0 0 14px', display: 'block', letterSpacing: '0.04em',
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
                 }}>
