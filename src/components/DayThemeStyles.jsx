@@ -436,6 +436,23 @@ body.day-mode .we .pill-card {
   /* ── Header day col ── */
     body.day-mode .tbl-hdr-daycol { color: rgba(26,24,48,0.72) !important; }
     body.day-mode .tbl-hdr-daycol div { color: rgba(26,24,48,0.65) !important; }
+    body.day-mode .bday-hdr-tip { color: #fff !important; }
+
+    /* ── APAC toggle pill — day mode ── */
+    body.day-mode .apac-toggle-track {
+      background: rgba(0,0,0,0.08) !important;
+      border-color: rgba(0,0,0,0.18) !important;
+    }
+    body.day-mode .apac-toggle-track.apac-toggle-on {
+      background: rgba(0,155,255,0.85) !important;
+      border-color: rgba(0,155,255,0.9) !important;
+    }
+    body.day-mode .apac-toggle-thumb {
+      background: rgba(80,80,100,0.55) !important;
+    }
+    body.day-mode .apac-toggle-track.apac-toggle-on .apac-toggle-thumb {
+      background: #fff !important;
+    }
 
   /* ── Theme toggle button — shared styles ── */
     .theme-toggle-btn {

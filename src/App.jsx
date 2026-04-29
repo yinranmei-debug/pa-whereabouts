@@ -205,6 +205,7 @@ export default function App() {
   const [holidaysData, setHolidaysData]       = useState(HOLIDAYS_FALLBACK);
   const [jpHolidays,   setJpHolidays]         = useState({});
   const [krHolidays,   setKrHolidays]         = useState({});
+  const [cnHolidays,   setCnHolidays]         = useState({});
   const [records,         setRecords]         = useState({});
   const [activeMenu,      setActiveMenu]      = useState(null);
   const [socialMenu,      setSocialMenu]      = useState(null);
@@ -564,6 +565,7 @@ export default function App() {
     };
     fetchCountry('JP', 'jp-holidays-cache', setJpHolidays);
     fetchCountry('KR', 'kr-holidays-cache', setKrHolidays);
+    fetchCountry('CN', 'cn-holidays-cache', setCnHolidays);
   }, []);
 
   useEffect(() => {
@@ -1737,17 +1739,18 @@ const handleCelebrate = (person) => {
                 <path className="apac-arc" d="M2 18 Q12 23 22 18" fill="none" stroke="rgba(106,199,255,0.45)" strokeWidth="1.1" strokeLinecap="round"/>
                 <circle className="apac-dot-jp" cx="15.5" cy="10" r="2.4" fill="rgba(220,50,70,0.9)"/>
                 <circle className="apac-dot-kr" cx="9.5" cy="12" r="2.4" fill="rgba(40,100,220,0.9)"/>
+                <circle className="apac-dot-cn" cx="12" cy="5" r="2.4" fill="rgba(255,195,0,0.9)"/>
                 <circle className="apac-center" cx="12" cy="18.5" r="1.4" fill="rgba(167,139,250,0.9)"/>
               </svg>
               <span style={{fontSize:11,fontWeight:700,letterSpacing:'0.03em'}}>APAC</span>
               {/* toggle pill */}
-              <div style={{
+              <div className={`apac-toggle-track${showApacHolidays?' apac-toggle-on':''}`} style={{
                 width:26, height:14, borderRadius:7,
                 background: showApacHolidays ? 'rgba(106,199,255,0.85)' : 'rgba(255,255,255,0.1)',
                 border: showApacHolidays ? '1px solid rgba(106,199,255,0.9)' : '1px solid rgba(255,255,255,0.2)',
                 position:'relative', transition:'background 0.2s, border-color 0.2s', flexShrink:0,
               }}>
-                <div style={{
+                <div className="apac-toggle-thumb" style={{
                   width:10, height:10, borderRadius:'50%',
                   background: showApacHolidays ? '#fff' : 'rgba(255,255,255,0.45)',
                   position:'absolute', top:1,
@@ -1872,7 +1875,7 @@ const handleCelebrate = (person) => {
                           {d.num}
                         </div>
                       </div>
-                      {showApacHolidays && (jpHolidays[d.ds] || krHolidays[d.ds]) && (
+                      {showApacHolidays && (jpHolidays[d.ds] || krHolidays[d.ds] || cnHolidays[d.ds]) && (
                         <div style={{position:'absolute',top:2,right:2,zIndex:20,display:'flex',flexDirection:'column',gap:3}}>
                           {jpHolidays[d.ds] && (
                             <div className="hol-pip hol-pip-jp">
@@ -1882,6 +1885,11 @@ const handleCelebrate = (person) => {
                           {krHolidays[d.ds] && (
                             <div className="hol-pip hol-pip-kr">
                               🇰🇷<div className="hol-pip-tip">{new Date(d.ds+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})} · {krHolidays[d.ds]}</div>
+                            </div>
+                          )}
+                          {cnHolidays[d.ds] && (
+                            <div className="hol-pip hol-pip-cn">
+                              🇨🇳<div className="hol-pip-tip">{new Date(d.ds+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})} · {cnHolidays[d.ds]}</div>
                             </div>
                           )}
                         </div>
