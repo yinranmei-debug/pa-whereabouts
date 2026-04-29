@@ -50,7 +50,7 @@ export default function DayZeroWelcome({ name, onDone }) {
         position: 'fixed', inset: 0, zIndex: 12000,
         background: 'radial-gradient(ellipse at 50% 60%, rgba(80,20,140,0.35) 0%, rgba(4,2,14,0.92) 70%)',
         backdropFilter: 'blur(12px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        display: 'flex', justifyContent: 'center',
         overflowY: 'auto',
         padding: '4vh 20px',
         animation: leaving ? 'dz-out 0.5s ease forwards' : undefined,
@@ -58,6 +58,7 @@ export default function DayZeroWelcome({ name, onDone }) {
 
         <div style={{
           width: 'clamp(480px, 66vw, 860px)',
+          margin: 'auto',
           flexShrink: 0,
           borderRadius: 40,
           background: 'linear-gradient(160deg, rgba(14,7,40,0.99) 0%, rgba(22,9,58,0.99) 55%, rgba(18,6,48,0.99) 100%)',

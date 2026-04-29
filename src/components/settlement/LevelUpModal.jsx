@@ -54,7 +54,7 @@ export default function LevelUpModal({ lvl, nextLevel, streak, onClose, onClaim 
         position: 'fixed', inset: 0, zIndex: 15000,
         background: `radial-gradient(ellipse at 50% 60%, ${lvl.ringFrom}44 0%, rgba(4,2,14,0.92) 70%)`,
         backdropFilter: 'blur(12px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        display: 'flex', justifyContent: 'center',
         overflowY: 'auto',
         padding: '4vh 20px',
         animation: leaving ? 'lum-out 0.5s ease forwards' : undefined,
@@ -62,6 +62,7 @@ export default function LevelUpModal({ lvl, nextLevel, streak, onClose, onClaim 
 
         <div style={{
           width: 'clamp(480px, 66vw, 860px)',
+          margin: 'auto',
           flexShrink: 0,
           borderRadius: 40,
           background: 'linear-gradient(160deg, rgba(10,6,28,0.99) 0%, rgba(16,8,40,0.99) 55%, rgba(12,6,34,0.99) 100%)',
