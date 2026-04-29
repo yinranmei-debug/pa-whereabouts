@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useFrame } from './SettlementChar';
 import { LEVELS } from './SettlementLevels';
-import LevelUpModal from './LevelUpModal';
 
 // ─── streak computation ───────────────────────────────────────────
 // Active day = any AM or PM status set (non-"none") on a weekday.
@@ -121,10 +120,9 @@ function WeekPips({ streak, from, to }) {
 }
 
 // ─── main dropdown ────────────────────────────────────────────────
-export default function StreakDropdown({ staffId, records, onClose, onLogout }) {
+export default function StreakDropdown({ staffId, records, onClose, onLogout, onShowLevelModal }) {
   const ref = useRef();
   const frame = useFrame(true, 18);
-  const [showModal, setShowModal] = useState(false);
 
   const streak = useMemo(() => computeStreak(staffId, records), [staffId, records]);
   const levelIdx = streakToLevelIdx(streak);
@@ -144,16 +142,15 @@ export default function StreakDropdown({ staffId, records, onClose, onLogout }) 
     const updated = [...claimedLevels, currentLevel.id];
     setClaimedLevels(updated);
     if (claimKey) localStorage.setItem(claimKey, JSON.stringify(updated));
-    setShowModal(false);
   };
 
   useEffect(() => {
     const handler = e => {
-      if (ref.current && !ref.current.contains(e.target) && !showModal) onClose();
+      if (ref.current && !ref.current.contains(e.target)) onClose();
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [onClose, showModal]);
+  }, [onClose]);
 
   const subC  = 'rgba(220,215,255,0.72)';
   const nameC = 'rgba(232,229,255,0.92)';
@@ -208,7 +205,7 @@ export default function StreakDropdown({ staffId, records, onClose, onLogout }) 
               </div>
             ) : null}
             {canClaim && (
-              <button onClick={() => setShowModal(true)} style={{
+              <button onClick={() => onShowLevelModal?.({ lvl: currentLevel, nextLevel, streak, onClaim: handleClaimDone })} style={{
                 marginTop: 12, padding: '9px 28px', fontSize: 11, fontWeight: 800,
                 letterSpacing: '0.12em', borderRadius: 100, border: 'none', cursor: 'pointer',
                 background: `linear-gradient(135deg, ${currentLevel.ringFrom}, ${currentLevel.ringTo})`,
@@ -258,17 +255,6 @@ export default function StreakDropdown({ staffId, records, onClose, onLogout }) 
           </button>
         </div>
       </div>
-
-      {/* Level-up claim modal — renders outside dropdown, fullscreen */}
-      {showModal && (
-        <LevelUpModal
-          lvl={currentLevel}
-          nextLevel={nextLevel}
-          streak={streak}
-          onClose={() => setShowModal(false)}
-          onClaim={handleClaimDone}
-        />
-      )}
 
       <style>{`
         @keyframes ss-ringspin { to { transform: rotate(360deg); } }

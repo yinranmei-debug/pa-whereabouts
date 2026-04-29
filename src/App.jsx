@@ -27,6 +27,7 @@ import TeamTodayPanel from './components/TeamTodayPanel';
 import ApacHolidayPanel from './components/ApacHolidayPanel';
 import StreakDropdown, { computeStreak, streakToLevelIdx } from './components/settlement/StreakDropdown';
 import DayZeroWelcome from './components/settlement/DayZeroWelcome';
+import LevelUpModal from './components/settlement/LevelUpModal';
 import { LEVELS } from './components/settlement/SettlementLevels';
 import AvatarNudge from './components/AvatarNudge';
 
@@ -284,7 +285,9 @@ export default function App() {
   const [showWeeklyPanel,   setShowWeeklyPanel]   = useState(false);
   const [showBdayPanel,     setShowBdayPanel]      = useState(false);
   const [showTeamToday,     setShowTeamToday]      = useState(false);
-  const [showApacHolidays,  setShowApacHolidays]   = useState(false);
+  const [showApacHolidays,  setShowApacHolidays]   = useState(false); // mode: show flags in header
+  const [showApacPanel,    setShowApacPanel]       = useState(false); // panel: dropdown visible
+  const [levelUpModal,     setLevelUpModal]        = useState(null);  // { lvl, nextLevel, streak }
   const [showStreakDropdown, setShowStreakDropdown] = useState(false);
   const [weeklyUpdates,     setWeeklyUpdates]      = useState([]);
  const [weeklyUpdatesCount, setWeeklyUpdatesCount] = useState(0);
@@ -1252,8 +1255,8 @@ const handleCelebrate = (person) => {
           isDayMode={isDayMode}
         />
         <ApacHolidayPanel
-          open={showApacHolidays}
-          onClose={() => setShowApacHolidays(false)}
+          open={showApacPanel}
+          onClose={() => setShowApacPanel(false)}
           jpHolidays={jpHolidays}
           krHolidays={krHolidays}
           cnHolidays={cnHolidays}
@@ -1658,6 +1661,7 @@ const handleCelebrate = (person) => {
                   records={records}
                   onClose={() => setShowStreakDropdown(false)}
                   onLogout={logout}
+                  onShowLevelModal={(data) => setLevelUpModal(data)}
                 />
               )}
             </div>
@@ -1741,7 +1745,11 @@ const handleCelebrate = (person) => {
             <button
               className={`tb-btn apac-hol-btn${showApacHolidays?' apac-active':''}`}
               style={{ marginLeft:6, display:'flex', alignItems:'center', gap:6 }}
-              onClick={() => setShowApacHolidays(p => !p)}
+              onClick={() => {
+                const next = !showApacHolidays;
+                setShowApacHolidays(next);
+                setShowApacPanel(next);
+              }}
               title="APAC Holidays — toggle JP/KR/CN flags"
             >
               <svg width="17" height="15" viewBox="0 0 24 22" fill="none">
@@ -2098,6 +2106,18 @@ const handleCelebrate = (person) => {
             setShowTour(false);
             setShowWelcome(true);
             finishingTourRef.current = false;
+          }}
+        />
+      )}
+      {levelUpModal && (
+        <LevelUpModal
+          lvl={levelUpModal.lvl}
+          nextLevel={levelUpModal.nextLevel}
+          streak={levelUpModal.streak}
+          onClose={() => setLevelUpModal(null)}
+          onClaim={() => {
+            levelUpModal.onClaim?.();
+            setLevelUpModal(null);
           }}
         />
       )}
