@@ -716,6 +716,26 @@ export default function App() {
     return () => document.removeEventListener('mob-party', fn);
   }, []);
 
+  // Auto-trigger level-up modal the first time a new tier is reached
+  useEffect(() => {
+    if (!account) return;
+    const staffEntry = impersonatedId
+      ? RAW_STAFF_LIST.find(s => s.id === impersonatedId)
+      : getStaffEntry(account.username.toLowerCase());
+    if (!staffEntry) return;
+    const streak = computeStreak(staffEntry.id, records);
+    const levelIdx = streakToLevelIdx(streak);
+    if (levelIdx === 0) return;
+    const storageKey = `settlement-level-${staffEntry.id}`;
+    const prevMax = parseInt(localStorage.getItem(storageKey) || '0', 10);
+    if (levelIdx > prevMax) {
+      localStorage.setItem(storageKey, String(levelIdx));
+      const lvl = LEVELS[levelIdx];
+      const nextLvl = levelIdx < 4 ? LEVELS[levelIdx + 1] : null;
+      setLevelUpModal({ lvl, nextLevel: nextLvl, streak });
+    }
+  }, [records, account, impersonatedId]);
+
   const navigateTip = (dir) => {
     const nextIdx = dir==='next'
       ? (tipIdx+1) % dailyTips.current.length

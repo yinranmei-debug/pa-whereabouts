@@ -1,6 +1,14 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 export default function ApacHolidayPanel({ open, onClose, jpHolidays, krHolidays, cnHolidays = {}, cnTiaoxiu = {}, isDayMode, onDateClick }) {
+  const ref = useRef();
+  useEffect(() => {
+    if (!open) return;
+    const handler = e => { if (ref.current && !ref.current.contains(e.target)) onClose(); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open, onClose]);
+
   if (!open) return null;
 
   const today = new Date().toISOString().slice(0, 10);
@@ -67,6 +75,7 @@ export default function ApacHolidayPanel({ open, onClose, jpHolidays, krHolidays
 
   return (
     <div
+      ref={ref}
       style={{
         position: 'fixed', top: 136, right: 24,
         width: 290, maxHeight: 460, zIndex: 12000,
@@ -92,19 +101,11 @@ export default function ApacHolidayPanel({ open, onClose, jpHolidays, krHolidays
             🇯🇵 Japan · 🇰🇷 Korea · 🇨🇳 China · {currentYear}
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <div style={{
-            fontSize: 8, fontWeight: 800, letterSpacing: '0.1em',
-            color: titleC, background: night ? 'rgba(106,199,255,0.12)' : 'rgba(0,155,255,0.08)',
-            border: `1px solid ${border}`, borderRadius: 4, padding: '2px 6px',
-          }}>ON</div>
-          <button onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px', fontSize: 13, color: subC, borderRadius: 6, lineHeight: 1, transition: 'color 0.15s' }}
-            onMouseOver={e => e.currentTarget.style.color = night ? '#fff' : '#1A1830'}
-            onMouseOut={e => e.currentTarget.style.color = subC}
-            title="Turn off APAC view"
-          >✕</button>
-        </div>
+        <div style={{
+          fontSize: 8, fontWeight: 800, letterSpacing: '0.1em',
+          color: titleC, background: night ? 'rgba(106,199,255,0.12)' : 'rgba(0,155,255,0.08)',
+          border: `1px solid ${border}`, borderRadius: 4, padding: '2px 6px',
+        }}>ON</div>
       </div>
 
       {/* Holiday list */}
