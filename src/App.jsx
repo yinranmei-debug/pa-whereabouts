@@ -2177,6 +2177,9 @@ const handleCelebrate = (person) => {
           isDayMode={isDayMode}
           onSkip={() => setLeaveInvite(null)}
           onSend={async (extraEmails) => {
+            const teamEmails = RAW_STAFF_LIST
+              .filter(s => s.region === 'Hong Kong')
+              .map(s => s.email);
             await fetch('https://vzdrpydtxlamoqtukgld.supabase.co/functions/v1/send-leave-invite', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -2186,6 +2189,7 @@ const handleCelebrate = (person) => {
                 statusLabel: leaveInvite.statusLabel,
                 statusIcon:  leaveInvite.statusIcon,
                 dates:       leaveInvite.dates,
+                teamEmails,
                 extraEmails,
               }),
             });
