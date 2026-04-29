@@ -1,4 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { encode as base64Encode } from 'https://deno.land/std@0.168.0/encoding/base64.ts';
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!;
 const TEST_RECIPIENT = 'yinrm0928@gmail.com';
@@ -74,7 +75,7 @@ serve(async (req) => {
     const lastDate    = sortedDates[sortedDates.length - 1];
     const isMulti     = sortedDates.length > 1;
 
-    const summary     = `${statusIcon} ${personName} – ${statusLabel}`;
+    const summary     = `${personName} - ${statusLabel}`;
     const dateDisplay = isMulti
       ? `${formatDateDisplay(firstDate)} – ${formatDateDisplay(lastDate)}`
       : formatDateDisplay(firstDate);
@@ -113,7 +114,7 @@ serve(async (req) => {
           `,
           attachments: [{
             filename: `${personName.replace(/ /g, '-')}-${statusLabel.replace(/ /g, '-')}.ics`,
-            content:  btoa(icsContent),
+            content:  base64Encode(new TextEncoder().encode(icsContent)),
           }],
         }),
       })

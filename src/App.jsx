@@ -2155,7 +2155,7 @@ const handleCelebrate = (person) => {
           onSend={async (extraEmails) => {
             await fetch('https://vzdrpydtxlamoqtukgld.supabase.co/functions/v1/send-leave-invite', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer sb_publishable_o1d0wmxwLrJCuTQ84uY38g__dqoj2dD' },
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 personName:  leaveInvite.person.name,
                 personEmail: leaveInvite.person.email,
