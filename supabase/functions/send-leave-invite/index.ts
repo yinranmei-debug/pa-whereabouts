@@ -56,6 +56,8 @@ serve(async (req) => {
 
     const allTo = [...new Set([...teamEmails, ...extraEmails])].filter(Boolean);
     if (allTo.length === 0) return json({ error: 'No recipients' }, 400);
+    const invalidEmails = allTo.filter(e => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+    if (invalidEmails.length > 0) return json({ error: `Invalid email(s): ${invalidEmails.join(', ')}` }, 400);
 
     const res = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',

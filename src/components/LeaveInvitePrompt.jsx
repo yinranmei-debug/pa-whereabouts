@@ -63,7 +63,8 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
     : `${fmtDate(dates[0])} – ${fmtDate(dates[dates.length - 1])} (${dates.length} days)`;
 
   const toggleMember = email => setSelected(s => { const n = new Set(s); n.has(email) ? n.delete(email) : n.add(email); return n; });
-  const parseBulk    = () => bulkText.split(/[\n,;]+/).map(e => e.trim()).filter(e => e.includes('@'));
+  const validEmail   = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
+  const parseBulk    = () => bulkText.split(/[\n,;]+/).map(e => e.trim()).filter(validEmail);
 
   const handleSend = async () => {
     let teamEmails, extraEmails = [];
@@ -324,6 +325,19 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
                       fontFamily: "'Plus Jakarta Sans', sans-serif", boxSizing: 'border-box', lineHeight: 1.6,
                     }}
                   />
+                  {/* show invalid emails live */}
+                  {bulkText && (() => {
+                    const invalid = bulkText.split(/[\n,;]+/).map(e => e.trim()).filter(e => e.length > 0 && !validEmail(e));
+                    return invalid.length > 0 ? (
+                      <div style={{ fontSize: 10, color: '#ff6b6b', marginTop: 4 }}>
+                        Invalid: {invalid.join(', ')}
+                      </div>
+                    ) : parseBulk().length > 0 ? (
+                      <div style={{ fontSize: 10, color: 'rgba(0,200,120,0.8)', marginTop: 4 }}>
+                        ✓ {parseBulk().length} email{parseBulk().length > 1 ? 's' : ''} ready
+                      </div>
+                    ) : null;
+                  })()}
                 </div>
 
                 {/* remember checkbox */}
