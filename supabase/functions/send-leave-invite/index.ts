@@ -1,7 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!;
-const TEST_RECIPIENT = 'yinran.mei@patternasia.com';
+const TEST_RECIPIENT = 'yinrm0928@gmail.com';
 const FROM_EMAIL     = 'Whereabouts <onboarding@resend.dev>';
 
 function buildICS(opts: {
