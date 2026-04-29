@@ -2,7 +2,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { encode as base64Encode } from 'https://deno.land/std@0.168.0/encoding/base64.ts';
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!;
-const HK_TEAM_EMAIL  = 'pattern.hk@pattern.com';
+const HK_TEAM_EMAIL  = 'testtest@pattern.com';
 const FROM_EMAIL     = 'Whereabouts <onboarding@resend.dev>';
 
 function buildICS(opts: {

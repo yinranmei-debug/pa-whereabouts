@@ -717,12 +717,10 @@ export default function App() {
     return () => document.removeEventListener('mob-party', fn);
   }, []);
 
-  // Show level-up modal once per tier, after welcome/tour sequence, at the entry point
+  // Show level-up modal the first time a new tier is reached (fires on records change)
   useEffect(() => {
     if (showWelcome || showTour) return; // wait until intro sequence is done
-    if (levelUpCheckedRef.current) return; // only check once per session
     if (!account || Object.keys(records).length === 0) return;
-    levelUpCheckedRef.current = true;
     const staffEntry = impersonatedId
       ? RAW_STAFF_LIST.find(s => s.id === impersonatedId)
       : getStaffEntry(account.username.toLowerCase());
