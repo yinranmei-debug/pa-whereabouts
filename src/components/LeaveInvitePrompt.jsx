@@ -2,6 +2,35 @@ import { useState } from 'react';
 
 const storageKey = id => `leave-invite-custom-${id}`;
 
+function CalendarIcon({ size = 22, style = {} }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" style={style}>
+      {/* body */}
+      <rect x="3" y="7" width="30" height="26" rx="5" fill="url(#calGrad)" />
+      {/* header bar */}
+      <rect x="3" y="7" width="30" height="9" rx="5" fill="rgba(255,255,255,0.18)" />
+      <rect x="3" y="12" width="30" height="4" fill="rgba(255,255,255,0.18)" />
+      {/* binding rings */}
+      <rect x="11" y="3" width="4" height="8" rx="2" fill="rgba(255,255,255,0.7)" />
+      <rect x="21" y="3" width="4" height="8" rx="2" fill="rgba(255,255,255,0.7)" />
+      {/* grid dots — 3×3 */}
+      {[0,1,2].map(col => [0,1,2].map(row => (
+        <rect key={`${col}-${row}`}
+          x={9 + col * 7} y={21 + row * 5}
+          width="4" height="3" rx="1"
+          fill={row === 0 ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.5)'}
+        />
+      )))}
+      <defs>
+        <linearGradient id="calGrad" x1="3" y1="7" x2="33" y2="33" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#9060e0" />
+          <stop offset="100%" stopColor="#5b21b6" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
 export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dates, isDayMode, teamMembers = [], onSend, onSkip }) {
   const savedRaw = (() => { try { return JSON.parse(localStorage.getItem(storageKey(person.id)) || 'null'); } catch { return null; } })();
   const savedEmails = savedRaw && savedRaw.length ? savedRaw : null;
@@ -63,10 +92,10 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
 
   const isWide   = mode === 'customize';
   const sendLabel = mode === 'customize'
-    ? `📅 Send to ${selected.size + parseBulk().length}`
+    ? `Send to ${selected.size + parseBulk().length}`
     : mode === 'choose' && chosenOpt === 'saved'
-      ? `📅 Send to my team (${savedEmails?.length})`
-      : `📅 Notify all HK team`;
+      ? `Send to my team (${savedEmails?.length})`
+      : `Notify all HK team`;
 
   return (
     <div style={{
@@ -100,7 +129,7 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
         {/* ── sent state ── */}
         {sent ? (
           <div style={{ textAlign: 'center', padding: '14px 0 6px' }}>
-            <div style={{ fontSize: 34, marginBottom: 10 }}>📅</div>
+            <CalendarIcon size={40} style={{ marginBottom: 10, filter: 'drop-shadow(0 4px 12px rgba(119,11,255,0.4))' }} />
             <div style={{ fontSize: 15, fontWeight: 700, color: nameC, marginBottom: 5 }}>Team notified!</div>
             <div style={{ fontSize: 12, color: subC }}>Calendar invite sent to {sentCount} people.</div>
           </div>
@@ -335,7 +364,12 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
                 opacity: (sending || (mode === 'customize' && selected.size + parseBulk().length === 0)) ? 0.55 : 1,
                 whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
               }}>
-                {sending ? 'Sending…' : sendLabel}
+                {sending ? 'Sending…' : (
+                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                  <CalendarIcon size={15} />
+                  {sendLabel}
+                </span>
+              )}
               </button>
             </div>
           </>
