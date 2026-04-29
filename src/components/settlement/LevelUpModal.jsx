@@ -126,51 +126,58 @@ export default function LevelUpModal({ lvl, nextLevel, streak, onClose, onClaim 
             {/* vibe body */}
             <div style={{
               fontSize: 18, color: bodyColor, lineHeight: 1.7,
-              maxWidth: 520, margin: '0 auto 44px',
+              maxWidth: 520, margin: '0 auto 36px',
               animation: 'lum-fadein 0.5s 0.46s ease both',
             }}>
-              {lvl.vibe}{' '}
-              <span style={{ color: 'rgba(220,210,255,0.95)', fontWeight: 600 }}>
-                {lvl.rule}
-              </span>
+              {lvl.vibe}
             </div>
 
-            {/* next tier nudge */}
-            {nextLevel && (
-              <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                background: `rgba(255,255,255,0.05)`,
-                border: `1px solid ${nextLevel.ringFrom}33`,
-                borderRadius: 100, padding: '8px 20px',
-                marginBottom: 28,
-                animation: 'lum-fadein 0.45s 0.54s ease both',
-              }}>
-                <span style={{ fontSize: 14, color: nextLevel.ringFrom, fontWeight: 700 }}>→</span>
-                <span style={{ fontSize: 13, color: 'rgba(220,215,255,0.6)', fontWeight: 500 }}>
-                  {nextLevel.weeksRequired - streak === 1
-                    ? `1 more qualifying week unlocks ${nextLevel.title}`
-                    : `${nextLevel.weeksRequired - streak} more qualifying weeks to unlock ${nextLevel.title}`}
-                </span>
-              </div>
-            )}
-
-            {/* CTA */}
-            <button className="lum-btn" onClick={handleClaim} style={{
-              padding: '18px 68px', borderRadius: 100, border: 'none', cursor: 'pointer',
-              background: `linear-gradient(135deg, ${lvl.ringFrom} 0%, ${lvl.ringTo} 60%, ${lvl.ringFrom} 100%)`,
-              color: '#0a0612', fontSize: 18, fontWeight: 800, letterSpacing: '0.08em',
-              animation: 'lum-fadein 0.5s 0.6s ease both, lum-btnpulse 2.4s 1.2s ease-in-out infinite',
+            {/* bottom actions — stacked center */}
+            <div style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
+              animation: 'lum-fadein 0.5s 0.54s ease both',
             }}>
-              ✦ Claim Reward
-            </button>
 
-            {/* dismiss link */}
-            <div style={{ marginTop: 18 }}>
+              {/* achievement rule */}
+              <div style={{
+                fontSize: 13, color: 'rgba(220,215,255,0.55)', fontWeight: 500,
+                maxWidth: 380, lineHeight: 1.5,
+              }}>
+                {lvl.rule}
+              </div>
+
+              {/* CTA */}
+              <button className="lum-btn" onClick={handleClaim} style={{
+                padding: '18px 68px', borderRadius: 100, border: 'none', cursor: 'pointer',
+                background: `linear-gradient(135deg, ${lvl.ringFrom} 0%, ${lvl.ringTo} 60%, ${lvl.ringFrom} 100%)`,
+                color: '#0a0612', fontSize: 18, fontWeight: 800, letterSpacing: '0.08em',
+                animation: 'lum-btnpulse 2.4s 1.2s ease-in-out infinite',
+              }}>
+                ✦ Claim Reward
+              </button>
+
+              {/* next tier nudge */}
+              {nextLevel && (
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  background: `rgba(255,255,255,0.04)`,
+                  border: `1px solid ${nextLevel.ringFrom}30`,
+                  borderRadius: 100, padding: '7px 18px',
+                }}>
+                  <span style={{ fontSize: 13, color: nextLevel.ringFrom, fontWeight: 700 }}>→</span>
+                  <span style={{ fontSize: 12, color: 'rgba(220,215,255,0.5)', fontWeight: 500 }}>
+                    {lvl.nudgeTemplate
+                      ? lvl.nudgeTemplate(nextLevel.weeksRequired - streak, nextLevel.title)
+                      : `${nextLevel.weeksRequired - streak} more week${nextLevel.weeksRequired - streak > 1 ? 's' : ''} to unlock ${nextLevel.title}`}
+                  </span>
+                </div>
+              )}
+
+              {/* dismiss link */}
               <button onClick={handleClose} style={{
                 background: 'none', border: 'none', cursor: 'pointer',
-                fontSize: 12, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.05em',
+                fontSize: 12, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.05em',
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
-                animation: 'lum-fadein 0.45s 0.8s ease both',
               }}>
                 maybe later
               </button>

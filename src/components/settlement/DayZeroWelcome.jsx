@@ -131,7 +131,7 @@ export default function DayZeroWelcome({ name, onDone }) {
             }}>
               No roads. No neighbors. Just you and a planet that needs building.{' '}
               <span style={{ color: 'rgba(218,205,255,0.95)', fontWeight: 600 }}>
-                Show up, and watch this place come alive.
+                Update your status on 2 days this week — and watch this place come alive.
               </span>
             </div>
 
@@ -154,7 +154,7 @@ export default function DayZeroWelcome({ name, onDone }) {
               letterSpacing: '0.05em',
               animation: 'dz-fadein 0.45s 0.8s ease both',
             }}>
-              2 days a week · your world takes shape
+              post your status · 2 days a week · watch your world grow
             </div>
           </div>
         </div>

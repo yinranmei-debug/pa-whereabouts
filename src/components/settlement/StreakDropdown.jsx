@@ -197,11 +197,13 @@ export default function StreakDropdown({ staffId, records, onClose, onLogout, on
             <div style={{ fontSize: 12, color: nameC, fontWeight: 600, lineHeight: 1.55 }}>{currentLevel.vibe}</div>
             {levelIdx === 0 ? (
               <div style={{ marginTop: 6, fontSize: 10, color: subC, lineHeight: 1.6 }}>
-                Update your status 2 days this week — a new scene unlocks.
+                Post your status on any 2 days this week to unlock your first scene.
               </div>
             ) : nextLevel && weeksToNext > 0 ? (
               <div style={{ marginTop: 6, fontSize: 10, color: subC }}>
-                {weeksToNext} more week{weeksToNext > 1 ? 's' : ''} to unlock Tier {levelIdx + 1}
+                {nextLevel.nudgeTemplate
+                  ? nextLevel.nudgeTemplate(weeksToNext, nextLevel.title)
+                  : `${weeksToNext} more week${weeksToNext > 1 ? 's' : ''} to unlock ${nextLevel.title}`}
               </div>
             ) : null}
             {canClaim && (
