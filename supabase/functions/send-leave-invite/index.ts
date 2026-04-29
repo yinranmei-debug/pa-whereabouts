@@ -2,7 +2,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { encode as base64Encode } from 'https://deno.land/std@0.168.0/encoding/base64.ts';
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!;
-const TEST_RECIPIENT = 'testtest@pattern.com';
+const HK_TEAM_EMAIL  = 'pattern.hk@pattern.com';
 const FROM_EMAIL     = 'Whereabouts <onboarding@resend.dev>';
 
 function buildICS(opts: {
@@ -83,7 +83,7 @@ serve(async (req) => {
       endDate:   nextDay(lastDate),
     });
 
-    const recipients = [TEST_RECIPIENT, ...extraEmails.filter((e: string) => e !== TEST_RECIPIENT)];
+    const recipients = [HK_TEAM_EMAIL, ...extraEmails.filter((e: string) => e !== HK_TEAM_EMAIL)];
 
     // Send one email per recipient so each gets a proper invite
     const results = await Promise.all(recipients.map((to: string) =>
@@ -99,6 +99,7 @@ serve(async (req) => {
               <h2 style="margin:0 0 8px">${statusIcon} ${personName} – ${statusLabel}</h2>
               <p style="color:#555;margin:0 0 16px">${dateDisplay}</p>
               <p style="color:#333">Open the attached <strong>.ics</strong> file to add this to your calendar.</p>
+              <p style="color:#555;font-size:13px;margin-top:8px">This invite has been sent to your HK team colleagues.</p>
               <p style="color:#888;font-size:12px;margin-top:24px">Sent from Whereabouts</p>
             </div>
           `,

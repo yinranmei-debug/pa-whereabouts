@@ -322,6 +322,7 @@ export default function App() {
   const flightOnLandRef  = useRef(null);
   const touchDragRef     = useRef(null);
   const finishingTourRef = useRef(false);
+  const levelUpCheckedRef = useRef(false);
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 768px)');
@@ -716,9 +717,12 @@ export default function App() {
     return () => document.removeEventListener('mob-party', fn);
   }, []);
 
-  // Auto-trigger level-up modal the first time a new tier is reached
+  // Show level-up modal once per tier, after welcome/tour sequence, at the entry point
   useEffect(() => {
-    if (!account) return;
+    if (showWelcome || showTour) return; // wait until intro sequence is done
+    if (levelUpCheckedRef.current) return; // only check once per session
+    if (!account || Object.keys(records).length === 0) return;
+    levelUpCheckedRef.current = true;
     const staffEntry = impersonatedId
       ? RAW_STAFF_LIST.find(s => s.id === impersonatedId)
       : getStaffEntry(account.username.toLowerCase());
@@ -726,15 +730,15 @@ export default function App() {
     const streak = computeStreak(staffEntry.id, records);
     const levelIdx = streakToLevelIdx(streak);
     if (levelIdx === 0) return;
-    const storageKey = `settlement-level-${staffEntry.id}`;
+    const storageKey = `settlement-levelup-${staffEntry.id}`;
     const prevMax = parseInt(localStorage.getItem(storageKey) || '0', 10);
     if (levelIdx > prevMax) {
       localStorage.setItem(storageKey, String(levelIdx));
       const lvl = LEVELS[levelIdx];
       const nextLvl = levelIdx < 4 ? LEVELS[levelIdx + 1] : null;
-      setLevelUpModal({ lvl, nextLevel: nextLvl, streak });
+      setTimeout(() => setLevelUpModal({ lvl, nextLevel: nextLvl, streak }), 600);
     }
-  }, [records, account, impersonatedId]);
+  }, [records, account, impersonatedId, showWelcome, showTour]);
 
   const navigateTip = (dir) => {
     const nextIdx = dir==='next'
@@ -830,8 +834,10 @@ const me      = impersonatedId
   };
 
   // Collect same-week leave dates already saved + newly set date, then show prompt
+  const LEAVE_INVITE_TYPES = new Set(['AL', 'SL', 'BL', 'ML', 'PL']);
+
   const triggerLeaveInvite = (staffId, newDate, statusId) => {
-    if (statusId === 'none' || !statusId) return;
+    if (!LEAVE_INVITE_TYPES.has(statusId)) return;
     const person = staffList.find(s => s.id === staffId);
     if (!person || person.id !== meStaff?.id) return; // only for own status
     const cfg = STATUS_CONFIG[statusId];
@@ -980,12 +986,12 @@ const me      = impersonatedId
 
   const firePartyLocal=(type,text='',intensity=1)=>{
     const els=type==='weekend'?['🍷','🌟','🎵','🍱']:['🎉',text.split(' ')[0]||'✨','✨'];
-    const count = Math.max(0, Math.round(28 * intensity));
+    const count = Math.max(0, Math.round(21 * intensity));
     if (count === 0) return;
     for (let i=0;i<count;i++) {
       const c=document.body.appendChild(document.createElement('div'));
       c.innerText=els[Math.floor(Math.random()*els.length)];
-      c.style.cssText=`position:fixed;left:${Math.random()*100}vw;top:-30px;font-size:22px;z-index:11000;pointer-events:none;transition:transform ${Math.random()*2+2}s cubic-bezier(0.1,0.5,0.5,1),opacity 2s;`;
+      c.style.cssText=`position:fixed;left:${Math.random()*100}vw;top:-30px;font-size:44px;z-index:11000;pointer-events:none;transition:transform ${Math.random()*2+2}s cubic-bezier(0.1,0.5,0.5,1),opacity 2s;`;
       setTimeout(()=>{c.style.transform=`translateY(105vh) rotate(${Math.random()*900}deg)`;c.style.opacity='0';},20);
       setTimeout(()=>c.remove(),4000);
     }

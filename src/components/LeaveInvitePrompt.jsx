@@ -65,12 +65,15 @@ export default function LeaveInvitePrompt({ person, statusId, statusLabel, statu
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', color: 'rgba(119,11,255,0.7)', textTransform: 'uppercase', marginBottom: 3 }}>
-                  Send calendar invite?
+                  Notify HK team?
                 </div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: nameC }}>
                   {statusIcon} {person.name} – {statusLabel}
                 </div>
                 <div style={{ fontSize: 11, color: subC, marginTop: 2 }}>{dateLabel}</div>
+                <div style={{ fontSize: 10, color: subC, marginTop: 3, opacity: 0.7 }}>
+                  Calendar invite → HK team colleagues
+                </div>
               </div>
               <button onClick={onSkip} style={{ background: 'none', border: 'none', cursor: 'pointer', color: subC, fontSize: 14, padding: '0 0 0 8px', lineHeight: 1 }}>✕</button>
             </div>
