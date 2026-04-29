@@ -18,6 +18,7 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
   const [sending,     setSending]     = useState(false);
   const [sent,        setSent]        = useState(false);
   const [sentCount,   setSentCount]   = useState(0);
+  const [sendError,   setSendError]   = useState(null);
 
   const night   = !isDayMode;
   const bg      = night ? 'rgba(12,8,32,0.98)'          : 'rgba(255,255,255,0.99)';
@@ -48,10 +49,16 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
     }
     setSentCount((teamEmails?.length || 0) + extraEmails.length);
     setSending(true);
-    await onSend(teamEmails, extraEmails);
-    setSending(false);
-    setSent(true);
-    setTimeout(onSkip, 2200);
+    setSendError(null);
+    try {
+      await onSend(teamEmails, extraEmails);
+      setSent(true);
+      setTimeout(onSkip, 2200);
+    } catch (e) {
+      setSendError(e.message || 'Something went wrong. Please try again.');
+    } finally {
+      setSending(false);
+    }
   };
 
   const isWide   = mode === 'customize';
@@ -305,6 +312,13 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
                   </span>
                 </div>
               </>
+            )}
+
+            {/* ── error ── */}
+            {sendError && (
+              <div style={{ fontSize: 11, color: '#ff6b6b', background: 'rgba(255,80,80,0.1)', border: '1px solid rgba(255,80,80,0.25)', borderRadius: 8, padding: '7px 10px', marginBottom: 10, lineHeight: 1.5 }}>
+                ⚠ {sendError}
+              </div>
             )}
 
             {/* ── actions ── */}

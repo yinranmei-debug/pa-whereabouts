@@ -2177,7 +2177,7 @@ const handleCelebrate = (person) => {
           teamMembers={RAW_STAFF_LIST.filter(s => s.region === 'Hong Kong')}
           onSkip={() => setLeaveInvite(null)}
           onSend={async (teamEmails, extraEmails = []) => {
-            await fetch('https://vzdrpydtxlamoqtukgld.supabase.co/functions/v1/send-leave-invite', {
+            const res = await fetch('https://vzdrpydtxlamoqtukgld.supabase.co/functions/v1/send-leave-invite', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -2190,6 +2190,10 @@ const handleCelebrate = (person) => {
                 extraEmails,
               }),
             });
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              throw new Error(err?.detail?.message || err?.error || `HTTP ${res.status}`);
+            }
           }}
         />
       )}
