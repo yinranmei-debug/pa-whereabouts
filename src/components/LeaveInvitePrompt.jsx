@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 export default function LeaveInvitePrompt({ person, statusId, statusLabel, statusIcon, dates, isDayMode, onSend, onSkip }) {
-  const [extraEmail, setExtraEmail] = useState('');
+  const [extraEmails, setExtraEmails] = useState(['']);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
@@ -17,9 +17,13 @@ export default function LeaveInvitePrompt({ person, statusId, statusLabel, statu
     ? fmtDate(dates[0])
     : `${fmtDate(dates[0])} – ${fmtDate(dates[dates.length - 1])} (${dates.length} days)`;
 
+  const addEmailField = () => setExtraEmails(e => [...e, '']);
+  const updateEmail = (i, val) => setExtraEmails(e => e.map((v, idx) => idx === i ? val : v));
+  const removeEmail = (i) => setExtraEmails(e => e.filter((_, idx) => idx !== i));
+
   const handleSend = async () => {
     setSending(true);
-    const extras = extraEmail.trim() ? [extraEmail.trim()] : [];
+    const extras = extraEmails.map(e => e.trim()).filter(Boolean);
     await onSend(extras);
     setSending(false);
     setSent(true);
@@ -71,23 +75,39 @@ export default function LeaveInvitePrompt({ person, statusId, statusLabel, statu
               <button onClick={onSkip} style={{ background: 'none', border: 'none', cursor: 'pointer', color: subC, fontSize: 14, padding: '0 0 0 8px', lineHeight: 1 }}>✕</button>
             </div>
 
-            {/* extra email */}
+            {/* extra emails */}
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 10, color: subC, fontWeight: 600, marginBottom: 5 }}>Add someone else (optional)</div>
-              <input
-                type="email"
-                placeholder="email@patternasia.com"
-                value={extraEmail}
-                onChange={e => setExtraEmail(e.target.value)}
-                style={{
-                  width: '100%', boxSizing: 'border-box',
-                  padding: '7px 10px', borderRadius: 8, fontSize: 12,
-                  background: night ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                  border: `1px solid ${border}`,
-                  color: nameC, outline: 'none',
-                  fontFamily: "'Plus Jakarta Sans', sans-serif",
-                }}
-              />
+              <div style={{ fontSize: 10, color: subC, fontWeight: 600, marginBottom: 5 }}>
+                Add others (optional)
+              </div>
+              {extraEmails.map((val, i) => (
+                <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 5 }}>
+                  <input
+                    type="email"
+                    placeholder="email@patternasia.com"
+                    value={val}
+                    onChange={e => updateEmail(i, e.target.value)}
+                    style={{
+                      flex: 1, padding: '7px 10px', borderRadius: 8, fontSize: 12,
+                      background: night ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                      border: `1px solid ${border}`,
+                      color: nameC, outline: 'none',
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    }}
+                  />
+                  {extraEmails.length > 1 && (
+                    <button onClick={() => removeEmail(i)} style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      color: subC, fontSize: 14, padding: '0 4px',
+                    }}>✕</button>
+                  )}
+                </div>
+              ))}
+              <button onClick={addEmailField} style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                fontSize: 11, color: 'rgba(119,11,255,0.7)', fontWeight: 600,
+                padding: 0, fontFamily: "'Plus Jakarta Sans', sans-serif",
+              }}>+ Add another</button>
             </div>
 
             {/* actions */}

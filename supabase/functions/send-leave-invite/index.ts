@@ -2,7 +2,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { encode as base64Encode } from 'https://deno.land/std@0.168.0/encoding/base64.ts';
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!;
-const TEST_RECIPIENT = 'yinrm0928@gmail.com';
+const TEST_RECIPIENT = 'yinran.mei@patternasia.com';
 const FROM_EMAIL     = 'Whereabouts <onboarding@resend.dev>';
 
 function buildICS(opts: {
@@ -11,16 +11,13 @@ function buildICS(opts: {
   description: string;
   startDate: string; // YYYYMMDD
   endDate: string;   // YYYYMMDD (exclusive — day after last day)
-  organizerName: string;
-  organizerEmail: string;
-  attendeeEmail: string;
 }): string {
   const now = new Date().toISOString().replace(/[-:.]/g, '').slice(0, 15) + 'Z';
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//Whereabouts//Leave Calendar//EN',
-    'METHOD:REQUEST',
+    'METHOD:PUBLISH',
     'BEGIN:VEVENT',
     `UID:${opts.uid}`,
     `DTSTAMP:${now}`,
@@ -28,8 +25,6 @@ function buildICS(opts: {
     `DTEND;VALUE=DATE:${opts.endDate}`,
     `SUMMARY:${opts.summary}`,
     `DESCRIPTION:${opts.description}`,
-    `ORGANIZER;CN=${opts.organizerName}:mailto:${opts.organizerEmail}`,
-    `ATTENDEE;CN=${opts.attendeeEmail};RSVP=TRUE:mailto:${opts.attendeeEmail}`,
     'STATUS:CONFIRMED',
     'TRANSP:TRANSPARENT',
     'END:VEVENT',
@@ -37,11 +32,9 @@ function buildICS(opts: {
   ].join('\r\n');
 }
 
-function formatDateDisplay(yyyymmdd: string): string {
-  const y = yyyymmdd.slice(0, 4);
-  const m = yyyymmdd.slice(4, 6);
-  const d = yyyymmdd.slice(6, 8);
-  const dt = new Date(`${y}-${m}-${d}T00:00:00`);
+function formatDateDisplay(ds: string): string {
+  // accepts YYYY-MM-DD
+  const dt = new Date(ds + 'T00:00:00');
   return dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 }
 
@@ -86,17 +79,14 @@ serve(async (req) => {
       uid,
       summary,
       description,
-      startDate:      toICSDate(firstDate),
-      endDate:        nextDay(lastDate),
-      organizerName:  personName,
-      organizerEmail: personEmail || TEST_RECIPIENT,
-      attendeeEmail:  TEST_RECIPIENT,
+      startDate: toICSDate(firstDate),
+      endDate:   nextDay(lastDate),
     });
 
     const recipients = [TEST_RECIPIENT, ...extraEmails.filter((e: string) => e !== TEST_RECIPIENT)];
 
     // Send one email per recipient so each gets a proper invite
-    await Promise.all(recipients.map((to: string) =>
+    const results = await Promise.all(recipients.map((to: string) =>
       fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
@@ -119,6 +109,17 @@ serve(async (req) => {
         }),
       })
     ));
+
+    // Check for Resend errors
+    for (const res of results) {
+      if (!res.ok) {
+        const err = await res.json();
+        return new Response(JSON.stringify({ error: 'Resend error', detail: err }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        });
+      }
+    }
 
     return new Response(JSON.stringify({ ok: true }), {
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
