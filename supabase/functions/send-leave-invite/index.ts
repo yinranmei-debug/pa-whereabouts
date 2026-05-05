@@ -108,7 +108,7 @@ serve(async (req) => {
           contentBytes: base64Encode(new TextEncoder().encode(icsContent)),
         }],
       },
-      saveToSentItems: true,
+      saveToSentItems: false,
     };
 
     const res = await fetch(
