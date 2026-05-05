@@ -322,7 +322,7 @@ const LoginScreen = ({ onLogin, isInitializing, error }) => {
                 onError={e => { e.currentTarget.style.display = 'none'; }}
               />
               <p style={{
-                fontSize: 11, color: 'rgba(167,139,250,0.3)',
+                fontSize: 11, color: 'rgba(255,255,255,0.55)',
                 margin: 0, lineHeight: 1.6,
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
               }}>
