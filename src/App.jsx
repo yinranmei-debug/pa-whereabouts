@@ -2181,6 +2181,22 @@ const handleCelebrate = (person) => {
           isDayMode={isDayMode}
           teamMembers={RAW_STAFF_LIST.filter(s => s.region === 'Hong Kong')}
           onSkip={() => setLeaveInvite(null)}
+          onSearchDirectory={async (query) => {
+            if (!query || query.trim().length < 2) return [];
+            const scopes = ['User.Read', 'User.ReadBasic.All'];
+            let token;
+            try { const r = await msalInstance.acquireTokenSilent({ scopes, account }); token = r.accessToken; }
+            catch { try { const r = await msalInstance.acquireTokenPopup({ scopes, account }); token = r.accessToken; } catch { return []; } }
+            try {
+              const res = await fetch(
+                `https://graph.microsoft.com/v1.0/users?$search="displayName:${encodeURIComponent(query.trim())}"&$select=displayName,mail&$top=8`,
+                { headers: { Authorization: `Bearer ${token}`, ConsistencyLevel: 'eventual' } }
+              );
+              if (!res.ok) return [];
+              const { value } = await res.json();
+              return value.filter(u => u.mail).map(u => ({ name: u.displayName, email: u.mail }));
+            } catch { return []; }
+          }}
           onSend={async (teamEmails, extraEmails = []) => {
             const res = await fetch('https://vzdrpydtxlamoqtukgld.supabase.co/functions/v1/send-leave-invite', {
               method: 'POST',

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 const storageKey = id => `leave-invite-custom-${id}`;
 
@@ -31,7 +31,7 @@ function CalendarIcon({ size = 22, style = {} }) {
   );
 }
 
-export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dates, isDayMode, teamMembers = [], onSend, onSkip }) {
+export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dates, isDayMode, teamMembers = [], onSend, onSkip, onSearchDirectory }) {
   const savedRaw = (() => { try { return JSON.parse(localStorage.getItem(storageKey(person.id)) || 'null'); } catch { return null; } })();
   const savedEmails = savedRaw && savedRaw.length ? savedRaw : null;
   const savedNames  = savedEmails
@@ -42,7 +42,11 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
   const [chosenOpt,   setChosenOpt]   = useState(savedEmails ? 'saved' : 'hk');
   const [showSavedList, setShowSavedList] = useState(false);
   const [selected,    setSelected]    = useState(() => new Set(savedEmails || teamMembers.map(m => m.email)));
-  const [bulkText,    setBulkText]    = useState('');
+  const [dirQuery,    setDirQuery]    = useState('');
+  const [dirResults,  setDirResults]  = useState([]);
+  const [dirLoading,  setDirLoading]  = useState(false);
+  const [dirAdded,    setDirAdded]    = useState([]);
+  const dirTimer = useRef(null);
   const [rememberMe,  setRememberMe]  = useState(false);
   const [sending,     setSending]     = useState(false);
   const [sent,        setSent]        = useState(false);
@@ -63,14 +67,24 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
     : `${fmtDate(dates[0])} – ${fmtDate(dates[dates.length - 1])} (${dates.length} days)`;
 
   const toggleMember = email => setSelected(s => { const n = new Set(s); n.has(email) ? n.delete(email) : n.add(email); return n; });
-  const validEmail   = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
-  const parseBulk    = () => bulkText.split(/[\n,;]+/).map(e => e.trim()).filter(validEmail);
+
+  useEffect(() => {
+    if (dirTimer.current) clearTimeout(dirTimer.current);
+    if (!dirQuery.trim() || dirQuery.trim().length < 2) { setDirResults([]); setDirLoading(false); return; }
+    setDirLoading(true);
+    dirTimer.current = setTimeout(async () => {
+      const results = await onSearchDirectory(dirQuery.trim());
+      setDirResults(results);
+      setDirLoading(false);
+    }, 300);
+    return () => { if (dirTimer.current) clearTimeout(dirTimer.current); };
+  }, [dirQuery]);
 
   const handleSend = async () => {
     let teamEmails, extraEmails = [];
     if (mode === 'customize') {
       teamEmails = [...selected];
-      extraEmails = parseBulk();
+      extraEmails = dirAdded.map(p => p.email);
       if (rememberMe) localStorage.setItem(storageKey(person.id), JSON.stringify([...teamEmails, ...extraEmails]));
     } else if (mode === 'choose' && chosenOpt === 'saved') {
       teamEmails = savedEmails;
@@ -93,7 +107,7 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
 
   const isWide   = mode === 'customize';
   const sendLabel = mode === 'customize'
-    ? `Send to ${selected.size + parseBulk().length}`
+    ? `Send to ${selected.size + dirAdded.length}`
     : mode === 'choose' && chosenOpt === 'saved'
       ? `Send to my team (${savedEmails?.length})`
       : `Notify all HK team`;
@@ -310,34 +324,71 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
                   ))}
                 </div>
 
-                {/* bulk add */}
+                {/* directory search */}
                 <div style={{ marginBottom: 10 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#fff', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 5 }}>Add more (paste emails)</div>
-                  <textarea
-                    placeholder={'james@company.com\nsara@agency.com'}
-                    value={bulkText}
-                    onChange={e => setBulkText(e.target.value)}
-                    rows={2}
-                    style={{
-                      width: '100%', borderRadius: 9, padding: '7px 10px', fontSize: 11,
-                      background: night ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-                      border: `1px solid ${border}`, color: '#fff', outline: 'none', resize: 'none',
-                      fontFamily: "'Plus Jakarta Sans', sans-serif", boxSizing: 'border-box', lineHeight: 1.6,
-                    }}
-                  />
-                  {/* show invalid emails live */}
-                  {bulkText && (() => {
-                    const invalid = bulkText.split(/[\n,;]+/).map(e => e.trim()).filter(e => e.length > 0 && !validEmail(e));
-                    return invalid.length > 0 ? (
-                      <div style={{ fontSize: 10, color: '#ff6b6b', marginTop: 4 }}>
-                        Invalid: {invalid.join(', ')}
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#fff', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 5 }}>Add from directory</div>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="text"
+                      placeholder="Search by name…"
+                      value={dirQuery}
+                      onChange={e => setDirQuery(e.target.value)}
+                      style={{
+                        width: '100%', borderRadius: 9, padding: '7px 32px 7px 10px', fontSize: 11,
+                        background: night ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                        border: `1px solid ${border}`, color: '#fff', outline: 'none',
+                        fontFamily: "'Plus Jakarta Sans', sans-serif", boxSizing: 'border-box',
+                      }}
+                    />
+                    {dirLoading && (
+                      <div style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: subC }}>⟳</div>
+                    )}
+                    {dirResults.filter(r => !dirAdded.some(a => a.email === r.email)).length > 0 && (
+                      <div style={{
+                        position: 'absolute', top: 'calc(100% + 3px)', left: 0, right: 0, zIndex: 200,
+                        background: night ? 'rgba(18,12,42,0.99)' : 'rgba(255,255,255,0.99)',
+                        border: `1px solid ${border}`, borderRadius: 9,
+                        maxHeight: 160, overflowY: 'auto',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+                        scrollbarWidth: 'thin', scrollbarColor: `${border} transparent`,
+                      }}>
+                        {dirResults
+                          .filter(r => !dirAdded.some(a => a.email === r.email))
+                          .map((r, i, arr) => (
+                            <div key={r.email}
+                              onMouseDown={e => { e.preventDefault(); setDirAdded(a => [...a, r]); setDirQuery(''); setDirResults([]); }}
+                              style={{
+                                padding: '7px 11px', cursor: 'pointer',
+                                borderBottom: i < arr.length - 1 ? `1px solid ${border}` : 'none',
+                              }}
+                              onMouseOver={e => e.currentTarget.style.background = night ? 'rgba(119,11,255,0.14)' : 'rgba(119,11,255,0.07)'}
+                              onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                            >
+                              <div style={{ fontSize: 12, fontWeight: 600, color: nameC }}>{r.name}</div>
+                              <div style={{ fontSize: 10, color: subC }}>{r.email}</div>
+                            </div>
+                          ))}
                       </div>
-                    ) : parseBulk().length > 0 ? (
-                      <div style={{ fontSize: 10, color: 'rgba(0,200,120,0.8)', marginTop: 4 }}>
-                        ✓ {parseBulk().length} email{parseBulk().length > 1 ? 's' : ''} ready
-                      </div>
-                    ) : null;
-                  })()}
+                    )}
+                  </div>
+                  {dirAdded.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 7 }}>
+                      {dirAdded.map(p => (
+                        <div key={p.email} style={{
+                          display: 'flex', alignItems: 'center', gap: 4,
+                          background: 'rgba(119,11,255,0.2)', border: '1px solid rgba(119,11,255,0.4)',
+                          borderRadius: 6, padding: '3px 8px', fontSize: 11, color: '#fff',
+                        }}>
+                          <span>{p.name.split(' ')[0]}</span>
+                          <button onMouseDown={() => setDirAdded(a => a.filter(x => x.email !== p.email))} style={{
+                            background: 'none', border: 'none', cursor: 'pointer',
+                            color: 'rgba(255,255,255,0.55)', padding: '0 0 0 2px', fontSize: 13, lineHeight: 1,
+                            fontFamily: 'inherit',
+                          }}>×</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* remember checkbox */}
@@ -370,12 +421,12 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
                 flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 12, fontWeight: 600,
                 background: 'transparent', border: `1px solid ${border}`, color: subC, cursor: 'pointer',
               }}>Not now</button>
-              <button onClick={handleSend} disabled={sending || (mode === 'customize' && selected.size + parseBulk().length === 0)} style={{
+              <button onClick={handleSend} disabled={sending || (mode === 'customize' && selected.size + dirAdded.length === 0)} style={{
                 flex: 2, padding: '10px 0', borderRadius: 10, fontSize: 12, fontWeight: 700,
                 background: 'linear-gradient(90deg,#770bff,#009bff)',
                 border: 'none', color: '#fff',
-                cursor: (sending || (mode === 'customize' && selected.size + parseBulk().length === 0)) ? 'default' : 'pointer',
-                opacity: (sending || (mode === 'customize' && selected.size + parseBulk().length === 0)) ? 0.55 : 1,
+                cursor: (sending || (mode === 'customize' && selected.size + dirAdded.length === 0)) ? 'default' : 'pointer',
+                opacity: (sending || (mode === 'customize' && selected.size + dirAdded.length === 0)) ? 0.55 : 1,
                 whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
               }}>
                 {sending ? 'Sending…' : (
