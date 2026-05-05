@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
-export default function ApacHolidayPanel({ open, onClose, jpHolidays, krHolidays, cnHolidays = {}, cnTiaoxiu = {}, isDayMode, onDateClick }) {
+export default function ApacHolidayPanel({ open, onClose, jpHolidays, krHolidays, cnHolidays = {}, cnTiaoxiu = {}, ukHolidays = {}, isDayMode, onDateClick }) {
   const ref = useRef();
   useEffect(() => {
     if (!open) return;
@@ -19,6 +19,7 @@ export default function ApacHolidayPanel({ open, onClose, jpHolidays, krHolidays
     ...Object.entries(krHolidays).map(([date, name]) => ({ date, name, country: 'KR' })),
     ...Object.entries(cnHolidays).map(([date, name]) => ({ date, name, country: 'CN' })),
     ...Object.entries(cnTiaoxiu).map(([date, name]) => ({ date, name, country: 'TX' })),
+    ...Object.entries(ukHolidays).map(([date, name]) => ({ date, name, country: 'UK' })),
   ]
     .filter(h => h.date.slice(0, 4) === String(currentYear) || h.date.slice(0, 4) === String(currentYear + 1))
     .sort((a, b) => a.date.localeCompare(b.date));
@@ -69,6 +70,12 @@ export default function ApacHolidayPanel({ open, onClose, jpHolidays, krHolidays
         border: 'rgba(150,150,160,0.25)',
         label:  '🔄 补班',
       },
+      UK: {
+        color:  night ? 'rgba(100,200,120,0.9)' : 'rgba(0,110,50,0.85)',
+        bg:     night ? 'rgba(0,120,50,0.14)'   : 'rgba(0,120,50,0.07)',
+        border: 'rgba(0,140,60,0.35)',
+        label:  '🇬🇧 UK',
+      },
     };
     return styles[country] || styles.JP;
   };
@@ -98,7 +105,7 @@ export default function ApacHolidayPanel({ open, onClose, jpHolidays, krHolidays
             APAC Holidays
           </div>
           <div style={{ fontSize: 10, color: subC, fontWeight: 500, marginTop: 1 }}>
-            🇯🇵 Japan · 🇰🇷 Korea · 🇨🇳 China · {currentYear}
+            🇯🇵 Japan · 🇰🇷 Korea · 🇨🇳 China · 🇬🇧 UK · {currentYear}
           </div>
         </div>
         <div style={{
@@ -167,7 +174,7 @@ export default function ApacHolidayPanel({ open, onClose, jpHolidays, krHolidays
         padding: '7px 13px', borderTop: `1px solid ${divider}`,
         fontSize: 9, color: subC, textAlign: 'center', flexShrink: 0,
       }}>
-        🔄 补班 = makeup workday (调休) · Flags shown in calendar
+        🔄 补班 = makeup workday (调休) · Click to jump to date
       </div>
     </div>
   );

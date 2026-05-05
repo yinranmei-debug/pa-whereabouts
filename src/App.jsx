@@ -210,6 +210,7 @@ export default function App() {
   const [jpHolidays,   setJpHolidays]         = useState({});
   const [krHolidays,   setKrHolidays]         = useState({});
   const [cnHolidays,   setCnHolidays]         = useState({});
+  const [ukHolidays,   setUkHolidays]         = useState({});
   const [cnTiaoxiu,    setCnTiaoxiu]          = useState({});
   const [records,         setRecords]         = useState({});
   const [activeMenu,      setActiveMenu]      = useState(null);
@@ -580,6 +581,7 @@ export default function App() {
     };
     fetchCountry('JP', 'jp-holidays-cache', setJpHolidays);
     fetchCountry('KR', 'kr-holidays-cache', setKrHolidays);
+    fetchCountry('GB', 'uk-holidays-cache', setUkHolidays);
     // CN: use hardcoded 2026 data (Nager.Date doesn't include 调休)
     // Merge with API data for other years
     fetchCountry('CN', 'cn-holidays-cache', (apiData) => {
@@ -1336,6 +1338,7 @@ const handleCelebrate = (person) => {
           krHolidays={krHolidays}
           cnHolidays={cnHolidays}
           cnTiaoxiu={cnTiaoxiu}
+          ukHolidays={ukHolidays}
           isDayMode={isDayMode}
           onDateClick={ds => navigateWeek(0, new Date(ds + 'T00:00:00'))}
         />
