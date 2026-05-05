@@ -375,6 +375,7 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
                               </div>
                               <div>
                                 <div style={{ fontSize: 12, fontWeight: 600, color: nameC }}>{r.name}</div>
+                                {r.jobTitle && <div style={{ fontSize: 10, color: 'rgba(139,92,246,0.85)', fontWeight: 600, marginBottom: 1 }}>{r.jobTitle}</div>}
                                 <div style={{ fontSize: 10, color: subC }}>{r.email}</div>
                               </div>
                             </div>

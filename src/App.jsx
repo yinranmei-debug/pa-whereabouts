@@ -16,6 +16,7 @@ import LoginScreen        from './components/LoginScreen';
 import AccessDeniedScreen from './components/AccessDeniedScreen';
 import EmojiFlyLayer      from './components/EmojiFlyLayer';
 import TourOverlay        from './components/TourOverlay';
+import LeaveInviteTour    from './components/LeaveInviteTour';
 import MobileView         from './components/MobileView';
 import MobileOnboarding   from './components/MobileOnboarding';
 import { useDimensionalBreach }   from './hooks/useDimensionalBreach';
@@ -290,6 +291,7 @@ export default function App() {
   const [showApacPanel,    setShowApacPanel]       = useState(false); // panel: dropdown visible
   const [levelUpModal,     setLevelUpModal]        = useState(null);  // { lvl, nextLevel, streak }
   const [leaveInvite,      setLeaveInvite]         = useState(null);  // { person, statusId, statusLabel, statusIcon, dates }
+  const [showLeaveInviteTour, setShowLeaveInviteTour] = useState(false);
   const [showStreakDropdown, setShowStreakDropdown] = useState(false);
   const [weeklyUpdates,     setWeeklyUpdates]      = useState([]);
  const [weeklyUpdatesCount, setWeeklyUpdatesCount] = useState(0);
@@ -453,6 +455,11 @@ export default function App() {
    if (!isMobile && !localStorage.getItem(tourKey)) {
       setShowTour(true);
       return;
+    }
+
+    // Leave invite tour — show once to anyone who hasn't seen it
+    if (!localStorage.getItem(`leave-invite-tour-done-${account.username}`)) {
+      setShowLeaveInviteTour(true);
     }
 
     // Returning user: Bday handled by BirthdayOverlay (isBusy gate)
@@ -2168,7 +2175,19 @@ const handleCelebrate = (person) => {
             localStorage.setItem(`tour-done-${account.username}`, '1');
             setShowTour(false);
             setShowWelcome(true);
+            if (!localStorage.getItem(`leave-invite-tour-done-${account.username}`)) {
+              setTimeout(() => setShowLeaveInviteTour(true), 1200);
+            }
             finishingTourRef.current = false;
+          }}
+        />
+      )}
+      {showLeaveInviteTour && (
+        <LeaveInviteTour
+          isDayMode={isDayMode}
+          onDone={() => {
+            localStorage.setItem(`leave-invite-tour-done-${account.username}`, '1');
+            setShowLeaveInviteTour(false);
           }}
         />
       )}
@@ -2189,7 +2208,7 @@ const handleCelebrate = (person) => {
             catch { try { const r = await msalInstance.acquireTokenPopup({ scopes, account }); token = r.accessToken; } catch { return []; } }
             try {
               const res = await fetch(
-                `https://graph.microsoft.com/v1.0/users?$search="displayName:${encodeURIComponent(query.trim())}"&$select=displayName,mail,id&$top=8`,
+                `https://graph.microsoft.com/v1.0/users?$search="displayName:${encodeURIComponent(query.trim())}"&$select=displayName,mail,id,jobTitle&$top=8`,
                 { headers: { Authorization: `Bearer ${token}`, ConsistencyLevel: 'eventual' } }
               );
               if (!res.ok) return [];
@@ -2200,10 +2219,10 @@ const handleCelebrate = (person) => {
                   const photoRes = await fetch(`https://graph.microsoft.com/v1.0/users/${u.id}/photo/$value`, { headers: { Authorization: `Bearer ${token}` } });
                   if (photoRes.ok) {
                     const blob = await photoRes.blob();
-                    if (blob.size > 0) return { name: u.displayName, email: u.mail, photoUrl: URL.createObjectURL(blob) };
+                    if (blob.size > 0) return { name: u.displayName, email: u.mail, jobTitle: u.jobTitle || null, photoUrl: URL.createObjectURL(blob) };
                   }
                 } catch {}
-                return { name: u.displayName, email: u.mail, photoUrl: null };
+                return { name: u.displayName, email: u.mail, jobTitle: u.jobTitle || null, photoUrl: null };
               }));
               return withPhotos;
             } catch { return []; }
