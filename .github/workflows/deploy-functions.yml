@@ -16,6 +16,6 @@ jobs:
         with:
           version: latest
       - name: Deploy send-leave-invite
-        run: supabase functions deploy send-leave-invite --project-ref vzdrpydtxlamoqtukgld
+        run: supabase functions deploy send-leave-invite --project-ref vzdrpydtxlamoqtukgld --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
