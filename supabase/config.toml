@@ -1,0 +1,4 @@
+project_id = "vzdrpydtxlamoqtukgld"
+
+[functions.send-leave-invite]
+verify_jwt = false
