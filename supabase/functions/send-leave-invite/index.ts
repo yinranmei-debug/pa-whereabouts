@@ -28,18 +28,37 @@ async function getAccessToken(): Promise<string> {
   return access_token;
 }
 
-function buildICS(opts: { uid: string; summary: string; description: string; startDate: string; endDate: string }): string {
+function isConsecutive(sorted: string[]): boolean {
+  for (let i = 1; i < sorted.length; i++) {
+    const gap = (new Date(sorted[i] + 'T00:00:00').getTime() - new Date(sorted[i-1] + 'T00:00:00').getTime()) / 86400000;
+    if (gap > 1) return false;
+  }
+  return true;
+}
+
+function buildICS(opts: { uid: string; summary: string; description: string; dates: string[] }): string {
   const now = new Date().toISOString().replace(/[-:.]/g, '').slice(0, 15) + 'Z';
-  return [
-    'BEGIN:VCALENDAR', 'VERSION:2.0',
-    'PRODID:-//Whereabouts//Leave Calendar//EN', 'METHOD:PUBLISH',
+  const sorted = [...opts.dates].sort();
+  const header = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Whereabouts//Leave Calendar//EN', 'METHOD:PUBLISH'];
+  const footer = ['END:VCALENDAR'];
+
+  const makeEvent = (uid: string, start: string, end: string) => [
     'BEGIN:VEVENT',
-    `UID:${opts.uid}`, `DTSTAMP:${now}`,
-    `DTSTART;VALUE=DATE:${opts.startDate}`, `DTEND;VALUE=DATE:${opts.endDate}`,
+    `UID:${uid}`, `DTSTAMP:${now}`,
+    `DTSTART;VALUE=DATE:${start}`, `DTEND;VALUE=DATE:${end}`,
     `SUMMARY:${opts.summary}`, `DESCRIPTION:${opts.description}`,
     'STATUS:CONFIRMED', 'TRANSP:TRANSPARENT',
-    'END:VEVENT', 'END:VCALENDAR',
-  ].join('\r\n');
+    'END:VEVENT',
+  ];
+
+  let events: string[];
+  if (sorted.length === 1 || isConsecutive(sorted)) {
+    events = makeEvent(opts.uid, toICSDate(sorted[0]), nextDay(sorted[sorted.length - 1]));
+  } else {
+    events = sorted.flatMap(ds => makeEvent(`${opts.uid}-${ds}`, toICSDate(ds), nextDay(ds)));
+  }
+
+  return [...header, ...events, ...footer].join('\r\n');
 }
 
 function fmtDate(ds: string): string {
@@ -65,17 +84,20 @@ serve(async (req) => {
 
     if (!personName || !dates?.length) return json({ error: 'Missing required fields' }, 400);
 
-    const sorted      = [...dates].sort();
-    const firstDate   = sorted[0];
-    const lastDate    = sorted[sorted.length - 1];
-    const dateDisplay = sorted.length > 1
-      ? `${fmtDate(firstDate)} – ${fmtDate(lastDate)}`
-      : fmtDate(firstDate);
-    const summary     = `${personName} - ${statusLabel}`;
-    const icsContent  = buildICS({
+    const sorted    = [...dates].sort();
+    const firstDate = sorted[0];
+    const lastDate  = sorted[sorted.length - 1];
+    const consecutive = sorted.length === 1 || isConsecutive(sorted);
+    const dateDisplay = sorted.length === 1
+      ? fmtDate(firstDate)
+      : consecutive
+        ? `${fmtDate(firstDate)} – ${fmtDate(lastDate)}`
+        : sorted.map(fmtDate).join(', ');
+    const summary    = `${personName} - ${statusLabel}`;
+    const icsContent = buildICS({
       uid: `leave-${personEmail}-${firstDate}-${lastDate}@whereabouts`,
       summary, description: `${personName} is on ${statusLabel}\\n${dateDisplay}`,
-      startDate: toICSDate(firstDate), endDate: nextDay(lastDate),
+      dates: sorted,
     });
 
     const allTo = [...new Set([...teamEmails, ...extraEmails])].filter(Boolean);

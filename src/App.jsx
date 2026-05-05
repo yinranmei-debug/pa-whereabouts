@@ -907,6 +907,16 @@ const me      = impersonatedId
         return supabase.from('statuses').upsert({id:ck,staff_id:staffId,date,shift,status:statusId});
       }));
       setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
+
+      // Trigger leave invite for own cells
+      if (LEAVE_INVITE_TYPES.has(statusId) && meStaff) {
+        const myKeys = keysToFill.filter(k => k.startsWith(meStaff.id + '-'));
+        if (myKeys.length > 0) {
+          const uniqueDates = [...new Set(myKeys.map(k => k.split('-').slice(1, -1).join('-')))].sort();
+          const cfg = STATUS_CONFIG[statusId];
+          if (cfg) setLeaveInvite({ person: meStaff, statusId, statusLabel: cfg.label, statusIcon: cfg.icon, dates: uniqueDates });
+        }
+      }
     });
   };
 
