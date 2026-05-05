@@ -2189,12 +2189,23 @@ const handleCelebrate = (person) => {
             catch { try { const r = await msalInstance.acquireTokenPopup({ scopes, account }); token = r.accessToken; } catch { return []; } }
             try {
               const res = await fetch(
-                `https://graph.microsoft.com/v1.0/users?$search="displayName:${encodeURIComponent(query.trim())}"&$select=displayName,mail&$top=8`,
+                `https://graph.microsoft.com/v1.0/users?$search="displayName:${encodeURIComponent(query.trim())}"&$select=displayName,mail,id&$top=8`,
                 { headers: { Authorization: `Bearer ${token}`, ConsistencyLevel: 'eventual' } }
               );
               if (!res.ok) return [];
               const { value } = await res.json();
-              return value.filter(u => u.mail).map(u => ({ name: u.displayName, email: u.mail }));
+              const users = value.filter(u => u.mail);
+              const withPhotos = await Promise.all(users.map(async u => {
+                try {
+                  const photoRes = await fetch(`https://graph.microsoft.com/v1.0/users/${u.id}/photo/$value`, { headers: { Authorization: `Bearer ${token}` } });
+                  if (photoRes.ok) {
+                    const blob = await photoRes.blob();
+                    if (blob.size > 0) return { name: u.displayName, email: u.mail, photoUrl: URL.createObjectURL(blob) };
+                  }
+                } catch {}
+                return { name: u.displayName, email: u.mail, photoUrl: null };
+              }));
+              return withPhotos;
             } catch { return []; }
           }}
           onSend={async (teamEmails, extraEmails = []) => {

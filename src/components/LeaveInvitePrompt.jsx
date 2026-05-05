@@ -262,7 +262,7 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
                 </div>
                 <button onClick={() => setMode('customize')} style={{
                   background: 'none', border: 'none', cursor: 'pointer',
-                  fontSize: 11, color: 'rgba(167,139,250,0.45)', fontWeight: 600,
+                  fontSize: 11, color: '#fff', fontWeight: 600,
                   padding: '0 0 13px', display: 'block', letterSpacing: '0.04em',
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
                 }}>
@@ -360,12 +360,23 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
                               style={{
                                 padding: '7px 11px', cursor: 'pointer',
                                 borderBottom: i < arr.length - 1 ? `1px solid ${border}` : 'none',
+                                display: 'flex', alignItems: 'center', gap: 9,
                               }}
                               onMouseOver={e => e.currentTarget.style.background = night ? 'rgba(119,11,255,0.14)' : 'rgba(119,11,255,0.07)'}
                               onMouseOut={e => e.currentTarget.style.background = 'transparent'}
                             >
-                              <div style={{ fontSize: 12, fontWeight: 600, color: nameC }}>{r.name}</div>
-                              <div style={{ fontSize: 10, color: subC }}>{r.email}</div>
+                              <div style={{
+                                width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+                                background: r.photoUrl ? `url(${r.photoUrl}) center/cover` : 'linear-gradient(135deg,#770bff,#009bff)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: 11, fontWeight: 700, color: '#fff',
+                              }}>
+                                {!r.photoUrl && r.name.split(' ').map(w => w[0]).slice(0,2).join('')}
+                              </div>
+                              <div>
+                                <div style={{ fontSize: 12, fontWeight: 600, color: nameC }}>{r.name}</div>
+                                <div style={{ fontSize: 10, color: subC }}>{r.email}</div>
+                              </div>
                             </div>
                           ))}
                       </div>
@@ -375,10 +386,18 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 7 }}>
                       {dirAdded.map(p => (
                         <div key={p.email} style={{
-                          display: 'flex', alignItems: 'center', gap: 4,
+                          display: 'flex', alignItems: 'center', gap: 5,
                           background: 'rgba(119,11,255,0.2)', border: '1px solid rgba(119,11,255,0.4)',
                           borderRadius: 6, padding: '3px 8px', fontSize: 11, color: '#fff',
                         }}>
+                          <div style={{
+                            width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
+                            background: p.photoUrl ? `url(${p.photoUrl}) center/cover` : 'linear-gradient(135deg,#770bff,#009bff)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 8, fontWeight: 700, color: '#fff',
+                          }}>
+                            {!p.photoUrl && p.name[0]}
+                          </div>
                           <span>{p.name.split(' ')[0]}</span>
                           <button onMouseDown={() => setDirAdded(a => a.filter(x => x.email !== p.email))} style={{
                             background: 'none', border: 'none', cursor: 'pointer',
