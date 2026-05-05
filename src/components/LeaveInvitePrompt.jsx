@@ -96,7 +96,7 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
     ? `Send to ${selected.size + parseBulk().length}`
     : mode === 'choose' && chosenOpt === 'saved'
       ? `Send to my team (${savedEmails?.length})`
-      : `Notify all APAC team`;
+      : `Notify all HK team`;
 
   return (
     <div style={{
@@ -207,7 +207,7 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
                     display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#fff',
                   }}>{chosenOpt === 'hk' && '●'}</div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: nameC, marginBottom: 2 }}>👥 Whole APAC team</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: nameC, marginBottom: 2 }}>👥 Whole HK team</div>
                     <div style={{ fontSize: 11, color: subC }}>{teamMembers.length} people</div>
                   </div>
                 </div>
@@ -241,9 +241,9 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
                   borderRadius: 12, padding: '11px 13px', marginBottom: 13,
                   border: `1px solid ${border}`,
                 }}>
-                  <div style={{ fontSize: 13, color: nameC, fontWeight: 600, marginBottom: 4 }}>📣 Notify the whole APAC team</div>
+                  <div style={{ fontSize: 13, color: nameC, fontWeight: 600, marginBottom: 4 }}>📣 Notify the whole HK team</div>
                   <div style={{ fontSize: 12, color: subC, lineHeight: 1.6 }}>
-                    A calendar invite goes to all {teamMembers.length} APAC team members automatically.
+                    A calendar invite goes to all {teamMembers.length} HK team members automatically.
                   </div>
                 </div>
                 <button onClick={() => setMode('customize')} style={{
@@ -277,7 +277,7 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
                       {teamMembers.every(m => selected.has(m.email)) ? '✓' : teamMembers.some(m => selected.has(m.email)) ? '–' : ''}
                     </div>
                     <span style={{ fontSize: 11, fontWeight: 700, color: subC, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                      APAC Team ({selected.size}/{teamMembers.length})
+                      HK Team ({selected.size}/{teamMembers.length})
                     </span>
                   </div>
                   <button onClick={() => setMode(savedEmails ? 'choose' : 'simple')} style={{
