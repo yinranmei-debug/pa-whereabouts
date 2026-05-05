@@ -305,6 +305,7 @@ const GlobalStyles = () => (
     .hol-pip-jp{filter:drop-shadow(0 0 4px rgba(200,40,60,0.65));}
     .hol-pip-kr{filter:drop-shadow(0 0 4px rgba(30,100,220,0.65));}
     .hol-pip-cn{filter:drop-shadow(0 0 4px rgba(222,41,16,0.65));}
+    .hol-pip-tx{filter:drop-shadow(0 0 4px rgba(255,165,0,0.65));}
     .hol-pip-tip{
       position:absolute;top:calc(100% + 6px);left:50%;
       transform:translateX(-50%) translateY(3px);

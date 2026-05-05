@@ -1951,7 +1951,7 @@ const handleCelebrate = (person) => {
                           {d.num}
                         </div>
                       </div>
-                      {showApacHolidays && (jpHolidays[d.ds] || krHolidays[d.ds] || cnHolidays[d.ds]) && (
+                      {showApacHolidays && (jpHolidays[d.ds] || krHolidays[d.ds] || cnHolidays[d.ds] || cnTiaoxiu[d.ds]) && (
                         <div style={{position:'absolute',top:2,right:2,zIndex:20,display:'flex',flexDirection:'column',gap:3}}>
                           {jpHolidays[d.ds] && (
                             <div className="hol-pip hol-pip-jp">
@@ -1966,6 +1966,11 @@ const handleCelebrate = (person) => {
                           {cnHolidays[d.ds] && (
                             <div className="hol-pip hol-pip-cn">
                               🇨🇳<div className="hol-pip-tip">{new Date(d.ds+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})} · {cnHolidays[d.ds]}</div>
+                            </div>
+                          )}
+                          {cnTiaoxiu[d.ds] && (
+                            <div className="hol-pip hol-pip-tx">
+                              🔄<div className="hol-pip-tip">{new Date(d.ds+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})} · {cnTiaoxiu[d.ds]}</div>
                             </div>
                           )}
                         </div>

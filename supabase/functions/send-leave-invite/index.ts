@@ -2,7 +2,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { encode as base64Encode } from 'https://deno.land/std@0.168.0/encoding/base64.ts';
 
 const BREVO_API_KEY = Deno.env.get('BREVO_API_KEY')!;
-const FROM = { name: 'Whereabouts', email: 'a9b598001@smtp-brevo.com' };
+const FROM = { name: 'HR APAC', email: 'hr.apac@pattern.com' };
 
 function buildICS(opts: { uid: string; summary: string; description: string; startDate: string; endDate: string }): string {
   const now = new Date().toISOString().replace(/[-:.]/g, '').slice(0, 15) + 'Z';
@@ -71,7 +71,7 @@ serve(async (req) => {
             <h2 style="margin:0 0 8px">${statusIcon} ${personName} – ${statusLabel}</h2>
             <p style="color:#555;margin:0 0 16px">${dateDisplay}</p>
             <p style="color:#333">Open the attached <strong>.ics</strong> file to add this to your calendar.</p>
-            <p style="color:#555;font-size:13px;margin-top:8px">This invite has been sent to your HK team colleagues.</p>
+            <p style="color:#555;font-size:13px;margin-top:8px">This invite has been sent to your APAC team colleagues.</p>
             <p style="color:#888;font-size:12px;margin-top:24px">Sent from Whereabouts</p>
           </div>
         `,
