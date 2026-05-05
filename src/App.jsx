@@ -1450,7 +1450,7 @@ const handleCelebrate = (person) => {
                     <div style={{fontSize:13,fontWeight:700,color:'#fff',marginBottom:2}}>{u.title}</div>
                     {u.body&&<div style={{fontSize:12,color:'rgba(232,229,255,0.5)'}}>{u.body}</div>}
                   </div>
-                  {u.author_id===meStaff?.id&&(
+                  {(u.author_id===meStaff?.id||isSuperUser(account?.username||''))&&(
                    <button onClick={async()=>{
                       await supabase.from('week_updates').delete().eq('id',u.id);
                       setWeeklyUpdates(prev=>{const n=prev.filter(x=>x.id!==u.id);setWeeklyUpdatesCount(n.length);return n;});
