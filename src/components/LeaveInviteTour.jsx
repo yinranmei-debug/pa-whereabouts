@@ -1,22 +1,63 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+const CARD_W = 320;
+const CARD_H = 280;
+const PAD = 8;
 
 export default function LeaveInviteTour({ isDayMode, onDone }) {
-  const [visible, setVisible] = useState(true);
+  const [visible, setVisible]   = useState(true);
+  const [box,     setBox]       = useState(null);
+  const [cardPos, setCardPos]   = useState(null);
+
   const night  = !isDayMode;
-  const bg     = night ? 'rgba(12,8,32,0.97)'    : 'rgba(255,255,255,0.98)';
   const nameC  = night ? '#fff'                   : '#1A1830';
   const subC   = night ? 'rgba(220,215,255,0.6)'  : 'rgba(26,24,48,0.55)';
   const border = night ? 'rgba(167,139,250,0.25)' : 'rgba(119,11,255,0.15)';
+
+  const measure = () => {
+    const el = document.querySelector('#my-row .sh.mine') || document.querySelector('.sh.mine');
+    if (!el) { setBox(null); setCardPos(null); return; }
+    const r = el.getBoundingClientRect();
+    const b = { top: r.top - PAD, left: r.left - PAD, width: r.width + PAD * 2, height: r.height + PAD * 2 };
+    setBox(b);
+
+    // Position card above the spotlight
+    let top  = r.top - CARD_H - 16;
+    let left = r.left + r.width / 2 - CARD_W / 2;
+    left = Math.max(12, Math.min(left, window.innerWidth  - CARD_W - 12));
+    top  = Math.max(12, Math.min(top,  window.innerHeight - CARD_H - 12));
+    setCardPos({ top, left });
+  };
+
+  useEffect(() => {
+    const t = setTimeout(measure, 120);
+    window.addEventListener('resize', measure);
+    window.addEventListener('scroll', measure, true);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('resize', measure);
+      window.removeEventListener('scroll', measure, true);
+    };
+  }, []);
 
   if (!visible) return null;
 
   const dismiss = () => { setVisible(false); onDone(); };
 
-  return (
+  const overlayStyle = { position: 'fixed', background: 'rgba(4,13,26,0.82)', zIndex: 15400, pointerEvents: 'none' };
+
+  const card = (
     <div style={{
-      position: 'fixed', bottom: 28, right: 28, zIndex: 15500,
-      width: 310, borderRadius: 20,
-      background: bg, border: `1px solid ${border}`,
+      position: 'fixed',
+      top:  cardPos ? cardPos.top  : undefined,
+      left: cardPos ? cardPos.left : undefined,
+      bottom: cardPos ? undefined : 28,
+      right:  cardPos ? undefined : 28,
+      width: CARD_W,
+      zIndex: 15500,
+      borderRadius: 20,
+      background: night ? 'rgba(12,8,32,0.97)' : 'rgba(255,255,255,0.98)',
+      border: `1px solid ${border}`,
       boxShadow: night
         ? '0 24px 64px rgba(0,0,0,0.65), 0 4px 20px rgba(119,11,255,0.25)'
         : '0 16px 48px rgba(119,11,255,0.14), 0 4px 16px rgba(0,0,0,0.08)',
@@ -24,12 +65,6 @@ export default function LeaveInviteTour({ isDayMode, onDone }) {
       animation: 'litIn 0.36s cubic-bezier(0.34,1.56,0.64,1)',
       overflow: 'hidden',
     }}>
-      <style>{`
-        @keyframes litIn { from{opacity:0;transform:translateY(20px) scale(0.94)} to{opacity:1;transform:translateY(0) scale(1)} }
-        @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
-        .lit-finger { animation: bob 1.2s ease-in-out infinite; display:inline-block; }
-      `}</style>
-
       <div style={{ height: 3, background: 'linear-gradient(90deg,#770bff,#009bff)' }} />
 
       <div style={{ padding: '18px 18px 16px' }}>
@@ -82,5 +117,52 @@ export default function LeaveInviteTour({ isDayMode, onDone }) {
         </button>
       </div>
     </div>
+  );
+
+  if (!box) {
+    return (
+      <>
+        <style>{`
+          @keyframes litIn { from{opacity:0;transform:translateY(20px) scale(0.94)} to{opacity:1;transform:translateY(0) scale(1)} }
+          @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+          .lit-finger { animation: bob 1.2s ease-in-out infinite; display:inline-block; }
+        `}</style>
+        {card}
+      </>
+    );
+  }
+
+  const { top: bt, left: bl, width: bw, height: bh } = box;
+  const br = bl + bw;
+  const bb = bt + bh;
+
+  return (
+    <>
+      <style>{`
+        @keyframes litIn { from{opacity:0;transform:translateY(20px) scale(0.94)} to{opacity:1;transform:translateY(0) scale(1)} }
+        @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+        .lit-finger { animation: bob 1.2s ease-in-out infinite; display:inline-block; }
+        @keyframes spotlightPulse {
+          0%,100% { box-shadow: 0 0 0 0 rgba(0,155,255,0.55), 0 0 0 0 rgba(119,11,255,0.25); }
+          50%     { box-shadow: 0 0 0 7px rgba(0,155,255,0.12), 0 0 0 14px rgba(119,11,255,0.06); }
+        }
+        .lit-ring { animation: spotlightPulse 2s ease-in-out infinite; }
+      `}</style>
+
+      {/* Dimming overlay — 4 rects around the spotlight */}
+      <div style={{ ...overlayStyle, top: 0, left: 0, right: 0, height: Math.max(0, bt) }} />
+      <div style={{ ...overlayStyle, top: Math.max(0, bb), left: 0, right: 0, bottom: 0 }} />
+      <div style={{ ...overlayStyle, top: Math.max(0, bt), left: 0, width: Math.max(0, bl), height: Math.max(0, bh) }} />
+      <div style={{ ...overlayStyle, top: Math.max(0, bt), left: Math.max(0, br), right: 0, height: Math.max(0, bh) }} />
+
+      {/* Pulsing ring around the spotlight */}
+      <div className="lit-ring" style={{
+        position: 'fixed', top: bt, left: bl, width: bw, height: bh,
+        border: '2px solid rgba(0,155,255,0.85)', borderRadius: 10,
+        zIndex: 15401, pointerEvents: 'none', boxSizing: 'border-box',
+      }} />
+
+      {card}
+    </>
   );
 }
