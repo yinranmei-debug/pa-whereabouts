@@ -276,7 +276,7 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
                     }}>
                       {teamMembers.every(m => selected.has(m.email)) ? '✓' : teamMembers.some(m => selected.has(m.email)) ? '–' : ''}
                     </div>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: subC, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                       HK Team ({selected.size}/{teamMembers.length})
                     </span>
                   </div>
@@ -305,14 +305,14 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
                         border: selected.has(m.email) ? 'none' : `1.5px solid ${subC}`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#fff',
                       }}>{selected.has(m.email) && '✓'}</div>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: nameC, flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.name}</span>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: '#fff', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.name}</span>
                     </div>
                   ))}
                 </div>
 
                 {/* bulk add */}
                 <div style={{ marginBottom: 10 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: subC, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 5 }}>Add more (paste emails)</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#fff', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 5 }}>Add more (paste emails)</div>
                   <textarea
                     placeholder={'james@company.com\nsara@agency.com'}
                     value={bulkText}
@@ -321,7 +321,7 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
                     style={{
                       width: '100%', borderRadius: 9, padding: '7px 10px', fontSize: 11,
                       background: night ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-                      border: `1px solid ${border}`, color: nameC, outline: 'none', resize: 'none',
+                      border: `1px solid ${border}`, color: '#fff', outline: 'none', resize: 'none',
                       fontFamily: "'Plus Jakarta Sans', sans-serif", boxSizing: 'border-box', lineHeight: 1.6,
                     }}
                   />
@@ -350,7 +350,7 @@ export default function LeaveInvitePrompt({ person, statusLabel, statusIcon, dat
                     display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#fff',
                     transition: 'all 0.15s',
                   }}>{rememberMe && '✓'}</div>
-                  <span style={{ fontSize: 11, color: subC, fontWeight: 500 }}>
+                  <span style={{ fontSize: 11, color: '#fff', fontWeight: 500 }}>
                     Remember this selection for next time
                   </span>
                 </div>

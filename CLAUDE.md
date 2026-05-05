@@ -52,9 +52,39 @@ Azure AD app registration required:
 - IDs live in `src/authConfig.js` — changing them logs everyone out once
 
 ## Email (leave invites)
-- Sender: `hr.apac@pattern.com` (must be a **verified sender** in Brevo dashboard)
-- `BREVO_API_KEY` env var set in Supabase dashboard → Edge Functions → Secrets
-- Deploy the edge function: `supabase functions deploy send-leave-invite`
+
+### How it works end-to-end
+```
+User sets their own status to Annual/Sick/Birthday/Maternity/Personal Leave
+        ↓
+triggerLeaveInvite() fires in App.jsx
+  — only triggers for leave types: AL, SL, BL, ML, PL
+  — only triggers for the logged-in user's own row (not other people's)
+  — collects all days that week already marked the same status
+        ↓
+LeaveInvitePrompt appears (floating card, bottom-right)
+  — shows the dates, lets user pick recipients
+  — "Notify all HK team" = everyone in teamMembers list
+        ↓
+User clicks Send
+        ↓
+App calls Supabase Edge Function (send-leave-invite) directly via fetch
+        ↓
+Edge Function (supabase/functions/send-leave-invite/index.ts):
+  1. Gets access token from Azure using client_credentials flow
+     (TENANT_ID + CLIENT_ID + AZURE_CLIENT_SECRET → access token)
+  2. Builds a .ics calendar file for the leave dates
+  3. Calls Microsoft Graph API POST /users/hr.apac@pattern.com/sendMail
+        ↓
+Recipients receive email with .ics attachment from hr.apac@pattern.com
+```
+
+### Config
+- Sender: `hr.apac@pattern.com` (Azure app needs `Mail.Send` Application permission, admin consented)
+- Azure app: Client ID `944ecd51-db39-4340-89e7-f86a17054de9`, Tenant `5a6c337f-18ca-4028-be6c-d74ec4ce73bf`
+- `AZURE_CLIENT_SECRET` set in Supabase dashboard → Edge Functions → Secrets
+- Function deployed with `--no-verify-jwt` (configured in `supabase/config.toml`)
+- Auto-deploys via GitHub Actions on push to `supabase/functions/**` or `supabase/config.toml`
 
 ## Supabase tables
 - `statuses` — maps `user_id` → current status string
