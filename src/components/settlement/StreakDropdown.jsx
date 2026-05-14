@@ -27,10 +27,9 @@ export function computeStreak(staffId, records) {
   thisMonday.setDate(today.getDate() - daysToMon);
   thisMonday.setHours(0, 0, 0, 0);
 
-  let streak = 0;
-  for (let w = 0; w < 10; w++) {
+  const countWeek = (offsetWeeks) => {
     const weekStart = new Date(thisMonday);
-    weekStart.setDate(thisMonday.getDate() - w * 7);
+    weekStart.setDate(thisMonday.getDate() + offsetWeeks * 7);
     let count = 0;
     for (let d = 0; d < 5; d++) {
       const day = new Date(weekStart);
@@ -38,10 +37,31 @@ export function computeStreak(staffId, records) {
       const ds = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
       if (activeDates.has(ds)) count++;
     }
-    if (count >= 2) streak++;
+    return count;
+  };
+
+  // Count backward (past weeks, including current if qualifying)
+  let backStreak = 0;
+  for (let w = 0; w < 11; w++) {
+    const count = countWeek(-w);
+    if (count >= 2) {
+      backStreak++;
+    } else if (w === 0) {
+      // Current week still in progress — skip it, don't break
+      continue;
+    } else {
+      break;
+    }
+  }
+
+  // Count forward (future weeks already filled in)
+  let fwdStreak = 0;
+  for (let w = 1; w <= 10; w++) {
+    if (countWeek(w) >= 2) fwdStreak++;
     else break;
   }
-  return streak; // 0-10
+
+  return Math.min(backStreak + fwdStreak, 10);
 }
 
 // streak (0-10) → LEVELS index (0-4)

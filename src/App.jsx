@@ -594,7 +594,7 @@ export default function App() {
   useEffect(() => {
     if (!account) return;
     (async () => {
-      const {data:sData} = await supabase.from('statuses').select('*');
+      const {data:sData} = await supabase.from('statuses').select('*').limit(50000);
       if (sData) { const r={}; sData.forEach(row=>{r[row.id]=row.status;}); setRecords(r); }
       const {data:eData} = await supabase.from('emotions').select('*');
       if (eData) { const e={}; eData.forEach(row=>{e[row.staff_id]=row.emoji;}); setEmotions(e); }
