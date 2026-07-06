@@ -20,5 +20,8 @@
   { "id": "yinran",    "name": "Yinran Mei",        "region": "Hong Kong", "email": "yinran.mei@patternasia.com",       "birthday": "04-16" },
   { "id": "robert",    "name": "Robert Wang",       "region": "Hong Kong", "email": "robert.wang@patternasia.com",      "birthday": "02-21" },
   { "id": "desiree",   "name": "Desiree Wong",      "region": "Hong Kong", "email": "desiree@patternasia.com",          "birthday": "02-24" },
-  { "id": "tina",      "name": "Tina Wang",         "region": "Hong Kong", "email": "tina.wang@patternasia.com",        "birthday": "08-11" }
+  { "id": "tina",      "name": "Tina Wang",         "region": "Hong Kong", "email": "tina.wang@patternasia.com",        "birthday": "08-11" },
+  { "id": "william",   "name": "William Wang",      "region": "Hong Kong", "email": "william.wang@patternasia.com",      "birthday": "01-01" },
+  { "id": "kevin",     "name": "Kevin Lyu",         "region": "Hong Kong", "email": "kevin.lyu@patternasia.com",         "birthday": "01-01" },
+  { "id": "zayn",      "name": "Zayn Zhou",         "region": "Hong Kong", "email": "zayn.zhou@patternasia.com",         "birthday": "01-01" }
 ]
