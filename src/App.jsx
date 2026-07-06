@@ -32,6 +32,7 @@ import LevelUpModal from './components/settlement/LevelUpModal';
 import { LEVELS } from './components/settlement/SettlementLevels';
 import AvatarNudge from './components/AvatarNudge';
 import LeaveInvitePrompt from './components/LeaveInvitePrompt';
+import AdminPortal from './components/AdminPortal';
 
 const supabase = createClient(
   'https://vzdrpydtxlamoqtukgld.supabase.co',
@@ -294,6 +295,10 @@ export default function App() {
   const [leaveInvite,      setLeaveInvite]         = useState(null);  // { person, statusId, statusLabel, statusIcon, dates }
   const [showLeaveInviteTour, setShowLeaveInviteTour] = useState(false);
   const [showStreakDropdown, setShowStreakDropdown] = useState(false);
+  const [showAdminPortal,   setShowAdminPortal]   = useState(false);
+  const [staffExtras,       setStaffExtras]       = useState([]);
+  const allStaff = [...RAW_STAFF_LIST, ...staffExtras];
+  const getStaffEntryDynamic = em => allStaff.find(s => s.email.toLowerCase() === em.toLowerCase());
   const [weeklyUpdates,     setWeeklyUpdates]      = useState([]);
  const [weeklyUpdatesCount, setWeeklyUpdatesCount] = useState(0);
   const [weeklyReadCount,    setWeeklyReadCount]    = useState(0);
@@ -399,7 +404,7 @@ export default function App() {
       try {
         await msalInstance.initialize(); setIsInit(true);
         const res = await msalInstance.handleRedirectPromise();
-        const isAllowed = em => isSuperUser(em)||!!getStaffEntry(em);
+        const isAllowed = em => isSuperUser(em)||!!getStaffEntryDynamic(em);
         if (res) {
           const em = res.account.username.toLowerCase();
           if (!isAllowed(em)) { setDenied(true); return; }
@@ -594,6 +599,9 @@ export default function App() {
   useEffect(() => {
     if (!account) return;
     (async () => {
+      const {data:extData} = await supabase.from('staff_extras').select('*').order('created_at');
+      if (extData) setStaffExtras(extData);
+
       const {data:sData} = await supabase.from('statuses').select('*').limit(50000);
       if (sData) { const r={}; sData.forEach(row=>{r[row.id]=row.status;}); setRecords(r); }
       const {data:eData} = await supabase.from('emotions').select('*');
@@ -1711,6 +1719,28 @@ const handleCelebrate = (person) => {
                 <span className="online-live-count" style={{fontSize:11,color:'rgba(255,255,255,0.5)',fontWeight:500}}>{Math.max(onlineUsers.length,1)} online</span>
               </div>
             </div>}
+            {account?.username?.toLowerCase() === 'yinran.mei@patternasia.com' && (
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => { setShowAdminPortal(v => !v); setShowStreakDropdown(false); }}
+                  style={{
+                    background: showAdminPortal ? 'rgba(167,139,250,0.2)' : 'rgba(255,255,255,0.07)',
+                    border: '1px solid rgba(167,139,250,0.25)', borderRadius: 8,
+                    color: 'rgba(167,139,250,0.8)', fontSize: 11, fontWeight: 700,
+                    padding: '5px 10px', cursor: 'pointer', letterSpacing: '0.05em',
+                    transition: 'background 0.15s',
+                  }}
+                  title="Admin: manage staff"
+                >⚙ Staff</button>
+                {showAdminPortal && (
+                  <AdminPortal
+                    supabase={supabase}
+                    onClose={() => setShowAdminPortal(false)}
+                    onStaffChange={setStaffExtras}
+                  />
+                )}
+              </div>
+            )}
             <div style={{ position: 'relative' }}>
               <div className="user-chip" style={{ cursor: 'pointer' }} onClick={() => setShowStreakDropdown(v => !v)}>
                 {!isMobile && <span className="user-name">{account.name}</span>}
@@ -2216,7 +2246,7 @@ const handleCelebrate = (person) => {
           statusIcon={leaveInvite.statusIcon}
           dates={leaveInvite.dates}
           isDayMode={isDayMode}
-          teamMembers={RAW_STAFF_LIST.filter(s => s.region === 'Hong Kong')}
+          teamMembers={allStaff.filter(s => s.region === 'Hong Kong')}
           onSkip={() => setLeaveInvite(null)}
           onSearchDirectory={async (query) => {
             if (!query || query.trim().length < 2) return [];
