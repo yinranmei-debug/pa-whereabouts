@@ -4,7 +4,7 @@ import { LEVELS } from './SettlementLevels';
 
 // ─── streak computation ───────────────────────────────────────────
 // Active day = any AM or PM status set (non-"none") on a weekday.
-// Qualifying week = Mon-Fri with ≥2 active days.
+// Qualifying week = Mon-Fri with ≥1 active day.
 // Streak = consecutive qualifying weeks going back from current week.
 // Tier thresholds (cumulative): T1=1wk, T2=3wks, T3=6wks, T4=10wks
 export function computeStreak(staffId, records) {
@@ -44,7 +44,7 @@ export function computeStreak(staffId, records) {
   let backStreak = 0;
   for (let w = 0; w < 11; w++) {
     const count = countWeek(-w);
-    if (count >= 2) {
+    if (count >= 1) {
       backStreak++;
     } else if (w === 0) {
       // Current week still in progress — skip it, don't break
@@ -217,7 +217,7 @@ export default function StreakDropdown({ staffId, records, onClose, onLogout, on
             <div style={{ fontSize: 12, color: nameC, fontWeight: 600, lineHeight: 1.55 }}>{currentLevel.vibe}</div>
             {levelIdx === 0 ? (
               <div style={{ marginTop: 6, fontSize: 10, color: subC, lineHeight: 1.6 }}>
-                Post your status on any 2 days this week to unlock your first scene.
+                Stay active this week to unlock your first scene.
               </div>
             ) : nextLevel && weeksToNext > 0 ? (
               <div style={{ marginTop: 6, fontSize: 10, color: subC }}>
