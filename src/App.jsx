@@ -87,20 +87,18 @@ const birthdayWindow = (birthday, now = new Date()) => {
   return null;
 };
 
-const getDailyTips = () => {
+const getDailyTips = (extraPool = []) => {
   const today = new Date();
-  // 用今天是今年第几天做 seed，确保每天不同
   const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 86400000);
   const seed = today.getFullYear() * 1000 + dayOfYear;
 
-  // Fisher-Yates shuffle with seeded random
   const seededRand = (s) => {
     let x = Math.sin(s + 1) * 10000;
     return x - Math.floor(x);
   };
 
-  // 打乱所有 tips，然后按 category 去重取前3
-  const shuffled = [...TIPS_DATA]
+  const pool = [...TIPS_DATA, ...extraPool];
+  const shuffled = pool
     .map((tip, i) => ({ tip, sort: seededRand(seed * 97 + i) }))
     .sort((a, b) => a.sort - b.sort)
     .map(x => x.tip);
@@ -115,6 +113,46 @@ const getDailyTips = () => {
     }
   }
   return picked;
+};
+
+const API_TIPS_CACHE_KEY = `tips-api-${new Date().toISOString().slice(0, 10)}`;
+
+async function fetchApiTips() {
+  const cached = localStorage.getItem(API_TIPS_CACHE_KEY);
+  if (cached) { try { return JSON.parse(cached); } catch {} }
+
+  const results = [];
+  const fetches = [
+    // Fun facts
+    ...Array(5).fill(null).map(() =>
+      fetch('https://uselessfacts.jsph.pl/api/v2/facts/random?language=en')
+        .then(r => r.json())
+        .then(d => ({ category: 'Fun Fact', text: d.text?.replace(/<[^>]+>/g, '').trim(), icon: '🐾' }))
+        .catch(() => null)
+    ),
+    // Advice
+    ...Array(5).fill(null).map(() =>
+      fetch('https://api.adviceslip.com/advice')
+        .then(r => r.json())
+        .then(d => ({ category: 'Mind Oasis', text: d.slip?.advice, icon: '💡' }))
+        .catch(() => null)
+    ),
+    // Zen quotes
+    ...Array(4).fill(null).map(() =>
+      fetch('https://zenquotes.io/api/random')
+        .then(r => r.json())
+        .then(d => ({ category: 'Inner Peace', text: `"${d[0]?.q}" — ${d[0]?.a}`, icon: '🌿' }))
+        .catch(() => null)
+    ),
+  ];
+
+  const settled = await Promise.allSettled(fetches);
+  settled.forEach(r => {
+    if (r.status === 'fulfilled' && r.value?.text) results.push(r.value);
+  });
+
+  if (results.length > 0) localStorage.setItem(API_TIPS_CACHE_KEY, JSON.stringify(results));
+  return results;
 };
 
 const CONFETTI_COLORS = [
@@ -303,12 +341,22 @@ export default function App() {
  const [weeklyUpdatesCount, setWeeklyUpdatesCount] = useState(0);
   const [weeklyReadCount,    setWeeklyReadCount]    = useState(0);
   const [newUpdate,         setNewUpdate]          = useState('');
-  const dailyTips = useRef(getDailyTips());
+  const [dailyTips, setDailyTips] = useState(() => {
+    const cached = localStorage.getItem(API_TIPS_CACHE_KEY);
+    const extra = cached ? (() => { try { return JSON.parse(cached); } catch { return []; } })() : [];
+    return getDailyTips(extra);
+  });
 
   const { activeBreach, chargingState, registerClick: registerBreachClick } = useDimensionalBreach();
   const { updateProgress: breachAudioProgress, triggerExplosion: breachAudioExplode, reset: breachAudioReset } = useBreachAudio();
 
   // Feed breach audio — progress swell and explosion trigger
+  useEffect(() => {
+    fetchApiTips().then(extra => {
+      if (extra.length > 0) setDailyTips(getDailyTips(extra));
+    });
+  }, []);
+
   useEffect(() => {
     breachAudioProgress(chargingState?.progress || 0);
   }, [chargingState?.progress]);
@@ -757,8 +805,8 @@ export default function App() {
 
   const navigateTip = (dir) => {
     const nextIdx = dir==='next'
-      ? (tipIdx+1) % dailyTips.current.length
-      : (tipIdx-1+dailyTips.current.length) % dailyTips.current.length;
+      ? (tipIdx+1) % dailyTips.length
+      : (tipIdx-1+dailyTips.length) % dailyTips.length;
     setTipSlideClass(dir==='next'?'tip-slide-in-right':'tip-slide-in-left');
     setTipVisible(false);
     setTimeout(()=>{ setTipIdx(nextIdx); setTipVisible(true); }, 50);
@@ -1179,7 +1227,7 @@ const handleCelebrate = (person) => {
   const VH=window.innerHeight;
   const tdSlideClass=slideDir==='right'?'td-slide-right':slideDir==='left'?'td-slide-left':'';
   const nonEditableCols=week.reduce((acc,d,i)=>{ if (!d.editable) acc.push({...d,colIndex:i}); return acc; },[]);
-  const currentTip = dailyTips.current[tipIdx];
+  const currentTip = dailyTips[tipIdx];
   const todayMMDD = (() => {
     const t = new Date();
     return `${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
@@ -1534,7 +1582,7 @@ const handleCelebrate = (person) => {
                 </div>
                 <div>
                   <div style={{fontSize:18,fontWeight:700,color:'#fff',letterSpacing:'-0.01em'}}>Daily Mind Huddle</div>
-                  <div style={{fontSize:12,fontWeight:500,color:'rgba(232,229,255,0.45)',marginTop:'3px'}}>{tipIdx+1} of {dailyTips.current.length} today</div>
+                  <div style={{fontSize:12,fontWeight:500,color:'rgba(232,229,255,0.45)',marginTop:'3px'}}>{tipIdx+1} of {dailyTips.length} today</div>
                 </div>
               </div>
               <div key={tipIdx} className={tipVisible?tipSlideClass:''} style={{minHeight:120,marginBottom:24}}>
@@ -1547,7 +1595,7 @@ const handleCelebrate = (person) => {
               <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                 <button onClick={()=>navigateTip('prev')} style={{width:36,height:36,borderRadius:10,border:'1.5px solid rgba(167,139,250,0.2)',background:'rgba(255,255,255,0.05)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,color:'rgba(232,229,255,0.5)'}} onMouseOver={e=>{e.currentTarget.style.borderColor='#009bff';e.currentTarget.style.color='#009bff';}} onMouseOut={e=>{e.currentTarget.style.borderColor='rgba(167,139,250,0.2)';e.currentTarget.style.color='rgba(232,229,255,0.5)';}}>‹</button>
                 <div style={{display:'flex',gap:6,alignItems:'center'}}>
-                  {dailyTips.current.map((_,i)=>(
+                  {dailyTips.map((_,i)=>(
                     <div key={i} onClick={()=>{setTipSlideClass(i>tipIdx?'tip-slide-in-right':'tip-slide-in-left');setTipVisible(false);setTimeout(()=>{setTipIdx(i);setTipVisible(true);},50);}}
                       style={{width:i===tipIdx?20:8,height:8,borderRadius:4,cursor:'pointer',transition:'all 0.3s',background:i===tipIdx?'linear-gradient(90deg,#009bff,#770bff)':'rgba(167,139,250,0.2)'}}
                     />
