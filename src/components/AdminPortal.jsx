@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 
-export default function AdminPortal({ supabase, staticStaff, onClose, onStaffChange, onOverridesChange }) {
+export default function AdminPortal({ supabase, staticStaff, onClose, onStaffChange }) {
   const ref = useRef();
   const [tab, setTab] = useState('add');
   const [staffExtras, setStaffExtras] = useState([]);
-  const [overrides, setOverrides] = useState({});
   const [form, setForm] = useState({ name: '', email: '', region: 'Hong Kong', birthday: '' });
   const [editingEmail, setEditingEmail] = useState({});
   const [error, setError] = useState('');
@@ -20,14 +19,6 @@ export default function AdminPortal({ supabase, staticStaff, onClose, onStaffCha
     supabase.from('staff_extras').select('*').order('created_at').then(({ data }) => {
       if (data) setStaffExtras(data);
     });
-    supabase.from('staff_email_overrides').select('*').then(({ data }) => {
-      if (data) {
-        const map = {};
-        data.forEach(r => { map[r.staff_id] = r.email; });
-        setOverrides(map);
-        setEditingEmail(map);
-      }
-    });
   }, []);
 
   const handleAdd = async () => {
@@ -38,7 +29,7 @@ export default function AdminPortal({ supabase, staticStaff, onClose, onStaffCha
     const id = email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '_');
     setSaving(true);
     const { data, error: err } = await supabase.from('staff_extras').insert([{
-      id, name: name.trim(), email: email.trim().toLowerCase(),
+      id, name: name.trim(), email: email.trim(),
       region, birthday: form.birthday || null,
     }]).select().single();
     setSaving(false);
@@ -56,25 +47,46 @@ export default function AdminPortal({ supabase, staticStaff, onClose, onStaffCha
     onStaffChange(updated);
   };
 
-  const handleSaveEmail = async (staffId, isExtra) => {
-    const newEmail = (editingEmail[staffId] || '').trim().toLowerCase();
+  const handleSaveEmail = async (staff, isStaticOverride) => {
+    const newEmail = (editingEmail[staff.id] || '').trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) return;
-    if (isExtra) {
-      await supabase.from('staff_extras').update({ email: newEmail }).eq('id', staffId);
-      const updated = staffExtras.map(s => s.id === staffId ? { ...s, email: newEmail } : s);
+
+    if (isStaticOverride) {
+      // Upsert the full static record into staff_extras with the new email
+      const { data, error: err } = await supabase.from('staff_extras').upsert({
+        id: staff.id,
+        name: staff.name,
+        email: newEmail,
+        region: staff.region,
+        birthday: staff.birthday || null,
+      }).select().single();
+      if (err) return;
+      const existing = staffExtras.find(s => s.id === staff.id);
+      const updated = existing
+        ? staffExtras.map(s => s.id === staff.id ? data : s)
+        : [...staffExtras, data];
       setStaffExtras(updated);
       onStaffChange(updated);
     } else {
-      await supabase.from('staff_email_overrides').upsert({ staff_id: staffId, email: newEmail });
-      const updatedOverrides = { ...overrides, [staffId]: newEmail };
-      setOverrides(updatedOverrides);
-      onOverridesChange(updatedOverrides);
+      // Portal-added staff: update in place
+      await supabase.from('staff_extras').update({ email: newEmail }).eq('id', staff.id);
+      const updated = staffExtras.map(s => s.id === staff.id ? { ...s, email: newEmail } : s);
+      setStaffExtras(updated);
+      onStaffChange(updated);
     }
   };
 
+  // Static staff: show with overridden email if it exists in staffExtras
+  const extraById = Object.fromEntries(staffExtras.map(s => [s.id, s]));
+  const portalOnlyExtras = staffExtras.filter(s => !staticStaff.find(st => st.id === s.id));
+
+  // allForEdit: all static staff + portal-only extras
   const allForEdit = [
-    ...staticStaff.map(s => ({ ...s, isExtra: false })),
-    ...staffExtras.map(s => ({ ...s, isExtra: true })),
+    ...staticStaff.map(s => {
+      const override = extraById[s.id];
+      return { ...s, email: override ? override.email : s.email, isStaticOverride: !!override, isExtra: false };
+    }),
+    ...portalOnlyExtras.map(s => ({ ...s, isStaticOverride: false, isExtra: true })),
   ];
 
   const inputStyle = {
@@ -148,12 +160,12 @@ export default function AdminPortal({ supabase, staticStaff, onClose, onStaffCha
             {saving ? 'Adding…' : '+ Add Member'}
           </button>
 
-          {staffExtras.length > 0 && (
+          {portalOnlyExtras.length > 0 && (
             <div style={{ marginTop: 4, borderTop: '1px solid rgba(167,139,250,0.1)', paddingTop: 10 }}>
               <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', color: 'rgba(167,139,250,0.4)', textTransform: 'uppercase', marginBottom: 6 }}>
-                Added via portal ({staffExtras.length})
+                Added via portal ({portalOnlyExtras.length})
               </div>
-              {staffExtras.map(s => (
+              {portalOnlyExtras.map(s => (
                 <div key={s.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0' }}>
                   <div>
                     <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(232,229,255,0.85)' }}>{s.name}</div>
@@ -180,7 +192,7 @@ export default function AdminPortal({ supabase, staticStaff, onClose, onStaffCha
             Click ✓ to save after editing
           </div>
           {allForEdit.map(s => {
-            const currentEmail = s.isExtra ? s.email : (overrides[s.id] || s.email);
+            const currentEmail = s.email;
             const edited = editingEmail[s.id] ?? currentEmail;
             const changed = edited.trim().toLowerCase() !== currentEmail.toLowerCase();
             const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(edited.trim());
@@ -191,7 +203,8 @@ export default function AdminPortal({ supabase, staticStaff, onClose, onStaffCha
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(232,229,255,0.85)' }}>{s.name}</div>
-                  {s.isExtra && <span style={{ fontSize: 8, color: 'rgba(167,139,250,0.4)', fontWeight: 700 }}>PORTAL</span>}
+                  {s.isStaticOverride && <span style={{ fontSize: 8, color: 'rgba(96,208,255,0.6)', fontWeight: 700 }}>EDITED</span>}
+                  {s.isExtra && !s.isStaticOverride && <span style={{ fontSize: 8, color: 'rgba(167,139,250,0.4)', fontWeight: 700 }}>PORTAL</span>}
                 </div>
                 <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                   <input
@@ -203,7 +216,7 @@ export default function AdminPortal({ supabase, staticStaff, onClose, onStaffCha
                     onChange={e => setEditingEmail(prev => ({ ...prev, [s.id]: e.target.value }))}
                   />
                   {changed && valid && (
-                    <button onClick={() => handleSaveEmail(s.id, s.isExtra)} style={{
+                    <button onClick={() => handleSaveEmail(s, !s.isExtra)} style={{
                       background: 'rgba(167,139,250,0.2)', border: '1px solid rgba(167,139,250,0.4)',
                       borderRadius: 6, color: '#a78bfa', fontSize: 12, cursor: 'pointer',
                       padding: '4px 8px', flexShrink: 0,

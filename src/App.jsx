@@ -335,10 +335,10 @@ export default function App() {
   const [showStreakDropdown, setShowStreakDropdown] = useState(false);
   const [showAdminPortal,   setShowAdminPortal]   = useState(false);
   const [staffExtras,       setStaffExtras]       = useState([]);
-  const [staffOverrides,    setStaffOverrides]    = useState({});
+  const extraIds = new Set(staffExtras.map(s => s.id));
   const allStaff = [
-    ...RAW_STAFF_LIST.map(s => staffOverrides[s.id] ? { ...s, email: staffOverrides[s.id] } : s),
-    ...staffExtras.map(s => staffOverrides[s.id] ? { ...s, email: staffOverrides[s.id] } : s),
+    ...RAW_STAFF_LIST.filter(s => !extraIds.has(s.id)),
+    ...staffExtras,
   ];
   const getStaffEntryDynamic = em => allStaff.find(s => s.email.toLowerCase() === em.toLowerCase());
   const [weeklyUpdates,     setWeeklyUpdates]      = useState([]);
@@ -653,8 +653,6 @@ export default function App() {
     (async () => {
       const {data:extData} = await supabase.from('staff_extras').select('*').order('created_at');
       if (extData) setStaffExtras(extData);
-      const {data:ovData} = await supabase.from('staff_email_overrides').select('*');
-      if (ovData) { const m={}; ovData.forEach(r=>{m[r.staff_id]=r.email;}); setStaffOverrides(m); }
 
       const {data:sData} = await supabase.from('statuses').select('*').limit(50000);
       if (sData) { const r={}; sData.forEach(row=>{r[row.id]=row.status;}); setRecords(r); }
@@ -1792,7 +1790,6 @@ const handleCelebrate = (person) => {
                     staticStaff={RAW_STAFF_LIST}
                     onClose={() => setShowAdminPortal(false)}
                     onStaffChange={setStaffExtras}
-                    onOverridesChange={setStaffOverrides}
                   />
                 )}
               </div>
