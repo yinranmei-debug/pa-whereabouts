@@ -1,5 +1,5 @@
 [
-  { "id": "arthur",    "name": "Arthur Cheung",   "region": "Hong Kong", "email": "arthur.cheung@patternasia.com",    "birthday": "04-16" },
+  { "id": "arthur",    "name": "Arthur Cheung",   "region": "Hong Kong", "email": "arthur@patternasia.com",           "birthday": "04-16" },
   { "id": "anita",     "name": "Anita Fan",        "region": "Hong Kong", "email": "anita.fan@patternasia.com",        "birthday": "09-26" },
   { "id": "bill",      "name": "Bill Xu",           "region": "Hong Kong", "email": "bill.xu@patternasia.com",          "birthday": "02-02" },
   { "id": "brenda",    "name": "Brenda Lee",        "region": "Hong Kong", "email": "brenda.lee@patternasia.com",       "birthday": "10-20" },

@@ -41,7 +41,7 @@ const supabase = createClient(
 
 const msalInstance = new PublicClientApplication(msalConfig);
 const STAFF_LIST = RAW_STAFF_LIST.filter(p => p.id !== 'arthur');
-const SUPER_USERS = ['arthur.cheung@patternasia.com', 'brenda.lee@patternasia.com', 'yinran.mei@patternasia.com'];
+const SUPER_USERS = ['arthur@patternasia.com', 'brenda.lee@patternasia.com', 'yinran.mei@patternasia.com'];
 
 const isSuperUser  = em => SUPER_USERS.includes(em.toLowerCase());
 const getStaffEntry = em => RAW_STAFF_LIST.find(s => s.email.toLowerCase() === em.toLowerCase());
