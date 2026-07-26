@@ -243,7 +243,11 @@ export default function App() {
   const [authError,       setAuthError]       = useState(null);
   const [denied,          setDenied]          = useState(false);
   const [activeTab,       setActiveTab]       = useState('calendar');
-  const [viewDate,        setViewDate]        = useState(new Date());
+  const [viewDate,        setViewDate]        = useState(() => {
+    const saved = localStorage.getItem('whereabouts-viewdate');
+    if (saved) { const d = new Date(saved); if (!isNaN(d)) return d; }
+    return new Date();
+  });
   const [region]                              = useState('Hong Kong');
   const [holidaysData, setHolidaysData]       = useState(HOLIDAYS_FALLBACK);
   const [jpHolidays,   setJpHolidays]         = useState({});
@@ -424,6 +428,7 @@ export default function App() {
       setSlideDir(dir);
       clearTimeout(slideTimerRef.current);
       slideTimerRef.current = setTimeout(() => setSlideDir(null), 320);
+      localStorage.setItem('whereabouts-viewdate', target.toISOString());
       return target;
     });
   };
