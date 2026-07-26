@@ -85,6 +85,26 @@ const upsertStatusRow = (key, statusId) => {
     .single();
 };
 
+/** PostgREST max-rows caps each request (this project: 1000). Paginate until all rows loaded. */
+const fetchAllStatuses = async () => {
+  const pageSize = 1000;
+  const rows = [];
+  let from = 0;
+  while (true) {
+    const { data, error } = await supabase
+      .from('statuses')
+      .select('*')
+      .order('id', { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (error) return { data: null, error };
+    if (!data?.length) break;
+    rows.push(...data);
+    if (data.length < pageSize) break;
+    from += pageSize;
+  }
+  return { data: rows, error: null };
+};
+
 const currentYearRange = (year = new Date().getFullYear()) => {
   const y = year;
   return { start: `${y}-01-01`, end: `${y}-12-31`, year: y };
@@ -678,7 +698,7 @@ export default function App() {
       const {data:extData} = await supabase.from('staff_extras').select('*').order('created_at');
       if (extData) setStaffExtras(extData);
 
-      const { data: sData, error: sErr } = await supabase.from('statuses').select('*').limit(50000);
+      const { data: sData, error: sErr } = await fetchAllStatuses();
       if (sErr) console.error('[statuses load]', sErr);
       if (sData) { const r={}; sData.forEach(row=>{r[row.id]=row.status;}); setRecords(r); }
       const {data:eData} = await supabase.from('emotions').select('*');

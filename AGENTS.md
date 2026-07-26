@@ -30,6 +30,7 @@ Then open `http://localhost:5173/?devbypass=1`. Use a real staff email from `src
 
 ### Supabase data notes
 - Setting a status writes to the `statuses` table (row id format `<staffId>-<YYYY-MM-DD>-<AM|PM>`). Changes propagate to other clients via realtime, so writes hit the **shared production** Supabase project. When testing, use far-future dates and delete the rows afterward (`DELETE /rest/v1/statuses?id=eq.<id>`), and avoid the leave types `AL/SL/BL/ML/PL` for your own row since they trigger the leave-invite emailer flow.
+- **Initial load must paginate `statuses`**: this project's PostgREST `max-rows` is **1000** (~1030+ rows in the table). A single `select('*').limit(50000)` only returns the first 1000 rows (by default order), so recent keys like `yinran-2026-07-31-AM` can exist in the DB but never reach the UI. `fetchAllStatuses()` in `App.jsx` pages with `.range()` until exhausted.
 - On first load per account, several onboarding/gamification modals stack up (tour → Day-Zero welcome → tier level-up → daily tip). Dismiss them to reach the grid; dismissal is persisted in `localStorage` keyed by account username.
 
 ### Edge function
