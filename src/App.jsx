@@ -74,6 +74,17 @@ const parseStatusCellKey = key => {
   return { staffId: m[1], date: m[2], shift: m[3] };
 };
 
+const upsertStatusRow = (key, statusId) => {
+  const parsed = parseStatusCellKey(key);
+  if (!parsed) return Promise.resolve({ data: null, error: { message: `invalid cell key: ${key}` } });
+  const { staffId, date, shift } = parsed;
+  return supabase
+    .from('statuses')
+    .upsert({ id: key, staff_id: staffId, date, shift, status: statusId })
+    .select('id,status')
+    .single();
+};
+
 const currentYearRange = (year = new Date().getFullYear()) => {
   const y = year;
   return { start: `${y}-01-01`, end: `${y}-12-31`, year: y };
@@ -667,7 +678,8 @@ export default function App() {
       const {data:extData} = await supabase.from('staff_extras').select('*').order('created_at');
       if (extData) setStaffExtras(extData);
 
-      const {data:sData} = await supabase.from('statuses').select('*').limit(50000);
+      const { data: sData, error: sErr } = await supabase.from('statuses').select('*').limit(50000);
+      if (sErr) console.error('[statuses load]', sErr);
       if (sData) { const r={}; sData.forEach(row=>{r[row.id]=row.status;}); setRecords(r); }
       const {data:eData} = await supabase.from('emotions').select('*');
       if (eData) { const e={}; eData.forEach(row=>{e[row.staff_id]=row.emoji;}); setEmotions(e); }
@@ -954,6 +966,7 @@ const me      = impersonatedId
     if (!parsed) return;
     const { staffId, date, shift } = parsed;
 
+    const prevStatus = records[key];
     setRecords(r => ({ ...r, [key]: statusId }));
     setActiveMenu(null);
     setSnapCellKey(key);
@@ -962,8 +975,19 @@ const me      = impersonatedId
 
     (async () => {
       setSaveStatus('saving');
-      const { error: saveErr } = await supabase.from('statuses').upsert({ id:key, staff_id:staffId, date, shift, status:statusId });
-      if (saveErr) { setSaveStatus('error:' + saveErr.message); setTimeout(()=>setSaveStatus(''),6000); return; }
+      const { data, error: saveErr } = await upsertStatusRow(key, statusId);
+      if (saveErr || !data) {
+        setRecords(r => {
+          const n = { ...r };
+          if (prevStatus === undefined) delete n[key];
+          else n[key] = prevStatus;
+          return n;
+        });
+        setSaveStatus('error:' + (saveErr?.message || 'save did not persist'));
+        setTimeout(()=>setSaveStatus(''),6000);
+        return;
+      }
+      setRecords(r => ({ ...r, [key]: data.status }));
       setSaveStatus('saved');
       setTimeout(()=>setSaveStatus(''),2000);
       triggerLeaveInvite(staffId, date, statusId);
@@ -984,13 +1008,12 @@ const me      = impersonatedId
 
     (async () => {
       setSaveStatus('saving');
-      const bulkResults = await Promise.all(keysToFill.map(ck => {
-        const p = parseStatusCellKey(ck);
-        if (!p) return { error: { message: `invalid cell key: ${ck}` } };
-        return supabase.from('statuses').upsert({id:ck,staff_id:p.staffId,date:p.date,shift:p.shift,status:statusId});
-      }));
-      const bulkErr = bulkResults.find(r => r.error)?.error;
-      if (bulkErr) { setSaveStatus('error:' + bulkErr.message); setTimeout(()=>setSaveStatus(''),6000); }
+      const bulkResults = await Promise.all(keysToFill.map(ck => upsertStatusRow(ck, statusId)));
+      const bulkErr = bulkResults.find(r => r.error || !r.data);
+      if (bulkErr) {
+        const msg = bulkErr.error?.message || 'save did not persist';
+        setSaveStatus('error:' + msg); setTimeout(()=>setSaveStatus(''),6000);
+      }
       else { setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000); }
 
       if (LEAVE_INVITE_TYPES.has(statusId) && meStaff) {
@@ -2012,20 +2035,40 @@ const handleCelebrate = (person) => {
             onStatusSelect={(key, sId) => {
               const parsed = parseStatusCellKey(key);
               if (!parsed) return;
-              const { staffId, date, shift } = parsed;
+              const prevStatus = records[key];
               setRecords(r=>({...r,[key]:sId}));
               setSaveStatus('saving');
-              supabase.from('statuses').upsert({id:key,staff_id:staffId,date,shift,status:sId})
-                .then(({ error }) => {
-                  if (error) { setSaveStatus('error:' + error.message); setTimeout(()=>setSaveStatus(''),6000); return; }
+              upsertStatusRow(key, sId)
+                .then(({ data, error }) => {
+                  if (error || !data) {
+                    setRecords(r => {
+                      const n = { ...r };
+                      if (prevStatus === undefined) delete n[key];
+                      else n[key] = prevStatus;
+                      return n;
+                    });
+                    setSaveStatus('error:' + (error?.message || 'save did not persist'));
+                    setTimeout(()=>setSaveStatus(''),6000);
+                    return;
+                  }
+                  setRecords(r => ({ ...r, [key]: data.status }));
                   setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
                 });
             }}
             onStatusClear={(key) => {
+              const prevStatus = records[key];
               setRecords(r=>{const n={...r};delete n[key];return n;});
               setSaveStatus('saving');
               supabase.from('statuses').delete().eq('id',key)
-                .then(()=>{ setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000); });
+                .then(({ error }) => {
+                  if (error) {
+                    setRecords(r => ({ ...r, [key]: prevStatus }));
+                    setSaveStatus('error:' + error.message);
+                    setTimeout(()=>setSaveStatus(''),6000);
+                    return;
+                  }
+                  setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
+                });
             }}
             emotions={emotions}
             staffPhotos={staffPhotos}
