@@ -67,6 +67,13 @@ const fmt = date => {
   return `${y}-${m}-${d}`;
 };
 
+const STATUS_CELL_KEY_RE = /^(.+)-(\d{4}-\d{2}-\d{2})-(AM|PM)$/;
+const parseStatusCellKey = key => {
+  const m = key.match(STATUS_CELL_KEY_RE);
+  if (!m) return null;
+  return { staffId: m[1], date: m[2], shift: m[3] };
+};
+
 const currentYearRange = (year = new Date().getFullYear()) => {
   const y = year;
   return { start: `${y}-01-01`, end: `${y}-12-31`, year: y };
@@ -384,6 +391,7 @@ export default function App() {
   const glowRafRef       = useRef(null);
   const myAvatarRef      = useRef(null);
   const flightOnLandRef  = useRef(null);
+  const flightKeyRef     = useRef(0);
   const touchDragRef     = useRef(null);
   const finishingTourRef = useRef(false);
   const levelUpCheckedRef = useRef(false);
@@ -892,11 +900,13 @@ const me      = impersonatedId
     if (!cellEl) return;
     const srcR  = clickedEl.getBoundingClientRect();
     const cellR = cellEl.getBoundingClientRect();
+    flightKeyRef.current += 1;
     flightOnLandRef.current = onLand;
     setFlight({
       icon:  cfg.icon,
       start: { x: srcR.left  + srcR.width/2,  y: srcR.top  + srcR.height/2 },
       end:   { x: cellR.left + cellR.width/2,  y: cellR.top + cellR.height/2 },
+      key:   flightKeyRef.current,
     });
   };
 
@@ -940,58 +950,58 @@ const me      = impersonatedId
 
   const handleStatusSelect = (key, statusId, e) => {
     e.stopPropagation();
-    const parts   = key.split('-');
-    const shift   = parts[parts.length-1];
-    const staffId = parts[0];
-    const date    = parts.slice(1,-1).join('-');
-    triggerStatusFly(statusId, e.currentTarget, key, async () => {
-      setRecords(r => ({ ...r, [key]: statusId }));
-      setActiveMenu(null);
-      setSnapCellKey(key);
-      setTimeout(()=>setSnapCellKey(null), 400);
+    const parsed = parseStatusCellKey(key);
+    if (!parsed) return;
+    const { staffId, date, shift } = parsed;
+
+    setRecords(r => ({ ...r, [key]: statusId }));
+    setActiveMenu(null);
+    setSnapCellKey(key);
+    setTimeout(()=>setSnapCellKey(null), 400);
+    triggerStatusFly(statusId, e.currentTarget, key, () => {});
+
+    (async () => {
       setSaveStatus('saving');
       const { error: saveErr } = await supabase.from('statuses').upsert({ id:key, staff_id:staffId, date, shift, status:statusId });
       if (saveErr) { setSaveStatus('error:' + saveErr.message); setTimeout(()=>setSaveStatus(''),6000); return; }
-      // Verify the row was actually written
-      const { data: verify, error: verifyErr } = await supabase.from('statuses').select('id,status').eq('id', key).single();
-      console.log('[save verify]', { key, statusId, verify, verifyErr });
-      if (!verify) { setSaveStatus('error: wrote OK but row not found – table schema mismatch?'); setTimeout(()=>setSaveStatus(''),8000); }
-      else { setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000); }
+      setSaveStatus('saved');
+      setTimeout(()=>setSaveStatus(''),2000);
       triggerLeaveInvite(staffId, date, statusId);
-    });
+    })();
   };
 
   const handleBulkStatusSelect = (statusId, e) => {
     e.stopPropagation();
     if (bulkSelectCells.length === 0) return;
     const keysToFill = [...bulkSelectCells];
-    triggerStatusFly(statusId, e.currentTarget, keysToFill[0], async () => {
-      const staggerMap = {};
-      keysToFill.forEach((k, i) => { staggerMap[k] = i * 45; });
-      setStaggerCells(staggerMap);
-      setTimeout(() => setStaggerCells({}), keysToFill.length * 45 + 350);
-      setRecords(r => { const upd={...r}; keysToFill.forEach(ck=>{upd[ck]=statusId;}); return upd; });
-      setActiveMenu(null); setBulkSelectCells([]);
+    const staggerMap = {};
+    keysToFill.forEach((k, i) => { staggerMap[k] = i * 45; });
+    setStaggerCells(staggerMap);
+    setTimeout(() => setStaggerCells({}), keysToFill.length * 45 + 350);
+    setRecords(r => { const upd={...r}; keysToFill.forEach(ck=>{upd[ck]=statusId;}); return upd; });
+    setActiveMenu(null); setBulkSelectCells([]);
+    triggerStatusFly(statusId, e.currentTarget, keysToFill[0], () => {});
+
+    (async () => {
       setSaveStatus('saving');
       const bulkResults = await Promise.all(keysToFill.map(ck => {
-        const parts=ck.split('-');
-        const shift=parts[parts.length-1],staffId=parts[0],date=parts.slice(1,-1).join('-');
-        return supabase.from('statuses').upsert({id:ck,staff_id:staffId,date,shift,status:statusId});
+        const p = parseStatusCellKey(ck);
+        if (!p) return { error: { message: `invalid cell key: ${ck}` } };
+        return supabase.from('statuses').upsert({id:ck,staff_id:p.staffId,date:p.date,shift:p.shift,status:statusId});
       }));
       const bulkErr = bulkResults.find(r => r.error)?.error;
       if (bulkErr) { setSaveStatus('error:' + bulkErr.message); setTimeout(()=>setSaveStatus(''),6000); }
       else { setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000); }
 
-      // Trigger leave invite for own cells
       if (LEAVE_INVITE_TYPES.has(statusId) && meStaff) {
         const myKeys = keysToFill.filter(k => k.startsWith(meStaff.id + '-'));
         if (myKeys.length > 0) {
-          const uniqueDates = [...new Set(myKeys.map(k => k.split('-').slice(1, -1).join('-')))].sort();
+          const uniqueDates = [...new Set(myKeys.map(k => parseStatusCellKey(k)?.date).filter(Boolean))].sort();
           const cfg = STATUS_CONFIG[statusId];
           if (cfg) setLeaveInvite({ person: meStaff, statusId, statusLabel: cfg.label, statusIcon: cfg.icon, dates: uniqueDates });
         }
       }
-    });
+    })();
   };
 
   const handleStatusClear = async (key, e) => {
@@ -1420,7 +1430,7 @@ const handleCelebrate = (person) => {
 
         {flight && (
           <EmojiFlyLayer
-            key={`${flight.start.x}-${flight.start.y}-${Date.now()}`}
+            key={flight.key}
             flight={flight}
             onComplete={handleFlightComplete}
           />
@@ -2000,12 +2010,16 @@ const handleCelebrate = (person) => {
               return acc;
             },[])}
             onStatusSelect={(key, sId) => {
-              const parts=key.split('-');
-              const shift=parts[parts.length-1],staffId=parts[0],date=parts.slice(1,-1).join('-');
+              const parsed = parseStatusCellKey(key);
+              if (!parsed) return;
+              const { staffId, date, shift } = parsed;
               setRecords(r=>({...r,[key]:sId}));
               setSaveStatus('saving');
               supabase.from('statuses').upsert({id:key,staff_id:staffId,date,shift,status:sId})
-                .then(()=>{ setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000); });
+                .then(({ error }) => {
+                  if (error) { setSaveStatus('error:' + error.message); setTimeout(()=>setSaveStatus(''),6000); return; }
+                  setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
+                });
             }}
             onStatusClear={(key) => {
               setRecords(r=>{const n={...r};delete n[key];return n;});
@@ -2240,8 +2254,7 @@ const handleCelebrate = (person) => {
                                             if (!isMe) return;
                                             e.stopPropagation();
                                             if (preview.length<=1) {
-                                              if (sid!=='none') handleStatusClear(key,e);
-                                              else setActiveMenu(open?null:key);
+                                              setActiveMenu(open?null:key);
                                             }
                                           }}
                                         >
@@ -2261,6 +2274,12 @@ const handleCelebrate = (person) => {
                                                 <span className="s-opt-label">{sCfg.label}</span>
                                               </div>
                                             ))}
+                                            {sid!=='none' && bulkSelectCells.length===0 && (
+                                              <div className="s-opt" style={{marginTop:4,borderTop:'1px solid rgba(167,139,250,0.12)',paddingTop:6}} onClick={e=>handleStatusClear(key,e)}>
+                                                <span className="s-opt-icon">✕</span>
+                                                <span className="s-opt-label">Clear status</span>
+                                              </div>
+                                            )}
                                           </div>
                                         )}
                                       </div>
