@@ -946,7 +946,11 @@ const me      = impersonatedId
       setTimeout(()=>setSnapCellKey(null), 400);
       setSaveStatus('saving');
       const { error: saveErr } = await supabase.from('statuses').upsert({ id:key, staff_id:staffId, date, shift, status:statusId });
-      if (saveErr) { setSaveStatus('error:' + saveErr.message); setTimeout(()=>setSaveStatus(''),6000); }
+      if (saveErr) { setSaveStatus('error:' + saveErr.message); setTimeout(()=>setSaveStatus(''),6000); return; }
+      // Verify the row was actually written
+      const { data: verify, error: verifyErr } = await supabase.from('statuses').select('id,status').eq('id', key).single();
+      console.log('[save verify]', { key, statusId, verify, verifyErr });
+      if (!verify) { setSaveStatus('error: wrote OK but row not found – table schema mismatch?'); setTimeout(()=>setSaveStatus(''),8000); }
       else { setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000); }
       triggerLeaveInvite(staffId, date, statusId);
     });
