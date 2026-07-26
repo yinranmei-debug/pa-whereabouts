@@ -945,8 +945,9 @@ const me      = impersonatedId
       setSnapCellKey(key);
       setTimeout(()=>setSnapCellKey(null), 400);
       setSaveStatus('saving');
-      await supabase.from('statuses').upsert({ id:key, staff_id:staffId, date, shift, status:statusId });
-      setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
+      const { error: saveErr } = await supabase.from('statuses').upsert({ id:key, staff_id:staffId, date, shift, status:statusId });
+      if (saveErr) { setSaveStatus('error:' + saveErr.message); setTimeout(()=>setSaveStatus(''),6000); }
+      else { setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000); }
       triggerLeaveInvite(staffId, date, statusId);
     });
   };
@@ -963,12 +964,14 @@ const me      = impersonatedId
       setRecords(r => { const upd={...r}; keysToFill.forEach(ck=>{upd[ck]=statusId;}); return upd; });
       setActiveMenu(null); setBulkSelectCells([]);
       setSaveStatus('saving');
-      await Promise.all(keysToFill.map(ck => {
+      const bulkResults = await Promise.all(keysToFill.map(ck => {
         const parts=ck.split('-');
         const shift=parts[parts.length-1],staffId=parts[0],date=parts.slice(1,-1).join('-');
         return supabase.from('statuses').upsert({id:ck,staff_id:staffId,date,shift,status:statusId});
       }));
-      setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
+      const bulkErr = bulkResults.find(r => r.error)?.error;
+      if (bulkErr) { setSaveStatus('error:' + bulkErr.message); setTimeout(()=>setSaveStatus(''),6000); }
+      else { setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000); }
 
       // Trigger leave invite for own cells
       if (LEAVE_INVITE_TYPES.has(statusId) && meStaff) {
@@ -986,8 +989,9 @@ const me      = impersonatedId
     e.stopPropagation();
     setSaveStatus('saving');
     setRecords(r => { const n={...r}; delete n[key]; return n; });
-    await supabase.from('statuses').delete().eq('id',key);
-    setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
+    const { error: delErr } = await supabase.from('statuses').delete().eq('id',key);
+    if (delErr) { setSaveStatus('error:' + delErr.message); setTimeout(()=>setSaveStatus(''),6000); }
+    else { setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000); }
   };
 
   const handleStatusCellMouseDown=(staffId,dateIdx,shift,status,e)=>{
@@ -1026,8 +1030,10 @@ const me      = impersonatedId
         preview.forEach(([staffId,dateIdx,shift])=>{ delete upd[`${staffId}-${week_arr[dateIdx]}-${shift}`]; });
         setRecords(upd); setSaveStatus('saving'); setActiveMenu(null);
         (async()=>{
-          await Promise.all(preview.map(([staffId,dateIdx,shift])=>supabase.from('statuses').delete().eq('id',`${staffId}-${week_arr[dateIdx]}-${shift}`)));
-          setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000);
+          const dragResults = await Promise.all(preview.map(([staffId,dateIdx,shift])=>supabase.from('statuses').delete().eq('id',`${staffId}-${week_arr[dateIdx]}-${shift}`)));
+          const dragErr = dragResults.find(r => r.error)?.error;
+          if (dragErr) { setSaveStatus('error:' + dragErr.message); setTimeout(()=>setSaveStatus(''),6000); }
+          else { setSaveStatus('saved'); setTimeout(()=>setSaveStatus(''),2000); }
         })();
       }
     }
@@ -1652,8 +1658,9 @@ const handleCelebrate = (person) => {
           )}
           <div className="nav-sep"/>
           <div className="nav-right">
-           {saveStatus==='saving'&&<span className="save-txt">↻ Saving</span>}
-            {saveStatus==='saved' &&<span className="save-ok">✓ Saved</span>}
+           {saveStatus==='saving'                    && <span className="save-txt">↻ Saving</span>}
+            {saveStatus==='saved'                     && <span className="save-ok">✓ Saved</span>}
+            {saveStatus.startsWith('error:')          && <span style={{fontSize:10,color:'#ff8080',maxWidth:220,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>✗ {saveStatus.slice(6)}</span>}
             <ThemeToggle isDayMode={isDayMode} onToggle={toggleTheme}/>
            {/* ── Mind Hub 三按钮 ── */}
             <div style={{display:'flex',alignItems:'center',gap:8}}>
