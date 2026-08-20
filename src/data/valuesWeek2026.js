@@ -9,7 +9,7 @@ export const VALUES_WEEK_INTRO = {
 /** Short labels for calendar pills (emoji + uppercase theme). */
 export const VALUES_WEEK_2026 = {
   '2026-09-28': '🎉 GAME CHANGERS',
-  '2026-09-29': '🎉 PARTNER OBSESSED',
+  '2026-09-29': '🎉 PARTNER OBSESSED & DATA FANATICS',
   '2026-09-30': '🎉 TEAM OF DOERS',
 };
 
@@ -40,7 +40,7 @@ export const VALUES_WEEK_DAYS = [
   {
     date: '2026-09-29',
     label: 'Tuesday, 9/29',
-    theme: 'Partner Obsessed + Data Fanatics',
+    theme: 'Partner Obsessed & Data Fanatics',
     sessions: [
       {
         slot: 'Morning',

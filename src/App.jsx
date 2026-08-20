@@ -1492,18 +1492,19 @@ const handleCelebrate = (person) => {
         {nonEditableCols.map(d=>{
           const x = colXMap[d.ds];
           if (!x) return null;
-          const isHol=!!d.hol;
+          const isVw=isValuesWeekDate(d.ds);
+          const isHol=!!d.hol&&!isVw;
           const holName=d.hol?d.hol.replace(/^\S+\s/,''):'';
           const isBouncing=bouncingDs===d.ds;
           return (
             <div key={d.ds} style={{position:'fixed',left:x,top:VH/2,transform:'translate(-50%,-50%)',pointerEvents:'none',zIndex:200}}>
-              <div key={isBouncing?`${d.ds}-b`:d.ds} className={isBouncing?'emoji-label-pop':''} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'8px'}}>
+              <div key={isBouncing?`${d.ds}-b`:d.ds} className={isBouncing?'emoji-label-pop':''} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'8px',maxWidth:88}}>
                 
-               <span className="pill-emoji-vibe" style={{fontSize:'48px',userSelect:'none',display:'inline-block',lineHeight:1,filter:'drop-shadow(0 0 4px rgba(0,155,255,0.8)) drop-shadow(0 0 8px rgba(119,11,255,0.6))'}}>
-  {isHol?d.hol.split(' ')[0]:'🏝️'}
+               <span className="pill-emoji-vibe" style={{fontSize:'48px',userSelect:'none',display:'inline-block',lineHeight:1,filter:isVw?'drop-shadow(0 0 4px rgba(0,155,255,0.9)) drop-shadow(0 0 8px rgba(0,100,255,0.55))':'drop-shadow(0 0 4px rgba(0,155,255,0.8)) drop-shadow(0 0 8px rgba(119,11,255,0.6))'}}>
+  {(isHol||isVw)?d.hol.split(' ')[0]:'🏝️'}
 </span>
-                <span style={{fontSize:'10px',fontWeight:'700',color:isHol?'#be185d':'#1d4ed8',letterSpacing:'0.06em',textAlign:'center',userSelect:'none',fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
-                  {isHol?holName:'WEEKEND'}
+                <span style={{fontSize:'10px',fontWeight:'700',color:isVw?'#1d4ed8':isHol?'#be185d':'#1d4ed8',letterSpacing:'0.06em',textAlign:'center',userSelect:'none',fontFamily:"'Plus Jakarta Sans',sans-serif",lineHeight:1.25}}>
+                  {isHol||isVw?holName:'WEEKEND'}
                 </span>
               </div>
             </div>
@@ -2264,20 +2265,22 @@ const handleCelebrate = (person) => {
                           {week.map((d,weekIdx)=>{
                             if (!d.editable) {
                               if (!isFirst) return null;
-                              const isHol=!!d.hol;
+                              const isVw=isValuesWeekDate(d.ds);
+                              const isHol=!!d.hol&&!isVw;
+                              const pillKind=isVw?'vw':isHol?'hol':'we';
                               return (
                                 <td key={d.ds} className={`ptd ${tdSlideClass}`} rowSpan={staffList.length}>
                                   <div
                                     data-pill-ds={d.ds}
-                                    className={`pill ${isHol?'hol':'we'}`}
+                                    className={`pill ${pillKind}`}
                                     onClick={e => {
                                       const pillEl = e.currentTarget;
                                       pillEl.classList.remove('holi-tap');
                                       void pillEl.offsetWidth;
                                       pillEl.classList.add('holi-tap');
-                                      fireParty(e, isHol?'holiday':'weekend', d.hol||'', d.ds);
+                                      fireParty(e, isHol||isVw?'holiday':'weekend', d.hol||'', d.ds);
                                     }}
-                                    onTouchEnd={e=>{ e.preventDefault(); fireParty({currentTarget:e.currentTarget,stopPropagation:()=>{}},isHol?'holiday':'weekend',d.hol||'',d.ds); }}
+                                    onTouchEnd={e=>{ e.preventDefault(); fireParty({currentTarget:e.currentTarget,stopPropagation:()=>{}},isHol||isVw?'holiday':'weekend',d.hol||'',d.ds); }}
                                     onMouseEnter={e=>{
                                       const rect=e.currentTarget.getBoundingClientRect();
                                       setHoveredPill({ ds: d.ds, x: rect.left+rect.width/2, y: rect.top-14 });
