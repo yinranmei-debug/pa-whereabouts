@@ -5,6 +5,7 @@ import { PublicClientApplication } from "@azure/msal-browser";
 import { msalConfig, loginRequest } from "./authConfig";
 import HOLIDAYS_FALLBACK from './data/holidays.json';
 import { CN_HOLIDAYS_2026, CN_TIAOXIU_2026 } from './data/cnHolidays2026';
+import { VALUES_WEEK_2026 } from './data/valuesWeek2026';
 import RAW_STAFF_LIST from './data/staff.json';
 import STATUS_CONFIG from './data/status.json';
 import TIPS_DATA from './data/tips.json';
@@ -66,6 +67,9 @@ const fmt = date => {
   const d = String(date.getDate()).padStart(2,'0');
   return `${y}-${m}-${d}`;
 };
+
+/** Company events merged on top of Nager.Date HK public holidays (never overwritten by API fetch). */
+const mergeHkHolidays = holidays => ({ ...holidays, ...VALUES_WEEK_2026 });
 
 const STATUS_CELL_KEY_RE = /^(.+)-(\d{4}-\d{2}-\d{2})-(AM|PM)$/;
 const parseStatusCellKey = key => {
@@ -287,7 +291,12 @@ export default function App() {
     return new Date();
   });
   const [region]                              = useState('Hong Kong');
-  const [holidaysData, setHolidaysData]       = useState(HOLIDAYS_FALLBACK);
+  const [holidaysData, setHolidaysData]       = useState(() => ({
+    'Hong Kong': {
+      ...HOLIDAYS_FALLBACK['Hong Kong'],
+      holidays: mergeHkHolidays(HOLIDAYS_FALLBACK['Hong Kong'].holidays),
+    },
+  }));
   const [jpHolidays,   setJpHolidays]         = useState({});
   const [krHolidays,   setKrHolidays]         = useState({});
   const [cnHolidays,   setCnHolidays]         = useState({});
@@ -643,14 +652,14 @@ export default function App() {
       try {
         const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
         if (cached && Date.now() - cached.ts < CACHE_TTL) {
-          setHolidaysData({ 'Hong Kong': { holidays: cached.holidays, adjusted_workdays: [] } });
+          setHolidaysData({ 'Hong Kong': { holidays: mergeHkHolidays(cached.holidays), adjusted_workdays: [] } });
           return;
         }
         const years = [new Date().getFullYear(), new Date().getFullYear() + 1];
         const results = await Promise.all(
           years.map(y => fetch(`https://date.nager.at/api/v3/PublicHolidays/${y}/HK`).then(r => r.ok ? r.json() : []))
         );
-        const holidays = buildHolidays(results.flat());
+        const holidays = mergeHkHolidays(buildHolidays(results.flat()));
         if (Object.keys(holidays).length > 0) {
           localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), holidays }));
           setHolidaysData({ 'Hong Kong': { holidays, adjusted_workdays: [] } });
