@@ -350,9 +350,9 @@ body.day-mode .we .pill-card {
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 2px 16px rgba(0,155,255,0.18) !important;
     }
     body.day-mode .vw .pill-card {
-      background: linear-gradient(160deg, rgba(0,155,255,0.22), rgba(0,100,255,0.18)) !important;
-      border: 2px solid rgba(0,155,255,0.62) !important;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.85), 0 2px 16px rgba(0,155,255,0.28) !important;
+      background: linear-gradient(160deg, rgba(0,155,255,0.16), rgba(0,110,255,0.13)) !important;
+      border: 2px solid rgba(0,155,255,0.55) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 2px 16px rgba(0,155,255,0.18) !important;
     }
     body.day-mode .pill:hover.hol .pill-card {
       box-shadow:
@@ -372,10 +372,10 @@ body.day-mode .we .pill-card {
     }
     body.day-mode .pill:hover.vw .pill-card {
       box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.85),
-        0 0 28px rgba(0,155,255,0.38),
-        0 0 56px rgba(0,140,255,0.22) !important;
-      filter: saturate(1.5) brightness(1.05) !important;
+        inset 0 1px 0 rgba(255,255,255,0.8),
+        0 0 28px rgba(0,155,255,0.28),
+        0 0 56px rgba(0,155,255,0.15) !important;
+      filter: saturate(1.5) brightness(1.04) !important;
       transition: filter 0.15s, box-shadow 0.25s !important;
     }
   /* Click glow — day: gradient frame wrap */

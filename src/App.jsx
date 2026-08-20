@@ -1500,10 +1500,10 @@ const handleCelebrate = (person) => {
             <div key={d.ds} style={{position:'fixed',left:x,top:VH/2,transform:'translate(-50%,-50%)',pointerEvents:'none',zIndex:200}}>
               <div key={isBouncing?`${d.ds}-b`:d.ds} className={isBouncing?'emoji-label-pop':''} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'8px',maxWidth:88}}>
                 
-               <span className="pill-emoji-vibe" style={{fontSize:'48px',userSelect:'none',display:'inline-block',lineHeight:1,filter:isVw?'drop-shadow(0 0 4px rgba(0,155,255,0.9)) drop-shadow(0 0 8px rgba(0,100,255,0.55))':'drop-shadow(0 0 4px rgba(0,155,255,0.8)) drop-shadow(0 0 8px rgba(119,11,255,0.6))'}}>
+               <span className="pill-emoji-vibe" style={{fontSize:'48px',userSelect:'none',display:'inline-block',lineHeight:1,filter:'drop-shadow(0 0 4px rgba(0,155,255,0.8)) drop-shadow(0 0 8px rgba(119,11,255,0.6))'}}>
   {(isHol||isVw)?d.hol.split(' ')[0]:'🏝️'}
 </span>
-                <span style={{fontSize:'10px',fontWeight:'700',color:isVw?'#1d4ed8':isHol?'#be185d':'#1d4ed8',letterSpacing:'0.06em',textAlign:'center',userSelect:'none',fontFamily:"'Plus Jakarta Sans',sans-serif",lineHeight:1.25}}>
+                <span style={{fontSize:'10px',fontWeight:'700',color:isHol?'#be185d':'#1d4ed8',letterSpacing:'0.06em',textAlign:'center',userSelect:'none',fontFamily:"'Plus Jakarta Sans',sans-serif",lineHeight:1.25}}>
                   {isHol||isVw?holName:'WEEKEND'}
                 </span>
               </div>

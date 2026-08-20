@@ -464,13 +464,13 @@ const GlobalStyles = () => (
       box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),0 2px 16px rgba(106,199,255,0.15);
     }
     .vw .pill-card{
-      background:linear-gradient(160deg,rgba(0,40,100,0.75) 0%,rgba(0,85,170,0.7) 45%,rgba(0,155,255,0.55) 100%);
-      border:1.5px solid rgba(0,155,255,0.45);
-      box-shadow:inset 0 1px 0 rgba(255,255,255,0.1),0 2px 16px rgba(0,155,255,0.28);
+      background:linear-gradient(160deg,rgba(10,34,84,0.7) 0%,rgba(14,44,96,0.65) 50%,rgba(18,54,112,0.6) 100%);
+      border:1.5px solid rgba(106,199,255,0.34);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),0 2px 16px rgba(0,155,255,0.16);
     }
     .pill:hover.hol .pill-card{box-shadow:inset 0 1px 0 rgba(255,255,255,0.12),0 0 28px rgba(217,70,239,0.45),0 0 56px rgba(168,85,247,0.25);filter:saturate(1.6) brightness(1.15);transition:filter 0.15s,box-shadow 0.25s;}
     .pill:hover.we  .pill-card{box-shadow:inset 0 1px 0 rgba(255,255,255,0.1),0 0 28px rgba(99,102,241,0.45),0 0 56px rgba(0,155,255,0.28);filter:saturate(1.6) brightness(1.15);transition:filter 0.15s,box-shadow 0.25s;}
-    .pill:hover.vw  .pill-card{box-shadow:inset 0 1px 0 rgba(255,255,255,0.12),0 0 28px rgba(0,155,255,0.5),0 0 56px rgba(0,120,255,0.32);filter:saturate(1.6) brightness(1.15);transition:filter 0.15s,box-shadow 0.25s;}
+    .pill:hover.vw  .pill-card{box-shadow:inset 0 1px 0 rgba(255,255,255,0.1),0 0 28px rgba(0,155,255,0.45),0 0 56px rgba(0,130,255,0.28);filter:saturate(1.6) brightness(1.15);transition:filter 0.15s,box-shadow 0.25s;}
 
   @keyframes pillHoverBounce{
       0%  {transform:translateY(0);}
