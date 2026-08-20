@@ -5,7 +5,8 @@ import { PublicClientApplication } from "@azure/msal-browser";
 import { msalConfig, loginRequest } from "./authConfig";
 import HOLIDAYS_FALLBACK from './data/holidays.json';
 import { CN_HOLIDAYS_2026, CN_TIAOXIU_2026 } from './data/cnHolidays2026';
-import { VALUES_WEEK_2026 } from './data/valuesWeek2026';
+import { VALUES_WEEK_2026, isValuesWeekDate } from './data/valuesWeek2026';
+import ValuesWeekSchedule from './components/ValuesWeekSchedule';
 import RAW_STAFF_LIST from './data/staff.json';
 import STATUS_CONFIG from './data/status.json';
 import TIPS_DATA from './data/tips.json';
@@ -1545,7 +1546,15 @@ const handleCelebrate = (person) => {
               >ADD</button>
             </div>
             {/* Auto entries: birthdays + holidays this week */}
-            <div style={{maxHeight:320,overflowY:'auto',padding:'8px 12px 12px'}}>
+            <div style={{maxHeight:week.some(d=>isValuesWeekDate(d.ds))?520:320,overflowY:'auto',padding:'8px 12px 12px'}}>
+              {week.some(d => isValuesWeekDate(d.ds)) && (
+                <div style={{marginBottom:12,padding:'4px 2px 2px'}}>
+                  <ValuesWeekSchedule compact />
+                  <div style={{fontSize:11,color:'rgba(232,229,255,0.4)',marginTop:8,lineHeight:1.45}}>
+                    No whereabouts status needed — enjoy Values Week!
+                  </div>
+                </div>
+              )}
               {/* Birthdays this week */}
               {week.map(d => {
                 const bday = RAW_STAFF_LIST.find(s => {
@@ -1572,8 +1581,8 @@ const handleCelebrate = (person) => {
                   </div>
                 );
               })}
-              {/* Holidays this week */}
-              {week.filter(d=>d.hol).map(d=>(
+              {/* Holidays this week (excludes Values Week — shown above) */}
+              {week.filter(d=>d.hol&&!isValuesWeekDate(d.ds)).map(d=>(
                 <div key={`hol-${d.ds}`} style={{display:'flex',alignItems:'flex-start',gap:12,padding:'10px 8px',borderRadius:12,background:'rgba(167,139,250,0.08)',border:'1px solid rgba(167,139,250,0.15)',marginBottom:8}}>
                   <div style={{width:36,height:36,borderRadius:10,background:'linear-gradient(135deg,rgba(167,139,250,0.3),rgba(106,199,255,0.3))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{d.hol.split(' ')[0]}</div>
                   <div>

@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Avatar from './Avatar';
+import ValuesWeekSchedule from './ValuesWeekSchedule';
+import { isValuesWeekDate } from '../data/valuesWeek2026';
 
 /**
  * MobileView — refined.
@@ -386,6 +388,22 @@ const MobileView = ({
 
       {selectedDay && myId && !selectedDay.editable && (
         <div style={{padding:'0 14px'}}>
+          {isValuesWeekDate(selectedDay.ds) ? (
+            <div style={{
+              background:'linear-gradient(135deg,rgba(255,0,120,0.1),rgba(255,183,0,0.08))',
+              border:'1px solid rgba(255,183,0,0.32)',
+              borderRadius:22,padding:16,
+              backdropFilter:'blur(14px)',
+            }}>
+              <div style={{fontSize:10,fontWeight:800,letterSpacing:'0.14em',color:'rgba(255,225,74,0.74)',marginBottom:8}}>
+                VALUES WEEK
+              </div>
+              <ValuesWeekSchedule date={selectedDay.ds} />
+              <div style={{fontSize:12,color:'rgba(232,229,255,0.45)',marginTop:10,lineHeight:1.45}}>
+                No whereabouts status needed for this day.
+              </div>
+            </div>
+          ) : (
           <div style={{
             background:selectedHolidayName
               ? 'linear-gradient(135deg,rgba(255,0,120,0.13),rgba(255,183,0,0.08))'
@@ -413,6 +431,7 @@ const MobileView = ({
               <div style={{fontSize:13,lineHeight:1.45}}>No work status is needed for this day.</div>
             </div>
           </div>
+          )}
         </div>
       )}
 
