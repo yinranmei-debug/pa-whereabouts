@@ -1,6 +1,6 @@
 import DayThemeStyles from './components/DayThemeStyles';
 import ThemeToggle from './components/ThemeToggle';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { PublicClientApplication } from "@azure/msal-browser";
 import { msalConfig, loginRequest } from "./authConfig";
 import HOLIDAYS_FALLBACK from './data/holidays.json';
@@ -42,11 +42,31 @@ const supabase = createClient(
 );
 
 const msalInstance = new PublicClientApplication(msalConfig);
-const STAFF_LIST = RAW_STAFF_LIST.filter(p => p.id !== 'arthur');
+const HIDDEN_STAFF_IDS = new Set(['arthur']);
 const SUPER_USERS = ['arthur@patternasia.com', 'brenda.lee@patternasia.com', 'yinran.mei@patternasia.com'];
 
 const isSuperUser  = em => SUPER_USERS.includes(em.toLowerCase());
-const getStaffEntry = em => RAW_STAFF_LIST.find(s => s.email.toLowerCase() === em.toLowerCase());
+
+/**
+ * The roster is staff.json plus the `staff_extras` table (the Admin Portal writes there).
+ * Rows that share an id with staff.json patch that entry in place so edits keep roster
+ * order; anyone new is appended. Every list the board renders must come from here,
+ * otherwise portal-added people are saved but never shown.
+ */
+const buildStaffList = extras => {
+  const rows = extras || [];
+  const byId = new Map(rows.map(s => [s.id, s]));
+  const patched = RAW_STAFF_LIST.map(s => {
+    const override = byId.get(s.id);
+    if (!override) return s;
+    const set = Object.fromEntries(
+      Object.entries(override).filter(([, v]) => v !== null && v !== undefined && v !== '')
+    );
+    return { ...s, ...set };
+  });
+  const staticIds = new Set(RAW_STAFF_LIST.map(s => s.id));
+  return [...patched, ...rows.filter(s => !staticIds.has(s.id))];
+};
 const AUTH_SESSION_MS = 14 * 24 * 60 * 60 * 1000;
 const authSessionKey = email => `whereabouts-auth-session-${email.toLowerCase()}`;
 const rememberAuthSession = email => localStorage.setItem(authSessionKey(email), String(Date.now()));
@@ -387,12 +407,10 @@ export default function App() {
   const [showStreakDropdown, setShowStreakDropdown] = useState(false);
   const [showAdminPortal,   setShowAdminPortal]   = useState(false);
   const [staffExtras,       setStaffExtras]       = useState([]);
-  const extraIds = new Set(staffExtras.map(s => s.id));
-  const allStaff = [
-    ...RAW_STAFF_LIST.filter(s => !extraIds.has(s.id)),
-    ...staffExtras,
-  ];
+  const allStaff = useMemo(() => buildStaffList(staffExtras), [staffExtras]);
+  const rosterStaff = useMemo(() => allStaff.filter(s => !HIDDEN_STAFF_IDS.has(s.id)), [allStaff]);
   const getStaffEntryDynamic = em => allStaff.find(s => s.email.toLowerCase() === em.toLowerCase());
+  const getStaffByIdDynamic = id => allStaff.find(s => s.id === id);
   const [weeklyUpdates,     setWeeklyUpdates]      = useState([]);
  const [weeklyUpdatesCount, setWeeklyUpdatesCount] = useState(0);
   const [weeklyReadCount,    setWeeklyReadCount]    = useState(0);
@@ -530,7 +548,7 @@ export default function App() {
  // ── Cake throw history — load for birthday person ──────
   useEffect(() => {
     if (!account) return;
-    const realMe = getStaffEntry(account.username.toLowerCase());
+    const realMe = getStaffEntryDynamic(account.username.toLowerCase());
     if (!realMe) return;
     const activeBirthdayWindow = birthdayWindow(realMe.birthday);
     if (!activeBirthdayWindow) return;
@@ -599,7 +617,7 @@ export default function App() {
       catch { try { const r = await msalInstance.acquireTokenPopup({scopes, account}); token=r.accessToken; } catch(e){return;} }
       const headers = {Authorization:`Bearer ${token}`};
       const photos={}, titles={};
-      await Promise.all(RAW_STAFF_LIST.map(async s => {
+      await Promise.all(allStaff.map(async s => {
         try {
           // Try 240x240 first (more reliable), fall back to generic photo endpoint
           let photoRes = await fetch(`https://graph.microsoft.com/v1.0/users/${s.email}/photos/240x240/$value`,{headers});
@@ -617,7 +635,7 @@ export default function App() {
       setStaffPhotos(photos);
       setStaffTitles(titles);
     })();
-  }, [account]);
+  }, [account, allStaff]);
 
   // Auto-fetch HK public holidays from Nager.Date for current + next year
   useEffect(() => {
@@ -708,6 +726,13 @@ export default function App() {
       const {data:extData} = await supabase.from('staff_extras').select('*').order('created_at');
       if (extData) setStaffExtras(extData);
 
+      // Roster edits from the Admin Portal reach every open board without a reload
+      supabase.channel('staff-extras-changes')
+        .on('postgres_changes',{event:'*',schema:'public',table:'staff_extras'},async ()=>{
+          const {data} = await supabase.from('staff_extras').select('*').order('created_at');
+          if (data) setStaffExtras(data);
+        }).subscribe();
+
       const { data: sData, error: sErr } = await fetchAllStatuses();
       if (sErr) console.error('[statuses load]', sErr);
       if (sData) { const r={}; sData.forEach(row=>{r[row.id]=row.status;}); setRecords(r); }
@@ -748,7 +773,7 @@ export default function App() {
 
   useEffect(() => {
     if (!account) return;
-    const meStaffLocal = getStaffEntry(account.username.toLowerCase());
+    const meStaffLocal = getStaffEntryDynamic(account.username.toLowerCase());
     const channel = supabase.channel('presence-party',{config:{presence:{key:account.username.toLowerCase()}}});
     channel
       .on('presence',{event:'sync'},()=>{
@@ -793,7 +818,7 @@ export default function App() {
       });
     presenceRef.current=channel;
     return ()=>{ supabase.removeChannel(channel); };
-  }, [account]);
+  }, [account, staffExtras]);
 
   useEffect(() => {
     const fn = e => {
@@ -846,8 +871,8 @@ export default function App() {
     if (showWelcome || showTour) return; // wait until intro sequence is done
     if (!account || Object.keys(records).length === 0) return;
     const staffEntry = impersonatedId
-      ? RAW_STAFF_LIST.find(s => s.id === impersonatedId)
-      : getStaffEntry(account.username.toLowerCase());
+      ? getStaffByIdDynamic(impersonatedId)
+      : getStaffEntryDynamic(account.username.toLowerCase());
     if (!staffEntry) return;
     const streak = computeStreak(staffEntry.id, records);
     const levelIdx = streakToLevelIdx(streak);
@@ -881,11 +906,11 @@ export default function App() {
   if (!account) return <LoginScreen onLogin={login} isInitializing={!isInit} error={authError}/>;
 
 const me      = impersonatedId
-    ? (RAW_STAFF_LIST.find(s => s.id === impersonatedId)?.email?.toLowerCase() || account.username.toLowerCase())
+    ? (getStaffByIdDynamic(impersonatedId)?.email?.toLowerCase() || account.username.toLowerCase())
     : account.username.toLowerCase();
   const meStaff = impersonatedId
-    ? RAW_STAFF_LIST.find(s => s.id === impersonatedId)
-    : getStaffEntry(account.username.toLowerCase());
+    ? getStaffByIdDynamic(impersonatedId)
+    : getStaffEntryDynamic(account.username.toLowerCase());
   const isSuperViewMode = !!impersonatedId;
 
   const popAvatar = userId => {
@@ -1074,7 +1099,7 @@ const me      = impersonatedId
 
   const handleStatusCellMouseOver=(staffId,dateIdx,shift)=>{
     if (!dragging) return;
-    const staffIds=STAFF_LIST.filter(s=>s.region===region).map(s=>s.id);
+    const staffIds=rosterStaff.filter(s=>s.region===region).map(s=>s.id);
     const minIdx=Math.min(staffIds.indexOf(dragging.staffId),staffIds.indexOf(staffId));
     const maxIdx=Math.max(staffIds.indexOf(dragging.staffId),staffIds.indexOf(staffId));
     const minDate=Math.min(dragging.dateIdx,dateIdx),maxDate=Math.max(dragging.dateIdx,dateIdx);
@@ -1249,7 +1274,7 @@ const handleCelebrate = (person) => {
         birthdayName:person.name,
         throwerId:meStaff?.id,
         throwerName:meStaff?.name||account.name,
-        realThrowerId: getStaffEntry(account.username.toLowerCase())?.id,
+        realThrowerId: getStaffEntryDynamic(account.username.toLowerCase())?.id,
       },
     });
     // Persist to Supabase
@@ -1273,7 +1298,7 @@ const handleCelebrate = (person) => {
   };
 
   const today    = fmt(new Date());
-  const staffList = STAFF_LIST.filter(s=>s.region===region);
+  const staffList = rosterStaff.filter(s=>s.region===region);
 
   const inOffice=(()=>{
     let n=0;
@@ -1462,7 +1487,7 @@ const handleCelebrate = (person) => {
         <TeamTodayPanel
           open={showTeamToday}
           onClose={() => setShowTeamToday(false)}
-          staffList={STAFF_LIST}
+          staffList={rosterStaff}
           records={records}
           STATUS_CONFIG={STATUS_CONFIG}
           emotions={emotions}
@@ -1558,7 +1583,7 @@ const handleCelebrate = (person) => {
               )}
               {/* Birthdays this week */}
               {week.map(d => {
-                const bday = RAW_STAFF_LIST.find(s => {
+                const bday = rosterStaff.find(s => {
                   const bd = s.birthday; // expected "MM-DD"
                   const ds = d.ds.slice(5); // "MM-DD" from "YYYY-MM-DD"
                   return bd === ds;
@@ -1608,7 +1633,7 @@ const handleCelebrate = (person) => {
                   )}
                 </div>
               ))}
-              {week.every(d=>!RAW_STAFF_LIST.find(s=>s.birthday===d.ds.slice(5)))&&week.every(d=>!d.hol)&&weeklyUpdates.length===0&&(
+              {week.every(d=>!rosterStaff.find(s=>s.birthday===d.ds.slice(5)))&&week.every(d=>!d.hol)&&weeklyUpdates.length===0&&(
                 <div style={{textAlign:'center',padding:'24px 0',color:'rgba(232,229,255,0.3)',fontSize:13}}>No updates this week yet.</div>
               )}
             </div>
@@ -1728,7 +1753,7 @@ const handleCelebrate = (person) => {
                 style={{height:32,padding:'0 10px',borderRadius:8,border:`1px solid ${impersonatedId?'rgba(255,183,0,0.5)':'rgba(167,139,250,0.2)'}`,background:impersonatedId?'rgba(255,183,0,0.1)':'rgba(255,255,255,0.05)',color:impersonatedId?'rgba(255,220,100,0.95)':'rgba(232,229,255,0.5)',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:"'Plus Jakarta Sans',sans-serif",appearance:'none',paddingRight:24}}
               >
                 <option value=''>👤 View as...</option>
-                {STAFF_LIST.map(s=>(
+                {rosterStaff.map(s=>(
                   <option key={s.id} value={s.id} style={{background:'#0f172a',color:'#e8e5ff'}}>{s.name}</option>
                 ))}
               </select>
@@ -2067,7 +2092,7 @@ const handleCelebrate = (person) => {
             meStaff={meStaff}
             STATUS_CONFIG={STATUS_CONFIG}
             bdaysThisWeek={week.reduce((acc,d)=>{
-              const bday = RAW_STAFF_LIST.find(s => s.birthday === d.ds.slice(5));
+              const bday = rosterStaff.find(s => s.birthday === d.ds.slice(5));
               if (bday) acc.push({id:bday.id, name:bday.name, ds:d.ds, isToday:d.isToday, dayName:d.dayName});
               return acc;
             },[])}
@@ -2134,7 +2159,7 @@ const handleCelebrate = (person) => {
                 <div ref={headerRef} className="tbl-hdr-row">
                   <div className="tbl-hdr-namecol"/>
                {week.map(d=>{
-                    const bdayPeople = RAW_STAFF_LIST.filter(s => s.birthday === d.ds.slice(5));
+                    const bdayPeople = rosterStaff.filter(s => s.birthday === d.ds.slice(5));
                     return (
                     <div key={d.ds} data-hdr-ds={d.ds} className="tbl-hdr-daycol" style={{position:'relative'}}>
                      {!showApacHolidays && bdayPeople.length > 0 && (

@@ -28,6 +28,21 @@ if (new URLSearchParams(window.location.search).get('devbypass') === '1') {
 
 Then open `http://localhost:5173/?devbypass=1`. Use a real staff email from `src/data/staff.json` so `meStaff` resolves and you can set your own status. This is a temporary debugging aid only — never commit it.
 
+### The staff roster has two sources — always merge them
+The roster is `src/data/staff.json` **plus** the `staff_extras` Supabase table, which is what the
+Admin Portal ("⚙ Staff" button) writes to. `buildStaffList()` in `src/App.jsx` merges them:
+rows sharing an id with `staff.json` patch that entry in place (so email edits keep roster order),
+and genuinely new people are appended.
+
+Anything the board renders must come from `rosterStaff` (merged, minus hidden ids) or `allStaff`
+(merged, including hidden), and identity lookups must use `getStaffEntryDynamic` /
+`getStaffByIdDynamic`. Do **not** render or resolve identity from `RAW_STAFF_LIST` — that is the
+static file only. This previously caused a silent bug where portal-added people were written to the
+database but never appeared on the board, and could not set their own status because `meStaff` did
+not resolve. `RAW_STAFF_LIST` is still correct for the `staticStaff` prop passed to `AdminPortal`
+(it needs to know which entries are overrides) and inside `BirthdayOverlay`, which resolves
+themes/ids from the static list only.
+
 ### Supabase data notes
 - Setting a status writes to the `statuses` table (row id format `<staffId>-<YYYY-MM-DD>-<AM|PM>`). Changes propagate to other clients via realtime, so writes hit the **shared production** Supabase project. When testing, use far-future dates and delete the rows afterward (`DELETE /rest/v1/statuses?id=eq.<id>`), and avoid the leave types `AL/SL/BL/ML/PL` for your own row since they trigger the leave-invite emailer flow.
 - **Initial load must paginate `statuses`**: this project's PostgREST `max-rows` is **1000** (~1030+ rows in the table). A single `select('*').limit(50000)` only returns the first 1000 rows (by default order), so recent keys like `yinran-2026-07-31-AM` can exist in the DB but never reach the UI. `fetchAllStatuses()` in `App.jsx` pages with `.range()` until exhausted.
