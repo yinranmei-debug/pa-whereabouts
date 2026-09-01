@@ -47,6 +47,11 @@ const SUPER_USERS = ['arthur@patternasia.com', 'brenda.lee@patternasia.com', 'yi
 
 const isSuperUser  = em => SUPER_USERS.includes(em.toLowerCase());
 
+const fetchStaffExtras = async () => {
+  const { data } = await supabase.from('staff_extras').select('*').order('created_at');
+  return data || [];
+};
+
 /**
  * The roster is staff.json plus the `staff_extras` table (the Admin Portal writes there).
  * Rows that share an id with staff.json patch that entry in place so edits keep roster
@@ -528,7 +533,13 @@ export default function App() {
       try {
         await msalInstance.initialize(); setIsInit(true);
         const res = await msalInstance.handleRedirectPromise();
-        const isAllowed = em => isSuperUser(em)||!!getStaffEntryDynamic(em);
+        // The allow-list must be checked against the live roster, not React state:
+        // staff_extras loads after sign-in, so relying on it here would lock out
+        // everyone added through the Admin Portal.
+        const extras = await fetchStaffExtras();
+        setStaffExtras(extras);
+        const roster = buildStaffList(extras);
+        const isAllowed = em => isSuperUser(em)||roster.some(s => s.email.toLowerCase() === em);
         if (res) {
           const em = res.account.username.toLowerCase();
           if (!isAllowed(em)) { setDenied(true); return; }
@@ -723,14 +734,10 @@ export default function App() {
   useEffect(() => {
     if (!account) return;
     (async () => {
-      const {data:extData} = await supabase.from('staff_extras').select('*').order('created_at');
-      if (extData) setStaffExtras(extData);
-
       // Roster edits from the Admin Portal reach every open board without a reload
       supabase.channel('staff-extras-changes')
         .on('postgres_changes',{event:'*',schema:'public',table:'staff_extras'},async ()=>{
-          const {data} = await supabase.from('staff_extras').select('*').order('created_at');
-          if (data) setStaffExtras(data);
+          setStaffExtras(await fetchStaffExtras());
         }).subscribe();
 
       const { data: sData, error: sErr } = await fetchAllStatuses();

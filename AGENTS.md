@@ -34,6 +34,12 @@ Admin Portal ("⚙ Staff" button) writes to. `buildStaffList()` in `src/App.jsx`
 rows sharing an id with `staff.json` patch that entry in place (so email edits keep roster order),
 and genuinely new people are appended.
 
+The sign-in allow-list must read the roster **freshly from the database**, not from React state.
+`staffExtras` only populates after sign-in, so checking `getStaffEntryDynamic` inside the auth
+effect denied access to everyone added through the portal (a chicken-and-egg deadlock: you needed
+the roster to be let in, but the roster only loaded once you were in). The auth effect now awaits
+`fetchStaffExtras()` before evaluating access.
+
 Anything the board renders must come from `rosterStaff` (merged, minus hidden ids) or `allStaff`
 (merged, including hidden), and identity lookups must use `getStaffEntryDynamic` /
 `getStaffByIdDynamic`. Do **not** render or resolve identity from `RAW_STAFF_LIST` — that is the
