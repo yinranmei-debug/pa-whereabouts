@@ -44,8 +44,11 @@ const supabase = createClient(
 const msalInstance = new PublicClientApplication(msalConfig);
 const HIDDEN_STAFF_IDS = new Set(['arthur']);
 const SUPER_USERS = ['arthur@patternasia.com', 'brenda.lee@patternasia.com', 'yinran.mei@patternasia.com'];
+const WEEK_UPDATE_ADMIN = 'yinran.mei@patternasia.com';
 
 const isSuperUser  = em => SUPER_USERS.includes(em.toLowerCase());
+/** Team-week add / pin / delete — same allow-list as the Admin Portal (Yinran only). */
+const isWeekUpdateAdmin = em => (em || '').toLowerCase() === WEEK_UPDATE_ADMIN;
 
 const fetchStaffExtras = async () => {
   const { data } = await supabase.from('staff_extras').select('*').order('created_at');
@@ -951,6 +954,7 @@ const me      = impersonatedId
   const isSuperViewMode = !!impersonatedId;
 
   const submitWeeklyUpdate = async () => {
+    if (!isWeekUpdateAdmin(account?.username)) return;
     const title = newUpdate.trim();
     if (!title) return;
     const eventDate = newUpdateDate || null;
@@ -1603,7 +1607,8 @@ const handleCelebrate = (person) => {
               <span style={{fontSize:16,fontWeight:700,color:'#fff'}}>Team week at a glance</span>
               <button onClick={()=>setShowWeeklyPanel(false)} style={{width:28,height:28,borderRadius:'50%',border:'none',background:'rgba(255,255,255,0.08)',cursor:'pointer',color:'rgba(232,229,255,0.6)',fontSize:13,display:'flex',alignItems:'center',justifyContent:'center'}} onMouseOver={e=>e.currentTarget.style.background='rgba(255,255,255,0.14)'} onMouseOut={e=>e.currentTarget.style.background='rgba(255,255,255,0.08)'}>✕</button>
             </div>
-            {/* Add update */}
+            {/* Add update — Yinran only */}
+            {isWeekUpdateAdmin(account?.username) && (
             <div style={{padding:'14px 20px',borderBottom:'1px solid rgba(167,139,250,0.08)'}}>
               <div style={{display:'flex',gap:10,marginBottom:10}}>
                 <input
@@ -1641,6 +1646,7 @@ const handleCelebrate = (person) => {
                 </div>
               )}
             </div>
+            )}
             {/* Auto entries: birthdays + holidays this week */}
             <div style={{maxHeight:week.some(d=>isValuesWeekDate(d.ds))?520:320,overflowY:'auto',padding:'8px 12px 12px'}}>
               {week.some(d => isValuesWeekDate(d.ds)) && (
@@ -1707,7 +1713,7 @@ const handleCelebrate = (person) => {
                       u.body && !getUpdateEventDate(u) ? <div style={{fontSize:12,color:'rgba(232,229,255,0.5)'}}>{u.body}</div> : null
                     )}
                   </div>
-                  {(u.author_id===meStaff?.id||isSuperUser(account?.username||''))&&(
+                  {isWeekUpdateAdmin(account?.username)&&(
                    <button onClick={async()=>{
                       await supabase.from('week_updates').delete().eq('id',u.id);
                       setWeeklyUpdates(prev=>{
