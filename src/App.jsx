@@ -421,9 +421,9 @@ export default function App() {
     });
   };
  const celebratePromptTimer = useRef(null);
-  const weeklyReadKey = account
-    ? `weekly-read-${account.username}-${(() => { const d=new Date(); const day=d.getDay(); d.setDate(d.getDate()-day+(day===0?-6:1)); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })()}`
-    : null;
+  // Seen-state is tracked per update id, not per week: a pin on a future date
+  // has to stay outstanding until the reader actually opens the panel.
+  const weeklySeenKey = account ? `weekly-seen-${account.username}` : null;
 
   // 必须在 sequence effect 之前定义
   const todayMMDD_hook = (() => {
@@ -448,8 +448,9 @@ export default function App() {
   const getStaffEntryDynamic = em => allStaff.find(s => s.email.toLowerCase() === em.toLowerCase());
   const getStaffByIdDynamic = id => allStaff.find(s => s.id === id);
   const [weeklyUpdates,     setWeeklyUpdates]      = useState([]);
- const [weeklyUpdatesCount, setWeeklyUpdatesCount] = useState(0);
-  const [weeklyReadCount,    setWeeklyReadCount]    = useState(0);
+  const [seenUpdateIds,     setSeenUpdateIds]      = useState([]);
+  const [justOpenedUnread,  setJustOpenedUnread]   = useState([]);
+  const [updateToast,       setUpdateToast]        = useState(null);
   const [newUpdate,         setNewUpdate]          = useState('');
   const [newUpdateDate,     setNewUpdateDate]      = useState(''); // YYYY-MM-DD or ''
   const [editingUpdate,     setEditingUpdate]      = useState(null); // { id, title, date }
@@ -795,23 +796,41 @@ export default function App() {
       const weekStart = currentWeekStart();
       await supabase.from('week_updates').delete().lt('week_start', weekStart);
       const {data:wData} = await supabase.from('week_updates').select('*').order('created_at',{ascending:true});
-     if (wData) {
+      let seen = [];
+      try { seen = JSON.parse(localStorage.getItem(`weekly-seen-${account.username}`) || '[]'); } catch { seen = []; }
+      if (wData) {
         setWeeklyUpdates(wData);
-        const thisWeekCount = wData.filter(u => u.week_start === weekStart).length;
-        setWeeklyUpdatesCount(thisWeekCount);
-        const readSoFar = parseInt(localStorage.getItem(`weekly-read-${account.username}-${weekStart}`) || '0');
-        setWeeklyReadCount(readSoFar);
+        // Drop ids of deleted rows so the stored list cannot grow forever
+        const live = new Set(wData.map(u => u.id));
+        setSeenUpdateIds(seen.filter(id => live.has(id)));
       }
       supabase.channel('week-updates-changes')
         .on('postgres_changes',{event:'*',schema:'public',table:'week_updates'},async ()=>{
           const {data} = await supabase.from('week_updates').select('*').order('created_at',{ascending:true});
-          if (data) {
-            setWeeklyUpdates(data);
-            setWeeklyUpdatesCount(data.filter(u => u.week_start === currentWeekStart()).length);
-          }
+          if (data) setWeeklyUpdates(data);
         }).subscribe();
     })();
   }, [account]);
+
+  // Announce pins that landed while the board was already open
+  const knownUpdateIdsRef = useRef(null);
+  useEffect(() => {
+    const ids = weeklyUpdates.map(u => u.id);
+    if (knownUpdateIdsRef.current === null) { knownUpdateIdsRef.current = new Set(ids); return; }
+    const fresh = weeklyUpdates.filter(u => !knownUpdateIdsRef.current.has(u.id));
+    knownUpdateIdsRef.current = new Set(ids);
+    if (fresh.length === 0) return;
+    const first = fresh[0];
+    const ds = getUpdateEventDate(first);
+    setUpdateToast({
+      emoji: first.emoji,
+      text: fresh.length === 1
+        ? `${first.title}${ds ? ` — ${new Date(ds+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}` : ''}`
+        : `${fresh.length} new team updates this week`,
+    });
+    const t = setTimeout(() => setUpdateToast(null), 6000);
+    return () => clearTimeout(t);
+  }, [weeklyUpdates]);
 
   // Jumping in from a calendar pin: scroll the matching entry into view, then fade the highlight
   useEffect(() => {
@@ -824,7 +843,7 @@ export default function App() {
 
   // Closing the panel abandons any in-progress edit
   useEffect(() => {
-    if (!showWeeklyPanel) { setEditingUpdate(null); setHighlightUpdateId(null); }
+    if (!showWeeklyPanel) { setEditingUpdate(null); setHighlightUpdateId(null); setJustOpenedUnread([]); }
   }, [showWeeklyPanel]);
 
   useEffect(() => {
@@ -993,11 +1012,31 @@ const me      = impersonatedId
     }
   };
 
+  const unreadUpdates = weeklyUpdates.filter(u => !seenUpdateIds.includes(u.id));
+  // Opening the panel clears the badge immediately, so keep a snapshot of what
+  // was unread at that moment to keep the NEW pills visible while it is open.
+  const isUpdateUnread = id => !seenUpdateIds.includes(id) || justOpenedUnread.includes(id);
+
+  const markWeeklyUpdatesSeen = () => {
+    const ids = weeklyUpdates.map(u => u.id);
+    setJustOpenedUnread(weeklyUpdates.filter(u => !seenUpdateIds.includes(u.id)).map(u => u.id));
+    setSeenUpdateIds(ids);
+    if (weeklySeenKey) localStorage.setItem(weeklySeenKey, JSON.stringify(ids));
+  };
+
+  const toggleWeeklyPanel = () => {
+    setShowWeeklyPanel(p => {
+      if (!p) markWeeklyUpdatesSeen();
+      return !p;
+    });
+  };
+
   /** Open the panel on the entry behind a calendar pin, and edit it when allowed. */
   const openWeeklyUpdate = (updateId, { edit = true } = {}) => {
     const row = weeklyUpdates.find(u => u.id === updateId);
     if (!row) return;
     setShowWeeklyPanel(true);
+    markWeeklyUpdatesSeen();
     setHighlightUpdateId(updateId);
     if (edit && isWeekUpdateAdmin(account?.username)) {
       setEditingUpdate({ id: row.id, title: row.title, date: getUpdateEventDate(row) || '' });
@@ -1602,6 +1641,20 @@ const handleCelebrate = (person) => {
             <span style={{fontSize:13,fontWeight:600,color:'#fff',lineHeight:1.4}}>{bdayToast.text}</span>
           </div>
         )}
+
+        {/* New team update toast */}
+        {updateToast && (
+          <div
+            className="bday-toast in"
+            style={{cursor:'pointer'}}
+            onClick={()=>{ setUpdateToast(null); toggleWeeklyPanel(); }}
+          >
+            <span style={{fontSize:20,lineHeight:1,flexShrink:0}}>{updateToast.emoji || '📌'}</span>
+            <span style={{fontSize:13,fontWeight:600,color:'#fff',lineHeight:1.4}}>
+              New team update · {updateToast.text}
+            </span>
+          </div>
+        )}
         <BananaEasterEgg
           readySignal={!showTour && !showWelcome && !showAvatarNudge && !showTips && (!hasBirthdayToday_hook || birthdayDone)}
         />
@@ -1806,7 +1859,12 @@ const handleCelebrate = (person) => {
                 <div key={u.id} data-update-id={u.id} onClick={()=>{ if(canEdit) openWeeklyUpdate(u.id); }} style={{display:'flex',alignItems:'flex-start',gap:12,padding:'10px 8px',borderRadius:12,background:isHighlighted?'rgba(0,155,255,0.12)':'rgba(255,255,255,0.04)',border:isHighlighted?'1px solid rgba(0,155,255,0.5)':'1px solid rgba(167,139,250,0.1)',marginBottom:8,cursor:canEdit?'pointer':'default',transition:'background 0.2s, border-color 0.2s'}}>
                   <div style={{width:36,height:36,borderRadius:10,background:'rgba(167,139,250,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{u.emoji}</div>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:13,fontWeight:700,color:'#fff',marginBottom:2}}>{u.title}</div>
+                    <div style={{fontSize:13,fontWeight:700,color:'#fff',marginBottom:2,display:'flex',alignItems:'center',gap:6}}>
+                      <span style={{minWidth:0,overflow:'hidden',textOverflow:'ellipsis'}}>{u.title}</span>
+                      {isUpdateUnread(u.id) && (
+                        <span style={{flexShrink:0,fontSize:9,fontWeight:800,letterSpacing:'0.08em',padding:'2px 6px',borderRadius:6,background:'linear-gradient(135deg,#009bff,#770bff)',color:'#fff'}}>NEW</span>
+                      )}
+                    </div>
                     {edLabel ? (
                       <div style={{fontSize:12,color:'rgba(196,181,253,0.7)'}}>📅 {edLabel}</div>
                     ) : (
@@ -1830,12 +1888,42 @@ const handleCelebrate = (person) => {
                 </div>
                 );
               })}
-              {week.every(d=>!rosterStaff.find(s=>s.birthday===d.ds.slice(5)))&&week.every(d=>!d.hol)&&weeklyUpdates.filter(u=>{
-                const ed=getUpdateEventDate(u);
-                if(ed) return week.some(d=>d.ds===ed);
-                const viewMonday=week[0]?mondayOf(week[0].ds):currentWeekStart();
-                return u.week_start===viewMonday||u.week_start===currentWeekStart();
-              }).length===0&&(
+              {/* Pins on later weeks — listed here so opening the panel really shows everything */}
+              {(() => {
+                const lastDs = week.length ? week[week.length-1].ds : null;
+                const upcoming = weeklyUpdates
+                  .map(u => ({ u, ed: getUpdateEventDate(u) }))
+                  .filter(x => x.ed && lastDs && x.ed > lastDs)
+                  .sort((a,b) => a.ed.localeCompare(b.ed));
+                if (!upcoming.length) return null;
+                return (
+                  <div style={{marginTop:4}}>
+                    <div style={{fontSize:10,fontWeight:800,letterSpacing:'0.12em',color:'rgba(232,229,255,0.35)',padding:'6px 8px 8px'}}>UPCOMING</div>
+                    {upcoming.map(({u, ed}) => (
+                      <div
+                        key={`up-${u.id}`}
+                        onClick={()=>{ navigateWeek(0, new Date(ed+'T00:00:00')); openWeeklyUpdate(u.id, { edit:false }); }}
+                        style={{display:'flex',alignItems:'center',gap:12,padding:'9px 8px',borderRadius:12,background:'rgba(255,255,255,0.025)',border:'1px dashed rgba(167,139,250,0.18)',marginBottom:8,cursor:'pointer'}}
+                      >
+                        <div style={{width:32,height:32,borderRadius:10,background:'rgba(167,139,250,0.12)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>{u.emoji}</div>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontSize:12.5,fontWeight:700,color:'rgba(232,229,255,0.9)',marginBottom:2,display:'flex',alignItems:'center',gap:6}}>
+                            <span style={{minWidth:0,overflow:'hidden',textOverflow:'ellipsis'}}>{u.title}</span>
+                            {isUpdateUnread(u.id) && (
+                              <span style={{flexShrink:0,fontSize:9,fontWeight:800,letterSpacing:'0.08em',padding:'2px 6px',borderRadius:6,background:'linear-gradient(135deg,#009bff,#770bff)',color:'#fff'}}>NEW</span>
+                            )}
+                          </div>
+                          <div style={{fontSize:11.5,color:'rgba(196,181,253,0.6)'}}>
+                            📅 {new Date(ed+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}
+                          </div>
+                        </div>
+                        <span style={{fontSize:13,color:'rgba(196,181,253,0.45)',flexShrink:0}}>›</span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+              {week.every(d=>!rosterStaff.find(s=>s.birthday===d.ds.slice(5)))&&week.every(d=>!d.hol)&&weeklyUpdates.length===0&&(
                 <div style={{textAlign:'center',padding:'24px 0',color:'rgba(232,229,255,0.3)',fontSize:13}}>No updates this week yet.</div>
               )}
             </div>
@@ -2004,18 +2092,9 @@ const handleCelebrate = (person) => {
 
               {/* 📅 Weekly updates */}
              <button
-                onClick={()=>{
-                  setShowWeeklyPanel(p => {
-                    if (!p && weeklyReadKey) {
-                      // marking as read — store current count
-                      localStorage.setItem(weeklyReadKey, String(weeklyUpdatesCount));
-                      setWeeklyReadCount(weeklyUpdatesCount);
-                    }
-                    return !p;
-                  });
-                }}
-                title="Team week at a glance"
-                style={{position:'relative',width:48,height:48,borderRadius:14,border:'1.5px solid rgba(167,139,250,0.3)',background:'rgba(15,10,40,0.7)',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s'}}
+                onClick={toggleWeeklyPanel}
+                title={unreadUpdates.length ? `${unreadUpdates.length} new team update${unreadUpdates.length===1?'':'s'}` : 'Team week at a glance'}
+                style={{position:'relative',width:48,height:48,borderRadius:14,border:unreadUpdates.length?'1.5px solid rgba(0,155,255,0.65)':'1.5px solid rgba(167,139,250,0.3)',background:'rgba(15,10,40,0.7)',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s'}}
                onMouseOver={e=>{e.currentTarget.style.borderColor='rgba(167,139,250,0.6)';e.currentTarget.style.transform='scale(1.12)';}}
                 onMouseOut={e=>{e.currentTarget.style.borderColor='rgba(167,139,250,0.3)';e.currentTarget.style.transform='scale(1)';}}
               >
@@ -2035,8 +2114,8 @@ const handleCelebrate = (person) => {
                   <circle cx="8" cy="18.5" r="1.5" fill="rgba(167,139,250,0.5)"/>
                   <circle cx="12" cy="18.5" r="1.5" fill="rgba(196,181,253,0.7)"/>
                 </svg>
-                {weeklyUpdatesCount > weeklyReadCount && (
-                  <div style={{position:'absolute',top:-6,right:-6,minWidth:18,height:18,borderRadius:9,background:'linear-gradient(135deg,#009bff,#770bff)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:800,color:'#fff',padding:'0 4px',boxShadow:'0 2px 8px rgba(119,11,255,0.4)'}}>{weeklyUpdatesCount - weeklyReadCount}</div>
+                {unreadUpdates.length > 0 && (
+                  <div style={{position:'absolute',top:-6,right:-6,minWidth:18,height:18,borderRadius:9,background:'linear-gradient(135deg,#009bff,#770bff)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:800,color:'#fff',padding:'0 4px',boxShadow:'0 2px 8px rgba(119,11,255,0.4)',animation:'bdayDotPulse 2s ease-in-out infinite'}}>{unreadUpdates.length}</div>
                 )}
               </button>
 
@@ -2273,19 +2352,11 @@ const handleCelebrate = (person) => {
                 localStorage.setItem(`bday-notif-read-${new Date().toDateString()}`, '1');
               }
             }}
-            onWeekly={()=>{
-              setShowWeeklyPanel(p => {
-                if (!p && weeklyReadKey) {
-                  localStorage.setItem(weeklyReadKey, String(weeklyUpdatesCount));
-                  setWeeklyReadCount(weeklyUpdatesCount);
-                }
-                return !p;
-              });
-            }}
+            onWeekly={toggleWeeklyPanel}
             onHuddle={()=>{ setTipIdx(0); setShowTips(true); }}
             onLogout={logout}
             accountName={account.name}
-            weeklyUnreadCount={Math.max(weeklyUpdatesCount - weeklyReadCount, 0)}
+            weeklyUnreadCount={unreadUpdates.length}
             birthdayUnread={hasBirthdayToday && !bdayNotifRead}
             staffList={staffList}
             week={week}
