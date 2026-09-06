@@ -94,6 +94,34 @@ const fmt = date => {
   return `${y}-${m}-${d}`;
 };
 
+const EVENT_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+/** Monday (YYYY-MM-DD) of the week containing `date` (Date or YYYY-MM-DD). */
+const mondayOf = date => {
+  const d = date instanceof Date ? new Date(date) : new Date(`${date}T00:00:00`);
+  const day = d.getDay();
+  d.setDate(d.getDate() - day + (day === 0 ? -6 : 1));
+  return fmt(d);
+};
+const currentWeekStart = () => mondayOf(new Date());
+/**
+ * Optional event date for a week update.
+ * Stored in `body` as YYYY-MM-DD until a dedicated event_date column exists.
+ * Falls back to `event_date` if/when that column is added.
+ */
+const getUpdateEventDate = u => {
+  if (u?.event_date && EVENT_DATE_RE.test(u.event_date)) return u.event_date;
+  if (EVENT_DATE_RE.test(u?.body || '')) return u.body;
+  return null;
+};
+const pickUpdateEmoji = title => {
+  const t = (title || '').toLowerCase();
+  if (t.includes('birthday')) return '🎂';
+  if (t.includes('holiday') || t.includes('leave')) return '🌴';
+  if (t.includes('office') || t.includes('visit')) return '🏢';
+  if (t.includes('meeting') || t.includes('townhall') || t.includes('all hands')) return '📅';
+  return '📌';
+};
+
 /** Company events merged on top of Nager.Date HK public holidays (never overwritten by API fetch). */
 const mergeHkHolidays = holidays => ({ ...holidays, ...VALUES_WEEK_2026 });
 
@@ -420,6 +448,7 @@ export default function App() {
  const [weeklyUpdatesCount, setWeeklyUpdatesCount] = useState(0);
   const [weeklyReadCount,    setWeeklyReadCount]    = useState(0);
   const [newUpdate,         setNewUpdate]          = useState('');
+  const [newUpdateDate,     setNewUpdateDate]      = useState(''); // YYYY-MM-DD or ''
   const [dailyTips, setDailyTips] = useState(() => {
     const cached = localStorage.getItem(API_TIPS_CACHE_KEY);
     const extra = cached ? (() => { try { return JSON.parse(cached); } catch { return []; } })() : [];
@@ -756,24 +785,25 @@ export default function App() {
           else setEmotions(e=>({...e,[payload.new.staff_id]:payload.new.emoji}));
         }).subscribe();
 
-      // Weekly updates — load this week's, auto-clear old ones
-      const weekStart = (() => {
-        const d=new Date(); const day=d.getDay();
-        d.setDate(d.getDate()-day+(day===0?-6:1));
-        return fmt(d);
-      })();
+      // Weekly updates — keep current + future weeks; load all remaining rows
+      // so dated events can render on the calendar when navigating weeks.
+      const weekStart = currentWeekStart();
       await supabase.from('week_updates').delete().lt('week_start', weekStart);
-      const {data:wData} = await supabase.from('week_updates').select('*').eq('week_start',weekStart).order('created_at',{ascending:true});
+      const {data:wData} = await supabase.from('week_updates').select('*').order('created_at',{ascending:true});
      if (wData) {
         setWeeklyUpdates(wData);
-        setWeeklyUpdatesCount(wData.length);
+        const thisWeekCount = wData.filter(u => u.week_start === weekStart).length;
+        setWeeklyUpdatesCount(thisWeekCount);
         const readSoFar = parseInt(localStorage.getItem(`weekly-read-${account.username}-${weekStart}`) || '0');
         setWeeklyReadCount(readSoFar);
       }
       supabase.channel('week-updates-changes')
         .on('postgres_changes',{event:'*',schema:'public',table:'week_updates'},async ()=>{
-          const {data} = await supabase.from('week_updates').select('*').eq('week_start',weekStart).order('created_at',{ascending:true});
-          if (data) { setWeeklyUpdates(data); setWeeklyUpdatesCount(data.length); }
+          const {data} = await supabase.from('week_updates').select('*').order('created_at',{ascending:true});
+          if (data) {
+            setWeeklyUpdates(data);
+            setWeeklyUpdatesCount(data.filter(u => u.week_start === currentWeekStart()).length);
+          }
         }).subscribe();
     })();
   }, [account]);
@@ -919,6 +949,29 @@ const me      = impersonatedId
     ? getStaffByIdDynamic(impersonatedId)
     : getStaffEntryDynamic(account.username.toLowerCase());
   const isSuperViewMode = !!impersonatedId;
+
+  const submitWeeklyUpdate = async () => {
+    const title = newUpdate.trim();
+    if (!title) return;
+    const eventDate = newUpdateDate || null;
+    const weekStart = eventDate ? mondayOf(eventDate) : currentWeekStart();
+    const emoji = pickUpdateEmoji(title);
+    // body stores YYYY-MM-DD event date until a real event_date column exists
+    await supabase.from('week_updates').insert({
+      week_start: weekStart,
+      emoji,
+      title,
+      body: eventDate || '',
+      author_id: meStaff?.id || 'guest',
+    });
+    setNewUpdate('');
+    setNewUpdateDate('');
+    const { data: fresh } = await supabase.from('week_updates').select('*').order('created_at', { ascending: true });
+    if (fresh) {
+      setWeeklyUpdates(fresh);
+      setWeeklyUpdatesCount(fresh.filter(u => u.week_start === currentWeekStart()).length);
+    }
+  };
 
   const popAvatar = userId => {
     const el = document.getElementById(`av-${userId}`);
@@ -1551,32 +1604,42 @@ const handleCelebrate = (person) => {
               <button onClick={()=>setShowWeeklyPanel(false)} style={{width:28,height:28,borderRadius:'50%',border:'none',background:'rgba(255,255,255,0.08)',cursor:'pointer',color:'rgba(232,229,255,0.6)',fontSize:13,display:'flex',alignItems:'center',justifyContent:'center'}} onMouseOver={e=>e.currentTarget.style.background='rgba(255,255,255,0.14)'} onMouseOut={e=>e.currentTarget.style.background='rgba(255,255,255,0.08)'}>✕</button>
             </div>
             {/* Add update */}
-            <div style={{padding:'14px 20px',borderBottom:'1px solid rgba(167,139,250,0.08)',display:'flex',gap:10}}>
-              <input
-                value={newUpdate}
-                onChange={e=>setNewUpdate(e.target.value)}
-                onKeyDown={async e=>{ if(e.key==='Enter'&&newUpdate.trim()){
-                  const weekStart=fmt((() => { const d=new Date(); const day=d.getDay(); d.setDate(d.getDate()-day+(day===0?-6:1)); return d; })());
-                  const emoji = newUpdate.toLowerCase().includes('birthday')?'🎂':newUpdate.toLowerCase().includes('holiday')||newUpdate.toLowerCase().includes('leave')?'🌴':newUpdate.toLowerCase().includes('office')?'🏢':'📌';
-                  await supabase.from('week_updates').insert({week_start:weekStart,emoji,title:newUpdate.trim(),body:'',author_id:meStaff?.id||'guest'});
-                  setNewUpdate('');
-                  const {data:fresh} = await supabase.from('week_updates').select('*').eq('week_start',weekStart).order('created_at',{ascending:true});
-                  if(fresh){setWeeklyUpdates(fresh);setWeeklyUpdatesCount(fresh.length);}
-                }}}
-                placeholder="Add an update — e.g. Brett visits office"
-                style={{flex:1,height:38,borderRadius:10,border:'1px solid rgba(167,139,250,0.2)',background:'rgba(255,255,255,0.05)',color:'#fff',fontSize:13,padding:'0 12px',outline:'none',fontFamily:"'Plus Jakarta Sans',sans-serif"}}
-              />
-              <button
-                onClick={async()=>{ if(!newUpdate.trim()) return;
-                  const weekStart=fmt((() => { const d=new Date(); const day=d.getDay(); d.setDate(d.getDate()-day+(day===0?-6:1)); return d; })());
-                  const emoji = newUpdate.toLowerCase().includes('birthday')?'🎂':newUpdate.toLowerCase().includes('holiday')||newUpdate.toLowerCase().includes('leave')?'🌴':newUpdate.toLowerCase().includes('office')?'🏢':'📌';
-                  await supabase.from('week_updates').insert({week_start:weekStart,emoji,title:newUpdate.trim(),body:'',author_id:meStaff?.id||'guest'});
-                  setNewUpdate('');
-                  const {data:fresh} = await supabase.from('week_updates').select('*').eq('week_start',weekStart).order('created_at',{ascending:true});
-                  if(fresh){setWeeklyUpdates(fresh);setWeeklyUpdatesCount(fresh.length);}
-                }}
-                style={{height:38,padding:'0 16px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#009bff,#770bff)',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer'}}
-              >ADD</button>
+            <div style={{padding:'14px 20px',borderBottom:'1px solid rgba(167,139,250,0.08)'}}>
+              <div style={{display:'flex',gap:10,marginBottom:10}}>
+                <input
+                  value={newUpdate}
+                  onChange={e=>setNewUpdate(e.target.value)}
+                  onKeyDown={e=>{ if(e.key==='Enter') submitWeeklyUpdate(); }}
+                  placeholder="Add an update — e.g. Brett visits office"
+                  style={{flex:1,height:38,borderRadius:10,border:'1px solid rgba(167,139,250,0.2)',background:'rgba(255,255,255,0.05)',color:'#fff',fontSize:13,padding:'0 12px',outline:'none',fontFamily:"'Plus Jakarta Sans',sans-serif"}}
+                />
+                <button
+                  onClick={submitWeeklyUpdate}
+                  style={{height:38,padding:'0 16px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#009bff,#770bff)',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer'}}
+                >ADD</button>
+              </div>
+              <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
+                <span style={{fontSize:11,fontWeight:700,letterSpacing:'0.06em',color:'rgba(232,229,255,0.4)',marginRight:2}}>PIN TO</span>
+                <button
+                  type="button"
+                  onClick={()=>setNewUpdateDate('')}
+                  style={{height:26,padding:'0 10px',borderRadius:8,border:newUpdateDate===''?'1px solid rgba(167,139,250,0.55)':'1px solid rgba(167,139,250,0.15)',background:newUpdateDate===''?'rgba(167,139,250,0.22)':'rgba(255,255,255,0.04)',color:newUpdateDate===''?'#fff':'rgba(232,229,255,0.55)',fontSize:11,fontWeight:700,cursor:'pointer'}}
+                >No date</button>
+                {week.map(d=>(
+                  <button
+                    key={d.ds}
+                    type="button"
+                    onClick={()=>setNewUpdateDate(prev => prev===d.ds ? '' : d.ds)}
+                    title={d.ds}
+                    style={{height:26,padding:'0 9px',borderRadius:8,border:newUpdateDate===d.ds?'1px solid rgba(0,155,255,0.65)':'1px solid rgba(167,139,250,0.15)',background:newUpdateDate===d.ds?'linear-gradient(135deg,rgba(0,155,255,0.35),rgba(119,11,255,0.35))':'rgba(255,255,255,0.04)',color:newUpdateDate===d.ds?'#fff':(d.isToday?'#c4b5fd':'rgba(232,229,255,0.55)'),fontSize:11,fontWeight:700,cursor:'pointer'}}
+                  >{d.dayName.slice(0,3)} {d.num}</button>
+                ))}
+              </div>
+              {newUpdateDate && (
+                <div style={{marginTop:8,fontSize:11,color:'rgba(196,181,253,0.75)'}}>
+                  Will show a pin on {new Date(newUpdateDate+'T00:00:00').toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'})}
+                </div>
+              )}
             </div>
             {/* Auto entries: birthdays + holidays this week */}
             <div style={{maxHeight:week.some(d=>isValuesWeekDate(d.ds))?520:320,overflowY:'auto',padding:'8px 12px 12px'}}>
@@ -1624,23 +1687,45 @@ const handleCelebrate = (person) => {
                   </div>
                 </div>
               ))}
-              {/* User-added updates */}
-              {weeklyUpdates.map(u=>(
+              {/* User-added updates (list stays in panel; dated ones also pin on the calendar) */}
+              {weeklyUpdates.filter(u => {
+                const ed = getUpdateEventDate(u);
+                if (ed) return week.some(d => d.ds === ed);
+                const viewMonday = week[0] ? mondayOf(week[0].ds) : currentWeekStart();
+                return u.week_start === viewMonday || u.week_start === currentWeekStart();
+              }).map(u => {
+                const ed = getUpdateEventDate(u);
+                const edLabel = ed ? new Date(ed+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}) : null;
+                return (
                 <div key={u.id} style={{display:'flex',alignItems:'flex-start',gap:12,padding:'10px 8px',borderRadius:12,background:'rgba(255,255,255,0.04)',border:'1px solid rgba(167,139,250,0.1)',marginBottom:8}}>
                   <div style={{width:36,height:36,borderRadius:10,background:'rgba(167,139,250,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{u.emoji}</div>
-                  <div style={{flex:1}}>
+                  <div style={{flex:1,minWidth:0}}>
                     <div style={{fontSize:13,fontWeight:700,color:'#fff',marginBottom:2}}>{u.title}</div>
-                    {u.body&&<div style={{fontSize:12,color:'rgba(232,229,255,0.5)'}}>{u.body}</div>}
+                    {edLabel ? (
+                      <div style={{fontSize:12,color:'rgba(196,181,253,0.7)'}}>📅 {edLabel}</div>
+                    ) : (
+                      u.body && !getUpdateEventDate(u) ? <div style={{fontSize:12,color:'rgba(232,229,255,0.5)'}}>{u.body}</div> : null
+                    )}
                   </div>
                   {(u.author_id===meStaff?.id||isSuperUser(account?.username||''))&&(
                    <button onClick={async()=>{
                       await supabase.from('week_updates').delete().eq('id',u.id);
-                      setWeeklyUpdates(prev=>{const n=prev.filter(x=>x.id!==u.id);setWeeklyUpdatesCount(n.length);return n;});
+                      setWeeklyUpdates(prev=>{
+                        const n=prev.filter(x=>x.id!==u.id);
+                        setWeeklyUpdatesCount(n.filter(x=>x.week_start===currentWeekStart()).length);
+                        return n;
+                      });
                     }} style={{background:'none',border:'none',color:'rgba(232,229,255,0.3)',cursor:'pointer',fontSize:12,padding:'2px 4px',flexShrink:0}} onMouseOver={e=>e.currentTarget.style.color='rgba(255,100,100,0.7)'} onMouseOut={e=>e.currentTarget.style.color='rgba(232,229,255,0.3)'}>✕</button>
                   )}
                 </div>
-              ))}
-              {week.every(d=>!rosterStaff.find(s=>s.birthday===d.ds.slice(5)))&&week.every(d=>!d.hol)&&weeklyUpdates.length===0&&(
+                );
+              })}
+              {week.every(d=>!rosterStaff.find(s=>s.birthday===d.ds.slice(5)))&&week.every(d=>!d.hol)&&weeklyUpdates.filter(u=>{
+                const ed=getUpdateEventDate(u);
+                if(ed) return week.some(d=>d.ds===ed);
+                const viewMonday=week[0]?mondayOf(week[0].ds):currentWeekStart();
+                return u.week_start===viewMonday||u.week_start===currentWeekStart();
+              }).length===0&&(
                 <div style={{textAlign:'center',padding:'24px 0',color:'rgba(232,229,255,0.3)',fontSize:13}}>No updates this week yet.</div>
               )}
             </div>
@@ -2103,6 +2188,7 @@ const handleCelebrate = (person) => {
               if (bday) acc.push({id:bday.id, name:bday.name, ds:d.ds, isToday:d.isToday, dayName:d.dayName});
               return acc;
             },[])}
+            weeklyUpdates={weeklyUpdates}
             onStatusSelect={(key, sId) => {
               const parsed = parseStatusCellKey(key);
               if (!parsed) return;
@@ -2186,6 +2272,29 @@ const handleCelebrate = (person) => {
                           </div>
                         </div>
                       )}
+                      {(() => {
+                        const dayEvents = weeklyUpdates.filter(u => getUpdateEventDate(u) === d.ds);
+                        if (!dayEvents.length) return null;
+                        const hasBday = !showApacHolidays && bdayPeople.length > 0;
+                        const pinStyle = showApacHolidays
+                          ? {position:'absolute',top:2,left:2,zIndex:20}
+                          : {position:'absolute',top: hasBday ? 28 : 2, right:2, zIndex:20};
+                        const tip = dayEvents.map(e => `${e.emoji} ${e.title}`).join(' · ');
+                        return (
+                          <div className="evt-hdr-pin" style={pinStyle}>
+                            <span style={{fontSize:15,lineHeight:1,display:'block',filter:'drop-shadow(0 2px 6px rgba(167,139,250,0.7))'}}>
+                              {dayEvents.length === 1 ? dayEvents[0].emoji : '📌'}
+                            </span>
+                            {dayEvents.length > 1 && (
+                              <span className="evt-hdr-count">{dayEvents.length}</span>
+                            )}
+                            <div className="evt-hdr-tip">
+                              {tip}
+                              <div className="evt-hdr-tip-arrow"/>
+                            </div>
+                          </div>
+                        );
+                      })()}
                       <div style={{fontSize:'11px',fontWeight:'700',letterSpacing:'0.06em',marginBottom:'6px',color:d.isToday?'#770bff':'#9ca3af'}}>{d.dayName.toUpperCase()}</div>
                       <div style={{position:'relative',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto',width:'34px',height:'34px'}}>
                         {d.isToday && todaySonar && (

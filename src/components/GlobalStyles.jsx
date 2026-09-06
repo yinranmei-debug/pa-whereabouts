@@ -287,6 +287,33 @@ const GlobalStyles = () => (
     }
     .bday-hdr-tip-arrow{ display:none; }
 
+    /* ── Team-update event pin in thead (same corner language as birthday cake) ── */
+    .evt-hdr-pin{cursor:default;position:relative;display:inline-flex;align-items:center;justify-content:center;}
+    .evt-hdr-pin>span{transition:transform 0.15s cubic-bezier(0.34,1.56,0.64,1);}
+    .evt-hdr-pin:hover>span{transform:scale(1.25);}
+    .evt-hdr-count{
+      position:absolute;top:-4px;right:-6px;min-width:14px;height:14px;padding:0 3px;
+      border-radius:7px;background:linear-gradient(135deg,#009bff,#770bff);
+      color:#fff;font-size:9px;font-weight:800;line-height:14px;text-align:center;
+      box-shadow:0 2px 6px rgba(119,11,255,0.45);
+    }
+    .evt-hdr-tip{
+      position:absolute;top:calc(100% + 6px);left:50%;
+      transform:translateX(-50%) translateY(3px);
+      background:linear-gradient(90deg,#1a1030,#0d2060);
+      border:1px solid rgba(167,139,250,0.55);
+      border-radius:6px;padding:4px 10px;
+      font-size:10px;font-weight:700;color:#fff;
+      white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis;
+      pointer-events:none;opacity:0;
+      transition:opacity 0.15s ease,transform 0.15s ease;
+      font-family:'Plus Jakarta Sans',sans-serif;
+      z-index:1000;letter-spacing:0.03em;
+      box-shadow:0 4px 12px rgba(0,0,0,0.5);
+    }
+    .evt-hdr-pin:hover .evt-hdr-tip{opacity:1;transform:translateX(-50%) translateY(0);}
+    .evt-hdr-tip-arrow{ display:none; }
+
     /* ── APAC holiday button animations ── */
     .apac-arc{transition:stroke 0.2s;}
     .apac-dot-jp,.apac-dot-kr,.apac-center{transition:filter 0.2s;}

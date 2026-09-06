@@ -27,6 +27,7 @@ const MobileView = ({
   accountName = '',
   weeklyUnreadCount = 0,
   birthdayUnread = false,
+  weeklyUpdates = [],
 }) => {
   const fmt = d => {
     const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
@@ -95,6 +96,14 @@ const MobileView = ({
   const selectedDay = week.find(d => d.ds === activeSelectedDs);
   const selectedIsRealToday = activeSelectedDs === realTodayDs;
   const selectedHolidayName = selectedDay?.hol;
+  const dayEvents = selectedDay
+    ? weeklyUpdates.filter(u => {
+        const ed = (u?.event_date && /^\d{4}-\d{2}-\d{2}$/.test(u.event_date)) ? u.event_date
+          : (/^\d{4}-\d{2}-\d{2}$/.test(u?.body || '') ? u.body : null);
+        return ed === selectedDay.ds;
+      })
+    : [];
+
   const goToToday = () => {
     setSelectedDs(realTodayDs);
     onToday?.(realTodayDs);
@@ -241,6 +250,11 @@ const MobileView = ({
           const am = myId && records[`${myId}-${d.ds}-AM`];
           const pm = myId && records[`${myId}-${d.ds}-PM`];
           const filled = (am?1:0) + (pm?1:0);
+          const dayEvts = weeklyUpdates.filter(u => {
+            const ed = (u?.event_date && /^\d{4}-\d{2}-\d{2}$/.test(u.event_date)) ? u.event_date
+              : (/^\d{4}-\d{2}-\d{2}$/.test(u?.body || '') ? u.body : null);
+            return ed === d.ds;
+          });
           const dayBg = d.hol
             ? 'linear-gradient(180deg,rgba(255,0,120,0.14),rgba(217,70,239,0.055))'
             : d.isWE
@@ -285,8 +299,17 @@ const MobileView = ({
                 background: d.isToday ? 'linear-gradient(135deg,#009bff,#770bff)' : 'transparent',
                 color: '#fff', fontSize:14,fontWeight:700,
                 boxShadow: d.isToday ? '0 4px 12px rgba(119,11,255,0.4)' : 'none',
+                position:'relative',
               }}>
                 {d.num}
+                {dayEvts.length > 0 && (
+                  <span style={{
+                    position:'absolute',top:-6,right:-8,fontSize:12,lineHeight:1,
+                    filter:'drop-shadow(0 2px 4px rgba(167,139,250,0.7))',
+                  }} title={dayEvts.map(e=>e.title).join(' · ')}>
+                    {dayEvts.length === 1 ? dayEvts[0].emoji : '📌'}
+                  </span>
+                )}
               </div>
               <div style={{display:'flex',gap:3,marginTop:2,height:5}}>
                 <div style={{width:5,height:5,borderRadius:'50%',background:filled>=1?'#4ade80':'rgba(167,139,250,0.2)'}}/>
@@ -489,6 +512,38 @@ const MobileView = ({
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* dated team updates for selected day */}
+      {dayEvents.length > 0 && (
+        <div style={{padding:'18px 14px 0'}}>
+          <div style={{
+            background:'linear-gradient(135deg,rgba(0,155,255,0.1),rgba(119,11,255,0.1))',
+            border:'1px solid rgba(167,139,250,0.28)',
+            borderRadius:18, padding:'14px 14px 12px',
+            backdropFilter:'blur(12px)',
+          }}>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+              <span style={{fontSize:16}}>📌</span>
+              <div style={{fontSize:11,fontWeight:800,letterSpacing:'0.14em',color:'#c4b5fd'}}>
+                TEAM UPDATES · {selectedDay?.dayName?.toUpperCase()} {selectedDay?.num}
+              </div>
+            </div>
+            {dayEvents.map(u => (
+              <div key={u.id} style={{
+                display:'flex',alignItems:'center',gap:12,
+                padding:'8px 4px',marginBottom:4,
+              }}>
+                <div style={{
+                  width:32,height:32,borderRadius:10,flexShrink:0,
+                  display:'flex',alignItems:'center',justifyContent:'center',
+                  background:'rgba(167,139,250,0.15)',fontSize:16,
+                }}>{u.emoji}</div>
+                <div style={{flex:1,minWidth:0,fontSize:13,fontWeight:600,color:'#fff'}}>{u.title}</div>
+              </div>
+            ))}
           </div>
         </div>
       )}
