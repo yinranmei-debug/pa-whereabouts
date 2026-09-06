@@ -1902,7 +1902,7 @@ const handleCelebrate = (person) => {
                     {upcoming.map(({u, ed}) => (
                       <div
                         key={`up-${u.id}`}
-                        onClick={()=>{ navigateWeek(0, new Date(ed+'T00:00:00')); openWeeklyUpdate(u.id, { edit:false }); }}
+                        onClick={()=>{ navigateWeek(0, new Date(ed+'T00:00:00')); openWeeklyUpdate(u.id); }}
                         style={{display:'flex',alignItems:'center',gap:12,padding:'9px 8px',borderRadius:12,background:'rgba(255,255,255,0.025)',border:'1px dashed rgba(167,139,250,0.18)',marginBottom:8,cursor:'pointer'}}
                       >
                         <div style={{width:32,height:32,borderRadius:10,background:'rgba(167,139,250,0.12)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>{u.emoji}</div>
