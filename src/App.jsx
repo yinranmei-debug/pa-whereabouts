@@ -452,6 +452,8 @@ export default function App() {
   const [weeklyReadCount,    setWeeklyReadCount]    = useState(0);
   const [newUpdate,         setNewUpdate]          = useState('');
   const [newUpdateDate,     setNewUpdateDate]      = useState(''); // YYYY-MM-DD or ''
+  const [editingUpdate,     setEditingUpdate]      = useState(null); // { id, title, date }
+  const [highlightUpdateId, setHighlightUpdateId]  = useState(null);
   const [dailyTips, setDailyTips] = useState(() => {
     const cached = localStorage.getItem(API_TIPS_CACHE_KEY);
     const extra = cached ? (() => { try { return JSON.parse(cached); } catch { return []; } })() : [];
@@ -811,6 +813,20 @@ export default function App() {
     })();
   }, [account]);
 
+  // Jumping in from a calendar pin: scroll the matching entry into view, then fade the highlight
+  useEffect(() => {
+    if (!showWeeklyPanel || !highlightUpdateId) return;
+    const el = document.querySelector(`[data-update-id="${highlightUpdateId}"]`);
+    el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    const t = setTimeout(() => setHighlightUpdateId(null), 2600);
+    return () => clearTimeout(t);
+  }, [showWeeklyPanel, highlightUpdateId, weeklyUpdates]);
+
+  // Closing the panel abandons any in-progress edit
+  useEffect(() => {
+    if (!showWeeklyPanel) { setEditingUpdate(null); setHighlightUpdateId(null); }
+  }, [showWeeklyPanel]);
+
   useEffect(() => {
     if (!account) return;
     const meStaffLocal = getStaffEntryDynamic(account.username.toLowerCase());
@@ -970,6 +986,48 @@ const me      = impersonatedId
     });
     setNewUpdate('');
     setNewUpdateDate('');
+    const { data: fresh } = await supabase.from('week_updates').select('*').order('created_at', { ascending: true });
+    if (fresh) {
+      setWeeklyUpdates(fresh);
+      setWeeklyUpdatesCount(fresh.filter(u => u.week_start === currentWeekStart()).length);
+    }
+  };
+
+  /** Open the panel on the entry behind a calendar pin, and edit it when allowed. */
+  const openWeeklyUpdate = (updateId, { edit = true } = {}) => {
+    const row = weeklyUpdates.find(u => u.id === updateId);
+    if (!row) return;
+    setShowWeeklyPanel(true);
+    setHighlightUpdateId(updateId);
+    if (edit && isWeekUpdateAdmin(account?.username)) {
+      setEditingUpdate({ id: row.id, title: row.title, date: getUpdateEventDate(row) || '' });
+    }
+  };
+
+  const saveWeeklyUpdateEdit = async () => {
+    if (!isWeekUpdateAdmin(account?.username) || !editingUpdate) return;
+    const title = editingUpdate.title.trim();
+    if (!title) return;
+    const eventDate = editingUpdate.date || null;
+    const patch = {
+      week_start: eventDate ? mondayOf(eventDate) : currentWeekStart(),
+      emoji: pickUpdateEmoji(title),
+      title,
+      body: eventDate || '',
+    };
+    // This project's RLS allows insert/delete but not update, so fall back to
+    // delete + re-insert when the update touches no rows.
+    const { data: updated } = await supabase
+      .from('week_updates').update(patch).eq('id', editingUpdate.id).select('id');
+    if (!updated || updated.length === 0) {
+      const existing = weeklyUpdates.find(u => u.id === editingUpdate.id);
+      await supabase.from('week_updates').delete().eq('id', editingUpdate.id);
+      await supabase.from('week_updates').insert({
+        ...patch,
+        author_id: existing?.author_id || meStaff?.id || 'guest',
+      });
+    }
+    setEditingUpdate(null);
     const { data: fresh } = await supabase.from('week_updates').select('*').order('created_at', { ascending: true });
     if (fresh) {
       setWeeklyUpdates(fresh);
@@ -1702,8 +1760,50 @@ const handleCelebrate = (person) => {
               }).map(u => {
                 const ed = getUpdateEventDate(u);
                 const edLabel = ed ? new Date(ed+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}) : null;
+                const isEditing = editingUpdate?.id === u.id;
+                const isHighlighted = highlightUpdateId === u.id;
+                const canEdit = isWeekUpdateAdmin(account?.username);
+                if (isEditing) {
+                  return (
+                    <div key={u.id} data-update-id={u.id} style={{padding:'12px 10px',borderRadius:12,background:'rgba(0,155,255,0.08)',border:'1px solid rgba(0,155,255,0.45)',marginBottom:8}}>
+                      <input
+                        autoFocus
+                        value={editingUpdate.title}
+                        onChange={e=>setEditingUpdate(prev=>({...prev,title:e.target.value}))}
+                        onKeyDown={e=>{ if(e.key==='Enter') saveWeeklyUpdateEdit(); if(e.key==='Escape') setEditingUpdate(null); }}
+                        style={{width:'100%',height:36,borderRadius:9,border:'1px solid rgba(167,139,250,0.3)',background:'rgba(255,255,255,0.06)',color:'#fff',fontSize:13,padding:'0 10px',outline:'none',fontFamily:"'Plus Jakarta Sans',sans-serif",marginBottom:10}}
+                      />
+                      <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap',marginBottom:10}}>
+                        <span style={{fontSize:11,fontWeight:700,letterSpacing:'0.06em',color:'rgba(232,229,255,0.4)',marginRight:2}}>PIN TO</span>
+                        <button
+                          type="button"
+                          onClick={()=>setEditingUpdate(prev=>({...prev,date:''}))}
+                          style={{height:26,padding:'0 10px',borderRadius:8,border:editingUpdate.date===''?'1px solid rgba(167,139,250,0.55)':'1px solid rgba(167,139,250,0.15)',background:editingUpdate.date===''?'rgba(167,139,250,0.22)':'rgba(255,255,255,0.04)',color:editingUpdate.date===''?'#fff':'rgba(232,229,255,0.55)',fontSize:11,fontWeight:700,cursor:'pointer'}}
+                        >No date</button>
+                        {week.map(d=>(
+                          <button
+                            key={d.ds}
+                            type="button"
+                            title={d.ds}
+                            onClick={()=>setEditingUpdate(prev=>({...prev,date:prev.date===d.ds?'':d.ds}))}
+                            style={{height:26,padding:'0 9px',borderRadius:8,border:editingUpdate.date===d.ds?'1px solid rgba(0,155,255,0.65)':'1px solid rgba(167,139,250,0.15)',background:editingUpdate.date===d.ds?'linear-gradient(135deg,rgba(0,155,255,0.35),rgba(119,11,255,0.35))':'rgba(255,255,255,0.04)',color:editingUpdate.date===d.ds?'#fff':(d.isToday?'#c4b5fd':'rgba(232,229,255,0.55)'),fontSize:11,fontWeight:700,cursor:'pointer'}}
+                          >{d.dayName.slice(0,3)} {d.num}</button>
+                        ))}
+                      </div>
+                      {editingUpdate.date && !week.some(d=>d.ds===editingUpdate.date) && (
+                        <div style={{fontSize:11,color:'rgba(196,181,253,0.75)',marginBottom:10}}>
+                          Currently pinned to {new Date(editingUpdate.date+'T00:00:00').toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'})} — navigate to that week to move it.
+                        </div>
+                      )}
+                      <div style={{display:'flex',gap:8}}>
+                        <button onClick={saveWeeklyUpdateEdit} style={{height:32,padding:'0 14px',borderRadius:9,border:'none',background:'linear-gradient(135deg,#009bff,#770bff)',color:'#fff',fontSize:12,fontWeight:700,cursor:'pointer'}}>SAVE</button>
+                        <button onClick={()=>setEditingUpdate(null)} style={{height:32,padding:'0 14px',borderRadius:9,border:'1px solid rgba(167,139,250,0.25)',background:'rgba(255,255,255,0.04)',color:'rgba(232,229,255,0.6)',fontSize:12,fontWeight:700,cursor:'pointer'}}>Cancel</button>
+                      </div>
+                    </div>
+                  );
+                }
                 return (
-                <div key={u.id} style={{display:'flex',alignItems:'flex-start',gap:12,padding:'10px 8px',borderRadius:12,background:'rgba(255,255,255,0.04)',border:'1px solid rgba(167,139,250,0.1)',marginBottom:8}}>
+                <div key={u.id} data-update-id={u.id} onClick={()=>{ if(canEdit) openWeeklyUpdate(u.id); }} style={{display:'flex',alignItems:'flex-start',gap:12,padding:'10px 8px',borderRadius:12,background:isHighlighted?'rgba(0,155,255,0.12)':'rgba(255,255,255,0.04)',border:isHighlighted?'1px solid rgba(0,155,255,0.5)':'1px solid rgba(167,139,250,0.1)',marginBottom:8,cursor:canEdit?'pointer':'default',transition:'background 0.2s, border-color 0.2s'}}>
                   <div style={{width:36,height:36,borderRadius:10,background:'rgba(167,139,250,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{u.emoji}</div>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontSize:13,fontWeight:700,color:'#fff',marginBottom:2}}>{u.title}</div>
@@ -1713,8 +1813,11 @@ const handleCelebrate = (person) => {
                       u.body && !getUpdateEventDate(u) ? <div style={{fontSize:12,color:'rgba(232,229,255,0.5)'}}>{u.body}</div> : null
                     )}
                   </div>
-                  {isWeekUpdateAdmin(account?.username)&&(
-                   <button onClick={async()=>{
+                  {canEdit&&(
+                   <>
+                   <button title="Edit" onClick={e=>{e.stopPropagation();openWeeklyUpdate(u.id);}} style={{background:'none',border:'none',color:'rgba(232,229,255,0.3)',cursor:'pointer',fontSize:12,padding:'2px 4px',flexShrink:0}} onMouseOver={e=>e.currentTarget.style.color='rgba(167,139,250,0.9)'} onMouseOut={e=>e.currentTarget.style.color='rgba(232,229,255,0.3)'}>✎</button>
+                   <button title="Delete" onClick={async e=>{
+                      e.stopPropagation();
                       await supabase.from('week_updates').delete().eq('id',u.id);
                       setWeeklyUpdates(prev=>{
                         const n=prev.filter(x=>x.id!==u.id);
@@ -1722,6 +1825,7 @@ const handleCelebrate = (person) => {
                         return n;
                       });
                     }} style={{background:'none',border:'none',color:'rgba(232,229,255,0.3)',cursor:'pointer',fontSize:12,padding:'2px 4px',flexShrink:0}} onMouseOver={e=>e.currentTarget.style.color='rgba(255,100,100,0.7)'} onMouseOut={e=>e.currentTarget.style.color='rgba(232,229,255,0.3)'}>✕</button>
+                   </>
                   )}
                 </div>
                 );
@@ -2195,6 +2299,7 @@ const handleCelebrate = (person) => {
               return acc;
             },[])}
             weeklyUpdates={weeklyUpdates}
+            onEventClick={id => openWeeklyUpdate(id)}
             onStatusSelect={(key, sId) => {
               const parsed = parseStatusCellKey(key);
               if (!parsed) return;
@@ -2286,8 +2391,16 @@ const handleCelebrate = (person) => {
                           ? {position:'absolute',top:2,left:2,zIndex:20}
                           : {position:'absolute',top: hasBday ? 28 : 2, right:2, zIndex:20};
                         const tip = dayEvents.map(e => `${e.emoji} ${e.title}`).join(' · ');
+                        const canEdit = isWeekUpdateAdmin(account?.username);
                         return (
-                          <div className="evt-hdr-pin" style={pinStyle}>
+                          <div
+                            className="evt-hdr-pin"
+                            style={{...pinStyle, cursor:'pointer'}}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => openWeeklyUpdate(dayEvents[0].id)}
+                            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openWeeklyUpdate(dayEvents[0].id); } }}
+                          >
                             <span style={{fontSize:15,lineHeight:1,display:'block',filter:'drop-shadow(0 2px 6px rgba(167,139,250,0.7))'}}>
                               {dayEvents.length === 1 ? dayEvents[0].emoji : '📌'}
                             </span>
@@ -2296,6 +2409,9 @@ const handleCelebrate = (person) => {
                             )}
                             <div className="evt-hdr-tip">
                               {tip}
+                              <div style={{opacity:0.65,fontWeight:600,marginTop:2}}>
+                                {canEdit ? 'Click to edit' : 'Click to open in Team week'}
+                              </div>
                               <div className="evt-hdr-tip-arrow"/>
                             </div>
                           </div>

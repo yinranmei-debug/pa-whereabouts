@@ -28,6 +28,7 @@ const MobileView = ({
   weeklyUnreadCount = 0,
   birthdayUnread = false,
   weeklyUpdates = [],
+  onEventClick,
 }) => {
   const fmt = d => {
     const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
@@ -532,9 +533,10 @@ const MobileView = ({
               </div>
             </div>
             {dayEvents.map(u => (
-              <div key={u.id} style={{
+              <div key={u.id} onClick={()=>onEventClick?.(u.id)} style={{
                 display:'flex',alignItems:'center',gap:12,
                 padding:'8px 4px',marginBottom:4,
+                cursor:onEventClick?'pointer':'default',
               }}>
                 <div style={{
                   width:32,height:32,borderRadius:10,flexShrink:0,
@@ -542,6 +544,7 @@ const MobileView = ({
                   background:'rgba(167,139,250,0.15)',fontSize:16,
                 }}>{u.emoji}</div>
                 <div style={{flex:1,minWidth:0,fontSize:13,fontWeight:600,color:'#fff'}}>{u.title}</div>
+                {onEventClick && <span style={{fontSize:14,color:'rgba(196,181,253,0.5)',flexShrink:0}}>›</span>}
               </div>
             ))}
           </div>
