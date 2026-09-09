@@ -116,14 +116,58 @@ const getUpdateEventDate = u => {
   if (EVENT_DATE_RE.test(u?.body || '')) return u.body;
   return null;
 };
+/** Admin-only pin categories. `emoji` is what gets stored on week_updates. */
+const UPDATE_CATEGORIES = [
+  { id: 'office', emoji: '🏢', label: 'In office' },
+  { id: 'travel', emoji: '✈️', label: 'Travel' },
+  { id: 'celebrate', emoji: '🎉', label: 'Celebration' },
+  { id: 'event', emoji: '📅', label: 'Team event' },
+  { id: 'food', emoji: '🍜', label: 'Food' },
+  { id: 'ops', emoji: '🔧', label: 'Office / ops' },
+  { id: 'away', emoji: '🌴', label: 'Away' },
+  { id: 'note', emoji: '📌', label: 'Note' },
+];
 const pickUpdateEmoji = title => {
   const t = (title || '').toLowerCase();
-  if (t.includes('birthday')) return '🎂';
-  if (t.includes('holiday') || t.includes('leave')) return '🌴';
-  if (t.includes('office') || t.includes('visit')) return '🏢';
-  if (t.includes('meeting') || t.includes('townhall') || t.includes('all hands')) return '📅';
+  if (t.includes('birthday') || t.includes('bday') || t.includes('celebrat') || t.includes('party')) return '🎉';
+  if (t.includes('travel') || t.includes('offsite') || t.includes('trip') || t.includes('fly') || t.includes('airport')) return '✈️';
+  if (t.includes('holiday') || t.includes('leave') || t.includes('away')) return '🌴';
+  if (t.includes('lunch') || t.includes('dinner') || t.includes('food') || t.includes('fridge') || t.includes('cater')) return '🍜';
+  if (t.includes('fix') || t.includes('repair') || t.includes('facility')) return '🔧';
+  if (t.includes('meeting') || t.includes('townhall') || t.includes('all hands') || t.includes('workshop') || t.includes('training')) return '📅';
+  if (t.includes('office') || t.includes('visit') || t.includes('hq')) return '🏢';
   return '📌';
 };
+
+function CategoryPicker({ value, onChange }) {
+  return (
+    <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
+      <span style={{fontSize:11,fontWeight:700,letterSpacing:'0.06em',color:'rgba(232,229,255,0.4)',marginRight:2}}>ICON</span>
+      {UPDATE_CATEGORIES.map(c => {
+        const on = value === c.emoji;
+        return (
+          <button
+            key={c.id}
+            type="button"
+            title={c.label}
+            onClick={() => onChange(c.emoji)}
+            style={{
+              height:28,padding:'0 8px',borderRadius:8,cursor:'pointer',
+              display:'inline-flex',alignItems:'center',gap:5,
+              border: on ? '1px solid rgba(0,155,255,0.65)' : '1px solid rgba(167,139,250,0.15)',
+              background: on ? 'linear-gradient(135deg,rgba(0,155,255,0.35),rgba(119,11,255,0.35))' : 'rgba(255,255,255,0.04)',
+              color: on ? '#fff' : 'rgba(232,229,255,0.62)',
+              fontSize:11,fontWeight:700,
+            }}
+          >
+            <span style={{fontSize:14,lineHeight:1}}>{c.emoji}</span>
+            {c.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 /** Company events merged on top of Nager.Date HK public holidays (never overwritten by API fetch). */
 const mergeHkHolidays = holidays => ({ ...holidays, ...VALUES_WEEK_2026 });
@@ -453,6 +497,8 @@ export default function App() {
   const [updateToast,       setUpdateToast]        = useState(null);
   const [newUpdate,         setNewUpdate]          = useState('');
   const [newUpdateDate,     setNewUpdateDate]      = useState(''); // YYYY-MM-DD or ''
+  const [newUpdateEmoji,    setNewUpdateEmoji]     = useState('📌');
+  const [newUpdateEmojiLocked, setNewUpdateEmojiLocked] = useState(false);
   const [editingUpdate,     setEditingUpdate]      = useState(null); // { id, title, date }
   const [highlightUpdateId, setHighlightUpdateId]  = useState(null);
   const [dailyTips, setDailyTips] = useState(() => {
@@ -994,7 +1040,7 @@ const me      = impersonatedId
     if (!title) return;
     const eventDate = newUpdateDate || null;
     const weekStart = eventDate ? mondayOf(eventDate) : currentWeekStart();
-    const emoji = pickUpdateEmoji(title);
+    const emoji = newUpdateEmoji || pickUpdateEmoji(title);
     // body stores YYYY-MM-DD event date until a real event_date column exists
     await supabase.from('week_updates').insert({
       week_start: weekStart,
@@ -1005,11 +1051,10 @@ const me      = impersonatedId
     });
     setNewUpdate('');
     setNewUpdateDate('');
+    setNewUpdateEmoji('📌');
+    setNewUpdateEmojiLocked(false);
     const { data: fresh } = await supabase.from('week_updates').select('*').order('created_at', { ascending: true });
-    if (fresh) {
-      setWeeklyUpdates(fresh);
-      setWeeklyUpdatesCount(fresh.filter(u => u.week_start === currentWeekStart()).length);
-    }
+    if (fresh) setWeeklyUpdates(fresh);
   };
 
   const unreadUpdates = weeklyUpdates.filter(u => !seenUpdateIds.includes(u.id));
@@ -1039,7 +1084,12 @@ const me      = impersonatedId
     markWeeklyUpdatesSeen();
     setHighlightUpdateId(updateId);
     if (edit && isWeekUpdateAdmin(account?.username)) {
-      setEditingUpdate({ id: row.id, title: row.title, date: getUpdateEventDate(row) || '' });
+      setEditingUpdate({
+        id: row.id,
+        title: row.title,
+        date: getUpdateEventDate(row) || '',
+        emoji: row.emoji === '🎂' ? '🎉' : (row.emoji || pickUpdateEmoji(row.title)),
+      });
     }
   };
 
@@ -1050,7 +1100,7 @@ const me      = impersonatedId
     const eventDate = editingUpdate.date || null;
     const patch = {
       week_start: eventDate ? mondayOf(eventDate) : currentWeekStart(),
-      emoji: pickUpdateEmoji(title),
+      emoji: editingUpdate.emoji || pickUpdateEmoji(title),
       title,
       body: eventDate || '',
     };
@@ -1068,10 +1118,7 @@ const me      = impersonatedId
     }
     setEditingUpdate(null);
     const { data: fresh } = await supabase.from('week_updates').select('*').order('created_at', { ascending: true });
-    if (fresh) {
-      setWeeklyUpdates(fresh);
-      setWeeklyUpdatesCount(fresh.filter(u => u.week_start === currentWeekStart()).length);
-    }
+    if (fresh) setWeeklyUpdates(fresh);
   };
 
   const popAvatar = userId => {
@@ -1724,7 +1771,11 @@ const handleCelebrate = (person) => {
               <div style={{display:'flex',gap:10,marginBottom:10}}>
                 <input
                   value={newUpdate}
-                  onChange={e=>setNewUpdate(e.target.value)}
+                  onChange={e=>{
+                    const v=e.target.value;
+                    setNewUpdate(v);
+                    if (!newUpdateEmojiLocked) setNewUpdateEmoji(pickUpdateEmoji(v));
+                  }}
                   onKeyDown={e=>{ if(e.key==='Enter') submitWeeklyUpdate(); }}
                   placeholder="Add an update — e.g. Brett visits office"
                   style={{flex:1,height:38,borderRadius:10,border:'1px solid rgba(167,139,250,0.2)',background:'rgba(255,255,255,0.05)',color:'#fff',fontSize:13,padding:'0 12px',outline:'none',fontFamily:"'Plus Jakarta Sans',sans-serif"}}
@@ -1734,7 +1785,7 @@ const handleCelebrate = (person) => {
                   style={{height:38,padding:'0 16px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#009bff,#770bff)',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer'}}
                 >ADD</button>
               </div>
-              <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
+              <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap',marginBottom:10}}>
                 <span style={{fontSize:11,fontWeight:700,letterSpacing:'0.06em',color:'rgba(232,229,255,0.4)',marginRight:2}}>PIN TO</span>
                 <button
                   type="button"
@@ -1750,6 +1801,12 @@ const handleCelebrate = (person) => {
                     style={{height:26,padding:'0 9px',borderRadius:8,border:newUpdateDate===d.ds?'1px solid rgba(0,155,255,0.65)':'1px solid rgba(167,139,250,0.15)',background:newUpdateDate===d.ds?'linear-gradient(135deg,rgba(0,155,255,0.35),rgba(119,11,255,0.35))':'rgba(255,255,255,0.04)',color:newUpdateDate===d.ds?'#fff':(d.isToday?'#c4b5fd':'rgba(232,229,255,0.55)'),fontSize:11,fontWeight:700,cursor:'pointer'}}
                   >{d.dayName.slice(0,3)} {d.num}</button>
                 ))}
+              </div>
+              <div style={{marginBottom: newUpdateDate ? 8 : 0}}>
+                <CategoryPicker
+                  value={newUpdateEmoji}
+                  onChange={emoji => { setNewUpdateEmoji(emoji); setNewUpdateEmojiLocked(true); }}
+                />
               </div>
               {newUpdateDate && (
                 <div style={{marginTop:8,fontSize:11,color:'rgba(196,181,253,0.75)'}}>
@@ -1848,6 +1905,12 @@ const handleCelebrate = (person) => {
                           Currently pinned to {new Date(editingUpdate.date+'T00:00:00').toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'})} — navigate to that week to move it.
                         </div>
                       )}
+                      <div style={{marginBottom:10}}>
+                        <CategoryPicker
+                          value={editingUpdate.emoji || '📌'}
+                          onChange={emoji => setEditingUpdate(prev=>({...prev,emoji}))}
+                        />
+                      </div>
                       <div style={{display:'flex',gap:8}}>
                         <button onClick={saveWeeklyUpdateEdit} style={{height:32,padding:'0 14px',borderRadius:9,border:'none',background:'linear-gradient(135deg,#009bff,#770bff)',color:'#fff',fontSize:12,fontWeight:700,cursor:'pointer'}}>SAVE</button>
                         <button onClick={()=>setEditingUpdate(null)} style={{height:32,padding:'0 14px',borderRadius:9,border:'1px solid rgba(167,139,250,0.25)',background:'rgba(255,255,255,0.04)',color:'rgba(232,229,255,0.6)',fontSize:12,fontWeight:700,cursor:'pointer'}}>Cancel</button>
@@ -1877,11 +1940,7 @@ const handleCelebrate = (person) => {
                    <button title="Delete" onClick={async e=>{
                       e.stopPropagation();
                       await supabase.from('week_updates').delete().eq('id',u.id);
-                      setWeeklyUpdates(prev=>{
-                        const n=prev.filter(x=>x.id!==u.id);
-                        setWeeklyUpdatesCount(n.filter(x=>x.week_start===currentWeekStart()).length);
-                        return n;
-                      });
+                      setWeeklyUpdates(prev=>prev.filter(x=>x.id!==u.id));
                     }} style={{background:'none',border:'none',color:'rgba(232,229,255,0.3)',cursor:'pointer',fontSize:12,padding:'2px 4px',flexShrink:0}} onMouseOver={e=>e.currentTarget.style.color='rgba(255,100,100,0.7)'} onMouseOut={e=>e.currentTarget.style.color='rgba(232,229,255,0.3)'}>✕</button>
                    </>
                   )}
