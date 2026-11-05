@@ -20,3 +20,7 @@ jobs:
         run: supabase functions deploy send-leave-invite --project-ref vzdrpydtxlamoqtukgld --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      - name: Deploy record-online-presence
+        run: supabase functions deploy record-online-presence --project-ref vzdrpydtxlamoqtukgld --no-verify-jwt
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
