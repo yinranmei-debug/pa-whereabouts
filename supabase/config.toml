@@ -2,3 +2,6 @@ project_id = "vzdrpydtxlamoqtukgld"
 
 [functions.send-leave-invite]
 verify_jwt = false
+
+[functions.record-online-presence]
+verify_jwt = false
